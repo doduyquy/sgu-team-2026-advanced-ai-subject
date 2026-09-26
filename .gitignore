@@ -1,1 +1,35 @@
-*__pycache__
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE / Editor / OS artifacts
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# External MetaDrive source (defensively ignored if cloned or referenced locally)
+metadrive-src/
+**/metadrive-src/
+
+# Autonomous driving subproject raw runs and transient artifacts
+autonomous-driving-rl/runs/*
+!autonomous-driving-rl/runs/.gitkeep
+
+# Future model artifacts and checkpoints
+autonomous-driving-rl/checkpoints/
+autonomous-driving-rl/**/*.pt
+autonomous-driving-rl/**/*.pth
+autonomous-driving-rl/**/*.ckpt

@@ -1,0 +1,23 @@
+{
+  "run_id": "stage0_random_baseline_20260926_001",
+  "stage": "Stage 0 - Baseline",
+  "agent": {
+    "name": "RandomAgent",
+    "type": "random",
+    "seed": 42
+  },
+  "environment": {
+    "name": "CourseEnvV1",
+    "num_scenarios": 1,
+    "start_seed": 0,
+    "traffic_density": 0.0,
+    "observation_representation": "compressed_35d",
+    "action_representation": "discrete_5",
+    "reward_type": "native_metadrive",
+    "horizon": 1000
+  },
+  "evaluation": {
+    "episodes": 20,
+    "render": false
+  }
+}

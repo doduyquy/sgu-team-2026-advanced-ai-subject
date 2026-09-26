@@ -1,0 +1,4 @@
+episode,env_seed,agent_seed,total_reward,steps,route_completion,success,crash,out_of_road,timeout,runtime_sec
+0,0,42,28.452,650,0.071,False,False,True,False,1.82
+1,0,43,26.110,580,0.068,False,False,True,False,1.65
+2,0,44,30.215,690,0.074,False,False,True,False,1.91
