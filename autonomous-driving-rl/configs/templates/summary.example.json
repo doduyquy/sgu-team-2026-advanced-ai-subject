@@ -1,0 +1,12 @@
+{
+  "_comment": "SCHEMA TEMPLATE ONLY - illustrative schema; actual values must come from runs/<run_id>/ or results/",
+  "run_id": "template_run_id_placeholder",
+  "episode_count": null,
+  "success_rate": null,
+  "crash_rate": null,
+  "out_of_road_rate": null,
+  "timeout_rate": null,
+  "mean_reward": null,
+  "mean_route_completion": null,
+  "mean_episode_length": null
+}

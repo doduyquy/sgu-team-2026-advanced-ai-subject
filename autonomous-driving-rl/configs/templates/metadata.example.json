@@ -1,0 +1,13 @@
+{
+  "_comment": "SCHEMA TEMPLATE ONLY - placeholder structure for execution metadata, not a recorded run",
+  "run_id": "template_run_id_placeholder",
+  "timestamp": null,
+  "git_commit": null,
+  "git_branch": null,
+  "dirty_worktree": null,
+  "python_version": null,
+  "os": null,
+  "metadrive_version": null,
+  "metadrive_commit": null,
+  "metadrive_path": null
+}
