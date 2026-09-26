@@ -92,16 +92,16 @@ The initial exploratory environment wrapper (`CourseEnvV1` in `src/environments/
 
 The random agent policy selects uniform random actions from `Discrete(5)`.
 
-In an exploratory 20-episode validation run with `traffic_density=0.0` and single-scenario configuration:
+In one exploratory 20-episode validation run with `traffic_density=0.0` and single-scenario configuration, observed outcomes were approximately:
 - **Episodes**: 20
 - **Success rate**: 0.0%
 - **Crash rate**: 0.0%
-- **Out-of-road rate**: 65.0% (remaining 35% terminated on horizon timeout)
-- **Mean route completion**: ~0.070 (vehicle exits road near the first curve)
+- **Out-of-road rate**: ~65.0% (remaining ~35% terminated on horizon timeout)
+- **Mean route completion**: ~0.070
 - **Mean episode reward**: ~28.058
 - **Mean episode length**: ~624.8 steps
 
-> ⚠️ **Notice**: These values are preliminary numbers from exploratory runs intended solely to verify that the environment step loop, collision detection, and episode termination signals function properly. They are **not** final scientific benchmarks.
+> ⚠️ **Notice & Stochasticity**: The current exploratory evaluator does not establish a finalized deterministic benchmark protocol. Because action sampling is uniform random and unseeded, individual runs will exhibit natural stochastic variation (for example, out-of-road termination rates typically vary between 60% and 75%). These figures describe **one illustrative exploratory run** intended solely to verify environment stepping, collision/boundary detection, and termination signals. They are **not** final scientific benchmark numbers.
 
 ---
 
@@ -120,11 +120,10 @@ python inspect_observation_parts.py
 python inspect_reward_config.py
 ```
 
-Run the Stage-0 random baseline evaluation:
+Run the Stage-0 random baseline evaluation (from the `autonomous-driving-rl` project root):
 ```powershell
 python -m src.evaluation.evaluate_random
 ```
-*(or `python src\evaluation\evaluate_random.py` from within `autonomous-driving-rl`)*
 
 ---
 
@@ -133,4 +132,4 @@ python -m src.evaluation.evaluate_random
 1. **Discrete Action Granularity**: The 5-action discrete mapping is rigid and lacks combined maneuvers (e.g. slight steering while coasting or hard braking while steering). Future revisions will evaluate discrete expansions (e.g., 9 actions) or continuous action controllers.
 2. **LiDAR Reduction**: Aggregating 240 rays into 16 min-pooled sectors loses fine angular resolution of narrow obstacles.
 3. **Reward Alignment**: The native reward was designed for dense model-free RL; reward shaping or multi-objective metrics may be required for planning algorithms.
-4. **Immediate Next Step**: Conduct a systematic literature review on rule-based highway controllers (e.g., IDM, MOBIL) and trajectory search before defining Stage 1 agent architecture.
+4. **Immediate Next Step**: Conduct a systematic literature survey covering autonomous-driving decision making, rule/heuristic baselines, planning/search, simulation-based planning, learning from data/imitation learning, model-free RL, search+learning, model-based RL, simulator/benchmark design, and evaluation methodology. The purpose of the survey is to decide the final project direction and architecture before Stage 1 implementation. (Methods such as IDM/MOBIL may serve as illustrative survey references, but are not pre-selected as the final architecture).

@@ -1,12 +1,13 @@
 {
-  "run_id": "stage0_random_baseline_20260926_001",
-  "timestamp": "2026-09-26T20:30:00Z",
-  "git_commit": "c2414c330aa11bc64bb727cb1bb08a1834ee5ce9",
-  "git_branch": "chore/autonomous-driving-repo-bootstrap",
-  "dirty_worktree": false,
-  "python_version": "3.10.16",
-  "os": "Windows-10-10.0.19045-SP0",
-  "metadrive_version": "0.4.3",
-  "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
-  "metadrive_path": "D:\\SGU\\CNTT\\TTNTNC\\metadrive-src"
+  "_comment": "SCHEMA TEMPLATE ONLY - placeholder structure for execution metadata, not a recorded run",
+  "run_id": "template_run_id_placeholder",
+  "timestamp": null,
+  "git_commit": null,
+  "git_branch": null,
+  "dirty_worktree": null,
+  "python_version": null,
+  "os": null,
+  "metadrive_version": null,
+  "metadrive_commit": null,
+  "metadrive_path": null
 }

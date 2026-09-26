@@ -1,10 +1,11 @@
 {
-  "run_id": "stage0_random_baseline_20260926_001",
+  "_comment": "SCHEMA TEMPLATE ONLY - illustrative configuration schema, not a frozen benchmark configuration",
+  "run_id": "template_stage0_example",
   "stage": "Stage 0 - Baseline",
   "agent": {
     "name": "RandomAgent",
     "type": "random",
-    "seed": 42
+    "seed": null
   },
   "environment": {
     "name": "CourseEnvV1",
