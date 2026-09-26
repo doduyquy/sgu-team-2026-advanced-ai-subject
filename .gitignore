@@ -9,8 +9,8 @@ htmlcov/
 # Virtual environments
 .venv/
 venv/
-ENV/
-env/
+autonomous-driving-rl/env/
+autonomous-driving-rl/ENV/
 
 # IDE / Editor / OS artifacts
 .vscode/

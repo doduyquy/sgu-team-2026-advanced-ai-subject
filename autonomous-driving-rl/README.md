@@ -101,7 +101,7 @@ In one exploratory 20-episode validation run with `traffic_density=0.0` and sing
 - **Mean episode reward**: ~28.058
 - **Mean episode length**: ~624.8 steps
 
-> ⚠️ **Notice & Stochasticity**: The current exploratory evaluator does not establish a finalized deterministic benchmark protocol. Because action sampling is uniform random and unseeded, individual runs will exhibit natural stochastic variation (for example, out-of-road termination rates typically vary between 60% and 75%). These figures describe **one illustrative exploratory run** intended solely to verify environment stepping, collision/boundary detection, and termination signals. They are **not** final scientific benchmark numbers.
+> ⚠️ **Notice & Stochasticity**: The current exploratory evaluator does not establish a finalized deterministic benchmark protocol. Because action sampling is uniform random and currently unseeded, individual exploratory runs can produce different aggregate metrics. These figures describe **one illustrative exploratory run** intended solely to verify environment stepping, collision/boundary detection, and termination signals. They are **not** final scientific benchmark numbers.
 
 ---
 
