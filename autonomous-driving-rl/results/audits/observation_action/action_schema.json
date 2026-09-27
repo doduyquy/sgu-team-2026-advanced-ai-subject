@@ -20,7 +20,7 @@
         "index": 1,
         "name": "throttle_brake",
         "range": "[-1.0, 1.0]",
-        "physical_effect": "Positive: engine force = max_engine_force * throttle (if speed < max_speed). Negative: brake = abs(throttle) * max_brake_force (or reverse if reverse enabled).",
+        "physical_effect": "Positive: engine force = max_engine_force * throttle (if speed < max_speed). Negative: brake = abs(throttle) * max_brake_force.",
         "neutral": 0.0
       }
     ]
@@ -92,10 +92,11 @@
         "Asymmetric coverage of control envelope"
       ]
     },
-    "candidate_symmetric_adapter_9": {
+    "candidate_low_branching_adapter_9": {
       "space_type": "Discrete(9)",
-      "formula": "3x3 grid: steering in {-0.6, 0.0, 0.6}, throttle in {-0.8, 0.0, 0.6}",
-      "use_case": "Low branching factor search (Stage 2/3) while preserving independent steering and braking"
+      "candidate_grid": "3x3 grid: steering in {-0.6, 0.0, 0.6}, throttle in {-0.8, 0.0, 0.6}",
+      "status": "NON-FROZEN CONCEPT",
+      "notes": "Throttle is asymmetric by design (-0.8 brake vs +0.6 throttle). Exact discrete primitives require later calibration."
     }
   }
 }

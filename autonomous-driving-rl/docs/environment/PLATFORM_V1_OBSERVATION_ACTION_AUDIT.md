@@ -3,7 +3,7 @@
 > **Status:** AUDIT & DESIGN RECOMMENDATION (GATE 1)  
 > **Freeze Status:** NON-FROZEN — RECOMMENDATIONS ONLY  
 > **Target Scope:** Universal compatibility across Stages 0 through 7  
-> **Date:** September 2026  
+> **Date:** September 2026 (Updated with Gate-1 Audit Refinements)  
 
 ---
 
@@ -15,12 +15,11 @@ The authoritative reference for this audit is the local pinned MetaDrive source 
 - **Pinned Git Commit:** `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`
 - **Package Name:** `metadrive-simulator`
 - **Package Version:** `0.4.3` (`metadrive.constants.VERSION == "0.4.3"`)
-- **Package Location:** Verified resolving to `D:\SGU\CNTT\TTNTNC\metadrive-src\metadrive\__init__.py`
-- **Git Tree Status:** Clean, verified via `git rev-parse HEAD` and `git status`. No source modifications made.
+- **Automated Verification:** Verified programmatically within `scripts/run_observation_action_audit.py` via `git rev-parse HEAD`, `git status --porcelain`, and package version validation. The script halts with an explicit error if the commit differs or if the working tree is dirty. No source modifications were made.
 
 ---
 
-## 2. Observation Source Audit
+## 2. Observation Source Audit & Discrepancy Findings
 
 The MetaDrive observation pipeline was audited from source code in:
 - `metadrive/obs/state_obs.py` (`StateObservation`, `LidarStateObservation`)
@@ -29,7 +28,7 @@ The MetaDrive observation pipeline was audited from source code in:
 - `metadrive/component/sensors/lidar.py` (`Lidar`)
 - `metadrive/component/sensors/distance_detector.py` (`DistanceDetector`)
 
-### Critical Source Discrepancies Uncovered
+### Critical Source Discrepancies and Terminology Clarifications
 
 1. **Ego Last-Action Ordering Inversion:**
    - In `metadrive/obs/state_obs.py` lines 39–41, the docstring claims:
@@ -49,198 +48,185 @@ The MetaDrive observation pipeline was audited from source code in:
    - In `BaseVehicle`, `action[0]` is **steering** and `action[1]` is **throttle/brake**.
    - Therefore, **Index 5 is steering** and **Index 6 is throttle/brake**. The official docstring had these two fields swapped. Empirical tests with `[0.2, 0.6]` confirmed `obs[5] == 0.6` (steering) and `obs[6] == 0.8` (throttle).
 
-2. **LiDAR Angular Sweep Direction Inversion:**
-   - In `state_obs.py` line 199, the docstring states:
-     `"starting from the vehicle head in clockwise direction"`.
-   - The actual implementation in `DistanceDetector._get_lidar_range` and `get_laser_end` is:
-     $$\text{angle} = \text{heading\_theta} + i \times \frac{2\pi}{N}$$
-   - In standard 2D Cartesian vehicle coordinates (+x forward, +y left), an increasing positive angle rotates from +x toward +y, which is **COUNTER-CLOCKWISE**.
-   - Experimental obstacle placements at 0°, +90°, 180°, and 270° produced hits at ray 0 (Front), ray 60 (Left), ray 120 (Rear), and ray 180 (Right). The sweep is mathematically and empirically **counter-clockwise**.
+2. **Road Border Measurements Are Geometric Abstractions (Not Sensor Rays):**
+   - With the default configuration (`vehicle_config["side_detector"]["num_lasers"] == 0`), `dist_to_left_side` and `dist_to_right_side` (Indices 0 and 1) **ARE NOT side-detector raycasts**.
+   - They are calculated analytically from vehicle position and the reference lane / route geometry (`_dist_to_route_left_right()`), normalized by `total_width`.
+   - Likewise, lane offset (Index 8), heading deviation (Index 2), and navigation checkpoints (Indices 9–18) are **geometric state abstractions** derived directly from simulator and map state.
+   - Consequently, default MetaDrive observation (Candidate A) is **not a "pure sensor observation"**; it is MetaDrive's default state-based local observation without explicit surrounding-vehicle ground-truth tracks.
+
+3. **Heading Difference Semantics:**
+   - Index 2 (`heading_diff`) is **not a raw angle in radians**.
+   - It is a normalized signed heading-deviation proxy computed via the dot product between the vehicle heading vector and the lane lateral unit vector:
+     $$\text{heading\_diff} = \frac{\text{clip}\left(\frac{\mathbf{v}_{\text{heading}} \cdot \mathbf{v}_{\text{lane\_lateral}}}{\|\mathbf{v}_{\text{heading}}\| \|\mathbf{v}_{\text{lane\_lateral}}\|}, -1.0, 1.0\right)}{2} + 0.5$$
+   - When aligned with the lane: $\mathbf{v}_{\text{heading}} \cdot \mathbf{v}_{\text{lane\_lateral}} = 0 \implies \text{heading\_diff} = 0.5$.
+   - A $+90^\circ$ perpendicular deviation yields `1.0`; a $-90^\circ$ perpendicular deviation yields `0.0`.
+
+4. **LiDAR Angular Sweep Direction:**
+   - In `state_obs.py` line 199, the docstring states: `"starting from the vehicle head in clockwise direction"`.
+   - The actual mathematical implementation in `DistanceDetector._get_lidar_range` and `get_laser_end` is:
+     $$\theta_i = \text{heading\_theta} + i \times \frac{2\pi}{N}$$
+   - In 2D Cartesian coordinates (+x forward, +y left), an increasing positive angle rotates from +x toward +y, which is **COUNTER-CLOCKWISE**.
+   - Empirical obstacle placements at 0°, +90°, 180°, and 270° produced hits at ray 0 (Front), ray 60 (Left), ray 120 (Rear), and ray 180 (Right), confirming a counter-clockwise sweep.
 
 ---
 
 ## 3. Exact Observation Index Table
 
-The authoritative field-level definition for the candidate 275D observation (`num_others=4`) and default 259D observation (`num_others=0`) is detailed below:
+Authoritative field-level definition for Candidate B (275D) and Candidate A (259D):
 
-| Index / Slice | Field Name | Semantic Meaning | Raw Units | Normalization Formula | Neutral / Zero Value | Privileged State? | Map Stability |
+| Index / Slice | Field Name | Category / Abstraction Type | Semantic Meaning | Raw Units | Normalization Formula | Neutral / Zero Value | Privileged State? |
 |---|---|---|---|---|---|---|---|
-| `[0]` | `dist_to_left_side` | Distance to left road curb/sidewalk | meters | `clip(dist / total_width, 0, 1)` where `total_width = (MAX_LANE_NUM+1)*MAX_LANE_WIDTH` | `0.0` = touching/beyond left border | No | Depends on map width definition |
-| `[1]` | `dist_to_right_side` | Distance to right road curb/sidewalk | meters | `clip(dist / total_width, 0, 1)` | `0.0` = touching/beyond right border | No | Depends on map width definition |
-| `[2]` | `heading_diff` | Heading difference relative to current reference lane | radians | `clip(cos(heading, lane_lat), -1, 1)/2 + 0.5` | `0.5` = perfectly aligned with lane heading; `1.0` = +90°, `0.0` = -90° | No | Stable |
-| `[3]` | `current_speed` | Vehicle forward velocity | km/h | `clip((speed_km_h + 1)/(max_speed_km_h + 1), 0, 1)` | `~0.0123` = stationary (0 km/h with 80 km/h max) | No | Stable |
-| `[4]` | `current_steering` | Front wheel turn angle | degrees | `clip((steering / MAX_STEERING + 1)/2, 0, 1)` | `0.5` = wheels straight; `0.0` = max left, `1.0` = max right | No | Stable |
-| `[5]` | `last_action_steering` | Steering input applied at last step | normalized `[-1, 1]` | `clip((action[0] + 1)/2, 0, 1)` | `0.5` = zero steering command | No | Stable |
-| `[6]` | `last_action_throttle` | Throttle/brake input applied at last step | normalized `[-1, 1]` | `clip((action[1] + 1)/2, 0, 1)` | `0.5` = idle/coast command (0.0 continuous) | No | Stable |
-| `[7]` | `yaw_rate` | Vehicle angular velocity magnitude | rad/s | `clip(arccos(clip(h_now . h_last, 0, 1))/0.1, 0, 1)` | `0.0` = zero angular turn rate (straight line) | No | Stable |
-| `[8]` | `lane_lateral_offset` | Offset from current lane centerline | meters | `clip((lateral * 2 / max_lane_width + 1.0)/2.0, 0, 1)` | `0.5` = centered on lane; `<0.5` right of center, `>0.5` left of center | No | Stable |
-| `[9]` | `navi_ckpt1_long` | Longitudinal distance to Checkpoint 1 | meters | `clip((dx / 50.0 + 1)/2, 0, 1)` | `0.5` = checkpoint is laterally aligned | No | Stable |
-| `[10]` | `navi_ckpt1_lat` | Lateral distance to Checkpoint 1 | meters | `clip((dy / 50.0 + 1)/2, 0, 1)` | `0.5` = checkpoint directly ahead/behind | No | Stable |
-| `[11]` | `navi_ckpt1_bend_radius` | Bending radius of lane leading to Checkpoint 1 | normalized | `clip(radius / (CURVE_MAX + lane_num * lane_width), 0, 1)` | `0.0` = straight lane | No | Stable |
-| `[12]` | `navi_ckpt1_bend_dir` | Curvature direction of lane to Checkpoint 1 | sign | `clip((-ref_lane.direction + 1)/2, 0, 1)` | `0.5` = straight lane; `1.0` clockwise, `0.0` counter-clockwise | No | Stable |
-| `[13]` | `navi_ckpt1_lane_angle` | Total angle change of lane to Checkpoint 1 | degrees | `clip((deg(angle)/ANGLE_MAX + 1)/2, 0, 1)` | `0.5` = straight lane | No | Stable |
-| `[14]` | `navi_ckpt2_long` | Longitudinal distance to Checkpoint 2 | meters | `clip((dx / 50.0 + 1)/2, 0, 1)` | `0.5` = checkpoint is laterally aligned | No | Stable |
-| `[15]` | `navi_ckpt2_lat` | Lateral distance to Checkpoint 2 | meters | `clip((dy / 50.0 + 1)/2, 0, 1)` | `0.5` = checkpoint directly ahead/behind | No | Stable |
-| `[16]` | `navi_ckpt2_bend_radius` | Bending radius of lane leading to Checkpoint 2 | normalized | `clip(radius / (CURVE_MAX + lane_num * lane_width), 0, 1)` | `0.0` = straight lane | No | Stable |
-| `[17]` | `navi_ckpt2_bend_dir` | Curvature direction of lane to Checkpoint 2 | sign | `clip((-ref_lane.direction + 1)/2, 0, 1)` | `0.5` = straight lane | No | Stable |
-| `[18]` | `navi_ckpt2_lane_angle` | Total angle change of lane to Checkpoint 2 | degrees | `clip((deg(angle)/ANGLE_MAX + 1)/2, 0, 1)` | `0.5` = straight lane | No | Stable |
-| `[19:35]` | `surrounding_vehicles` | 4 nearest detected vehicles (4 values each: `rel_x`, `rel_y`, `rel_vx`, `rel_vy`) | m, km/h | `(pos/50.0 + 1)/2`, `(vel/max_speed + 1)/2` | **`0.0` = absent/padded vehicle**; `0.5` = co-located & zero relative speed | **YES (Privileged)** | Dynamic traffic |
-| `[35:275]` (or `[19:259]`) | `lidar_cloud_points` | 240 LiDAR distance rays sweeping 360° counter-clockwise | fraction of 50m | `hit_distance / 50.0` | `1.0` = no obstacle / max range (50m); `0.0` = contact or dropped ray | No | Dynamic & static objects |
+| `[0]` | `dist_to_left_side` | State abstraction (lane geometry) | Distance to left road border | meters | `clip(dist / total_width, 0, 1)` | `0.0` = touching/beyond left curb | No |
+| `[1]` | `dist_to_right_side` | State abstraction (lane geometry) | Distance to right road border | meters | `clip(dist / total_width, 0, 1)` | `0.0` = touching/beyond right curb | No |
+| `[2]` | `heading_diff` | State abstraction (lane geometry) | Signed heading-deviation proxy (dot product with lane lateral vector) | scalar proxy | `clip(cos(heading, lane_lat), -1, 1)/2 + 0.5` | `0.5` = aligned with lane heading; `1.0` = +90°, `0.0` = -90° | No |
+| `[3]` | `current_speed` | Proprioceptive sensor | Vehicle forward speed | km/h | `clip((speed_km_h + 1)/(max_speed_km_h + 1), 0, 1)` | `~0.0123` = stationary ($0\text{ km/h}$) | No |
+| `[4]` | `current_steering` | Proprioceptive sensor | Front wheel turn angle | degrees | `clip((steering / MAX_STEERING + 1)/2, 0, 1)` | `0.5` = wheels straight; `0.0` = max left, `1.0` = max right | No |
+| `[5]` | `last_action_steering` | Internal actuator feedback | Steering command from last step | normalized `[-1, 1]` | `clip((action[0] + 1)/2, 0, 1)` | `0.5` = zero steering command | No |
+| `[6]` | `last_action_throttle` | Internal actuator feedback | Throttle/brake command from last step | normalized `[-1, 1]` | `clip((action[1] + 1)/2, 0, 1)` | `0.5` = coast/idle command ($0.0$) | No |
+| `[7]` | `yaw_rate` | Proprioceptive sensor | Vehicle angular velocity magnitude | rad/s | `clip(arccos(clip(h_now . h_last, 0, 1))/0.1, 0, 1)` | `0.0` = zero angular turn rate (straight line) | No |
+| `[8]` | `lane_lateral_offset` | State abstraction (lane geometry) | Lateral offset from current lane centerline | meters | `clip((lateral * 2 / max_lane_width + 1.0)/2.0, 0, 1)` | `0.5` = centered on lane; `<0.5` right, `>0.5` left | No |
+| `[9]` | `navi_ckpt1_long` | Navigation abstraction | Projected distance to Checkpoint 1 along heading | meters | `clip((dx / 50.0 + 1)/2, 0, 1)` | `0.5` = checkpoint laterally aligned | No |
+| `[10]` | `navi_ckpt1_lat` | Navigation abstraction | Projected distance to Checkpoint 1 along RHS | meters | `clip((dy / 50.0 + 1)/2, 0, 1)` | `0.5` = checkpoint directly ahead/behind | No |
+| `[11]` | `navi_ckpt1_bend_radius` | Navigation abstraction | Bending radius of lane to Checkpoint 1 | normalized | `clip(radius / (CURVE_MAX + lane_num * lane_width), 0, 1)` | `0.0` = straight lane | No |
+| `[12]` | `navi_ckpt1_bend_dir` | Navigation abstraction | Curvature direction of lane to Checkpoint 1 | sign | `clip((-ref_lane.direction + 1)/2, 0, 1)` | `0.5` = straight lane; `1.0` clockwise, `0.0` CCW | No |
+| `[13]` | `navi_ckpt1_lane_angle` | Navigation abstraction | Total angle change of lane to Checkpoint 1 | degrees | `clip((deg(angle)/ANGLE_MAX + 1)/2, 0, 1)` | `0.5` = straight lane | No |
+| `[14]` | `navi_ckpt2_long` | Navigation abstraction | Projected distance to Checkpoint 2 along heading | meters | `clip((dx / 50.0 + 1)/2, 0, 1)` | `0.5` = checkpoint laterally aligned | No |
+| `[15]` | `navi_ckpt2_lat` | Navigation abstraction | Projected distance to Checkpoint 2 along RHS | meters | `clip((dy / 50.0 + 1)/2, 0, 1)` | `0.5` = checkpoint directly ahead/behind | No |
+| `[16]` | `navi_ckpt2_bend_radius` | Navigation abstraction | Bending radius of lane to Checkpoint 2 | normalized | `clip(radius / (CURVE_MAX + lane_num * lane_width), 0, 1)` | `0.0` = straight lane | No |
+| `[17]` | `navi_ckpt2_bend_dir` | Navigation abstraction | Curvature direction of lane to Checkpoint 2 | sign | `clip((-ref_lane.direction + 1)/2, 0, 1)` | `0.5` = straight lane | No |
+| `[18]` | `navi_ckpt2_lane_angle` | Navigation abstraction | Total angle change of lane to Checkpoint 2 | degrees | `clip((deg(angle)/ANGLE_MAX + 1)/2, 0, 1)` | `0.5` = straight lane | No |
+| `[19:35]` | `surrounding_vehicles` | Privileged physics query | 4 nearest detected vehicles (`rel_x`, `rel_y`, `rel_vx`, `rel_vy`) | m, km/h | `(pos/50.0 + 1)/2`, `(vel/max_speed + 1)/2` | **`0.0` = absent/padded vehicle**; `0.5` = co-located & zero relative speed | **YES (Privileged)** |
+| `[35:275]` (or `[19:259]`) | `lidar_cloud_points` | Active range sensor | 240 LiDAR distance rays sweeping 360° counter-clockwise | fraction of 50m | `hit_distance / 50.0` | `1.0` = clear path ($50\text{ m}$); `0.0` = contact or dropped ray | No |
 
 ---
 
 ## 4. LiDAR Semantics
 
-- **Number of Rays:** 240 rays.
-- **Maximum Range:** 50.0 meters (`distance=50.0`).
-- **Ray Angular Resolution:** $360^\circ / 240 = 1.5^\circ$ per ray.
-- **Ray 0 Orientation:** $0^\circ$, pointing straight ahead along the vehicle's heading vector (`[cos(heading), sin(heading)]`).
-- **Ray Angular Ordering:** Counter-Clockwise around the vehicle:
-  - Ray 0 ($0^\circ$): Front / Heading
+- **Ray Count & Range:** 240 rays, max distance $50.0\text{ m}$, angular resolution $1.5^\circ$.
+- **Ray 0 Orientation & Sweep:** Ray 0 points directly along the vehicle heading vector ($0^\circ$). Increasing ray indices advance **COUNTER-CLOCKWISE**:
+  - Ray 0 ($0^\circ$): Forward / Heading
   - Ray 60 ($90^\circ$): Direct Left
   - Ray 120 ($180^\circ$): Direct Rear
-  - Ray 180 ($270^\circ$ or $-90^\circ$): Direct Right
-  - Ray 239 ($358.5^\circ$): Right-Front
-- **Normalization Convention:** Normalized hit fraction $\in [0.0, 1.0]$:
-  - `1.0`: No obstacle detected within 50.0 m (clear path).
-  - `0.0`: Immediate contact ($0.0\text{ m}$) or ray dropped by noise.
-  - Intermediate values represent distance $d = \text{val} \times 50.0\text{ m}$.
-- **Static vs Dynamic Interaction:**
-  - **Dynamic Vehicles:** Detected when within line of sight.
-  - **Static Traffic Objects:** Cones (`TrafficCone`), barriers (`TrafficBarrier`), and warning signs are in `physics_world.dynamic_world`, and therefore **ARE detected**.
-  - **Road Boundaries & Sidewalks:** Road geometry is in `physics_world.static_world`. Standard MetaDrive `Lidar` queries only `dynamic_world`. Therefore, **road boundaries, lane markings, and sidewalks ARE NOT VISIBLE to LiDAR**. (Road edges are only sensed via `dist_to_left_side` / `dist_to_right_side` from `side_detector`).
-- **Sensor Noise Effects:**
-  - `gaussian_noise`: Adds zero-mean Gaussian perturbation $\mathcal{N}(0, \sigma^2)$ to hit fractions, clipped to $[0.0, 1.0]$.
-  - `dropout_prob`: Randomly sets hit fractions to `0.0`. Notice this creates semantic ambiguity: a dropped ray reads as an obstacle at $0\text{ m}$ distance.
+  - Ray 180 ($270^\circ$): Direct Right
+- **Normalization:** Hit fraction $\in [0.0, 1.0]$. `1.0` means clear path ($50\text{ m}$); `0.0` means immediate contact ($0\text{ m}$) or dropped ray.
+- **Physical Sensing Targets:** Dynamic vehicles and static traffic obstacles (`TrafficCone`, `TrafficBarrier`) reside in `physics_world.dynamic_world` and are sensed. **Static road borders, curbs, sidewalks, and lane markings reside in `physics_world.static_world` and ARE NOT DETECTED by LiDAR**.
+- **Noise Characteristics:** `gaussian_noise` perturbs hit fractions with $\mathcal{N}(0, \sigma^2)$. `dropout_prob` forces rays to `0.0` (which semantically mimics an obstacle at contact distance).
 
 ---
 
 ## 5. Surrounding-Vehicle Semantics (`num_others = 4`)
 
-When `vehicle_config["lidar"]["num_others"] = 4`:
-1. **Observation Dimensions:**
-   - `num_others = 0`: 259D ($9 + 10 + 240$)
-   - `num_others = 1`: 263D ($9 + 10 + 4 + 240$)
-   - `num_others = 4`: 275D ($9 + 10 + 16 + 240$)
-2. **Vehicle Ordering:**
-   - Sorted ascending by Euclidean distance: $\sqrt{(x_{\text{ego}} - x_v)^2 + (y_{\text{ego}} - y_v)^2}$.
-   - The closest 4 vehicles within 50 meters are selected.
-3. **Four Features per Vehicle:**
-   - `rel_longitudinal_pos`: `clip((dx / 50.0 + 1) / 2, 0.0, 1.0)`
-   - `rel_lateral_pos`: `clip((dy / 50.0 + 1) / 2, 0.0, 1.0)`
-   - `rel_longitudinal_vel`: `clip((dvx / max_speed + 1) / 2, 0.0, 1.0)`
-   - `rel_lateral_vel`: `clip((dvy / max_speed + 1) / 2, 0.0, 1.0)`
-4. **Padding Semantics:**
-   - If fewer than 4 vehicles exist within 50 meters (or if `traffic_density == 0.0`), absent vehicle slots are padded with `[0.0, 0.0, 0.0, 0.0]`.
-   - **Critical Semantic Distinction:** A detected vehicle matched in position and velocity with ego yields normalized values of `[0.5, 0.5, 0.5, 0.5]`. An absent vehicle yields `[0.0, 0.0, 0.0, 0.0]`.
-5. **Privileged State Leakage Analysis:**
-   - **Physics World Query:** Surrounding vehicles are gathered via `get_surrounding_objects()` using a `BulletGhostNode` cylinder of radius 50m.
-   - **Occlusion Bypass:** Vehicles completely occluded behind other vehicles or obstacles are still included if within the 50m radius.
-   - **Direct Simulation Coordinates:** Ground truth position and velocity are extracted directly from simulator internals (`vehicle.position`, `vehicle.velocity_km_h`).
-   - **Conclusion:** These 16 features constitute **privileged simulator state**, not raw physical sensor perception.
+1. **Dimensions:** `num_others=0` $\to$ 259D; `num_others=1` $\to$ 263D; `num_others=4` $\to$ 275D.
+2. **Vehicle Ordering:** Sorted ascending by Euclidean distance from ego vehicle.
+3. **Four Features per Vehicle:** `rel_x`, `rel_y`, `rel_vx`, `rel_vy`.
+4. **Padding Semantics:** Absent slots are filled with `[0.0, 0.0, 0.0, 0.0]`.  
+   *Note:* `0.0` indicates an absent/dummy vehicle, whereas `0.5` represents an active vehicle at zero relative position and zero relative velocity.
+5. **Privileged State Leakage:** Vehicles are collected via a 50m broad-phase cylinder query in the physics world. This query **bypasses LiDAR ray occlusion completely** (detects cars behind opaque obstacles) and reads simulator internal coordinates and velocities directly.
 
 ---
 
 ## 6. Observation Candidate Comparison
 
-We evaluate three observation candidates:
-- **Candidate A (259D):** MetaDrive default raw state + 240 LiDAR rays.
-- **Candidate B (275D):** MetaDrive raw state + navigation + 4 surrounding vehicles (16D) + 240 LiDAR rays.
+We evaluate four observation candidates (Candidates A, B, C, and new Candidate D):
+
+- **Candidate A (259D):** MetaDrive default local state + 240 LiDAR rays. State-based local observation without explicit surrounding vehicle tracks.
+- **Candidate B (275D):** MetaDrive state + navigation + 4 surrounding vehicles (16D) + 240 LiDAR rays.
 - **Candidate C (35D):** CourseEnv experimental representation (9 ego + 10 navigation + 16 min-pooled LiDAR sectors).
+- **Candidate D (Structured AgentInput Concept — Open Candidate):** Decoupled architecture separating CoreObservation (259D), optional TrafficContext (structured surrounding vehicle state with explicit validity mask), TaskContext (read-only map context), and private EvaluatorTelemetry.
 
 ### Comparison Matrix
 
-| Criterion | Candidate A (259D) | Candidate B (275D) | Candidate C (35D) |
-|---|---|---|---|
-| **Information Sufficiency** | Moderate (spatial geometry present, but obstacle velocity must be inferred across frames) | High (explicit bounding-box relative positions and velocities) | Low (coarse 16-sector spatial pooling, no dynamic velocity) |
-| **Dimensionality** | Moderate (259D vector) | Moderate (275D vector) | Low (35D compact vector) |
-| **Algorithm Neutrality** | High (pure sensor + navigation signals) | Medium (contains privileged state assumptions) | Low (bakes in specific min-pooling heuristic) |
-| **Dynamic Object Velocity** | Requires frame stacking / recurrence (LSTM/GRU/Transformer) | Explicitly provided in observation | Missing; requires frame stacking |
-| **Ability to Support Learning (RL/IL)** | Strong; standard for MetaDrive benchmarks | Strong; faster sample efficiency due to explicit traffic state | Good for fast toy prototyping, poor for advanced maneuvers |
-| **Ability to Support Planning/Search** | Difficult to extract obstacle positions without ray triangulation | Highly convenient (structured bounding-box inputs) | Unusable for collision-free trajectory optimization |
-| **Risk of Information Loss** | Minimal | None | **High** (averages/min-pools 15 rays into 1 sector, losing angular resolution) |
-| **Privileged State Leakage** | Low (only ego telemetry and map checkpoints) | **High** (direct physics-world query of other vehicles) | Low (only aggregated sectors) |
-| **Computational Cost** | Low | Low | Very Low |
-
----
-
-## 7. Stage 0–7 Compatibility Matrix
-
-| Project Stage | Candidate A (259D) | Candidate B (275D) | Candidate C (35D) | Evaluation & Architecture Recommendation |
+| Criterion | Candidate A (259D) | Candidate B (275D) | Candidate C (35D) | Candidate D (Structured Concept) |
 |---|---|---|---|---|
-| **Stage 0: Random Baseline** | Compatible | Compatible | Compatible | Any candidate works; 35D has no advantage beyond marginally smaller memory. |
-| **Stage 1: Rule / Heuristic** | Difficult | **Highly Suitable** | Partially Suitable | Rule agents (e.g. IDM, TTC heuristics) require obstacle distance and relative velocity. 275D provides this directly; 35D lacks velocity; 259D requires ray tracking. |
-| **Stage 2: Planning / Search** | Impractical | **Highly Suitable** | Insufficient | Planners (A*, lattice planners) need obstacle state coordinates to check bounding boxes against candidate paths. 275D gives structured states; 35D is too coarse. |
-| **Stage 3: Simulation-Based Planning** | Impractical | **Highly Suitable** | Insufficient | MCTS / forward rollout search requires structured obstacle positions for forward state rollout collision checks. |
-| **Stage 4: Imitation Learning** | Suitable | **Highly Suitable** | Degraded | Expert demonstrations driving among traffic correlate strongly with surrounding vehicle relative velocities. 35D loses fine guidance. |
-| **Stage 5: Model-Free RL (PPO/SAC)** | **Highly Suitable** | Suitable (with caution on privileged leakage) | Suitable for fast baseline | PPO/SAC learn effectively on both 259D and 275D. 275D converges faster in multi-vehicle traffic. |
-| **Stage 6: Search + Learning** | Difficult for search part | **Highly Suitable** | Insufficient | Hybrid architectures require the search component to have structured geometric entities. |
-| **Stage 7: Model-Based RL / World Models** | **Suitable** | Suitable | Degraded | World models (Dreamer-style) can model 259D or 275D. In 259D, latent state reconstructs LiDAR rays; in 275D, dynamics predict surrounding vehicle tracks. |
-
-### Evaluation of the Canonical Observation Architecture Principle
-
-> **Design Principle:** The canonical environment exposes the richer raw observation contract, while individual agents or adapter wrappers apply deterministic transformations.
-
-**Conclusion:** **CONFIRMED VALID.**  
-If the platform freezes a 35D observation at the environment root, Stage 1 (Rules), Stage 2 (Planning), and Stage 3 (Look-ahead) are permanently impaired because ray pooling irreversibly destroys obstacle angular resolution and dynamic velocities cannot be recovered. Conversely, an agent desiring a 35D representation can deterministically downsample a 275D observation in microseconds.
+| **Information Sufficiency** | Moderate (full spatial occupancy; lacks obstacle velocity) | High (explicit bounding-box relative positions & velocities) | Low (coarse 16-sector spatial pooling; no velocities) | **Very High** (full uncompressed observation + structured contexts) |
+| **Dimensionality** | Moderate (259D vector) | Moderate (275D vector) | Low (35D vector) | Modular (259D Core + typed contexts) |
+| **Algorithm Neutrality** | High | Medium (bakes privileged tracker into flat vector) | Low (bakes in specific min-pooling) | **Very High** (agents consume only what their contract permits) |
+| **Dynamic Obstacle Velocity** | Requires frame stacking / recurrent models | Explicitly provided in observation | Missing | Provided in optional `TrafficContext` with validity mask |
+| **Ability to Support Learning (RL/IL)** | Strong; standard for MetaDrive benchmarks | Strong; faster sample efficiency | Good for toy baselines, poor for complex maneuvers | **Strong**; clean separation prevents policy cheating |
+| **Ability to Support Planning/Search** | Requires ray triangulation for local collision checking | High for local avoidance, but still lacks global map topology | Unusable for collision-free trajectory optimization | **Ideal**; cleanly pairs local obstacle checks with global `TaskContext` |
+| **Risk of Information Loss** | Minimal | None | **High** (averages/min-pools 15 rays into 1 sector) | None |
+| **Privileged State Leakage** | Low (only ego telemetry & map checkpoints) | **High** (direct physics-world query of other vehicles) | Low | **Strictly Managed** (traffic tracker is explicit and optional) |
+| **Computational Cost** | Low | Low | Very Low | Low |
 
 ---
 
-## 8. Agent-Visible Observation vs. Privileged Telemetry Proposal
+## 7. Stage 0–7 Compatibility Matrix & Planning Nuance
 
-To maintain strict scientific integrity across learning and search benchmarks, the platform must formalize an information boundary:
+### Conceptual Disentanglement of Planning Requirements
+To avoid overclaiming that a single flat observation vector "solves" or "breaks" planning:
+1. **Global Route Planning:** Requires topological road connectivity, lane graph connections, and route goal checkpoints. Neither 259D nor 275D provides global topology; both require a standardized, read-only `TaskContext` / `MapContext`.
+2. **Local Motion / Trajectory Planning:** Requires drivable corridor boundaries and local obstacle occupancy. Candidate A (259D) provides spatial occupancy via 240 LiDAR rays, enabling local path generation, though without obstacle velocities. Candidate B (275D) adds explicit relative positions and velocities.
+3. **Dynamic Obstacle Interaction:** Crucial for predictive collision checking (e.g. time-to-collision heuristics, lattice rollouts). Candidate B and Candidate D supply dynamic velocities; Candidate A requires temporal estimation.
+
+### Stage-by-Stage Compatibility Matrix
+
+| Project Stage | Candidate A (259D) | Candidate B (275D) | Candidate C (35D) | Candidate D (Structured Concept) | Architectural Recommendation |
+|---|---|---|---|---|---|
+| **Stage 0: Random Baseline** | Compatible | Compatible | Compatible | Compatible | Any candidate functions; 35D has minimal overhead. |
+| **Stage 1: Rule / Heuristic** | Moderate (requires ray grouping for TTC) | Suitable (TTC computed directly) | Degraded (no velocity, coarse sectors) | **Ideal** (rules can inspect CoreObservation + optional TrafficContext) | Rule agents benefit from explicit obstacle distance and velocity. |
+| **Stage 2: Planning / Search** | Partially Suitable (local obstacle checks via LiDAR; needs map context) | Suitable for local collision; lacks global topology | Insufficient (cannot plan fine trajectories through gaps) | **Ideal** (local planning from Core, global planning from TaskContext) | Global planning requires `TaskContext`; local planning needs fine occupancy. |
+| **Stage 3: Simulation Look-ahead (MCTS)** | Partially Suitable (high ray dimension for rollouts) | Suitable (structured states for forward collision checks) | Insufficient (coarse sectors cause collision blindness) | **Ideal** (structured rollouts with explicit state representation) | MCTS forward simulation benefits from structured obstacle tracking. |
+| **Stage 4: Imitation Learning** | Suitable | Suitable | Degraded | **Suitable** | Expert behavior correlates strongly with surrounding traffic dynamics. |
+| **Stage 5: Model-Free RL (PPO/SAC)** | **Highly Suitable** (clean, standard benchmark baseline) | Suitable (faster sample efficiency; risk of privileged dependence) | Suitable for fast initial smoke test | **Highly Suitable** (policy trains on CoreObservation) | PPO learns robustly on 259D without relying on privileged physics tracks. |
+| **Stage 6: Search + Learning** | Partially Suitable | Suitable | Insufficient | **Ideal** (learning uses CoreObservation, search uses TaskContext) | Hybrid systems require clean architectural separation. |
+| **Stage 7: Model-Based RL / World Models** | **Suitable** (latent dynamics reconstruct raw LiDAR) | Suitable | Degraded | **Suitable** | World models (e.g. Dreamer) model temporal sequences of raw observations. |
+
+---
+
+## 8. Agent-Visible Information vs. Privileged Telemetry & Candidate D
+
+### Proposed Information Boundary
 
 ```text
-+--------------------------------------------------------------------------------+
-|                             SIMULATOR STATE                                    |
-+--------------------------------------------------------------------------------+
-       |                                                  |
-       v                                                  v
-[AGENT-VISIBLE INTERFACE]                       [EVALUATOR / PRIVILEGED INTERFACE]
-- Ego kinematics (speed, steering, yaw)          - Ground-truth global trajectory
-- Local lane offsets & heading difference        - Route completion percentage
-- Waypoint / checkpoint guidance (local)         - Collision flags (crash_vehicle, crash_object)
-- 240-ray LiDAR sensor data                      - Out-of-road termination signals
-- [Optional] Read-only MapContext / TrackContext  - Simulator internal seeds & object pointers
++-----------------------------------------------------------------------------------------+
+|                                    SIMULATOR STATE                                      |
++-----------------------------------------------------------------------------------------+
+       |                                                                |
+       v                                                                v
+[AGENT-VISIBLE / PUBLIC INTERFACE]                    [EVALUATOR / LOGGER-ONLY INTERFACE]
+- CoreObservation: ego kinematics, lane offsets,      - Ground-truth global trajectory
+  navigation checkpoints, 240-ray LiDAR               - Route completion percentage
+- Optional TrafficContext: structured surrounding     - Collision flags (crash_vehicle, crash_object)
+  vehicle tracks + explicit boolean validity mask      - Out-of-road termination signals
+- Non-frozen TaskContext: read-only goal & route       - Simulation internal RNG seeds & object pointers
 ```
 
-### Proposed Classification of Telemetry Fields
+### Telemetry Field Classification
 
 | Field / Concept | Classification | Justification |
 |---|---|---|
-| `current_speed`, `steering`, `yaw_rate` | **A. Agent-Visible** | Realistic on-board proprioceptive sensors (wheel encoders, IMU). |
-| `dist_to_left_side`, `dist_to_right_side` | **A. Agent-Visible** | Ultrasonic / short-range lane boundary sensors. |
-| `lane_lateral_offset`, `heading_diff` | **A. Agent-Visible** | Standard lane-detection camera / lane centering output. |
-| `navi_ckpt1_*`, `navi_ckpt2_*` | **A. Agent-Visible** | GPS / local navigation path planner output. |
-| `lidar_cloud_points` (240 rays) | **A. Agent-Visible** | Legitimate active range sensor. |
-| `surrounding_vehicles` (16D) | **B. Optional Public Context / Track Filter** | Can be viewed as an onboard perception module (bounding-box tracker) OR as privileged state. Must be documented if used. |
-| `route_completion` | **C. Evaluator-Only Telemetry** | Global evaluation metric. If fed to the policy, the agent could exploit progress hacking. |
-| `arrive_dest`, `crash_*`, `out_of_road` | **C. Evaluator-Only Telemetry** | Objective evaluation outcomes and termination monitors. |
+| `current_speed`, `steering`, `yaw_rate` | **A. Agent-Visible** | Proprioceptive vehicle sensors (encoders, IMU). |
+| `dist_to_left_side`, `dist_to_right_side` | **A. Agent-Visible** | Local lane boundary state abstractions. |
+| `lane_lateral_offset`, `heading_diff` | **A. Agent-Visible** | Lane-centering perception abstractions. |
+| `navi_ckpt1_*`, `navi_ckpt2_*` | **A. Agent-Visible** | Local waypoint navigator outputs. |
+| `lidar_cloud_points` (240 rays) | **A. Agent-Visible** | Uncompressed physical range sensor perception. |
+| `surrounding_vehicles` (16D) | **B. Optional Public Context / Tracker** | If exposed, must include an explicit validity mask and be documented as a perception tracker abstraction rather than raw sensing. |
+| `route_completion` | **C. Evaluator-Only Telemetry** | Global evaluation metric. Providing it to policies creates reward/progress hacking. |
+| `arrive_dest`, `crash_*`, `out_of_road` | **C. Evaluator-Only Telemetry** | Objective benchmark evaluation flags. |
 | `env_seed` | **C. Evaluator-Only Telemetry** | Scenario indexing for reproducible evaluation logging. |
-| `vehicle.position` (global `(x, y)`) | **C. Evaluator-Only Telemetry** | Absolute world coordinates are privileged. Agents should operate in ego-centric coordinates. |
-| `vehicle.navigation.map` graph / internal nodes | **C. Evaluator-Only Telemetry** | Raw simulator internal objects must not be modified by agents. |
+| `vehicle.position` (global `(x, y)`) | **C. Evaluator-Only Telemetry** | Absolute world coordinates are privileged; agents operate in ego-centric local frames. |
+| Internal map graphs / engine pointers | **C. Evaluator-Only Telemetry** | Raw simulator internals must remain strictly inaccessible to policies. |
 
-### Proposed Read-Only `MapContext` Interface (Future Concept)
-For global planning and search algorithms (Stages 2, 3, 6) requiring road topology without granting backdoor access to the simulator engine:
-- A frozen, read-only data transfer object: `MapContext(lanes: Sequence[LaneGeometry], reference_path: Polyline, speed_limit: float)`.
-- Available equally to all algorithms through a standardized public getter (`env.get_task_context()`), ensuring fair evaluation.
+### Proposed Open Candidate D: Structured AgentInput Concept (NON-FROZEN)
+Rather than forcing all algorithms into a monolithic 275D flat vector where privileged tracks are invisibly mixed with raw rays, Candidate D proposes a structured container:
+- **`CoreObservation`**: 259D uncompressed local state, navigation, and 240 LiDAR rays.
+- **`TrafficContext`**: Up to $N$ tracked vehicle bounding boxes with relative $(x, y, v_x, v_y)$ and an explicit boolean `validity_mask` (eliminating the ambiguous `0.0` padding).
+- **`TaskContext`**: A read-only interface providing reference path geometry and speed limits for planners.
+- **`EvaluatorTelemetry`**: Private dictionary for benchmark metrics.
+
+*Status: Open concept for Platform V1 consideration; NOT frozen and NOT declared winner.*
 
 ---
 
 ## 9. Native Action Semantics
 
-From `metadrive/component/vehicle/base_vehicle.py` (`_set_action`, `_apply_throttle_brake`):
-- Action space: `Box(-1.0, 1.0, shape=(2,), dtype=np.float32)`.
-- Vector format: `[steering, throttle_brake]`.
-- **Steering (`action[0]`):**
-  - Continuous range: $[-1.0, 1.0]$.
-  - Scales wheel steering angle: $\theta_{\text{steer}} = \text{action}[0] \times \text{max\_steering}$ (where $\text{max\_steering} = 60^\circ$).
-  - Negative values steer **LEFT**; positive values steer **RIGHT**; `0.0` is straight.
-- **Throttle / Brake (`action[1]`):**
-  - Continuous range: $[-1.0, 1.0]$.
-  - When $\text{action}[1] \ge 0$: Applies engine force $F_{\text{engine}} = \text{max\_engine_force} \times \text{action}[1]$ across wheels (capped if speed exceeds `max_speed_km_h`). Wheel brake is set to a nominal rolling resistance of $2.0\text{ N}$.
-  - When $\text{action}[1] < 0$: Engine force is $0.0$; applies wheel brake torque $F_{\text{brake}} = |\text{action}[1]| \times \text{max\_brake_force}$.
-  - When $\text{action}[1] == 0$: Coasting (no engine force, minimal rolling brake).
+- **Action Space:** Continuous `Box(-1.0, 1.0, shape=(2,), dtype=np.float32)`.
+- **Vector Format:** `[steering, throttle_brake]`.
+- **Steering (`action[0]`):** Continuous $[-1.0, 1.0]$ mapped to wheel angle $\delta = \text{action}[0] \times 60^\circ$. Negative is **LEFT**, positive is **RIGHT**, `0.0` is straight.
+- **Throttle / Brake (`action[1]`):** Continuous $[-1.0, 1.0]$:
+  - $\ge 0$: Engine tractive force $F_{\text{engine}} = \text{action}[1] \times \text{max\_engine_force}$.
+  - $< 0$: Mechanical braking force $F_{\text{brake}} = |\text{action}[1]| \times \text{max\_brake_force}$.
+  - $== 0$: Coasting / idle (zero engine force, rolling resistance only).
 
 ---
 
@@ -250,28 +236,15 @@ MetaDrive provides native discrete action mapping in `metadrive/policy/env_input
 - Config keys: `discrete_action=True`, `discrete_steering_dim=5`, `discrete_throttle_dim=5`.
 - Space: `Discrete(25)` ($5 \times 5$).
 - **Conversion Formula:**
-  $$\text{steering\_unit} = \frac{2.0}{\text{discrete\_steering\_dim} - 1} = \frac{2.0}{4} = 0.5$$
-  $$\text{throttle\_unit} = \frac{2.0}{\text{discrete\_throttle\_dim} - 1} = \frac{2.0}{4} = 0.5$$
   $$\text{steering} = (\text{action} \pmod 5) \times 0.5 - 1.0$$
   $$\text{throttle} = (\text{action} // 5) \times 0.5 - 1.0$$
-
-### Discrete(25) Action Lookup Table
-
-| Index | Steering Index | Throttle Index | Continuous Steering | Continuous Throttle | Semantic Meaning |
-|---|---|---|---|---|---|
-| `0` | 0 | 0 | -1.0 | -1.0 | Full Left, Full Brake |
-| `2` | 2 | 0 | 0.0 | -1.0 | Straight, Full Brake |
-| `4` | 4 | 0 | +1.0 | -1.0 | Full Right, Full Brake |
-| `10` | 0 | 2 | -1.0 | 0.0 | Full Left, Coast |
-| `12` | 2 | 2 | 0.0 | 0.0 | Straight, Coast / Idle |
-| `14` | 4 | 2 | +1.0 | 0.0 | Full Right, Coast |
-| `20` | 0 | 4 | -1.0 | +1.0 | Full Left, Full Throttle |
-| `22` | 2 | 4 | 0.0 | +1.0 | Straight, Full Throttle |
-| `24` | 4 | 4 | +1.0 | +1.0 | Full Right, Full Throttle |
+- candidate steering values: `[-1.0, -0.5, 0.0, 0.5, 1.0]`.
+- candidate throttle values: `[-1.0, -0.5, 0.0, 0.5, 1.0]`.
+- Perfectly symmetric and covers all four quadrants of the control rectangle.
 
 ---
 
-## 11. Current CourseEnvV1 Discrete(5) Shortcomings
+## 11. Current CourseEnvV1 Discrete(5) Limitations
 
 `CourseEnvV1` implements an exploratory 5-action discrete mapping:
 ```python
@@ -282,12 +255,12 @@ MetaDrive provides native discrete action mapping in `metadrive/policy/env_input
 4: [ 0.00, -0.80]  # BRAKE
 ```
 
-### Objective Shortcoming Analysis:
-1. **Coupled Steering and Throttle:** Commands 0 and 2 automatically command $+0.35$ throttle. The agent cannot steer without simultaneously accelerating.
-2. **Missing Evasive Braking:** There is no command for steering while braking (e.g., swerving while slowing down to avoid an obstacle).
-3. **Missing Idle / Coasting:** No action provides $(0.0, 0.0)$. The vehicle is either forced into heavy acceleration, cruising, or abrupt braking.
-4. **Restricted Steering Magnitude:** Steering is locked at $|\delta| = 0.35$. Hard cornering or fast evasive swerving requiring $|\delta| \in [0.6, 1.0]$ is physically impossible.
-5. **Asymmetric Coverage:** The actuator envelope covers only a tiny subset of the reachable control space, creating unfairness for algorithms that could otherwise find optimal trajectory plans.
+### Objective Limitations:
+1. **Coupled Steering and Throttle:** Steering always forces $+0.35$ throttle.
+2. **Missing Evasive Braking:** Cannot steer while decelerating.
+3. **Missing Idle / Coasting:** No action provides $(0.0, 0.0)$.
+4. **Locked Steering Magnitude:** Limited to $|\delta| = 0.35$; sharp turns are physically impossible.
+5. **Asymmetric Envelope Coverage:** Restricts reachable vehicle dynamics.
 
 ---
 
@@ -295,78 +268,83 @@ MetaDrive provides native discrete action mapping in `metadrive/policy/env_input
 
 | Candidate Space | Type | Branching Factor | Expressiveness | Suitability for DQN | Suitability for PPO / SAC | Suitability for MCTS / Search |
 |---|---|---|---|---|---|---|
-| **A. CourseEnv Discrete(5)** | Discrete | Very Low (5) | Very Poor | Good for quick toy test | Incompatible (requires discrete policy head) | High rollout depth, poor vehicle maneuverability |
-| **B. Symmetric Discrete(9)** ($3 \times 3$) | Discrete | Low (9) | Moderate (steer $\in \{-0.6, 0, 0.6\}$, throttle $\in \{-0.8, 0, 0.6\}$) | Good | Incompatible (requires discrete policy head) | Good balance of search horizon and independent control |
-| **C. MetaDrive Discrete(25)** ($5 \times 5$) | Discrete | Moderate (25) | High (covers full $[-1, 1]^2$ grid) | Good | Incompatible without discretization wrapper | High branching factor (limits tree depth) |
-| **D. Native Continuous Box(2)** | Continuous | Infinite | Full ($\mathcal{C}^0$ envelope) | Incompatible (requires discretization) | **Native / Ideal** | Requires action sampling / progressive widening |
+| **A. CourseEnv Discrete(5)** | Discrete | Very Low (5) | Very Poor | Quick toy test only | Incompatible | High rollout depth, poor vehicle maneuverability |
+| **B. Low-Branching Adapter (Discrete 9)** | Discrete | Low (9) | Moderate (steer $\in \{-0.6, 0, 0.6\}$, throttle $\in \{-0.8, 0, 0.6\}$) | Good | Incompatible | Balanced branching factor; primitives non-frozen |
+| **C. MetaDrive Discrete(25)** | Discrete | Moderate (25) | High (covers full $[-1, 1]^2$ grid) | Good | Incompatible | Higher branching factor limits tree depth |
+| **D. Native Continuous Box(2)** | Continuous | Infinite | Full ($\mathcal{C}^0$ envelope) | Incompatible without adapter | **Native / Ideal** | Requires action sampling / progressive widening |
 
 ---
 
 ## 13. Control Frequency Findings
 
-Audited from `metadrive/envs/base_env.py` and empirical stepping:
+Audited from `metadrive/envs/base_env.py` and empirical measurements:
 - `physics_world_step_size`: $0.02\text{ s}$ ($50\text{ Hz}$ physics integration).
-- `decision_repeat`: $5$ physics substeps per agent decision step.
-- Nominal agent step duration:
-  $$\Delta t = 0.02\text{ s} \times 5 = 0.10\text{ s} \implies 10\text{ Hz decision frequency}$$
-- **Empirical Measurement:**  
-  At steady speed, measured $\Delta \text{pos} / v_{\text{avg}} = 0.0955\text{ s}$ (within expected numerical tolerance of discrete physics integration).
-
-### Implications Across Stages:
-- **Rule / PID Control:** $10\text{ Hz}$ is adequate for highway and urban cruise control, but aggressive dynamic stabilization requires smooth PID output.
-- **Search Depth (MCTS / Lattice):** At $10\text{ Hz}$, a 2-second planning horizon requires 20 steps. At branching factor $b=25$, exhaustive search $25^{20}$ is impossible; sampling-based search or $b \le 9$ is necessary.
-- **Model-Free RL (PPO/SAC):** $10\text{ Hz}$ is the standard, well-conditioned decision rate for MetaDrive. Transitions are informative without extreme step latency.
-- **World Models:** $0.1\text{ s}$ transitions provide sufficiently significant state deltas for latent transition predictors (e.g. RSSM) without suffering from single-step vanishing deltas.
+- `decision_repeat`: $5$ substeps per env step.
+- Nominal step duration: $\Delta t = 0.02\text{ s} \times 5 = 0.10\text{ s}$ ($10\text{ Hz}$ decision frequency).
+- **Empirical Confirmation:** $\Delta \text{pos} / v_{\text{avg}} = 0.0955\text{ s}$ at steady cruise.
+- $10\text{ Hz}$ is well-conditioned for RL (PPO/SAC) and world models, while search algorithms will require compact discrete primitives or sampling.
 
 ---
 
 ## 14. Action-Response Calibration Experiments
 
-All experiments were executed on a deterministic straight road (`map='S'`, `traffic_density=0.0`) starting from a stationary vehicle at spawn.
+All calibration tests were executed on a deterministic straight road (`map='S'`, `traffic_density=0.0`).
 
-### Calibration Data Summary (50 Steps / 5.0 Seconds Duration)
+### 1. Symmetric Early Steering Calibration (15 Steps Horizon)
+To eliminate road-boundary spawn asymmetry from previous tests, steering response was evaluated over an identical 15-step duration ($1.5\text{ s}$) before reaching road edges:
 
-| Test Label | Action `[steer, throttle]` | Steps | Final Speed | Distance Traveled | Heading Change | Lateral Offset | Termination |
-|---|---|---|---|---|---|---|---|
-| `idle` | `[0.0, 0.0]` | 50 | $0.0\text{ km/h}$ | $0.0\text{ m}$ | $0.0^\circ$ | $0.00\text{ m}$ | None |
-| `low_throttle` | `[0.0, 0.25]` | 50 | $12.4\text{ km/h}$ | $8.5\text{ m}$ | $0.0^\circ$ | $0.00\text{ m}$ | None |
-| `mid_throttle` | `[0.0, 0.50]` | 50 | $24.9\text{ km/h}$ | $17.1\text{ m}$ | $0.0^\circ$ | $0.00\text{ m}$ | None |
-| `full_throttle` | `[0.0, 1.00]` | 50 | $49.7\text{ km/h}$ | $34.1\text{ m}$ | $0.0^\circ$ | $0.00\text{ m}$ | None |
-| `gentle_brake` | `[0.0, -0.25]` | 50 | $0.0\text{ km/h}$ | $0.0\text{ m}$ | $0.0^\circ$ | $0.00\text{ m}$ | None |
-| `mid_brake` | `[0.0, -0.50]` | 50 | $0.0\text{ km/h}$ | $0.0\text{ m}$ | $0.0^\circ$ | $0.00\text{ m}$ | None |
-| `full_brake` | `[0.0, -1.00]` | 50 | $0.0\text{ km/h}$ | $0.0\text{ m}$ | $0.0^\circ$ | $0.00\text{ m}$ | None |
-| `slight_left_throttle` | `[-0.25, 0.40]` | 49 | $19.2\text{ km/h}$ | $12.5\text{ m}$ | $-51.3^\circ$ | $-0.59\text{ m}$ | Out of Road |
-| `hard_left_throttle` | `[-0.50, 0.40]` | 42 | $15.5\text{ km/h}$ | $8.5\text{ m}$ | $-72.2^\circ$ | $-0.78\text{ m}$ | Out of Road |
-| `slight_right_throttle`| `[0.25, 0.40]` | 22 | $8.7\text{ km/h}$ | $2.6\text{ m}$ | $+10.1^\circ$ | $-0.47\text{ m}$ | Out of Road |
-| `hard_right_throttle` | `[0.50, 0.40]` | 17 | $6.5\text{ km/h}$ | $1.5\text{ m}$ | $+11.6^\circ$ | $-0.44\text{ m}$ | Out of Road |
-| `accel20_then_full_brake` | Accel 20 steps $\to$ full brake | $20 + 9$ | $0.0\text{ km/h}$ | Stopping dist: $1.48\text{ m}$ | $0.0^\circ$ | $0.00\text{ m}$ | Stopped in 0.9s from $19.9\text{ km/h}$ |
+| Action Label | Steering Command | Throttle Command | Speed at Step 15 | Heading Change | Lateral Offset | Symmetry Check |
+|---|---|---|---|---|---|---|
+| `slight_left_15steps` | `-0.25` | `0.40` | $5.92\text{ km/h}$ | $-4.582^\circ$ | $+0.162\text{ m}$ | Identical magnitude to right |
+| `slight_right_15steps`| `+0.25` | `0.40` | $5.92\text{ km/h}$ | $+4.582^\circ$ | $-0.162\text{ m}$ | Identical magnitude to left |
+| `hard_left_15steps` | `-0.50` | `0.40` | $5.73\text{ km/h}$ | $-8.934^\circ$ | $+0.316\text{ m}$ | Identical magnitude to right |
+| `hard_right_15steps` | `+0.50` | `0.40` | $5.73\text{ km/h}$ | $+8.934^\circ$ | $-0.316\text{ m}$ | Identical magnitude to left |
 
-*Full step-by-step telemetry saved in `results/audits/observation_action/control_response.csv`.*
+*Finding:* The vehicle actuator responds with **exact bilateral symmetry** in speed, heading rate, and lateral displacement. Earlier asymmetric termination (22 vs 49 steps) was purely an artifact of unequal distance from the spawn lane to the left versus right road edges.
+
+### 2. Controlled Braking Calibration (Equal Initial Pre-Brake Speed)
+The vehicle was accelerated for 20 steps at full throttle (`[0.0, 1.0]`) to reach an identical pre-brake speed of **$19.88\text{ km/h}$**, followed by independent brake commands until stopped ($v < 0.1\text{ km/h}$):
+
+| Test Label | Brake Command | Pre-Brake Speed | Stopping Steps | Stopping Time | Stopping Distance |
+|---|---|---|---|---|---|
+| `controlled_brake_25pct` | `throttle_brake = -0.25` | $19.88\text{ km/h}$ | 14 steps | $1.40\text{ s}$ | $3.92\text{ m}$ |
+| `controlled_brake_50pct` | `throttle_brake = -0.50` | $19.88\text{ km/h}$ | 10 steps | $1.00\text{ s}$ | $2.06\text{ m}$ |
+| `controlled_brake_100pct`| `throttle_brake = -1.00` | $19.88\text{ km/h}$ | 9 steps | $0.90\text{ s}$ | $1.48\text{ m}$ |
+
+*Finding:* Mechanical braking exhibits clean monotonic deceleration and stopping distance scaling with brake magnitude.
+
+*Machine-readable evidence:* Summary rows for all calibration tests are recorded in `results/audits/observation_action/control_response.csv`.
 
 ---
 
-## 15. Determinism Findings
+## 15. Determinism & Repeatability Findings
 
-Tested across 3 independent environment instances with identical scenario seed (`seed=42`) and identical non-trivial action sequence (30 steps):
-- **Position Discrepancy (Run 0 vs Run 1):** $0.0000000000\text{ m}$ (Exact float match).
-- **Position Discrepancy (Run 0 vs Run 2):** $0.0000000000\text{ m}$ (Exact float match).
-- **Heading Discrepancy:** $0.0000000000\text{ rad}$.
-- **Velocity Discrepancy:** $0.0000000000\text{ km/h}$.
-- **Route Completion Discrepancy:** $0.0000000000$.
+Evaluated across repeated independent executions on multiple scenario seeds (seeds 42 and 101) using a fixed multi-action sequence:
+- **Full Observation Vector Discrepancy:** $0.00\times 10^0$ (exact element-wise match across all 275 dimensions).
+- **Reward Discrepancy:** $0.00\times 10^0$.
+- **Position Discrepancy:** $0.00\times 10^0\text{ m}$.
+- **Heading Discrepancy:** $0.00\times 10^0\text{ rad}$.
+- **Velocity Discrepancy:** $0.00\times 10^0\text{ km/h}$.
+- **Route Completion Discrepancy:** $0.00\times 10^0$.
+- **Termination / Truncation Agreement:** 100% identical.
 
-### Concept Separation: Scenario Seed vs. Agent RNG Seed
-- **Scenario Seed (`env_seed`):** Determines road geometry, procedural block generation, obstacle placements, and initial traffic vehicle spawns.
-- **Agent RNG Seed:** Governs stochastic action sampling, policy exploratory noise, and dropout perturbations.
-- **Platform V1 Requirement:** The benchmark harness must explicitly decouple these two concepts to ensure that agent comparisons evaluate policy capability across identical scenario seeds.
+### Determinism Claim Formulation
+> **Verified Finding:** Exact repeatability was observed under the tested configuration.  
+> *Scope Limitation:* This evidence confirms single-platform repeatability within the pinned software environment. It does not assert universal cross-hardware or cross-platform determinism across diverse OS/CPU architectures.
 
-*Full comparative run data saved in `results/audits/observation_action/determinism.csv`.*
+### Decoupling Scenario Seed from Agent Stochasticity
+The platform benchmark harness must formally separate:
+1. **Scenario Seed (`env_seed`):** Determines road geometry, procedural block layout, and initial traffic placement.
+2. **Agent RNG Seed:** Controls policy stochasticity, action noise, and dropout perturbations.
+
+*Comparative step records are saved in `results/audits/observation_action/determinism.csv`.*
 
 ---
 
 ## 16. Risks
 
-1. **Silent Privileged State Leakage:** If `num_others=4` is enabled in candidate observations, policies will train on physics-world cheat data (occlusion-free coordinates and velocities) that are unrepresentative of physical sensors.
-2. **LiDAR Sector Compression Blindness:** Min-pooling 240 rays into 16 sectors permanently destroys spatial resolution, preventing rule agents and planners from navigating narrow gaps between obstacles.
+1. **Privileged State Contamination:** Baking 16 surrounding vehicle values directly into a flat observation vector leaks occlusion-free physics state to policies.
+2. **Ray Downsampling Blindness:** Irreversibly compressing 240 rays into 16 sectors prevents rule agents and planners from identifying narrow drivable gaps.
 3. **Actuator Space Fragmentation:** Disparate action contracts between algorithms (e.g. Discrete(5) for DQN vs Box(2) for PPO) undermine fair scientific benchmark comparison across Stages 0–7.
 4. **Dropped Ray Misclassification:** With `dropout_prob > 0`, dropped rays read as `0.0` (immediate collision), which could trigger false-positive emergency braking in heuristic or search policies.
 
@@ -374,28 +352,26 @@ Tested across 3 independent environment instances with identical scenario seed (
 
 ## 17. Open Questions
 
-1. **Surrounding Vehicles: Sensor vs. Privileged Contract?**
-   Should `num_others=4` be considered an accepted "onboard perception tracker module" (analogous to Mobileye / YOLO bounding box tracking), or should it be removed from the canonical contract in favor of pure 259D raw perception?
-2. **Standardizing the Discrete Adapter:**
-   If continuous `Box(2)` is the canonical underlying actuator contract, should discrete algorithms (DQN, MCTS) use MetaDrive's native `Discrete(25)` or a leaner symmetric `Discrete(9)` to reduce tree search branching factor?
-3. **LiDAR Noise in Canonical Benchmarks:**
-   Should canonical evaluation seeds feature clean LiDAR (`gaussian_noise=0.0`, `dropout_prob=0.0`) with noise reserved for robustness stress-testing, or should non-zero noise be part of the default environment?
-4. **Lane Line / Side Detector Inclusions:**
-   Currently, `side_detector` and `lane_line_detector` point clouds are disabled by default (scalar left/right distances are used instead). Should full border ray point clouds be explored for Platform V1?
+1. **Surrounding Vehicles Contract:** Should surrounding vehicles be exposed as an optional structured tracker (`TrafficContext` with validity mask) or kept strictly out of the default policy interface?
+2. **Discrete Primitives Calibration:** For discrete planning and RL, what exact steering and throttle discrete primitives provide optimal coverage without excessive branching?
+3. **Canonical Benchmark Noise:** Should default evaluation runs feature clean LiDAR (`noise=0.0`, `dropout=0.0`) with noise reserved for robustness stress tests?
+4. **Lane Line / Side Detector Inclusions:** Should static road border point clouds (`side_detector`, `lane_line_detector`) be evaluated in Platform V1?
 
 ---
 
-## 18. Recommendations — Non-Frozen
+## 18. Recommendations — Explicitly Non-Frozen
 
-> **NOTICE:** The recommendations below are strictly proposals resulting from this Gate 1 audit. **No specifications or contracts are frozen in this task.**
+> **NOTICE:** All recommendations below are non-binding proposals resulting from this Gate 1 audit. **No specifications or contracts are frozen in this task.**
 
-1. **Canonical Environment Observation Recommendation:**
-   - Retain **Candidate B (275D)** or **Candidate A (259D)** as the uncompressed root observation contract emitted by the environment.
-   - Prohibit freezing a 35D compressed observation at the environment layer; allow agents to apply deterministic feature extraction wrappers locally.
-2. **Canonical Environment Action Recommendation:**
+1. **Canonical Observation Recommendation:**
+   - Retain **Candidate A (259D)** as the uncompressed root observation contract emitted by the environment.
+   - Maintain **Candidate D (Structured AgentInput Concept)** as an active candidate separating CoreObservation, optional TrafficContext, and TaskContext.
+   - Prohibit freezing a 35D compressed observation at the environment layer.
+2. **Canonical Action Recommendation:**
    - Adopt native continuous **`Box(-1.0, 1.0, shape=(2,), dtype=np.float32)`** as the foundational actuator interface for all stages.
-   - Provide an optional, certified symmetric discrete adapter (e.g. `Discrete(25)` or `Discrete(9)`) for discrete-only methods (DQN, discrete MCTS).
-3. **Telemetry Formalization:**
+   - Provide an optional, certified discrete adapter (e.g. `Discrete(25)` or `candidate_low_branching_adapter_9`) for discrete-only methods.
+3. **Telemetry & Task Context:**
    - Strictly sequester `route_completion`, collision flags, and raw world coordinates in `info` as evaluator-only telemetry.
+   - Develop a read-only `TaskContext` / `MapContext` specification for global planning algorithms.
 4. **Control Frequency Contract:**
-   - Preserve `physics_world_step_size=0.02` and `decision_repeat=5` ($10\text{ Hz}$ agent cycle), which is thoroughly validated across physics, actuation, and determinism.
+   - Preserve `physics_world_step_size=0.02` and `decision_repeat=5` ($10\text{ Hz}$ agent cycle).

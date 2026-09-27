@@ -8,7 +8,7 @@
   },
   "candidate_spaces": {
     "candidate_A": {
-      "name": "MetaDrive Default Raw State + LiDAR",
+      "name": "MetaDrive Default Local State + LiDAR",
       "total_dimensions": 259,
       "breakdown": {
         "ego_state": 9,
@@ -16,7 +16,8 @@
         "surrounding_vehicles": 0,
         "lidar_rays": 240
       },
-      "space_type": "Box(0.0, 1.0, shape=(259,), dtype=float32)"
+      "space_type": "Box(0.0, 1.0, shape=(259,), dtype=float32)",
+      "description": "MetaDrive default state-based local observation without explicit surrounding-vehicle tracks. Ego borders, offsets, and navigation are geometric state abstractions."
     },
     "candidate_B": {
       "name": "MetaDrive State + Navigation + 4 Surrounding Vehicles + LiDAR",
@@ -27,7 +28,8 @@
         "surrounding_vehicles": 16,
         "lidar_rays": 240
       },
-      "space_type": "Box(0.0, 1.0, shape=(275,), dtype=float32)"
+      "space_type": "Box(0.0, 1.0, shape=(275,), dtype=float32)",
+      "description": "Flat vector incorporating 16 surrounding vehicle values extracted directly from physics engine."
     },
     "candidate_C": {
       "name": "CourseEnv Compressed State",
@@ -38,7 +40,19 @@
         "surrounding_vehicles": 0,
         "lidar_sectors": 16
       },
-      "space_type": "Box(0.0, 1.0, shape=(35,), dtype=float32)"
+      "space_type": "Box(0.0, 1.0, shape=(35,), dtype=float32)",
+      "description": "Heuristically downsampled representation with min-pooled LiDAR sectors."
+    },
+    "candidate_D": {
+      "name": "Structured AgentInput Concept (Open Candidate)",
+      "structure": {
+        "CoreObservation": "259D uncompressed local state, navigation checkpoints, and 240 LiDAR rays",
+        "TrafficContext": "Structured surrounding vehicle state (relative pos, vel) with explicit validity mask",
+        "TaskContext": "Read-only goal, route, and map context (reference path, lane geometry, speed limit)",
+        "EvaluatorTelemetry": "Strictly segregated private telemetry (ground truth trajectory, route completion, collision flags)"
+      },
+      "status": "NON-FROZEN OPEN CONCEPT",
+      "description": "Decoupled architecture avoiding mixing an oracle traffic tracker directly into a flat observation vector."
     }
   },
   "field_specifications_275D": [
@@ -47,7 +61,8 @@
       "field": "dist_to_left_side",
       "slice": "[0]",
       "category": "ego_state",
-      "semantic": "Distance to left road border divided by map total width",
+      "type": "state_abstraction",
+      "semantic": "Distance to left road border divided by map total width (computed from lane geometry when side_detector lasers==0)",
       "raw_unit": "meters",
       "normalization": "dist / ((MAX_LANE_NUM + 1) * MAX_LANE_WIDTH)",
       "clipping": "[0.0, 1.0]",
@@ -60,7 +75,8 @@
       "field": "dist_to_right_side",
       "slice": "[1]",
       "category": "ego_state",
-      "semantic": "Distance to right road border divided by map total width",
+      "type": "state_abstraction",
+      "semantic": "Distance to right road border divided by map total width (computed from lane geometry when side_detector lasers==0)",
       "raw_unit": "meters",
       "normalization": "dist / ((MAX_LANE_NUM + 1) * MAX_LANE_WIDTH)",
       "clipping": "[0.0, 1.0]",
@@ -70,14 +86,15 @@
     },
     {
       "index": 2,
-      "field": "heading_difference",
+      "field": "heading_diff",
       "slice": "[2]",
       "category": "ego_state",
-      "semantic": "Angular difference between vehicle heading and current reference lane direction",
-      "raw_unit": "cosine / radians",
-      "normalization": "clip(cos(heading, lateral), -1, 1) / 2 + 0.5",
+      "type": "state_abstraction",
+      "semantic": "Normalized signed heading-deviation proxy based on dot product of heading vector with lane lateral vector",
+      "raw_unit": "normalized scalar proxy",
+      "normalization": "clip(dot(heading, lane_lat) / (norm*norm), -1, 1) / 2 + 0.5",
       "clipping": "[0.0, 1.0]",
-      "neutral_or_zero": "0.5 represents vehicle aligned perfectly with lane heading; 1.0 is +90 deg, 0.0 is -90 deg",
+      "neutral_or_zero": "0.5 represents vehicle aligned with lane heading; 1.0 is +90 deg deviation, 0.0 is -90 deg deviation",
       "privileged_leakage": false,
       "stability": "Stable across maps"
     },
@@ -86,6 +103,7 @@
       "field": "current_speed",
       "slice": "[3]",
       "category": "ego_state",
+      "type": "proprioceptive_sensor",
       "semantic": "Current forward speed of the vehicle",
       "raw_unit": "km/h",
       "normalization": "(speed_km_h + 1) / (max_speed_km_h + 1)",
@@ -99,6 +117,7 @@
       "field": "current_steering",
       "slice": "[4]",
       "category": "ego_state",
+      "type": "proprioceptive_sensor",
       "semantic": "Current front wheel steering angle",
       "raw_unit": "degrees",
       "normalization": "(steering / MAX_STEERING + 1) / 2",
@@ -112,6 +131,7 @@
       "field": "last_action_steering",
       "slice": "[5]",
       "category": "ego_state",
+      "type": "internal_telemetry",
       "semantic": "Steering component of last executed continuous action (VERIFIED: MetaDrive docstring had this swapped with throttle!)",
       "raw_unit": "normalized action [-1, 1]",
       "normalization": "(last_action[0] + 1) / 2",
@@ -125,6 +145,7 @@
       "field": "last_action_throttle_brake",
       "slice": "[6]",
       "category": "ego_state",
+      "type": "internal_telemetry",
       "semantic": "Throttle/brake component of last executed continuous action (VERIFIED: MetaDrive docstring had this swapped with steering!)",
       "raw_unit": "normalized action [-1, 1]",
       "normalization": "(last_action[1] + 1) / 2",
@@ -138,6 +159,7 @@
       "field": "yaw_rate",
       "slice": "[7]",
       "category": "ego_state",
+      "type": "proprioceptive_sensor",
       "semantic": "Current vehicle angular velocity magnitude (beta_diff / 0.1s)",
       "raw_unit": "rad/s",
       "normalization": "arccos(clip(heading_now . heading_last, 0, 1)) / 0.1",
@@ -148,10 +170,11 @@
     },
     {
       "index": 8,
-      "field": "lateral_lane_offset",
+      "field": "lane_lateral_offset",
       "slice": "[8]",
       "category": "ego_state",
-      "semantic": "Lateral offset from current lane centerline",
+      "type": "state_abstraction",
+      "semantic": "Lateral offset from current lane centerline (computed from lane geometry)",
       "raw_unit": "meters",
       "normalization": "(lateral * 2 / max_lane_width + 1.0) / 2.0",
       "clipping": "[0.0, 1.0]",
@@ -164,11 +187,12 @@
       "field": "navi_ckpt1_longitudinal",
       "slice": "[9]",
       "category": "navigation",
+      "type": "navigation_abstraction",
       "semantic": "Projection of distance to checkpoint 1 along vehicle heading",
       "raw_unit": "meters",
       "normalization": "(ckpt_in_heading / NAVI_POINT_DIST + 1) / 2",
       "clipping": "[0.0, 1.0]",
-      "neutral_or_zero": "0.5 means checkpoint is lateral to vehicle (0 longitudinal delta)",
+      "neutral_or_zero": "0.5 means checkpoint is lateral to vehicle",
       "privileged_leakage": false,
       "stability": "Stable"
     },
@@ -177,11 +201,12 @@
       "field": "navi_ckpt1_lateral",
       "slice": "[10]",
       "category": "navigation",
+      "type": "navigation_abstraction",
       "semantic": "Projection of distance to checkpoint 1 along vehicle right-hand side",
       "raw_unit": "meters",
       "normalization": "(ckpt_in_rhs / NAVI_POINT_DIST + 1) / 2",
       "clipping": "[0.0, 1.0]",
-      "neutral_or_zero": "0.5 means checkpoint is directly in front/behind vehicle (0 lateral offset)",
+      "neutral_or_zero": "0.5 means checkpoint directly ahead/behind",
       "privileged_leakage": false,
       "stability": "Stable"
     },
@@ -190,6 +215,7 @@
       "field": "navi_ckpt1_bending_radius",
       "slice": "[11]",
       "category": "navigation",
+      "type": "navigation_abstraction",
       "semantic": "Bending radius of lane leading to checkpoint 1",
       "raw_unit": "meters normalized",
       "normalization": "ref_lane.radius / (CURVE_MAX + lane_num * lane_width)",
@@ -203,11 +229,12 @@
       "field": "navi_ckpt1_bending_direction",
       "slice": "[12]",
       "category": "navigation",
+      "type": "navigation_abstraction",
       "semantic": "Bending direction of lane leading to checkpoint 1",
       "raw_unit": "sign (+1 clockwise, -1 counterclockwise)",
       "normalization": "(dir + 1) / 2",
       "clipping": "[0.0, 1.0]",
-      "neutral_or_zero": "0.5 represents straight lane (0 curvature direction)",
+      "neutral_or_zero": "0.5 represents straight lane",
       "privileged_leakage": false,
       "stability": "Stable"
     },
@@ -216,6 +243,7 @@
       "field": "navi_ckpt1_lane_angle",
       "slice": "[13]",
       "category": "navigation",
+      "type": "navigation_abstraction",
       "semantic": "Angular difference between start and end heading of lane leading to checkpoint 1",
       "raw_unit": "degrees",
       "normalization": "(deg(angle) / CURVE_ANGLE_MAX + 1) / 2",
@@ -229,6 +257,7 @@
       "field": "navi_ckpt2_longitudinal",
       "slice": "[14]",
       "category": "navigation",
+      "type": "navigation_abstraction",
       "semantic": "Projection of distance to checkpoint 2 along vehicle heading",
       "raw_unit": "meters",
       "normalization": "(ckpt_in_heading / NAVI_POINT_DIST + 1) / 2",
@@ -242,11 +271,12 @@
       "field": "navi_ckpt2_lateral",
       "slice": "[15]",
       "category": "navigation",
+      "type": "navigation_abstraction",
       "semantic": "Projection of distance to checkpoint 2 along vehicle right-hand side",
       "raw_unit": "meters",
       "normalization": "(ckpt_in_rhs / NAVI_POINT_DIST + 1) / 2",
       "clipping": "[0.0, 1.0]",
-      "neutral_or_zero": "0.5 means checkpoint is directly in front/behind vehicle",
+      "neutral_or_zero": "0.5 means checkpoint directly ahead/behind",
       "privileged_leakage": false,
       "stability": "Stable"
     },
@@ -255,6 +285,7 @@
       "field": "navi_ckpt2_bending_radius",
       "slice": "[16]",
       "category": "navigation",
+      "type": "navigation_abstraction",
       "semantic": "Bending radius of lane leading to checkpoint 2",
       "raw_unit": "meters normalized",
       "normalization": "ref_lane.radius / (CURVE_MAX + lane_num * lane_width)",
@@ -268,6 +299,7 @@
       "field": "navi_ckpt2_bending_direction",
       "slice": "[17]",
       "category": "navigation",
+      "type": "navigation_abstraction",
       "semantic": "Bending direction of lane leading to checkpoint 2",
       "raw_unit": "sign (+1 clockwise, -1 counterclockwise)",
       "normalization": "(dir + 1) / 2",
@@ -281,6 +313,7 @@
       "field": "navi_ckpt2_lane_angle",
       "slice": "[18]",
       "category": "navigation",
+      "type": "navigation_abstraction",
       "semantic": "Angular difference between start and end heading of lane leading to checkpoint 2",
       "raw_unit": "degrees",
       "normalization": "(deg(angle) / CURVE_ANGLE_MAX + 1) / 2",
@@ -294,6 +327,7 @@
       "field": "surrounding_vehicles",
       "slice": "[19:35]",
       "category": "surrounding_vehicles",
+      "type": "privileged_physics_query",
       "semantic": "4 nearest detected vehicles within 50m cylinder broad-phase (4 values per vehicle: rel_pos_long, rel_pos_lat, rel_vel_long, rel_vel_lat)",
       "raw_unit": "meters and km/h",
       "normalization": "rel_pos: (pos / 50.0 + 1) / 2; rel_vel: (vel / max_speed + 1) / 2",
@@ -307,13 +341,14 @@
       "field": "lidar_cloud_points",
       "slice": "[35:275] (or [19:259] if num_others=0)",
       "category": "lidar",
+      "type": "active_range_sensor",
       "semantic": "240 distance detector rays sweeping 360 degrees counter-clockwise starting from 0 deg (direct ahead)",
       "raw_unit": "hit fraction (dist / 50.0m)",
       "normalization": "hit_fraction",
       "clipping": "[0.0, 1.0]",
       "neutral_or_zero": "1.0 means clear path / max range (50m); 0.0 means immediate collision or dropped ray",
       "privileged_leakage": false,
-      "stability": "High frequency sensor data"
+      "stability": "Dynamic and static obstacles (excludes static road borders)"
     }
   ]
 }
