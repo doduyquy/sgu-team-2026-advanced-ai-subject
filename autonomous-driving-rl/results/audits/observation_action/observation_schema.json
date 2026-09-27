@@ -342,13 +342,13 @@
       "slice": "[35:275] (or [19:259] if num_others=0)",
       "category": "lidar",
       "type": "active_range_sensor",
-      "semantic": "240 distance detector rays sweeping 360 degrees counter-clockwise starting from 0 deg (direct ahead)",
+      "semantic": "240 distance detector rays sweeping 360 degrees counter-clockwise starting from 0 deg (direct ahead). Lidar.mask uses CollisionGroup.can_be_lidar_detected() (Vehicle, InvisibleWall, TrafficObject, TrafficParticipants), which excludes Sidewalk, ContinuousLaneLine, and BrokenLaneLine.",
       "raw_unit": "hit fraction (dist / 50.0m)",
       "normalization": "hit_fraction",
       "clipping": "[0.0, 1.0]",
       "neutral_or_zero": "1.0 means clear path / max range (50m); 0.0 means immediate collision or dropped ray",
       "privileged_leakage": false,
-      "stability": "Dynamic and static obstacles (excludes static road borders)"
+      "stability": "Dynamic obstacles and static traffic objects (sidewalks, road borders, and lane lines are excluded by the LiDAR collision mask)"
     }
   ]
 }

@@ -109,7 +109,7 @@ Authoritative field-level definition for Candidate B (275D) and Candidate A (259
   - Ray 120 ($180^\circ$): Direct Rear
   - Ray 180 ($270^\circ$): Direct Right
 - **Normalization:** Hit fraction $\in [0.0, 1.0]$. `1.0` means clear path ($50\text{ m}$); `0.0` means immediate contact ($0\text{ m}$) or dropped ray.
-- **Physical Sensing Targets:** Dynamic vehicles and static traffic obstacles (`TrafficCone`, `TrafficBarrier`) reside in `physics_world.dynamic_world` and are sensed. **Static road borders, curbs, sidewalks, and lane markings reside in `physics_world.static_world` and ARE NOT DETECTED by LiDAR**.
+- **Physical Sensing Targets & Mask Filtering:** Normal LiDAR detects dynamic vehicles, traffic participants (pedestrians/cyclists), invisible walls, and static traffic obstacles (`TrafficCone`, `TrafficBarrier`). Sidewalks, continuous lane lines, and broken lane lines **ARE NOT DETECTED by LiDAR** because `Lidar.mask` is explicitly set to `CollisionGroup.can_be_lidar_detected() = Vehicle | InvisibleWall | TrafficObject | TrafficParticipants`, which deliberately excludes `Sidewalk`, `ContinuousLaneLine`, and `BrokenLaneLine`. Note that sidewalks are actually instantiated as dynamic nodes with `CollisionGroup.Sidewalk` attached to `dynamic_world`, so their exclusion is strictly due to the collision bitmask filter rather than a static vs. dynamic world partitioning.
 - **Noise Characteristics:** `gaussian_noise` perturbs hit fractions with $\mathcal{N}(0, \sigma^2)$. `dropout_prob` forces rays to `0.0` (which semantically mimics an obstacle at contact distance).
 
 ---
@@ -300,18 +300,18 @@ To eliminate road-boundary spawn asymmetry from previous tests, steering respons
 | `hard_left_15steps` | `-0.50` | `0.40` | $5.73\text{ km/h}$ | $-8.934^\circ$ | $+0.316\text{ m}$ | Identical magnitude to right |
 | `hard_right_15steps` | `+0.50` | `0.40` | $5.73\text{ km/h}$ | $+8.934^\circ$ | $-0.316\text{ m}$ | Identical magnitude to left |
 
-*Finding:* The vehicle actuator responds with **exact bilateral symmetry** in speed, heading rate, and lateral displacement. Earlier asymmetric termination (22 vs 49 steps) was purely an artifact of unequal distance from the spawn lane to the left versus right road edges.
+*Finding:* A **mirror-symmetric steering response was observed in the tested 15-step configuration** across speed, heading change rate, and lateral displacement. Earlier asymmetric termination (22 vs 49 steps) was purely an artifact of unequal distance from the spawn lane to the left versus right road edges, rather than an actuator bias.
 
 ### 2. Controlled Braking Calibration (Equal Initial Pre-Brake Speed)
-The vehicle was accelerated for 20 steps at full throttle (`[0.0, 1.0]`) to reach an identical pre-brake speed of **$19.88\text{ km/h}$**, followed by independent brake commands until stopped ($v < 0.1\text{ km/h}$):
+The vehicle was accelerated for 20 steps at full throttle (`[0.0, 1.0]`) to reach an identical pre-brake speed of **$19.88\text{ km/h}$**, followed by independent brake commands until stopped ($v < 0.1\text{ km/h}$). Speeds during braking and final termination flags were empirically captured directly from the simulator:
 
-| Test Label | Brake Command | Pre-Brake Speed | Stopping Steps | Stopping Time | Stopping Distance |
-|---|---|---|---|---|---|
-| `controlled_brake_25pct` | `throttle_brake = -0.25` | $19.88\text{ km/h}$ | 14 steps | $1.40\text{ s}$ | $3.92\text{ m}$ |
-| `controlled_brake_50pct` | `throttle_brake = -0.50` | $19.88\text{ km/h}$ | 10 steps | $1.00\text{ s}$ | $2.06\text{ m}$ |
-| `controlled_brake_100pct`| `throttle_brake = -1.00` | $19.88\text{ km/h}$ | 9 steps | $0.90\text{ s}$ | $1.48\text{ m}$ |
+| Test Label | Brake Command | Pre-Brake Speed | Stopping Steps | Stopping Time | Stopping Distance | Measured Mean Speed | Final Simulator Flags |
+|---|---|---|---|---|---|---|---|
+| `controlled_brake_25pct` | `throttle_brake = -0.25` | $19.88\text{ km/h}$ | 14 steps | $1.40\text{ s}$ | **$3.92\text{ m}$** | $8.95\text{ km/h}$ | `terminated=False, out_of_road=False` |
+| `controlled_brake_50pct` | `throttle_brake = -0.50` | $19.88\text{ km/h}$ | 10 steps | $1.00\text{ s}$ | **$2.06\text{ m}$** | $5.98\text{ km/h}$ | `terminated=False, out_of_road=False` |
+| `controlled_brake_100pct`| `throttle_brake = -1.00` | $19.88\text{ km/h}$ | 9 steps | $0.90\text{ s}$ | **$1.48\text{ m}$** | $4.38\text{ km/h}$ | `terminated=False, out_of_road=False` |
 
-*Finding:* Mechanical braking exhibits clean monotonic deceleration and stopping distance scaling with brake magnitude.
+*Finding:* Mechanical braking exhibits clean monotonic deceleration, stopping distance scaling, and measured average speeds with brake magnitude.
 
 *Machine-readable evidence:* Summary rows for all calibration tests are recorded in `results/audits/observation_action/control_response.csv`.
 

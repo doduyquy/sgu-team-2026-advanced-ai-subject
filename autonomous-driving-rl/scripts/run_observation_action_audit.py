@@ -170,7 +170,7 @@ def audit_lidar_properties():
     env_noise.close()
     
     print(f"  Ray count: {results['num_rays']}")
-    print(f"  Empty road hits: {results['empty_road_hits']} (road borders NOT detected by dynamic lidar)")
+    print(f"  Empty road hits: {results['empty_road_hits']} (road borders/sidewalks excluded by CollisionGroup.can_be_lidar_detected() mask)")
     print(f"  Ahead hit rays (0 deg): {results['ahead_hit_rays']}")
     print(f"  Left hit rays (+90 deg): {results['left_hit_rays']}")
     print(f"  Rear hit rays (180 deg): {results['rear_hit_rays']}")
@@ -435,12 +435,17 @@ def audit_action_response(output_csv_path):
         
         # Apply brake command until vehicle stops (v < 0.1 km/h) or max 50 steps
         brake_steps = 0
-        while v.speed_km_h > 0.1 and brake_steps < 50:
-            env.step([0.0, brake_val])
+        brake_speeds = []
+        terminated = truncated = False
+        step_info = {}
+        while v.speed_km_h > 0.1 and brake_steps < 50 and not (terminated or truncated):
+            obs, r, terminated, truncated, step_info = env.step([0.0, brake_val])
             brake_steps += 1
+            brake_speeds.append(float(v.speed_km_h))
             
         dist_to_stop = float(np.linalg.norm(v.position - pos_at_brake))
         final_speed = float(v.speed_km_h)
+        measured_avg_speed = float(np.mean(brake_speeds)) if brake_speeds else pre_speed
         
         csv_rows.append({
             "test_category": "controlled_braking",
@@ -451,18 +456,18 @@ def audit_action_response(output_csv_path):
             "duration_sec": round(brake_steps * 0.1, 2),
             "initial_speed_km_h": round(pre_speed, 2),
             "final_speed_km_h": round(final_speed, 2),
-            "avg_speed_km_h": round(pre_speed / 2.0, 2),
+            "avg_speed_km_h": round(measured_avg_speed, 2),
             "dist_traveled_m": round(dist_to_stop, 2),
             "stopping_dist_m": round(dist_to_stop, 2),
             "delta_heading_deg": 0.0,
             "lateral_offset_m": 0.0,
-            "terminated": False,
-            "truncated": False,
-            "out_of_road": False,
-            "arrive_dest": False,
+            "terminated": terminated,
+            "truncated": truncated,
+            "out_of_road": step_info.get("out_of_road", False),
+            "arrive_dest": step_info.get("arrive_dest", False),
             "notes": f"Accelerated 20 steps to {pre_speed:.1f} km/h, then applied throttle_brake={brake_val}."
         })
-        print(f"  {label:24s} brake={brake_val}: pre_v={pre_speed:.2f} km/h, stop_steps={brake_steps} ({brake_steps*0.1:.2f}s), stop_dist={dist_to_stop:.2f} m")
+        print(f"  {label:24s} brake={brake_val}: pre_v={pre_speed:.2f} km/h, stop_steps={brake_steps} ({brake_steps*0.1:.2f}s), stop_dist={dist_to_stop:.2f} m, avg_v={measured_avg_speed:.2f} km/h")
         env.close()
 
     # Write summary CSV
@@ -532,15 +537,34 @@ def audit_determinism(output_csv_path):
         r0 = runs_data[0]
         r1 = runs_data[1]
         
+        # Check trajectory length first - do not allow zip truncation to hide mismatches
+        len_match = (len(r0) == len(r1))
+        
         max_obs_diff = max(float(np.max(np.abs(s0["obs"] - s1["obs"]))) for s0, s1 in zip(r0, r1))
         max_reward_diff = max(abs(s0["reward"] - s1["reward"]) for s0, s1 in zip(r0, r1))
         max_pos_diff = max(math.hypot(s1["x"] - s0["x"], s1["y"] - s0["y"]) for s0, s1 in zip(r0, r1))
         max_heading_diff = max(abs(s1["heading_rad"] - s0["heading_rad"]) for s0, s1 in zip(r0, r1))
         max_speed_diff = max(abs(s1["speed_km_h"] - s0["speed_km_h"]) for s0, s1 in zip(r0, r1))
         max_route_diff = max(abs(s1["route_completion"] - s0["route_completion"]) for s0, s1 in zip(r0, r1))
-        term_match = all(s0["terminated"] == s1["terminated"] and s0["truncated"] == s1["truncated"] for s0, s1 in zip(r0, r1))
+        term_match = all(s0["terminated"] == s1["terminated"] for s0, s1 in zip(r0, r1))
+        trunc_match = all(s0["truncated"] == s1["truncated"] for s0, s1 in zip(r0, r1))
+        
+        seed_exact_match = (
+            len_match
+            and max_obs_diff == 0.0
+            and max_reward_diff == 0.0
+            and max_pos_diff == 0.0
+            and max_heading_diff == 0.0
+            and max_speed_diff == 0.0
+            and max_route_diff == 0.0
+            and term_match
+            and trunc_match
+        )
+        if not seed_exact_match:
+            all_exact_match = False
         
         print(f"  Scenario Seed {scenario_seed}:")
+        print(f"    Trajectory Length Match:  {len_match} ({len(r0)} vs {len(r1)})")
         print(f"    Max Obs Vector Diff:      {max_obs_diff:.2e}")
         print(f"    Max Reward Diff:          {max_reward_diff:.2e}")
         print(f"    Max Position Diff:        {max_pos_diff:.2e} m")
@@ -548,9 +572,8 @@ def audit_determinism(output_csv_path):
         print(f"    Max Speed Diff:           {max_speed_diff:.2e} km/h")
         print(f"    Max Route Completion Diff:{max_route_diff:.2e}")
         print(f"    Termination Match:        {term_match}")
-        
-        if max_obs_diff > 0.0 or max_pos_diff > 0.0:
-            all_exact_match = False
+        print(f"    Truncation Match:         {trunc_match}")
+        print(f"    Seed Exact Match:         {seed_exact_match}")
             
         for s0, s1 in zip(r0, r1):
             csv_rows.append({
@@ -922,13 +945,13 @@ def generate_schemas(obs_schema_path, act_schema_path):
                 "slice": "[35:275] (or [19:259] if num_others=0)",
                 "category": "lidar",
                 "type": "active_range_sensor",
-                "semantic": "240 distance detector rays sweeping 360 degrees counter-clockwise starting from 0 deg (direct ahead)",
+                "semantic": "240 distance detector rays sweeping 360 degrees counter-clockwise starting from 0 deg (direct ahead). Lidar.mask uses CollisionGroup.can_be_lidar_detected() (Vehicle, InvisibleWall, TrafficObject, TrafficParticipants), which excludes Sidewalk, ContinuousLaneLine, and BrokenLaneLine.",
                 "raw_unit": "hit fraction (dist / 50.0m)",
                 "normalization": "hit_fraction",
                 "clipping": "[0.0, 1.0]",
                 "neutral_or_zero": "1.0 means clear path / max range (50m); 0.0 means immediate collision or dropped ray",
                 "privileged_leakage": False,
-                "stability": "Dynamic and static obstacles (excludes static road borders)"
+                "stability": "Dynamic obstacles and static traffic objects (sidewalks, road borders, and lane lines are excluded by the LiDAR collision mask)"
             }
         ]
     }
@@ -1051,7 +1074,7 @@ def main():
         f.write("- **Ego Last Action Ordering:** The MetaDrive docstring claimed throttle precedes steering. Source code and empirical validation prove that index 5 is STEERING and index 6 is THROTTLE/BRAKE.\n")
         f.write("- **Observation Semantics:** Road borders (`dist_to_left/right_side`), lane offsets, and heading deviation are geometric state abstractions, not side-detector rays. `heading_diff` is a normalized signed proxy based on dot product with the lane lateral vector.\n")
         f.write("- **LiDAR Sweep Direction:** The MetaDrive docstring claimed clockwise sweep. Source code and empirical testing prove that ray 0 is Forward (0 deg), ray 60 is Left (+90 deg), ray 120 is Rear (180 deg), ray 180 is Right (270 deg) — an exact COUNTER-CLOCKWISE sweep.\n")
-        f.write("- **LiDAR Static Detection:** LiDAR detects dynamic vehicles and static traffic obstacles (cones, barriers) but DOES NOT detect road borders, curbs, or sidewalks.\n")
+        f.write("- **LiDAR Detection Targets:** LiDAR detects dynamic vehicles and static traffic obstacles (cones, barriers). Sidewalks and lane lines are excluded because Lidar.mask is set to CollisionGroup.can_be_lidar_detected(), which excludes Sidewalk, ContinuousLaneLine, and BrokenLaneLine.\n")
         f.write("- **Surrounding Vehicles:** With `num_others=4`, 16 features are added. These features query physics state directly via a 50m cylinder, bypassing LiDAR ray occlusion (privileged state leakage). Padding for absent vehicles is `0.0`, whereas zero relative delta normalizes to `0.5`.\n\n")
         
         f.write("## 3. Control Frequency Findings\n")
@@ -1075,7 +1098,7 @@ def main():
         f.write("- Native MetaDrive action is continuous `Box(-1, 1, shape=(2,))` representing `[steering, throttle_brake]`.\n")
         f.write("- Native discrete mapping `Discrete(25)` implements a symmetric 5x5 grid.\n")
         f.write("- `CourseEnvV1` Discrete(5) embeds throttle into steering, lacks evasive braking, and omits idle/coasting.\n")
-        f.write("- Early 15-step steering response confirms symmetric lateral displacement and heading response for left and right commands.\n")
+        f.write("- Mirror-symmetric steering response was observed in the tested 15-step configuration.\n")
         f.write("- Controlled braking from ~19.9 km/h confirms monotonic stopping distances: 3.92m (-0.25), 2.06m (-0.50), and 1.48m (-1.00).\n")
 
     print(f"[SAVED] Audit summary markdown saved to: {summary_md_path}")
