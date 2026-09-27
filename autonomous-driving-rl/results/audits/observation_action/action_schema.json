@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "source_simulator": "MetaDrive",
+    "pinned_version": "0.4.3",
+    "pinned_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "canonical_status": "PROPOSED_AUDIT_RECOMMENDATION_NOT_FROZEN",
+    "audit_date": "2026-09-27"
+  },
+  "native_continuous_action_space": {
+    "space_type": "Box(-1.0, 1.0, shape=(2,), dtype=float32)",
+    "dimensions": [
+      {
+        "index": 0,
+        "name": "steering",
+        "range": "[-1.0, 1.0]",
+        "physical_effect": "steering * max_steering (approx 60 deg max wheel turn). Negative is LEFT, positive is RIGHT.",
+        "neutral": 0.0
+      },
+      {
+        "index": 1,
+        "name": "throttle_brake",
+        "range": "[-1.0, 1.0]",
+        "physical_effect": "Positive: engine force = max_engine_force * throttle (if speed < max_speed). Negative: brake = abs(throttle) * max_brake_force.",
+        "neutral": 0.0
+      }
+    ]
+  },
+  "discrete_action_adapters": {
+    "metadrive_native_discrete_25": {
+      "space_type": "Discrete(25)",
+      "formula": "steering = (action % 5) * 0.5 - 1.0; throttle = (action // 5) * 0.5 - 1.0",
+      "steering_values": [
+        -1.0,
+        -0.5,
+        0.0,
+        0.5,
+        1.0
+      ],
+      "throttle_values": [
+        -1.0,
+        -0.5,
+        0.0,
+        0.5,
+        1.0
+      ],
+      "symmetry": "Fully symmetric, orthogonal grid covering all 4 quadrants"
+    },
+    "course_env_v1_discrete_5": {
+      "space_type": "Discrete(5)",
+      "actions": {
+        "0": {
+          "name": "LEFT",
+          "continuous": [
+            -0.35,
+            0.35
+          ]
+        },
+        "1": {
+          "name": "STRAIGHT",
+          "continuous": [
+            0.0,
+            0.4
+          ]
+        },
+        "2": {
+          "name": "RIGHT",
+          "continuous": [
+            0.35,
+            0.35
+          ]
+        },
+        "3": {
+          "name": "ACCELERATE",
+          "continuous": [
+            0.0,
+            0.8
+          ]
+        },
+        "4": {
+          "name": "BRAKE",
+          "continuous": [
+            0.0,
+            -0.8
+          ]
+        }
+      },
+      "shortcomings": [
+        "Coupled steering and throttle (steering always forces 0.35 throttle)",
+        "No steering while braking (cannot perform evasive braking)",
+        "No idle / coasting action (throttle = 0)",
+        "Locked steering magnitude (+/-0.35 only, cannot steer sharply)",
+        "Asymmetric coverage of control envelope"
+      ]
+    },
+    "candidate_low_branching_adapter_9": {
+      "space_type": "Discrete(9)",
+      "candidate_grid": "3x3 grid: steering in {-0.6, 0.0, 0.6}, throttle in {-0.8, 0.0, 0.6}",
+      "status": "NON-FROZEN CONCEPT",
+      "notes": "Throttle is asymmetric by design (-0.8 brake vs +0.6 throttle). Exact discrete primitives require later calibration."
+    }
+  }
+}
