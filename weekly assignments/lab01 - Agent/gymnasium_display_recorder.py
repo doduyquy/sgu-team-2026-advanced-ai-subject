@@ -6,14 +6,16 @@ import io
 import base64
 from IPython.display import HTML
 from IPython import display as ipythondisplay
-from pyvirtualdisplay import Display
-
-import os
-os.environ['PYVIRTUALDISPLAY_DISPLAYFD'] = '0'
-
-# Start virtual display
-display = Display(visible=0, size=(640, 480))
-display.start()
+# pyvirtualdisplay is only needed on headless Linux/WSL/Colab.
+# On Windows, Pygame renders directly via rgb_array without Xvfb.
+try:
+    from pyvirtualdisplay import Display
+    import os
+    os.environ['PYVIRTUALDISPLAY_DISPLAYFD'] = '0'
+    display = Display(visible=0, size=(640, 480))
+    display.start()
+except Exception:
+    display = None
 
 def gym_make(env_name, run_name, render_fps=30):
     """
