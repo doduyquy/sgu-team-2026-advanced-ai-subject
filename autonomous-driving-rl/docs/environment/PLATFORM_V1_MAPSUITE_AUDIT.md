@@ -3,7 +3,7 @@
 > **Status:** AUDIT & DESIGN RECOMMENDATION (GATE 2)  
 > **Freeze Status:** NON-FROZEN — RESEARCH CANDIDATE SUITE ONLY  
 > **Target Scope:** Universal scenario suite supporting Stages 0 through 7  
-> **Date:** September 2026  
+> **Date:** September 2026 (Updated with Gate-2 Review Refinements)  
 
 ---
 
@@ -26,7 +26,7 @@ The mission of Gate 2 is to design, experimentally sweep, and calibrate a **four
 4. **Extreme:** Longest distance, heterogeneous multi-block composition (Intersections, Roundabouts, Ramps, Merges, Splits), dense traffic.
 
 **Core Mandates:**
-- Difficulty is defined by **intrinsic environment properties** (topology, route length, decision points, traffic density), NOT by agent failure rates.
+- Difficulty is defined by **intrinsic environment properties** (topology, route length, decision blocks, traffic density), NOT by agent failure rates.
 - MapSuiteV1 candidates are **NOT frozen** in Gate 2; they form a validated candidate pool.
 - No Stage 1+ agents, rewards, observations, or actions were modified.
 
@@ -55,14 +55,14 @@ Procedural generation was audited from source in:
 ### Block Types & Registered IDs
 MetaDrive registers block primitives through `PGBlockDistConfig` and `get_metadrive_class()`:
 
-| Block Type | Class Name | ID | Description & Decision Capability |
+| Block Type | Class Name | ID | Description & Maneuver Capability |
 |---|---|---|---|
 | **First Block** | `FirstPGBlock` | `I` | Spawn straight block ($50\text{ m}$ default) where vehicle initializes. |
 | **Straight** | `Straight` | `S` | Linear road corridor without branches. Parameter: `length` $\in [40, 80]\text{ m}$. |
 | **Curve** | `Curve` | `C` | Arc curve corridor. Parameters: `radius` $\in [25, 60]\text{ m}$, `angle` $\in [45^\circ, 135^\circ]$, `dir` $\in \{0, 1\}$. |
-| **Intersection** | `StdInterSection` | `X` | 4-way standard intersection. **3 branching choices** per entrance. |
-| **T-Intersection** | `StdTInterSection` | `T` | 3-way T-intersection. **2 branching choices** per entrance. |
-| **Roundabout** | `Roundabout` | `O` | Multi-lane rotary. Multiple exits, weaving maneuvers. |
+| **Intersection** | `StdInterSection` | `X` | 4-way standard intersection. **3 alternative turning choices** per entrance. |
+| **T-Intersection** | `StdTInterSection` | `T` | 3-way T-intersection. **2 alternative turning choices** per entrance. |
+| **Roundabout** | `Roundabout` | `O` | Multi-lane rotary. Multiple exits, circular weaving. |
 | **In-Ramp** | `InRampOnStraight` | `r` | Highway on-ramp merging into straight corridor. |
 | **Out-Ramp** | `OutRampOnStraight` | `R` | Highway off-ramp diverging from straight corridor. |
 | **Merge** | `Merge` | `y` | Bottleneck narrowing lane reduction. |
@@ -93,12 +93,15 @@ To reconcile reproducible debugging with statistical generalization across Stage
 
 ```text
 MapSuiteV1 Tier (e.g. Medium)
-   ├── 1. Canonical Scenario (Fixed Sequence + Fixed Seed, e.g. SCXCS Seed 11)
-   │      - Deterministic benchmark reference
+   ├── 1. Primary Canonical Scenario (Fixed Sequence + Fixed Seed, e.g. SCXCS Seed 11)
+   │      - Deterministic benchmark reference adopted after structural and visual review
    │      - Used for debugging, trajectory visualization, video rendering, baseline comparisons
    │      - Fully serialized block-level configuration
    │
-   └── 2. Scenario Family (Fixed Sequence + Seed Pool 0..19+)
+   ├── 2. Alternate Canonical Scenarios (e.g. SCTCS Seed 0, SCXCCS Seed 13)
+   │      - Fully validated alternate reference configurations preserved for diagnostics
+   │
+   └── 3. Scenario Family (Fixed Sequence + Seed Pool 0..19+)
           - Procedural seed variations of identical structural complexity
           - Used for policy training, cross-validation, and out-of-distribution evaluation
 ```
@@ -118,14 +121,16 @@ To ensure map difficulty is unpolluted by confounding physical or perceptual art
 
 ---
 
-## 6. Tier Intent & Target Profiles
+## 6. Tier Intent & Multi-Dimensional Difficulty Concept
 
-| Tier | Topological Intent | Route Length Target | Decision Blocks | Traffic Density Target | Primary Agent Challenge |
-|---|---|---|---|---|---|
-| **Easy** | Pure corridor following (Straight, Curve). Zero multi-exit branch blocks. | $250\text{ m} - 450\text{ m}$ | 0 | $0.0$ (no traffic) | Basic lane centering, curvature tracking, smooth throttle control. |
-| **Medium** | Single branch decision (T or X intersection) embedded in curves/straights. | $450\text{ m} - 700\text{ m}$ | 1 ($2-3$ choices) | $0.08$ (low traffic) | Navigation checkpoint following, intersection navigation, light vehicle clearance. |
-| **Hard** | Multiple decision blocks combining Intersections, Roundabouts, and Ramps. | $600\text{ m} - 850\text{ m}$ | $2-3$ ($6-8$ choices) | $0.15$ (moderate traffic) | Multi-stage routing, roundabout circulating, dynamic gap selection. |
-| **Extreme** | Heterogeneous long-horizon composition (X, T, Roundabout, Ramps, Merges, Splits). | $850\text{ m} - 1200\text{ m}$ | $4-6$ ($10-12$ choices) | $0.25$ (dense traffic) | Long-horizon planning, bottleneck merges, dense traffic interaction. |
+Difficulty in MapSuiteV1 is **multi-dimensional**—governed by topology, maneuver-decision blocks, curvature, and traffic density—**not defined solely by route distance**. Consequently, route-length distributions between tiers are allowed to overlap naturally (e.g. a long Hard route vs. a compact Extreme network).
+
+| Tier | Topological Intent | Route Length Target | Decision Blocks (`decision_block_count`) | Branching Score (`branching_choice_score`) | Traffic Density Target | Primary Agent Challenge |
+|---|---|---|---|---|---|---|
+| **Easy** | Pure corridor following (Straight, Curve). Zero multi-exit branch blocks. | $250\text{ m} - 450\text{ m}$ | 0 | 0 | $0.0$ (no traffic) | Basic lane centering, curvature tracking, smooth throttle control. |
+| **Medium** | Single branch decision (T or X intersection) embedded in curves/straights. | $450\text{ m} - 700\text{ m}$ | 1 | $2 - 3$ | $0.08$ (low traffic) | Navigation checkpoint following, intersection navigation, light vehicle clearance. |
+| **Hard** | Multiple decision blocks combining Intersections, Roundabouts, and Ramps. | $600\text{ m} - 850\text{ m}$ | $2 - 3$ | $6 - 8$ | $0.15$ (moderate traffic) | Multi-stage routing, roundabout circulating, dynamic gap selection. |
+| **Extreme** | Heterogeneous long-horizon composition (X, T, Roundabout, Ramps, Merges, Splits). | $850\text{ m} - 1200\text{ m}$ | $4 - 6$ | $10 - 11$ | $0.25$ (dense traffic) | Long-horizon planning, bottleneck merges, dense traffic interaction. |
 
 ---
 
@@ -133,48 +138,57 @@ To ensure map difficulty is unpolluted by confounding physical or perceptual art
 
 12 candidate sequences (3 per tier) were swept across 20 scenario seeds each ($20 \times 12 = 240$ scenarios total):
 
-| Tier | Sequence | Seeds Tested | Success Rate | Route Length Range | Mean Route Length | Decision Points | Mean Bounding Box ($W \times H$) |
-|---|---|---|---|---|---|---|---|
-| **Easy** | `SCS` | 20 | **20/20 (100%)** | $209.5\text{ m} - 414.5\text{ m}$ | $324.7\text{ m}$ | 0 | $193\text{ m} \times 152\text{ m}$ |
-| **Easy** | `SCSS` | 20 | **20/20 (100%)** | $251.8\text{ m} - 491.5\text{ m}$ | $382.9\text{ m}$ | 0 | $228\text{ m} \times 178\text{ m}$ |
-| **Easy** | `SCCS` | 20 | **20/20 (100%)** | $280.5\text{ m} - 640.4\text{ m}$ | $454.5\text{ m}$ | 0 | $235\text{ m} \times 245\text{ m}$ |
-| **Medium** | `SCXCS` | 20 | **20/20 (100%)** | $352.0\text{ m} - 625.2\text{ m}$ | $509.1\text{ m}$ | 3 | $237\text{ m} \times 326\text{ m}$ |
-| **Medium** | `SCTCS` | 20 | **20/20 (100%)** | $326.7\text{ m} - 708.8\text{ m}$ | $518.2\text{ m}$ | 2 | $244\text{ m} \times 304\text{ m}$ |
-| **Medium** | `SCXCCS` | 20 | **20/20 (100%)** | $478.6\text{ m} - 827.1\text{ m}$ | $666.4\text{ m}$ | 3 | $275\text{ m} \times 356\text{ m}$ |
-| **Hard** | `SCXOCS` | 20 | **20/20 (100%)** | $556.6\text{ m} - 829.8\text{ m}$ | $649.0\text{ m}$ | 6 | $298\text{ m} \times 382\text{ m}$ |
-| **Hard** | `SCTXrCS` | 20 | **20/20 (100%)** | $612.1\text{ m} - 871.2\text{ m}$ | $742.1\text{ m}$ | 6 | $326\text{ m} \times 402\text{ m}$ |
-| **Hard** | `XTOCS` | 20 | **20/20 (100%)** | $397.9\text{ m} - 659.0\text{ m}$ | $508.2\text{ m}$ | 8 | $268\text{ m} \times 351\text{ m}$ |
-| **Extreme** | `CrXROSTR` | 20 | **20/20 (100%)** | $752.0\text{ m} - 1062.4\text{ m}$ | $919.5\text{ m}$ | 11 | $385\text{ m} \times 478\text{ m}$ |
-| **Extreme** | `SCXOCrTYCS` | 20 | **20/20 (100%)** | $884.9\text{ m} - 1288.7\text{ m}$ | $1054.0\text{ m}$ | 10 | $412\text{ m} \times 524\text{ m}$ |
-| **Extreme** | `SCTXORyCCS` | 20 | **20/20 (100%)** | $823.5\text{ m} - 1153.5\text{ m}$ | $1009.7\text{ m}$ | 10 | $428\text{ m} \times 495\text{ m}$ |
+### Metric Clarifications:
+- **`decision_block_count`:** Count of physical branching / maneuver-decision blocks encountered (`X`, `T`, `O`, `r`, `R`, `y`, `Y`).
+- **`branching_choice_score`:** Weighted branching complexity score ($X \to 3$, $T \to 2$, $O \to 3$, $r/R \to 1$, $y/Y \to 1$).
+- **`planned_traffic_vehicle_count`:** Total traffic vehicles planned across blocks under `TrafficMode.Trigger`.
+
+| Tier | Sequence | Seeds Tested | Success Rate | Route Length Range | Mean Route Length | Decision Blocks | Branch Score | Mean Bounding Box ($W \times H$) |
+|---|---|---|---|---|---|---|---|---|
+| **Easy** | `SCS` | 20 | **20/20 (100%)** | $209.5\text{ m} - 414.5\text{ m}$ | $324.7\text{ m}$ | 0 | 0 | $193\text{ m} \times 152\text{ m}$ |
+| **Easy** | `SCSS` | 20 | **20/20 (100%)** | $251.8\text{ m} - 491.5\text{ m}$ | $382.9\text{ m}$ | 0 | 0 | $228\text{ m} \times 178\text{ m}$ |
+| **Easy** | `SCCS` | 20 | **20/20 (100%)** | $280.5\text{ m} - 640.4\text{ m}$ | $454.5\text{ m}$ | 0 | 0 | $235\text{ m} \times 245\text{ m}$ |
+| **Medium** | `SCXCS` | 20 | **20/20 (100%)** | $352.0\text{ m} - 625.2\text{ m}$ | $509.1\text{ m}$ | 1 | 3 | $237\text{ m} \times 326\text{ m}$ |
+| **Medium** | `SCTCS` | 20 | **20/20 (100%)** | $326.7\text{ m} - 708.8\text{ m}$ | $518.2\text{ m}$ | 1 | 2 | $244\text{ m} \times 304\text{ m}$ |
+| **Medium** | `SCXCCS` | 20 | **20/20 (100%)** | $478.6\text{ m} - 827.1\text{ m}$ | $666.4\text{ m}$ | 1 | 3 | $275\text{ m} \times 356\text{ m}$ |
+| **Hard** | `SCXOCS` | 20 | **20/20 (100%)** | $556.6\text{ m} - 829.8\text{ m}$ | $649.0\text{ m}$ | 2 | 6 | $298\text{ m} \times 382\text{ m}$ |
+| **Hard** | `SCTXrCS` | 20 | **20/20 (100%)** | $612.1\text{ m} - 871.2\text{ m}$ | $742.1\text{ m}$ | 3 | 6 | $326\text{ m} \times 402\text{ m}$ |
+| **Hard** | `XTOCS` | 20 | **20/20 (100%)** | $397.9\text{ m} - 659.0\text{ m}$ | $508.2\text{ m}$ | 3 | 8 | $268\text{ m} \times 351\text{ m}$ |
+| **Extreme** | `CrXROSTR` | 20 | **20/20 (100%)** | $752.0\text{ m} - 1062.4\text{ m}$ | $919.5\text{ m}$ | 6 | 11 | $385\text{ m} \times 478\text{ m}$ |
+| **Extreme** | `SCXOCrTYCS` | 20 | **20/20 (100%)** | $884.9\text{ m} - 1288.7\text{ m}$ | $1054.0\text{ m}$ | 5 | 10 | $412\text{ m} \times 524\text{ m}$ |
+| **Extreme** | `SCTXORyCCS` | 20 | **20/20 (100%)** | $823.5\text{ m} - 1153.5\text{ m}$ | $1009.7\text{ m}$ | 5 | 10 | $428\text{ m} \times 495\text{ m}$ |
 
 *Machine-readable evidence:* Full row-by-row scenario telemetry is stored in `results/audits/mapsuite/candidate_metrics.csv`.
 
 ---
 
-## 8. Provisional Canonical Candidate Selection
+## 8. Primary Canonical Candidates & Alternate Pool Selection
 
-For each tier, three provisional canonical candidates were selected. Selection criteria prioritized:
-1. **Representative route length:** Scenarios near the median of their sequence distribution (avoiding extreme short or outlier long routes).
-2. **Visual cleanliness:** Clean, non-overlapping layouts verified by top-down rendering.
-3. **Exact reproducibility:** Clean reset and verified parameter serialization.
+### Human-Reviewed Selection Rationale
+Primary canonical candidates were adopted following thorough structural, visual, and pedagogical review:
+1. **Easy Primary (`SCS` Seed 11):** Clean $349.6\text{ m}$ baseline. Zero branching decision blocks. Perfect for early steering and throttle calibration.
+2. **Medium Primary (`SCXCS` Seed 11):** Balanced $523.8\text{ m}$ corridor introducing a single 4-way intersection (`X`) with light traffic.
+3. **Hard Primary (`SCXOCS` Seed 2):** $643.0\text{ m}$ urban network combining a 4-way cross-intersection and a multi-exit roundabout (`O`).
+4. **Extreme Primary (`CrXROSTR` Seed 6):** $938.6\text{ m}$ multi-feature composition with ramps (`r`, `R`), intersections (`X`, `T`), and rotaries (`O`).
 
-### Shortlisted Provisional Canonical Candidates
+The remaining candidates per tier are **preserved as alternate canonicals** in the candidate pool for diagnostic evaluation and future scenario testing.
 
-| Tier | Rank | Sequence | Seed | Route Length | Decision Points | Traffic Density | Planned Vehicles | Top-Down Preview Path |
-|---|---|---|---|---|---|---|---|---|
-| **Easy** | 1 | `SCS` | `11` | $349.60\text{ m}$ | 0 | $0.00$ | 0 | `results/audits/mapsuite/previews/easy_rank1_SCS_seed11.png` |
-| **Easy** | 2 | `SCSS` | `9` | $403.15\text{ m}$ | 0 | $0.00$ | 0 | `results/audits/mapsuite/previews/easy_rank2_SCSS_seed9.png` |
-| **Easy** | 3 | `SCCS` | `9` | $444.15\text{ m}$ | 0 | $0.00$ | 0 | `results/audits/mapsuite/previews/easy_rank3_SCCS_seed9.png` |
-| **Medium** | 1 | `SCXCS` | `11` | $523.75\text{ m}$ | 3 | $0.08$ | 9 | `results/audits/mapsuite/previews/medium_rank1_SCXCS_seed11.png` |
-| **Medium** | 2 | `SCTCS` | `0` | $521.06\text{ m}$ | 2 | $0.08$ | 10 | `results/audits/mapsuite/previews/medium_rank2_SCTCS_seed0.png` |
-| **Medium** | 3 | `SCXCCS` | `13` | $688.37\text{ m}$ | 3 | $0.08$ | 15 | `results/audits/mapsuite/previews/medium_rank3_SCXCCS_seed13.png` |
-| **Hard** | 1 | `SCXOCS` | `2` | $643.01\text{ m}$ | 6 | $0.15$ | 24 | `results/audits/mapsuite/previews/hard_rank1_SCXOCS_seed2.png` |
-| **Hard** | 2 | `SCTXrCS` | `1` | $748.76\text{ m}$ | 6 | $0.15$ | 26 | `results/audits/mapsuite/previews/hard_rank2_SCTXrCS_seed1.png` |
-| **Hard** | 3 | `XTOCS` | `19` | $496.89\text{ m}$ | 8 | $0.15$ | 18 | `results/audits/mapsuite/previews/hard_rank3_XTOCS_seed19.png` |
-| **Extreme** | 1 | `CrXROSTR` | `6` | $938.58\text{ m}$ | 11 | $0.25$ | 44 | `results/audits/mapsuite/previews/extreme_rank1_CrXROSTR_seed6.png` |
-| **Extreme** | 2 | `SCXOCrTYCS` | `16` | $1051.77\text{ m}$ | 10 | $0.25$ | 46 | `results/audits/mapsuite/previews/extreme_rank2_SCXOCrTYCS_seed16.png` |
-| **Extreme** | 3 | `SCTXORyCCS` | `4` | $1003.23\text{ m}$ | 10 | $0.25$ | 45 | `results/audits/mapsuite/previews/extreme_rank3_SCTXORyCCS_seed4.png` |
+### Canonical Candidates Manifest
+
+| Tier | Candidate Role | Sequence | Seed | Route Length | Decision Blocks | Branch Score | Traffic Density | Planned Traffic | Top-Down Preview Path |
+|---|---|---|---|---|---|---|---|---|---|
+| **Easy** | **Primary** | `SCS` | `11` | $349.60\text{ m}$ | 0 | 0 | $0.00$ | 0 | `results/audits/mapsuite/previews/easy_rank1_SCS_seed11.png` |
+| **Easy** | Alternate | `SCSS` | `9` | $403.15\text{ m}$ | 0 | 0 | $0.00$ | 0 | `results/audits/mapsuite/previews/easy_rank2_SCSS_seed9.png` |
+| **Easy** | Alternate | `SCCS` | `9` | $444.15\text{ m}$ | 0 | 0 | $0.00$ | 0 | `results/audits/mapsuite/previews/easy_rank3_SCCS_seed9.png` |
+| **Medium** | **Primary** | `SCXCS` | `11` | $523.75\text{ m}$ | 1 | 3 | $0.08$ | 9 | `results/audits/mapsuite/previews/medium_rank1_SCXCS_seed11.png` |
+| **Medium** | Alternate | `SCTCS` | `0` | $521.06\text{ m}$ | 1 | 2 | $0.08$ | 10 | `results/audits/mapsuite/previews/medium_rank2_SCTCS_seed0.png` |
+| **Medium** | Alternate | `SCXCCS` | `13` | $688.37\text{ m}$ | 1 | 3 | $0.08$ | 15 | `results/audits/mapsuite/previews/medium_rank3_SCXCCS_seed13.png` |
+| **Hard** | **Primary** | `SCXOCS` | `2` | $643.01\text{ m}$ | 2 | 6 | $0.15$ | 24 | `results/audits/mapsuite/previews/hard_rank1_SCXOCS_seed2.png` |
+| **Hard** | Alternate | `SCTXrCS` | `1` | $748.76\text{ m}$ | 3 | 6 | $0.15$ | 26 | `results/audits/mapsuite/previews/hard_rank2_SCTXrCS_seed1.png` |
+| **Hard** | Alternate | `XTOCS` | `19` | $496.89\text{ m}$ | 3 | 8 | $0.15$ | 18 | `results/audits/mapsuite/previews/hard_rank3_XTOCS_seed19.png` |
+| **Extreme** | **Primary** | `CrXROSTR` | `6` | $938.58\text{ m}$ | 6 | 11 | $0.25$ | 44 | `results/audits/mapsuite/previews/extreme_rank1_CrXROSTR_seed6.png` |
+| **Extreme** | Alternate | `SCXOCrTYCS` | `16` | $1051.77\text{ m}$ | 5 | 10 | $0.25$ | 46 | `results/audits/mapsuite/previews/extreme_rank2_SCXOCrTYCS_seed16.png` |
+| **Extreme** | Alternate | `SCTXORyCCS` | `4` | $1003.23\text{ m}$ | 5 | 10 | $0.25$ | 45 | `results/audits/mapsuite/previews/extreme_rank3_SCTXORyCCS_seed4.png` |
 
 *Exact metadata and serialized block configurations:* Saved in `results/audits/mapsuite/canonical_candidates.json` and `configs/maps/mapsuite_v1_candidates.json`.
 
@@ -182,69 +196,77 @@ For each tier, three provisional canonical candidates were selected. Selection c
 
 ## 9. Top-Down Visual Previews
 
-All 12 provisional canonical candidates were rendered headlessly at $512 \times 512$ resolution using MetaDrive's official `draw_top_down_map` renderer:
+All 12 candidates were rendered headlessly at $512 \times 512$ resolution using MetaDrive's official `draw_top_down_map` renderer:
 
 - **Easy Tier:**
-  - Rank 1: `SCS` Seed 11 — Straight spawn, gentle right sweep, exit straight.
-  - Rank 2: `SCSS` Seed 9 — Extended straight corridor with single sweeping curve.
-  - Rank 3: `SCCS` Seed 9 — S-curve sequence with consecutive left/right bends.
+  - Primary: `SCS` Seed 11 — Straight spawn, gentle sweeping curve, straight exit.
+  - Alternate: `SCSS` Seed 9 — Extended straight cruising with single curve.
+  - Alternate: `SCCS` Seed 9 — S-curve sequence with consecutive left/right bends.
 - **Medium Tier:**
-  - Rank 1: `SCXCS` Seed 11 — Clean approach curve leading into perpendicular 4-way intersection.
-  - Rank 2: `SCTCS` Seed 0 — S-corridor with T-junction branching point.
-  - Rank 3: `SCXCCS` Seed 13 — Higher-speed multi-curve sequence flanking standard intersection.
+  - Primary: `SCXCS` Seed 11 — Clean approach curve leading into perpendicular 4-way intersection.
+  - Alternate: `SCTCS` Seed 0 — S-corridor with T-junction branching point.
+  - Alternate: `SCXCCS` Seed 13 — Higher-speed multi-curve sequence flanking standard intersection.
 - **Hard Tier:**
-  - Rank 1: `SCXOCS` Seed 2 — 4-way intersection followed by full roundabout circulation.
-  - Rank 2: `SCTXrCS` Seed 1 — T-junction, cross intersection, and highway on-ramp merge.
-  - Rank 3: `XTOCS` Seed 19 — Compact high-density urban core with intersection and rotary.
+  - Primary: `SCXOCS` Seed 2 — 4-way intersection followed by full roundabout circulation.
+  - Alternate: `SCTXrCS` Seed 1 — T-junction, cross intersection, and highway on-ramp merge.
+  - Alternate: `XTOCS` Seed 19 — Compact high-density urban core with intersection and rotary.
 - **Extreme Tier:**
-  - Rank 1: `CrXROSTR` Seed 6 — Multi-block highway network combining curves, ramps, intersections, and rotaries.
-  - Rank 2: `SCXOCrTYCS` Seed 16 — Long-distance corridor with bottlenecks, splits, and intersections.
-  - Rank 3: `SCTXORyCCS` Seed 4 — Complex multi-branch loop with merge and split transitions.
+  - Primary: `CrXROSTR` Seed 6 — Multi-block highway network combining curves, ramps, intersections, and rotaries.
+  - Alternate: `SCXOCrTYCS` Seed 16 — Long-distance corridor with bottlenecks, splits, and intersections.
+  - Alternate: `SCTXORyCCS` Seed 4 — Complex multi-branch loop with merge and split transitions.
 
 ---
 
 ## 10. Traffic Profile Observations
 
-1. **Traffic Mode Finding:** MetaDrive operates by default in `TrafficMode.Trigger`. Rather than running all background traffic globally, vehicles are procedurally planned across blocks (`block_triggered_vehicles`) and dynamically activated as the ego vehicle approaches each block.
+1. **Traffic Mode Finding:** MetaDrive operates by default in `TrafficMode.Trigger`. Traffic vehicles are procedurally planned across blocks (`block_triggered_vehicles`) and dynamically activated as ego approaches.
 2. **Planned Vehicle Counts:**
    - Easy ($\text{density} = 0.0$): 0 vehicles.
    - Medium ($\text{density} = 0.08$): $9 - 15$ planned vehicles.
    - Hard ($\text{density} = 0.15$): $18 - 26$ planned vehicles.
    - Extreme ($\text{density} = 0.25$): $40 - 50$ planned vehicles.
-3. **Reproducibility:** Under a fixed scenario seed and fixed traffic mode, traffic spawn lanes and vehicle configurations generate deterministically.
+3. **Rollout Note:** Actual concurrent nearby vehicle counts will be measured during dynamic rollout evaluation in later gates.
 
 ---
 
-## 11. Horizon Risk Analysis (Critical Gate-3 Finding)
+## 11. Objective Horizon Feasibility Analysis (Critical Gate-3 Finding)
 
-The current exploratory environment operates with `horizon = 1000`. At $10\text{ Hz}$ control frequency ($\Delta t = 0.10\text{ s}$), one episode provides an upper bound of:
-$$\text{Max Duration} = 1000 \times 0.10\text{ s} = 100.0\text{ seconds}$$
+The current exploratory environment operates with `horizon = 1000`. At $10\text{ Hz}$ control frequency ($\Delta t = 0.10\text{ s}$), one episode provides an upper bound budget of:
+$$\text{Episode Budget} = 1000 \times 0.10\text{ s} = 100.0\text{ seconds}$$
 
-### Speed-to-Distance Feasibility Table
+To avoid relying on an arbitrary boolean threshold, we compute the **minimum required average vehicle speed** to complete the route within 100.0s:
+$$\bar{v}_{\text{required}} = \frac{\text{route\_length\_m}}{100.0\text{ s}} \times 3.6\quad [\text{km/h}]$$
 
-| Average Vehicle Speed | Max Travel Distance in 100s | Feasible in Easy ($325\text{ m}$)? | Feasible in Medium ($520\text{ m}$)? | Feasible in Hard ($740\text{ m}$)? | Feasible in Extreme ($1050\text{ m}$)? |
-|---|---|---|---|---|---|
-| $15\text{ km/h} \approx 4.17\text{ m/s}$ | $417\text{ m}$ | **Yes** | **No** (Truncated) | **No** (Truncated) | **No** (Truncated) |
-| $20\text{ km/h} \approx 5.56\text{ m/s}$ | $556\text{ m}$ | **Yes** | Borderline | **No** (Truncated) | **No** (Truncated) |
-| $25\text{ km/h} \approx 6.94\text{ m/s}$ | $694\text{ m}$ | **Yes** | **Yes** | Borderline | **No** (Truncated) |
-| $35\text{ km/h} \approx 9.72\text{ m/s}$ | $972\text{ m}$ | **Yes** | **Yes** | **Yes** | Borderline |
-| $45\text{ km/h} \approx 12.50\text{ m/s}$ | $1250\text{ m}$ | **Yes** | **Yes** | **Yes** | **Yes** |
+### Feasibility Against Reference Average Speeds
 
-### Critical Risk Identification:
-In Extreme tier scenarios where route length reaches $1000\text{ m} - 1288\text{ m}$, an agent executing cautious driving through dense traffic or stopping at intersections will be **truncated (`max_step=True`) due to episode timeout rather than driving failure**.
-- **Recommendation for Gate 3:** Gate 3 (Episode Termination and Reward Design) must introduce either a **dynamic distance-proportional horizon** (e.g. $\text{horizon} = \max(1000, 1.5 \times \text{route\_len} / v_{\text{nominal}}$)) or a tier-adjusted horizon ceiling (e.g. 2000 steps for Extreme).
-- *Notice:* Horizon was **not modified** in this task.
+| Canonical Scenario | Route Length | Required Avg Speed ($\bar{v}_{\text{req}}$) | $15\text{ km/h}$ Feasible? | $20\text{ km/h}$ Feasible? | $25\text{ km/h}$ Feasible? | $35\text{ km/h}$ Feasible? |
+|---|---|---|---|---|---|---|
+| **Easy Primary (`SCS` s11)** | $349.6\text{ m}$ | **$12.59\text{ km/h}$** | **Yes** | **Yes** | **Yes** | **Yes** |
+| **Easy Alternate (`SCSS` s9)**| $403.2\text{ m}$ | **$14.51\text{ km/h}$** | **Yes** | **Yes** | **Yes** | **Yes** |
+| **Medium Primary (`SCXCS` s11)**| $523.8\text{ m}$ | **$18.86\text{ km/h}$** | No (Truncated) | **Yes** | **Yes** | **Yes** |
+| **Hard Primary (`SCXOCS` s2)** | $643.0\text{ m}$ | **$23.15\text{ km/h}$** | No (Truncated) | No (Truncated) | **Yes** | **Yes** |
+| **Hard Alternate (`SCTXrCS` s1)**| $748.8\text{ m}$| **$26.96\text{ km/h}$** | No (Truncated) | No (Truncated) | No (Truncated) | **Yes** |
+| **Extreme Primary (`CrXROSTR` s6)**|$938.6\text{ m}$| **$33.79\text{ km/h}$** | No (Truncated) | No (Truncated) | No (Truncated) | **Yes** |
+| **Extreme Alternate (`SCXOCrTYCS` s16)**|$1051.8\text{ m}$| **$37.86\text{ km/h}$** | No (Truncated) | No (Truncated) | No (Truncated) | No (Truncated) |
+
+### Finding & Recommendation for Gate 3:
+- In Hard and Extreme tiers, routes exceeding $700\text{ m} - 1050\text{ m}$ require maintaining average cruising speeds above $25 - 38\text{ km/h}$ without pausing at intersections or yielding to dense traffic.
+- If an agent drives cautiously at $20\text{ km/h}$ through complex roundabouts, it will be **falsely truncated (`max_step=True`) due to step budget exhaustion rather than a driving failure**.
+- **Actionable Input for Gate 3:** Gate 3 (Episode Termination and Reward Design) must resolve the horizon policy (e.g. dynamic distance-proportional horizon or tier-based horizon ceilings). Horizon was **not modified** in Gate 2.
 
 ---
 
-## 12. Map Serialization Strategy
+## 12. Strengthened Map Round-Trip Reproducibility
 
-Relying solely on `(sequence, seed)` is fragile across upstream simulator updates. To achieve absolute archival stability:
-1. `PGMap.get_meta_data()["block_sequence"]` extracts the exact sampled geometric parameters for every block (length, radius, angle, socket index, curvature direction).
-2. MetaDrive supports `MapGenerateMethod.PG_MAP_FILE`, reconstructing the identical road network from this serialized block list without procedural sampling.
-3. Verification test confirmed:
-   $$\text{Route Length}_{\text{Original}} = 407.8944161\text{ m} \equiv \text{Route Length}_{\text{Reconstructed}} = 407.8944161\text{ m}$$
-4. `configs/maps/mapsuite_v1_candidates.json` and `results/audits/mapsuite/canonical_candidates.json` store both the procedural definition (`sequence`, `seed`) and the exact block dictionary manifest.
+To ensure map reconstructions are 100% stable:
+1. `PGMap.get_meta_data()["block_sequence"]` serializes exact geometric parameters for every block.
+2. In `scripts/audit_mapsuite_candidates.py`, a strengthened verification test compares the procedural map vs. `MapGenerateMethod.PG_MAP_FILE` reconstruction:
+   - **Block IDs Match:** `True` (`ISCS`)
+   - **Bounding Box Match:** `True`
+   - **Route Length Difference:** $0.0000000000\text{ m}$ (exact float match)
+   - **Checkpoints Match:** `True`
+   - **Top-Down Render Pixel Equality:** `True` (bit-for-bit identical $512 \times 512$ PNG)
+3. Manifests store both the procedural definition (`sequence`, `seed`) and the exact block dictionary.
 
 ---
 
@@ -253,25 +275,37 @@ Relying solely on `(sequence, seed)` is fragile across upstream simulator update
 Inspection of `metadrive/envs/marl_envs/marl_racing_env.py` reveals:
 - **`RacingMap` (`PGMap` subclass):** A custom closed-circuit racing track manually composed of Straight and Curve blocks with `remove_negative_lanes=True` and `side_lane_line_type=PGLineType.GUARDRAIL`.
 - **Multi-Agent Architecture:** Powered by `MultiAgentMetaDrive` supporting competitive multi-agent simulation (`num_agents=12`).
-- **Target Use Case:** Showcase demonstrations (Human vs. Final Agent, Agent vs. Agent competitive racing, local multi-player exhibition).
-- **Benchmark Distinction:** The Race Map is **strictly separated from the scientific benchmark MapSuiteV1**. It serves as an evaluation showcase, not a platform difficulty tier.
+- **Benchmark Distinction:** The Race Map is **strictly separated from the scientific benchmark MapSuiteV1**. It serves as an evaluation showcase (Human vs. Agent, Agent vs. Agent competitive racing), not a platform difficulty tier.
 
 ---
 
-## 14. Open Questions Before Platform V1 Freeze
+## 14. Future Research Launcher Roadmap Note
 
-1. **Selection of Final Primary Canonical Seeds:** Should Tier Canonical Map 1 be `SCS` (simpler) or `SCSS` (slightly longer) for Easy? Should Hard Canonical Map be `SCXOCS` (Roundabout focus) or `SCTXrCS` (Ramp/highway focus)?
-2. **Horizon Policy for Gate 3:** Should Platform V1 use a fixed horizon per tier (e.g. 1000 for Easy/Med, 2000 for Hard/Ext) or a dynamic formula based on route length?
-3. **Traffic Respawn Policy:** Should background traffic respawn indefinitely (`TrafficMode.Respawn`) or remain finite block-triggered waves (`TrafficMode.Trigger`)?
+A later stage may introduce a **Research Launcher** interface exposing:
+- Map tier selection (Easy, Medium, Hard, Extreme);
+- Primary vs. Alternate canonical map selection;
+- Agent policy selection (Stage 0 through 7);
+- Evaluation seed pool / episode count;
+- Rendering & HUD toggle;
+- Experiment logging & W&B synchronization.
+
+**Constraint:** In benchmark mode, the Research Launcher must strictly lock scientific platform contracts. No UI dependency (e.g. PySide6) is introduced in Gate 2.
 
 ---
 
-## 15. Non-Frozen Recommendations
+## 15. Open Questions Before Platform V1 Freeze
 
-1. **Adopt Four-Tier Profile:**
-   - **Easy:** `SCS` (Canonical Seed 11, $349.6\text{ m}$, 0 decisions, 0.0 traffic).
-   - **Medium:** `SCXCS` (Canonical Seed 11, $523.8\text{ m}$, 3 decisions, 0.08 traffic).
-   - **Hard:** `SCXOCS` (Canonical Seed 2, $643.0\text{ m}$, 6 decisions, 0.15 traffic).
-   - **Extreme:** `CrXROSTR` (Canonical Seed 6, $938.6\text{ m}$, 11 decisions, 0.25 traffic).
-2. **Preserve Scenario Families:** Maintain the 20-seed candidate pools in `candidate_metrics.csv` for post-canonical generalization testing.
-3. **Retain Dual Map Representation:** Store both procedural seeds and serialized `block_sequence` dictionaries in configuration manifests.
+1. **Horizon Policy for Gate 3:** Should Platform V1 use a dynamic distance-proportional horizon ($\text{horizon} = \max(1000, 1.5 \times \text{route\_len} / v_{\text{nominal}}$)) or fixed tier-based step ceilings (e.g. 1000 for Easy/Med, 2000 for Hard/Ext)?
+2. **Traffic Respawn Policy:** Should background traffic respawn indefinitely (`TrafficMode.Respawn`) or remain finite block-triggered waves (`TrafficMode.Trigger`)?
+
+---
+
+## 16. Non-Frozen Recommendations
+
+1. **Adopt Four-Tier Primary Canonicals:**
+   - **Easy Primary:** `SCS` Seed 11 ($349.6\text{ m}$, 0 decision blocks, 0.0 traffic).
+   - **Medium Primary:** `SCXCS` Seed 11 ($523.8\text{ m}$, 1 decision block, 0.08 traffic).
+   - **Hard Primary:** `SCXOCS` Seed 2 ($643.0\text{ m}$, 2 decision blocks, 0.15 traffic).
+   - **Extreme Primary:** `CrXROSTR` Seed 6 ($938.6\text{ m}$, 6 decision blocks, 0.25 traffic).
+2. **Preserve Alternate Canonical Pool:** Maintain the 8 validated alternate candidates across tiers for diagnostic and robustness evaluation.
+3. **Preserve Scenario Families:** Maintain the 20-seed candidate pools in `candidate_metrics.csv` for post-canonical generalization testing.
