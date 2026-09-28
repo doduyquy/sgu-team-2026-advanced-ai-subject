@@ -16,11 +16,12 @@
 - **Telescoping Sum Exactness:** Sum of deltas matches `final_rc - initial_rc` down to float machine precision (error < 1e-15 across all 12 canonical/alternate topologies).
 - **Monotonicity:** Zero negative deltas observed during forward reference driving.
 - **Length Invariance:** Net route progress across any completed map is normalized to ~1.0.
+- **Reverse Motion Dynamics:** In an explicitly labeled audit-only test (`vehicle_config.enable_reverse=True`), physical backward motion confirmed negative delta_route_completion accumulation (`reverse_progress_audit.csv`).
 
 ## 4. Parameter Sensitivity Calibration
-- Tested 72 parameter combinations. 48 configurations satisfied all core invariants.
+- Tested 72 parameter combinations. 42 configurations satisfied all core invariants (clean success > unsafe arrival, stationary timeout < 0, safety failure < 0).
 - Selected configuration: `w_progress=1.0`, `time_penalty_budget=0.25`, `success_bonus=1.0`, `safety_penalty=1.0`, `timeout_penalty=0.0`.
-- Yields minimal cross-tier return spread (~0.0135 across all 4 tiers), strictly penalizes stationary timeout (-0.25), and ensures safety failures remain negative.
+- Rationale: Selected as an interpretable, balanced non-unique design choice that strictly penalizes waiting (-0.25 on stationary timeout), preserves a decisive clean-success margin (~1.88 return), and avoids making time efficiency overly dominant over safety.
 
 ## 5. Reward Candidate Comparison
 | Trajectory | Tier | Route Length | Native Return (Cand A) | Cand B Return | Cand C Return (Proposed) | Cand C Progress | Cand C Time Cost | Cand C Terminal |

@@ -67,11 +67,40 @@ class EpisodeRecord:
         if self.simulation_time_s < 0:
             raise ValueError(f"simulation_time_s must be non-negative, got {self.simulation_time_s}")
 
+        # Semantic Consistency Invariants
         if self.clean_success:
             if not self.raw_arrival or self.primary_reason != TerminalReason.SUCCESS:
                 raise ValueError(
                     f"clean_success=True requires raw_arrival=True and primary_reason=SUCCESS (got arrival={self.raw_arrival}, reason={self.primary_reason})"
                 )
+            if self.time_to_clean_success_s is None or not math.isfinite(self.time_to_clean_success_s) or self.time_to_clean_success_s < 0:
+                raise ValueError(
+                    f"clean_success=True requires a non-null, finite, non-negative time_to_clean_success_s (got {self.time_to_clean_success_s})"
+                )
+        else:
+            if self.primary_reason == TerminalReason.SUCCESS:
+                raise ValueError(
+                    "primary_reason=SUCCESS requires clean_success=True and raw_arrival=True in Platform V1 taxonomy"
+                )
+            if self.time_to_clean_success_s is not None:
+                raise ValueError(
+                    f"Non-success record must have time_to_clean_success_s=None (got {self.time_to_clean_success_s})"
+                )
+
+        if self.primary_reason == TerminalReason.TIMEOUT:
+            if not self.truncated:
+                raise ValueError("primary_reason=TIMEOUT requires truncated=True")
+
+        if self.primary_reason in (
+            TerminalReason.CRASH_HUMAN,
+            TerminalReason.CRASH_VEHICLE,
+            TerminalReason.CRASH_OBJECT,
+            TerminalReason.CRASH_BUILDING,
+            TerminalReason.CRASH_SIDEWALK,
+            TerminalReason.OUT_OF_ROAD,
+        ):
+            if not self.terminated:
+                raise ValueError(f"Safety primary reason {self.primary_reason} requires terminated=True")
 
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
@@ -83,7 +112,7 @@ class EpisodeRecord:
 class AggregateMetrics:
     """
     Scientific benchmark summary aggregated across evaluation episodes.
-    Separates Primary benchmark metrics, Secondary diagnostics, and Training returns.
+    Preserves full Python float precision; rounding belongs in formatting/display layers.
     """
     total_episodes: int
 
@@ -130,31 +159,31 @@ class AggregateMetrics:
 def compute_aggregate_metrics(records: List[EpisodeRecord]) -> AggregateMetrics:
     """
     Aggregates a list of EpisodeRecord instances into standardized evaluation metrics.
-    Handles empty success pools with explicit None/null semantics.
+    Maintains full float precision throughout. Handles empty success pools with explicit None semantics.
     """
     if not records:
         raise ValueError("Cannot aggregate empty list of episode records.")
 
     n = len(records)
 
-    # Primary task rates
+    # Primary task rates (full float precision)
     clean_successes = sum(1 for r in records if r.clean_success)
-    clean_success_rate = round(clean_successes / n, 4)
+    clean_success_rate = clean_successes / n
 
     raw_arrivals = sum(1 for r in records if r.raw_arrival)
-    raw_arrival_rate = round(raw_arrivals / n, 4)
+    raw_arrival_rate = raw_arrivals / n
 
     # Mutually exclusive primary outcome rates driven by TerminalReason enum
     reasons = [r.primary_reason for r in records]
-    success_rate = round(reasons.count(TerminalReason.SUCCESS) / n, 4)
-    timeout_rate = round(reasons.count(TerminalReason.TIMEOUT) / n, 4)
-    crash_human_rate = round(reasons.count(TerminalReason.CRASH_HUMAN) / n, 4)
-    crash_vehicle_rate = round(reasons.count(TerminalReason.CRASH_VEHICLE) / n, 4)
-    crash_object_rate = round(reasons.count(TerminalReason.CRASH_OBJECT) / n, 4)
-    crash_building_rate = round(reasons.count(TerminalReason.CRASH_BUILDING) / n, 4)
-    crash_sidewalk_rate = round(reasons.count(TerminalReason.CRASH_SIDEWALK) / n, 4)
-    out_of_road_rate = round(reasons.count(TerminalReason.OUT_OF_ROAD) / n, 4)
-    unknown_rate = round(reasons.count(TerminalReason.UNKNOWN_TERMINATION) / n, 4)
+    success_rate = reasons.count(TerminalReason.SUCCESS) / n
+    timeout_rate = reasons.count(TerminalReason.TIMEOUT) / n
+    crash_human_rate = reasons.count(TerminalReason.CRASH_HUMAN) / n
+    crash_vehicle_rate = reasons.count(TerminalReason.CRASH_VEHICLE) / n
+    crash_object_rate = reasons.count(TerminalReason.CRASH_OBJECT) / n
+    crash_building_rate = reasons.count(TerminalReason.CRASH_BUILDING) / n
+    crash_sidewalk_rate = reasons.count(TerminalReason.CRASH_SIDEWALK) / n
+    out_of_road_rate = reasons.count(TerminalReason.OUT_OF_ROAD) / n
+    unknown_rate = reasons.count(TerminalReason.UNKNOWN_TERMINATION) / n
 
     # Overall safety failure rate (any safety failure as primary reason)
     safety_failures = sum(
@@ -168,36 +197,33 @@ def compute_aggregate_metrics(records: List[EpisodeRecord]) -> AggregateMetrics:
             TerminalReason.OUT_OF_ROAD,
         )
     )
-    safety_failure_rate = round(safety_failures / n, 4)
+    safety_failure_rate = safety_failures / n
 
     # Raw individual event rates (can overlap / sum > 1.0)
-    raw_crash_vehicle_rate = round(sum(1 for r in records if r.raw_crash_vehicle) / n, 4)
-    raw_crash_object_rate = round(sum(1 for r in records if r.raw_crash_object) / n, 4)
-    raw_crash_building_rate = round(sum(1 for r in records if r.raw_crash_building) / n, 4)
-    raw_crash_human_rate = round(sum(1 for r in records if r.raw_crash_human) / n, 4)
-    raw_crash_sidewalk_rate = round(sum(1 for r in records if r.raw_crash_sidewalk) / n, 4)
-    raw_out_of_road_rate = round(sum(1 for r in records if r.raw_out_of_road) / n, 4)
-    raw_any_safety_event_rate = round(
-        sum(
-            1 for r in records
-            if (
-                r.raw_crash_vehicle
-                or r.raw_crash_object
-                or r.raw_crash_building
-                or r.raw_crash_human
-                or r.raw_crash_sidewalk
-                or r.raw_out_of_road
-            )
-        ) / n,
-        4
-    )
+    raw_crash_vehicle_rate = sum(1 for r in records if r.raw_crash_vehicle) / n
+    raw_crash_object_rate = sum(1 for r in records if r.raw_crash_object) / n
+    raw_crash_building_rate = sum(1 for r in records if r.raw_crash_building) / n
+    raw_crash_human_rate = sum(1 for r in records if r.raw_crash_human) / n
+    raw_crash_sidewalk_rate = sum(1 for r in records if r.raw_crash_sidewalk) / n
+    raw_out_of_road_rate = sum(1 for r in records if r.raw_out_of_road) / n
+    raw_any_safety_event_rate = sum(
+        1 for r in records
+        if (
+            r.raw_crash_vehicle
+            or r.raw_crash_object
+            or r.raw_crash_building
+            or r.raw_crash_human
+            or r.raw_crash_sidewalk
+            or r.raw_out_of_road
+        )
+    ) / n
 
     # Route completion statistics
     final_completions = [r.final_route_completion for r in records]
     max_completions = [r.max_route_completion for r in records]
-    mean_final_rc = round(statistics.mean(final_completions), 4)
-    median_final_rc = round(statistics.median(final_completions), 4)
-    mean_max_rc = round(statistics.mean(max_completions), 4)
+    mean_final_rc = statistics.mean(final_completions)
+    median_final_rc = statistics.median(final_completions)
+    mean_max_rc = statistics.mean(max_completions)
 
     # Conditional efficiency (successful episodes only)
     success_times = [
@@ -206,8 +232,8 @@ def compute_aggregate_metrics(records: List[EpisodeRecord]) -> AggregateMetrics:
         if r.clean_success and r.time_to_clean_success_s is not None
     ]
     if success_times:
-        mean_time_to_success = round(statistics.mean(success_times), 2)
-        median_time_to_success = round(statistics.median(success_times), 2)
+        mean_time_to_success = statistics.mean(success_times)
+        median_time_to_success = statistics.median(success_times)
     else:
         mean_time_to_success = None
         median_time_to_success = None
@@ -215,13 +241,13 @@ def compute_aggregate_metrics(records: List[EpisodeRecord]) -> AggregateMetrics:
     # Motion & Diagnostics
     mean_speeds = [r.mean_speed_kmh for r in records]
     max_speeds = [r.max_speed_kmh for r in records]
-    mean_spd = round(statistics.mean(mean_speeds), 2)
-    max_spd = round(max(max_speeds), 2)
+    mean_spd = statistics.mean(mean_speeds)
+    max_spd = max(max_speeds)
 
     returns = [r.episode_return for r in records]
     steps_list = [r.episode_steps for r in records]
-    mean_ret = round(statistics.mean(returns), 4)
-    mean_steps = round(statistics.mean(steps_list), 2)
+    mean_ret = statistics.mean(returns)
+    mean_steps = statistics.mean(steps_list)
 
     return AggregateMetrics(
         total_episodes=n,

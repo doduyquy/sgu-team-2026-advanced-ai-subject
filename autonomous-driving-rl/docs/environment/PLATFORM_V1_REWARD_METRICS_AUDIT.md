@@ -180,7 +180,18 @@ r_t = w_progress * delta_route_completion - (time_penalty_budget / horizon_steps
 - `time_penalty_budget = 0.25`: Total possible time cost across the entire horizon $H$ is capped at $0.25$ ($H \times \frac{0.25}{H} = 0.25$).
 - `success_bonus = 1.0`: Awarded if and only if `clean_success == True`.
 - `safety_penalty = 1.0`: Uniform penalty applied upon any safety terminal failure (`CRASH_HUMAN`, `CRASH_VEHICLE`, `CRASH_OBJECT`, `CRASH_BUILDING`, `CRASH_SIDEWALK`, `OUT_OF_ROAD`).
+- `unknown_termination_penalty = 1.0`: Conservative penalty applied upon unclassified termination so abnormal aborts cannot be exploited as free exits.
 - `timeout_penalty = 0.0`: Timeout is truncation; the accumulated time cost ($-0.25$) is sufficient disincentive without double-penalizing.
+- `clip_min = None`, `clip_max = None`: Default is unclipped full float precision.
+
+### Parameter Sensitivity Findings & Selection Rationale
+Across 72 evaluated candidate configurations in `results/audits/reward_metrics/parameter_sensitivity.csv`:
+- Exactly **42 / 72** configurations satisfied all strict core invariants (`clean_success_gt_unsafe_arrival`, `stationary_timeout_lt_zero`, and `safety_failure_lt_zero`).
+- **Non-Unique Design Choice:** The sensitivity study does NOT uniquely identify one optimal parameter configuration; multiple configurations satisfy the invariants.
+- **Selection Rationale for 0.25 Time Budget:**
+  - Setting `time_penalty_budget = 0.25` provides an interpretable middle-strength bounded time cost: it strictly penalizes waiting ($-0.250$ on stationary timeout) while preserving a decisive clean-success margin ($\sim 1.88$ return vs. negative returns on failure).
+  - While configurations with `time_penalty_budget = 0.5` achieve slightly smaller return spread ($\sim 0.0108$ vs. $\sim 0.0135$), they consume half of the normalized progress reward in time cost, creating excessive speed pressure. Conversely, `0.1` creates very weak time urgency.
+  - RewardSpecV1 remains explicitly **NON-FROZEN**.
 
 ### Component Decomposition via `RewardBreakdown`:
 Every step reward returns an explicit breakdown container:
@@ -190,9 +201,11 @@ class RewardBreakdown:
     progress_reward: float
     time_cost: float
     terminal_reward: float
+    raw_total_reward: float
     total_reward: float
+    clipping_applied: bool = False
 ```
-Exposing components individually prevents silent reward hacking and facilitates policy loss diagnostics.
+Where `raw_total = progress_reward - time_cost + terminal_reward` and `total_reward` reflects optional clamping if configured. Exposing components individually at full Python float precision prevents silent reward hacking and avoids rounding accumulation.
 
 ---
 

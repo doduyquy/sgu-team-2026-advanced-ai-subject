@@ -50,7 +50,7 @@
       },
       {
         "name": "primary_outcome_rates",
-        "description": "Mutually exclusive rates for crash_human, crash_vehicle, crash_object, crash_building, crash_sidewalk, out_of_road."
+        "description": "Mutually exclusive rates for crash_human, crash_vehicle, crash_object, crash_building, crash_sidewalk, out_of_road, unknown_termination."
       },
       {
         "name": "raw_safety_event_rates",

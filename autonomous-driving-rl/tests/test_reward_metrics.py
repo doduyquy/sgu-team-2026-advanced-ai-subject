@@ -243,6 +243,66 @@ class TestEvaluationMetrics(unittest.TestCase):
                 episode_return=0.0
             )
 
+        # clean_success True but time_to_clean_success_s is None
+        with self.assertRaises(ValueError):
+            EpisodeRecord(
+                tier="Easy", sequence="SCS", scenario_seed=0, terminated=True, truncated=False,
+                primary_reason=TerminalReason.SUCCESS, raw_arrival=True, clean_success=True,
+                final_route_completion=1.0, max_route_completion=1.0,
+                raw_crash_vehicle=False, raw_crash_object=False, raw_crash_building=False,
+                raw_crash_human=False, raw_crash_sidewalk=False, raw_out_of_road=False,
+                episode_steps=100, simulation_time_s=10.0, mean_speed_kmh=20.0, max_speed_kmh=25.0,
+                episode_return=1.0, time_to_clean_success_s=None
+            )
+
+        # Non-success with non-null time_to_clean_success_s
+        with self.assertRaises(ValueError):
+            EpisodeRecord(
+                tier="Easy", sequence="SCS", scenario_seed=0, terminated=True, truncated=False,
+                primary_reason=TerminalReason.OUT_OF_ROAD, raw_arrival=False, clean_success=False,
+                final_route_completion=0.5, max_route_completion=0.5,
+                raw_crash_vehicle=False, raw_crash_object=False, raw_crash_building=False,
+                raw_crash_human=False, raw_crash_sidewalk=False, raw_out_of_road=True,
+                episode_steps=100, simulation_time_s=10.0, mean_speed_kmh=20.0, max_speed_kmh=25.0,
+                episode_return=-1.0, time_to_clean_success_s=40.0
+            )
+
+        # primary_reason SUCCESS but clean_success False
+        with self.assertRaises(ValueError):
+            EpisodeRecord(
+                tier="Easy", sequence="SCS", scenario_seed=0, terminated=True, truncated=False,
+                primary_reason=TerminalReason.SUCCESS, raw_arrival=True, clean_success=False,
+                final_route_completion=1.0, max_route_completion=1.0,
+                raw_crash_vehicle=False, raw_crash_object=False, raw_crash_building=False,
+                raw_crash_human=False, raw_crash_sidewalk=False, raw_out_of_road=False,
+                episode_steps=100, simulation_time_s=10.0, mean_speed_kmh=20.0, max_speed_kmh=25.0,
+                episode_return=1.0
+            )
+
+        # primary_reason TIMEOUT but truncated False
+        with self.assertRaises(ValueError):
+            EpisodeRecord(
+                tier="Easy", sequence="SCS", scenario_seed=0, terminated=True, truncated=False,
+                primary_reason=TerminalReason.TIMEOUT, raw_arrival=False, clean_success=False,
+                final_route_completion=0.5, max_route_completion=0.5,
+                raw_crash_vehicle=False, raw_crash_object=False, raw_crash_building=False,
+                raw_crash_human=False, raw_crash_sidewalk=False, raw_out_of_road=False,
+                episode_steps=100, simulation_time_s=10.0, mean_speed_kmh=20.0, max_speed_kmh=25.0,
+                episode_return=-1.0
+            )
+
+        # primary_reason CRASH_VEHICLE but terminated False
+        with self.assertRaises(ValueError):
+            EpisodeRecord(
+                tier="Easy", sequence="SCS", scenario_seed=0, terminated=False, truncated=True,
+                primary_reason=TerminalReason.CRASH_VEHICLE, raw_arrival=False, clean_success=False,
+                final_route_completion=0.5, max_route_completion=0.5,
+                raw_crash_vehicle=True, raw_crash_object=False, raw_crash_building=False,
+                raw_crash_human=False, raw_crash_sidewalk=False, raw_out_of_road=False,
+                episode_steps=100, simulation_time_s=10.0, mean_speed_kmh=20.0, max_speed_kmh=25.0,
+                episode_return=-1.0
+            )
+
         # Non-finite route completion
         with self.assertRaises(ValueError):
             EpisodeRecord(

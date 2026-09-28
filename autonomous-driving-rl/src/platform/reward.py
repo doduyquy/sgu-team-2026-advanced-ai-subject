@@ -44,6 +44,7 @@ class RewardSpecV1:
     time_penalty_budget: float = 0.25
     success_bonus: float = 1.0
     safety_penalty: float = 1.0
+    unknown_termination_penalty: float = 1.0
     timeout_penalty: float = 0.0
     clip_min: Optional[float] = None
     clip_max: Optional[float] = None
@@ -57,6 +58,10 @@ class RewardSpecV1:
             raise ValueError(f"success_bonus must be non-negative, got {self.success_bonus}")
         if self.safety_penalty < 0:
             raise ValueError(f"safety_penalty must be non-negative, got {self.safety_penalty}")
+        if self.unknown_termination_penalty < 0:
+            raise ValueError(
+                f"unknown_termination_penalty must be non-negative, got {self.unknown_termination_penalty}"
+            )
         if self.timeout_penalty < 0:
             raise ValueError(f"timeout_penalty must be non-negative, got {self.timeout_penalty}")
         if self.clip_min is not None and self.clip_max is not None and self.clip_min > self.clip_max:
@@ -71,7 +76,7 @@ class RewardSpecV1:
         outcome: Optional[EpisodeOutcome] = None,
     ) -> RewardBreakdown:
         """
-        Computes the step reward and component breakdown at full float precision.
+        Computes the step reward and component breakdown at full Python float precision.
 
         Args:
             delta_route_completion: Progress delta (route_completion_t - route_completion_{t-1}).
@@ -102,9 +107,10 @@ class RewardSpecV1:
                 TerminalReason.CRASH_BUILDING,
                 TerminalReason.CRASH_SIDEWALK,
                 TerminalReason.OUT_OF_ROAD,
-                TerminalReason.UNKNOWN_TERMINATION,
             ):
                 terminal_rew = -self.safety_penalty
+            elif outcome.primary_reason == TerminalReason.UNKNOWN_TERMINATION:
+                terminal_rew = -self.unknown_termination_penalty
             elif outcome.primary_reason == TerminalReason.TIMEOUT:
                 terminal_rew = -self.timeout_penalty
 
