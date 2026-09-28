@@ -1,0 +1,13 @@
+tier,candidate_role,provisional_rank,sequence,scenario_seed,route_length_m,traffic_density,idm_completed,idm_completion_steps,idm_completion_time_s,idm_mean_speed_kmh,horizon_1000_counterfactual_status,proposed_route_aware_horizon_steps,proposed_budget_seconds,safety_margin_over_idm,final_primary_reason,final_clean_success,final_terminated,final_truncated,took_sec
+Easy,primary_canonical,1,SCS,11,349.6,0.0,True,407,40.7,28.97,COMPLETED_WITHIN_1000,1049,104.9,2.58,SUCCESS,True,True,False,2.4
+Easy,alternate_canonical,2,SCSS,9,403.15,0.0,True,478,47.8,29.15,COMPLETED_WITHIN_1000,1210,121.0,2.53,SUCCESS,True,True,False,2.5
+Easy,alternate_canonical,3,SCCS,9,444.15,0.0,True,533,53.3,29.24,COMPLETED_WITHIN_1000,1333,133.3,2.5,SUCCESS,True,True,False,2.8
+Medium,primary_canonical,1,SCXCS,11,523.75,0.0,False,383,38.3,28.76,OUT_OF_ROAD_AT_STEP_383,1572,157.2,N/A,OUT_OF_ROAD,False,True,False,2.3
+Medium,alternate_canonical,2,SCTCS,0,521.06,0.0,True,629,62.9,29.28,COMPLETED_WITHIN_1000,1564,156.4,2.49,SUCCESS,True,True,False,3.5
+Medium,alternate_canonical,3,SCXCCS,13,688.37,0.0,True,830,83.0,29.47,COMPLETED_WITHIN_1000,2066,206.6,2.49,SUCCESS,True,True,False,5.0
+Hard,primary_canonical,1,SCXOCS,2,643.01,0.0,True,779,77.9,29.36,COMPLETED_WITHIN_1000,1930,193.0,2.48,SUCCESS,True,True,False,4.9
+Hard,alternate_canonical,2,SCTXrCS,1,748.76,0.0,True,897,89.7,29.5,COMPLETED_WITHIN_1000,2247,224.7,2.51,SUCCESS,True,True,False,5.6
+Hard,alternate_canonical,3,XTOCS,19,496.89,0.0,True,599,59.9,29.21,COMPLETED_WITHIN_1000,1491,149.1,2.49,SUCCESS,True,True,False,3.8
+Extreme,primary_canonical,1,CrXROSTR,6,938.58,0.0,True,1123,112.3,29.45,WOULD_TRUNCATE_UNDER_1000,2816,281.6,2.51,SUCCESS,True,True,False,6.4
+Extreme,alternate_canonical,2,SCXOCrTYCS,16,1051.77,0.0,True,1255,125.5,29.6,WOULD_TRUNCATE_UNDER_1000,3156,315.6,2.51,SUCCESS,True,True,False,7.2
+Extreme,alternate_canonical,3,SCTXORyCCS,4,1003.23,0.0,True,1218,121.8,29.57,WOULD_TRUNCATE_UNDER_1000,3010,301.0,2.47,SUCCESS,True,True,False,6.6

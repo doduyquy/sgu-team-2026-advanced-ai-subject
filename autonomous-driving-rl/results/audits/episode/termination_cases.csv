@@ -1,0 +1,9 @@
+case_name,test_type,steps,raw_arrive_dest,raw_out_of_road,raw_crash_vehicle,raw_crash_object,raw_crash_sidewalk,raw_max_step,sim_terminated,sim_truncated,classified_primary_reason,classified_clean_success,classified_terminated,classified_truncated,notes
+clean_destination_arrival,simulator_run,407,True,False,False,False,False,False,True,False,SUCCESS,True,True,False,IDM navigated to destination terminus without collision.
+out_of_road_line_crossing,simulator_run,44,False,True,False,False,False,False,True,False,OUT_OF_ROAD,False,True,False,Steering across solid line triggered out_of_road termination.
+static_object_collision,simulator_run,29,False,False,False,True,False,False,True,False,CRASH_OBJECT,False,True,False,Direct head-on collision with spawned TrafficCone.
+timeout_truncate_as_terminate_false,simulator_run,15,False,False,False,False,False,True,False,True,TIMEOUT,False,False,True,"Standard Gymnasium timeout: terminated=False, truncated=True."
+control_truncate_as_terminate_true,simulator_control_test,15,False,False,False,False,False,True,True,True,TIMEOUT,False,True,True,Source-understanding test: both terminated and truncated evaluate to True.
+simultaneous_arrival_and_crash_vehicle,synthetic_precedence_test,100,True,False,True,False,False,False,True,False,CRASH_VEHICLE,False,True,False,Safety-first precedence: crash takes priority over arrival.
+simultaneous_arrival_and_out_of_road,synthetic_precedence_test,100,True,True,False,False,True,False,True,False,CRASH_SIDEWALK,False,True,False,Safety-first precedence: sidewalk collision takes priority over arrival.
+simultaneous_crash_and_max_step,synthetic_precedence_test,1000,False,False,True,False,False,True,True,True,CRASH_VEHICLE,False,True,True,Crash takes priority over timeout; classified as terminal failure.
