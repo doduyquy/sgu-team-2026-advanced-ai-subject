@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "spec_name": "RewardSpecV1",
+    "status": "NON-FROZEN RESEARCH SPECIFICATION",
+    "gate": "Gate 4 (Research Platform V1)",
+    "pinned_metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "pinned_metadrive_version": "0.4.3",
+    "provenance_warning": "RewardSpecV1 is an RL training signal only. It is strictly forbidden to rank algorithms primarily by episode return on scientific benchmarks."
+  },
+  "reward_specification": {
+    "spec_version": "1.0.0",
+    "status": "NON-FROZEN",
+    "progress_weight": 1.0,
+    "time_penalty_budget": 0.25,
+    "success_bonus": 1.0,
+    "safety_penalty": 1.0,
+    "timeout_penalty": 0.0,
+    "clip_min": -5.0,
+    "clip_max": 5.0
+  },
+  "reward_equation": {
+    "formula": "r_t = w_progress * delta_route_completion - (time_penalty_budget / horizon_steps) + r_terminal",
+    "components": {
+      "progress_shaping": "w_progress * (route_completion_t - route_completion_{t-1}). Bounded to ~1.0 over full route regardless of map length.",
+      "time_cost": "time_penalty_budget / horizon_steps. Bounded to time_penalty_budget across entire horizon. Discourages standing still without creating speed pressure.",
+      "clean_success_terminal": "+success_bonus awarded only if clean_success=True (arrive_dest and no safety violations).",
+      "safety_failure_terminal": "-safety_penalty awarded if any safety terminal failure occurs (crash_human, crash_vehicle, crash_object, crash_building, crash_sidewalk, out_of_road).",
+      "timeout_terminal": "-timeout_penalty on step budget exhaustion."
+    }
+  },
+  "safety_precedence_source": "src.platform.episode.SAFETY_FIRST_PRECEDENCE"
+}

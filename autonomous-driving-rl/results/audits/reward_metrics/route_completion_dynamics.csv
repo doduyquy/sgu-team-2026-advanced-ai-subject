@@ -1,0 +1,5 @@
+tier,sequence,scenario_seed,route_length_m,steps,initial_route_completion,final_route_completion,telescoping_sum_deltas,actual_rc_difference,telescoping_error,negative_delta_count,min_step_delta,max_step_delta,mean_step_delta,spikes_over_0_05,is_monotonic_forward,is_telescoping_exact
+Easy,SCS,11,349.6,407,0.014302,0.987864,0.973562,0.973562,1.1102230246251565e-16,0,2.1e-05,0.002725,0.002392,0,True,True
+Medium,SCXCS,11,523.75,383,0.009547,0.63878,0.629234,0.629234,0.0,0,1.4e-05,0.002696,0.001643,0,True,True
+Hard,SCXOCS,2,643.01,779,0.007776,0.9937,0.985925,0.985925,0.0,0,1.1e-05,0.001307,0.001266,0,True,True
+Extreme,CrXROSTR,6,938.58,1123,0.005327,0.995103,0.989776,0.989776,1.1102230246251565e-16,0,8e-06,0.001428,0.000881,0,True,True

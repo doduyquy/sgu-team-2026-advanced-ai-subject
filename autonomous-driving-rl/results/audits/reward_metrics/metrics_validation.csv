@@ -1,0 +1,7 @@
+tier,sequence,scenario_seed,terminated,truncated,primary_reason,raw_arrival,clean_success,final_route_completion,max_route_completion,raw_crash_vehicle,raw_crash_object,raw_crash_building,raw_crash_human,raw_crash_sidewalk,raw_out_of_road,episode_steps,simulation_time_s,mean_speed_kmh,max_speed_kmh,episode_return,time_to_clean_success_s,agent_seed
+Easy,SCS,11,True,False,SUCCESS,True,True,1.0,1.0,False,False,False,False,False,False,407,40.7,29.0,30.0,1.89,40.7,
+Medium,SCTCS,0,True,False,SUCCESS,True,True,1.0,1.0,False,False,False,False,False,False,629,62.9,29.3,30.0,1.84,62.9,
+Medium,SCXCS,11,True,False,OUT_OF_ROAD,False,False,0.6388,0.6388,False,False,False,False,False,True,383,38.3,28.8,30.0,-0.42,,
+Hard,SCXOCS,2,True,False,CRASH_VEHICLE,False,False,0.28,0.28,True,False,False,False,False,False,249,24.9,27.5,30.0,-0.75,,
+Extreme,CrXROSTR,6,False,True,TIMEOUT,False,False,0.75,0.75,False,False,False,False,False,False,1000,100.0,20.0,30.0,0.5,,
+Hard,SCTXrCS,1,True,False,CRASH_VEHICLE,True,False,1.0,1.0,True,False,False,False,False,False,800,80.0,25.0,30.0,-0.15,,
