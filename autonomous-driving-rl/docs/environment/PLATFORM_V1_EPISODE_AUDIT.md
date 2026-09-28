@@ -224,31 +224,48 @@ Implemented in `src/platform/episode.py`:
 
 We evaluated all 12 canonical and alternate MapSuite scenarios using **actual Gate-2 benchmark traffic** (`traffic_density = cand["traffic_density"]`, `traffic_mode = "trigger"`) and reconstructed exact geometry via `MapGenerateMethod.PG_MAP_FILE`:
 
-### Empirical Rollout Results
+### Empirical Rollout Results (Actual MapSuite Benchmark Traffic)
 
-| Tier | Candidate Role | Sequence | Seed | Route Length | Traffic Density | Planned Traffic | Active Mean | Active Max | Unique Activated | IDM Completion | IDM Speed | Horizon 1000 Counterfactual | Proposed Horizon | Budget Seconds | Margin over IDM |
+| Tier | Role | Sequence | Seed | Route Length | Traffic Density | Planned Traffic | Active Mean | Active Max | Unique Activated | Reference Outcome | IDM Speed | Counterfactual 1000 Status | Proposed Horizon | Budget Seconds | Margin over IDM |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **Easy** | Primary | `SCS` | `11` | $349.6\text{ m}$ | 0.00 | 0 | 0.0 | 0 | 0 | 407 steps (40.7s) | $29.0\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1049** | $104.9\text{ s}$ | $2.58\times$ |
-| **Easy** | Alternate | `SCSS` | `9` | $403.1\text{ m}$ | 0.00 | 0 | 0.0 | 0 | 0 | 478 steps (47.8s) | $29.1\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1210** | $121.0\text{ s}$ | $2.53\times$ |
-| **Easy** | Alternate | `SCCS` | `9` | $444.1\text{ m}$ | 0.00 | 0 | 0.0 | 0 | 0 | 533 steps (53.3s) | $29.2\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1333** | $133.3\text{ s}$ | $2.50\times$ |
-| **Medium** | Primary | `SCXCS` | `11` | $523.8\text{ m}$ | 0.08 | 9 | 4.5 | 8 | 9 | Out-of-road (step 383) | $28.8\text{ km/h}$ | IDM_FAILED_STEP_383 | **1572** | $157.2\text{ s}$ | $2.50\times$ (nom) |
-| **Medium** | Alternate | `SCTCS` | `0` | $521.1\text{ m}$ | 0.08 | 7 | 3.6 | 5 | 7 | 629 steps (62.9s) | $29.3\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1564** | $156.4\text{ s}$ | $2.49\times$ |
-| **Medium** | Alternate | `SCXCCS` | `13` | $688.4\text{ m}$ | 0.08 | 12 | 5.6 | 9 | 12 | 844 steps (84.4s) | $28.9\text{ km/h}$ | COMPLETED_WITHIN_1000 | **2066** | $206.6\text{ s}$ | $2.49\times$ |
-| **Hard** | Primary | `SCXOCS` | `2` | $643.0\text{ m}$ | 0.15 | 27 | 5.6 | 9 | 15 | Out-of-road (step 249) | $27.5\text{ km/h}$ | IDM_FAILED_STEP_249 | **1930** | $193.0\text{ s}$ | $2.48\times$ (nom) |
-| **Hard** | Alternate | `SCTXrCS` | `1` | $748.8\text{ m}$ | 0.15 | 28 | 12.8 | 23 | 28 | Out-of-road (step 780) | $27.7\text{ km/h}$ | IDM_FAILED_STEP_780 | **2247** | $224.7\text{ s}$ | $2.50\times$ (nom) |
-| **Hard** | Alternate | `XTOCS` | `19` | $496.9\text{ m}$ | 0.15 | 17 | 7.3 | 12 | 17 | 678 steps (67.8s) | $26.0\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1491** | $149.1\text{ s}$ | $2.49\times$ |
-| **Extreme** | Primary | `CrXROSTR` | `6` | $938.6\text{ m}$ | 0.25 | 70 | 16.4 | 26 | 38 | Out-of-road (step 563) | $12.4\text{ km/h}$ | IDM_FAILED_STEP_563 | **2816** | $281.6\text{ s}$ | $2.51\times$ (nom) |
-| **Extreme** | Alternate | `SCXOCrTYCS` | `16` | $1051.8\text{ m}$ | 0.25 | 79 | 20.2 | 35 | 44 | Out-of-road (step 618) | $20.9\text{ km/h}$ | IDM_FAILED_STEP_618 | **3156** | $315.6\text{ s}$ | $2.51\times$ (nom) |
-| **Extreme** | Alternate | `SCTXORyCCS` | `4` | $1003.2\text{ m}$ | 0.25 | 58 | 15.1 | 19 | 31 | Out-of-road (step 405) | $26.5\text{ km/h}$ | IDM_FAILED_STEP_405 | **3010** | $301.0\text{ s}$ | $2.47\times$ (nom) |
+| **Easy** | Primary | `SCS` | `11` | $349.6\text{ m}$ | 0.00 | 0 | 0.0 | 0 | 0 | SUCCESS @ 407 steps | $29.0\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1049** | $104.9\text{ s}$ | $2.58\times$ |
+| **Easy** | Alternate | `SCSS` | `9` | $403.1\text{ m}$ | 0.00 | 0 | 0.0 | 0 | 0 | SUCCESS @ 478 steps | $29.1\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1210** | $121.0\text{ s}$ | $2.53\times$ |
+| **Easy** | Alternate | `SCCS` | `9` | $444.1\text{ m}$ | 0.00 | 0 | 0.0 | 0 | 0 | SUCCESS @ 533 steps | $29.2\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1333** | $133.3\text{ s}$ | $2.50\times$ |
+| **Medium** | Primary | `SCXCS` | `11` | $523.8\text{ m}$ | 0.08 | 9 | 4.51 | 8 | 8 | OUT_OF_ROAD @ 383 steps | $28.8\text{ km/h}$ | OUT_OF_ROAD_AT_STEP_383 | **1572** | $157.2\text{ s}$ | N/A |
+| **Medium** | Alternate | `SCTCS` | `0` | $521.1\text{ m}$ | 0.08 | 7 | 3.57 | 5 | 7 | SUCCESS @ 629 steps | $29.3\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1564** | $156.4\text{ s}$ | $2.49\times$ |
+| **Medium** | Alternate | `SCXCCS` | `13` | $688.4\text{ m}$ | 0.08 | 12 | 5.62 | 9 | 12 | SUCCESS @ 844 steps | $28.9\text{ km/h}$ | COMPLETED_WITHIN_1000 | **2066** | $206.6\text{ s}$ | $2.45\times$ |
+| **Hard** | Primary | `SCXOCS` | `2` | $643.0\text{ m}$ | 0.15 | 27 | 5.56 | 9 | 9 | CRASH_VEHICLE @ 249 steps | $27.5\text{ km/h}$ | CRASH_VEHICLE_AT_STEP_249 | **1930** | $193.0\text{ s}$ | N/A |
+| **Hard** | Alternate | `SCTXrCS` | `1` | $748.8\text{ m}$ | 0.15 | 28 | 12.76 | 23 | 28 | CRASH_VEHICLE @ 780 steps | $27.7\text{ km/h}$ | CRASH_VEHICLE_AT_STEP_780 | **2247** | $224.7\text{ s}$ | N/A |
+| **Hard** | Alternate | `XTOCS` | `19` | $496.9\text{ m}$ | 0.15 | 17 | 7.35 | 12 | 17 | SUCCESS @ 678 steps | $26.0\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1491** | $149.1\text{ s}$ | $2.20\times$ |
+| **Extreme** | Primary | `CrXROSTR` | `6` | $938.6\text{ m}$ | 0.25 | 70 | 16.42 | 26 | 26 | CRASH_VEHICLE @ 563 steps | $12.4\text{ km/h}$ | CRASH_VEHICLE_AT_STEP_563 | **2816** | $281.6\text{ s}$ | N/A |
+| **Extreme** | Alternate | `SCXOCrTYCS` | `16` | $1051.8\text{ m}$ | 0.25 | 79 | 20.20 | 35 | 35 | CRASH_VEHICLE @ 618 steps | $20.9\text{ km/h}$ | CRASH_VEHICLE_AT_STEP_618 | **3156** | $315.6\text{ s}$ | N/A |
+| **Extreme** | Alternate | `SCTXORyCCS` | `4` | $1003.2\text{ m}$ | 0.25 | 58 | 15.09 | 19 | 19 | CRASH_VEHICLE @ 405 steps | $26.5\text{ km/h}$ | CRASH_VEHICLE_AT_STEP_405 | **3010** | $301.0\text{ s}$ | N/A |
+
+### Secondary Zero-Traffic Reference Traversal Times (`horizon_reference_no_traffic.csv`)
+
+| Tier | Role | Sequence | Seed | Route Length | Reference Outcome | Completion Steps | Completion Time | IDM Mean Speed | Counterfactual 1000 Status |
+|---|---|---|---|---|---|---|---|---|---|
+| **Easy** | Primary | `SCS` | `11` | $349.6\text{ m}$ | SUCCESS | 407 | $40.7\text{ s}$ | $29.0\text{ km/h}$ | COMPLETED_WITHIN_1000 |
+| **Easy** | Alternate | `SCSS` | `9` | $403.1\text{ m}$ | SUCCESS | 478 | $47.8\text{ s}$ | $29.1\text{ km/h}$ | COMPLETED_WITHIN_1000 |
+| **Easy** | Alternate | `SCCS` | `9` | $444.1\text{ m}$ | SUCCESS | 533 | $53.3\text{ s}$ | $29.2\text{ km/h}$ | COMPLETED_WITHIN_1000 |
+| **Medium** | Primary | `SCXCS` | `11` | $523.8\text{ m}$ | OUT_OF_ROAD | 383 | $38.3\text{ s}$ | $28.8\text{ km/h}$ | OUT_OF_ROAD_AT_STEP_383 |
+| **Medium** | Alternate | `SCTCS` | `0` | $521.1\text{ m}$ | SUCCESS | 629 | $62.9\text{ s}$ | $29.3\text{ km/h}$ | COMPLETED_WITHIN_1000 |
+| **Medium** | Alternate | `SCXCCS` | `13` | $688.4\text{ m}$ | SUCCESS | 830 | $83.0\text{ s}$ | $29.5\text{ km/h}$ | COMPLETED_WITHIN_1000 |
+| **Hard** | Primary | `SCXOCS` | `2` | $643.0\text{ m}$ | SUCCESS | 779 | $77.9\text{ s}$ | $29.4\text{ km/h}$ | COMPLETED_WITHIN_1000 |
+| **Hard** | Alternate | `SCTXrCS` | `1` | $748.8\text{ m}$ | SUCCESS | 897 | $89.7\text{ s}$ | $29.5\text{ km/h}$ | COMPLETED_WITHIN_1000 |
+| **Hard** | Alternate | `XTOCS` | `19` | $496.9\text{ m}$ | SUCCESS | 599 | $59.9\text{ s}$ | $29.2\text{ km/h}$ | COMPLETED_WITHIN_1000 |
+| **Extreme** | Primary | `CrXROSTR` | `6` | $938.6\text{ m}$ | SUCCESS | 1123 | $112.3\text{ s}$ | $29.4\text{ km/h}$ | **WOULD_TRUNCATE_UNDER_1000** |
+| **Extreme** | Alternate | `SCXOCrTYCS` | `16` | $1051.8\text{ m}$ | SUCCESS | 1255 | $125.5\text{ s}$ | $29.6\text{ km/h}$ | **WOULD_TRUNCATE_UNDER_1000** |
+| **Extreme** | Alternate | `SCTXORyCCS` | `4` | $1003.2\text{ m}$ | SUCCESS | 1218 | $121.8\text{ s}$ | $29.6\text{ km/h}$ | **WOULD_TRUNCATE_UNDER_1000** |
 
 ### Traffic Statistics Analysis:
 - Under `TrafficMode.Trigger`, planned traffic is dynamically activated in waves as ego approaches.
 - In Hard and Extreme tiers, active concurrent traffic averages $5.6 - 20.2$ vehicles with peak concurrent loads reaching up to $35$ vehicles.
-- In dense traffic, IDMPolicy lane-tracking struggles with sharp intersection turns and merge bottlenecks, clipping curbs at complex junctures. This is reported honestly per Section 12 instructions.
+- In dense traffic, IDMPolicy lane-tracking struggles with sharp intersection turns and merge bottlenecks, clipping curbs or colliding with traffic at complex junctures. This is reported honestly per Section 12 instructions.
 - In the secondary zero-traffic calibration, IDMPolicy cleanly reached the goal on all 3 Extreme scenarios at steps 1123, 1255, and 1218.
 
 ### Scoped Horizon Finding:
-Under a fixed 1000-step budget ($100.0\text{ s}$), reference rollouts on Extreme routes ($>900\text{ m}$) **would be truncated prior to arrival** even when driving at nominal cruising speeds ($\sim 29.5\text{ km/h}$).
+Under a fixed 1000-step budget ($100.0\text{ s}$), reference rollouts on Extreme routes ($>900\text{ m}$) **would be truncated prior to arrival** even when driving at nominal cruising speeds ($\sim 29.5\text{ km/h}$) under clean conditions.
 
 ---
 
@@ -268,8 +285,10 @@ $$\text{horizon\_steps} = \max\left(\text{min\_steps},\ \min\left(\text{max\_ste
 ### Formula Simplification:
 $$\text{horizon\_steps} = \max\left(1000,\ \lceil \text{route\_length\_m} \times 3.0 \rceil\right)$$
 
-### Rationale:
-The new benchmark traffic evidence confirms that $18\text{ km/h}$ floor speed with $1.5\times$ safety margin remains fully justified. It provides a $2.5\times$ buffer over nominal reference completion time, preventing premature truncation when agents yield to traffic or navigate sharp corners.
+### Horizon Policy Justification:
+1. **Design Rationale:** The horizon is an emergency safety cutoff, not a speed performance metric. Route length is static scenario metadata known prior to episode launch. Setting $v_{\text{floor}} = 18\text{ km/h}$ with a $1.5\times$ margin provides sufficient time for cautious driving, queuing at intersections, and yielding to traffic.
+2. **Empirical Grounding:** In successful zero-traffic reference rollouts across all tiers and successful actual-traffic scenarios in Easy, Medium, and Hard, the proposed formula provides a $2.20\times - 2.58\times$ buffer over nominal reference completion time.
+3. **Coverage Limitation:** IDMPolicy is not a robust expert under dense traffic on complex geometries; scenarios where IDM failed do not provide a measured empirical completion-time margin and are documented as `N/A`. The proposed horizon remains non-frozen and will be verified by future learned/planning agents.
 
 ---
 

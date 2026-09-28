@@ -47,7 +47,9 @@
       "computed_horizon_steps": 1049,
       "budget_seconds": 104.9,
       "idm_completion_steps": 407,
-      "safety_margin_over_idm": 2.58
+      "safety_margin_over_idm": 2.58,
+      "final_primary_reason": "SUCCESS",
+      "final_clean_success": true
     },
     "Easy_alternate_canonical_SCSS_seed9": {
       "tier": "Easy",
@@ -60,7 +62,9 @@
       "computed_horizon_steps": 1210,
       "budget_seconds": 121.0,
       "idm_completion_steps": 478,
-      "safety_margin_over_idm": 2.53
+      "safety_margin_over_idm": 2.53,
+      "final_primary_reason": "SUCCESS",
+      "final_clean_success": true
     },
     "Easy_alternate_canonical_SCCS_seed9": {
       "tier": "Easy",
@@ -73,7 +77,9 @@
       "computed_horizon_steps": 1333,
       "budget_seconds": 133.3,
       "idm_completion_steps": 533,
-      "safety_margin_over_idm": 2.5
+      "safety_margin_over_idm": 2.5,
+      "final_primary_reason": "SUCCESS",
+      "final_clean_success": true
     },
     "Medium_primary_canonical_SCXCS_seed11": {
       "tier": "Medium",
@@ -86,7 +92,9 @@
       "computed_horizon_steps": 1572,
       "budget_seconds": 157.2,
       "idm_completion_steps": 383,
-      "safety_margin_over_idm": "N/A"
+      "safety_margin_over_idm": "N/A",
+      "final_primary_reason": "OUT_OF_ROAD",
+      "final_clean_success": false
     },
     "Medium_alternate_canonical_SCTCS_seed0": {
       "tier": "Medium",
@@ -99,7 +107,9 @@
       "computed_horizon_steps": 1564,
       "budget_seconds": 156.4,
       "idm_completion_steps": 629,
-      "safety_margin_over_idm": 2.49
+      "safety_margin_over_idm": 2.49,
+      "final_primary_reason": "SUCCESS",
+      "final_clean_success": true
     },
     "Medium_alternate_canonical_SCXCCS_seed13": {
       "tier": "Medium",
@@ -112,7 +122,9 @@
       "computed_horizon_steps": 2066,
       "budget_seconds": 206.6,
       "idm_completion_steps": 844,
-      "safety_margin_over_idm": 2.45
+      "safety_margin_over_idm": 2.45,
+      "final_primary_reason": "SUCCESS",
+      "final_clean_success": true
     },
     "Hard_primary_canonical_SCXOCS_seed2": {
       "tier": "Hard",
@@ -125,7 +137,9 @@
       "computed_horizon_steps": 1930,
       "budget_seconds": 193.0,
       "idm_completion_steps": 249,
-      "safety_margin_over_idm": "N/A"
+      "safety_margin_over_idm": "N/A",
+      "final_primary_reason": "CRASH_VEHICLE",
+      "final_clean_success": false
     },
     "Hard_alternate_canonical_SCTXrCS_seed1": {
       "tier": "Hard",
@@ -138,7 +152,9 @@
       "computed_horizon_steps": 2247,
       "budget_seconds": 224.7,
       "idm_completion_steps": 780,
-      "safety_margin_over_idm": "N/A"
+      "safety_margin_over_idm": "N/A",
+      "final_primary_reason": "CRASH_VEHICLE",
+      "final_clean_success": false
     },
     "Hard_alternate_canonical_XTOCS_seed19": {
       "tier": "Hard",
@@ -151,7 +167,9 @@
       "computed_horizon_steps": 1491,
       "budget_seconds": 149.1,
       "idm_completion_steps": 678,
-      "safety_margin_over_idm": 2.2
+      "safety_margin_over_idm": 2.2,
+      "final_primary_reason": "SUCCESS",
+      "final_clean_success": true
     },
     "Extreme_primary_canonical_CrXROSTR_seed6": {
       "tier": "Extreme",
@@ -164,7 +182,9 @@
       "computed_horizon_steps": 2816,
       "budget_seconds": 281.6,
       "idm_completion_steps": 563,
-      "safety_margin_over_idm": "N/A"
+      "safety_margin_over_idm": "N/A",
+      "final_primary_reason": "CRASH_VEHICLE",
+      "final_clean_success": false
     },
     "Extreme_alternate_canonical_SCXOCrTYCS_seed16": {
       "tier": "Extreme",
@@ -177,7 +197,9 @@
       "computed_horizon_steps": 3156,
       "budget_seconds": 315.6,
       "idm_completion_steps": 618,
-      "safety_margin_over_idm": "N/A"
+      "safety_margin_over_idm": "N/A",
+      "final_primary_reason": "CRASH_VEHICLE",
+      "final_clean_success": false
     },
     "Extreme_alternate_canonical_SCTXORyCCS_seed4": {
       "tier": "Extreme",
@@ -190,7 +212,9 @@
       "computed_horizon_steps": 3010,
       "budget_seconds": 301.0,
       "idm_completion_steps": 405,
-      "safety_margin_over_idm": "N/A"
+      "safety_margin_over_idm": "N/A",
+      "final_primary_reason": "CRASH_VEHICLE",
+      "final_clean_success": false
     }
   }
 }

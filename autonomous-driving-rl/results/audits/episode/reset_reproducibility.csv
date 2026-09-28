@@ -1,4 +1,4 @@
-run_id,scenario_seed,obs_diff_from_r0,pos_init_x,pos_init_y,heading_init_rad,speed_init_kmh,planned_traffic,run_steps,run_terminated,run_truncated,final_out_of_road,reset_arrive_dest,reset_out_of_road,reset_crash,zero_leakage_verified
-0,42,0.0,5.0,3.5,0.0,0.0,9,27,True,False,True,False,False,False,True
-1,42,0.0,5.0,3.5,0.0,0.0,9,15,False,False,False,False,False,False,True
-2,42,0.0,5.0,3.5,0.0,0.0,9,15,False,False,False,False,False,False,True
+run_id,scenario_seed,pos_init_x,pos_init_y,heading_init_rad,speed_init_kmh,planned_traffic,pos_diff_from_r0,heading_diff_from_r0,speed_diff_from_r0,checkpoints_match_r0,block_ids_match_r0,planned_traffic_match_r0,clean_reset_flags,obs_diff_from_r0,run_steps,run_terminated,run_truncated,final_out_of_road,zero_leakage_verified
+0,42,5.0,3.5,0.0,0.0,9,0.0,0.0,0.0,True,True,True,True,0.0,27,True,False,True,True
+1,42,5.0,3.5,0.0,0.0,9,0.0,0.0,0.0,True,True,True,True,0.0,15,False,False,False,True
+2,42,5.0,3.5,0.0,0.0,9,0.0,0.0,0.0,True,True,True,True,0.0,15,False,False,False,True
