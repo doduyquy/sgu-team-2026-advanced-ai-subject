@@ -37,10 +37,10 @@
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 68.35594940185547,
+          "angle": 108.8008804321289,
           "radius": 49.81145095825195,
           "dir": 1,
-          "angle": 108.8008804321289,
+          "length": 68.35594940185547,
           "id": "C",
           "pre_block_socket_index": "1S-socket0"
         },
@@ -89,10 +89,10 @@
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 68.58112335205078,
+          "angle": 109.30752563476562,
           "radius": 50.00848388671875,
           "dir": 1,
-          "angle": 109.30752563476562,
+          "length": 68.58112335205078,
           "id": "C",
           "pre_block_socket_index": "1S-socket0"
         },
@@ -147,18 +147,18 @@
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 68.58112335205078,
+          "angle": 109.30752563476562,
           "radius": 50.00848388671875,
           "dir": 1,
-          "angle": 109.30752563476562,
+          "length": 68.58112335205078,
           "id": "C",
           "pre_block_socket_index": "1S-socket0"
         },
         {
-          "length": 54.25770950317383,
+          "angle": 77.07984161376953,
           "radius": 37.475494384765625,
           "dir": 0,
-          "angle": 77.07984161376953,
+          "length": 54.25770950317383,
           "id": "C",
           "pre_block_socket_index": "2C-socket0"
         },
@@ -212,25 +212,25 @@
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 68.35594940185547,
+          "angle": 108.8008804321289,
           "radius": 49.81145095825195,
           "dir": 1,
-          "angle": 108.8008804321289,
+          "length": 68.35594940185547,
           "id": "C",
           "pre_block_socket_index": "1S-socket0"
         },
         {
-          "decrease_increase": 0,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 0,
           "id": "X",
           "pre_block_socket_index": "2C-socket0"
         },
         {
-          "length": 50.335750579833984,
+          "angle": 68.25543975830078,
           "radius": 34.04378128051758,
           "dir": 0,
-          "angle": 68.25543975830078,
+          "length": 50.335750579833984,
           "id": "C",
           "pre_block_socket_index": "3X-socket0"
         },
@@ -282,26 +282,26 @@
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 75.13549041748047,
+          "angle": 124.05485534667969,
           "radius": 55.74355697631836,
           "dir": 1,
-          "angle": 124.05485534667969,
+          "length": 75.13549041748047,
           "id": "C",
           "pre_block_socket_index": "1S-socket0"
         },
         {
           "t_type": 2,
-          "decrease_increase": 1,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 1,
           "id": "T",
           "pre_block_socket_index": "2C-socket0"
         },
         {
-          "length": 44.16066360473633,
+          "angle": 54.36149597167969,
           "radius": 28.640581130981445,
           "dir": 0,
-          "angle": 54.36149597167969,
+          "length": 44.16066360473633,
           "id": "C",
           "pre_block_socket_index": "3T-socket1"
         },
@@ -355,33 +355,33 @@
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 76.36976623535156,
+          "angle": 126.83197784423828,
           "radius": 56.82354736328125,
           "dir": 1,
-          "angle": 126.83197784423828,
+          "length": 76.36976623535156,
           "id": "C",
           "pre_block_socket_index": "1S-socket0"
         },
         {
-          "decrease_increase": 0,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 0,
           "id": "X",
           "pre_block_socket_index": "2C-socket0"
         },
         {
-          "length": 66.64091491699219,
+          "angle": 104.94206237792969,
           "radius": 48.3108024597168,
           "dir": 1,
-          "angle": 104.94206237792969,
+          "length": 66.64091491699219,
           "id": "C",
           "pre_block_socket_index": "3X-socket1"
         },
         {
-          "length": 49.448585510253906,
+          "angle": 66.25931549072266,
           "radius": 33.267513275146484,
           "dir": 0,
-          "angle": 66.25931549072266,
+          "length": 49.448585510253906,
           "id": "C",
           "pre_block_socket_index": "4C-socket0"
         },
@@ -441,17 +441,17 @@
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 51.71649932861328,
+          "angle": 71.36212158203125,
           "radius": 35.25193405151367,
           "dir": 0,
-          "angle": 71.36212158203125,
+          "length": 51.71649932861328,
           "id": "C",
           "pre_block_socket_index": "1S-socket0"
         },
         {
-          "decrease_increase": 0,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 0,
           "id": "X",
           "pre_block_socket_index": "2C-socket0"
         },
@@ -463,10 +463,10 @@
           "pre_block_socket_index": "3X-socket2"
         },
         {
-          "length": 70.78519439697266,
+          "angle": 114.26669311523438,
           "radius": 51.93704605102539,
           "dir": 1,
-          "angle": 114.26669311523438,
+          "length": 70.78519439697266,
           "id": "C",
           "pre_block_socket_index": "4O-socket1"
         },
@@ -523,39 +523,39 @@
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 42.44232177734375,
+          "angle": 50.49522399902344,
           "radius": 27.13703155517578,
           "dir": 0,
-          "angle": 50.49522399902344,
+          "length": 42.44232177734375,
           "id": "C",
           "pre_block_socket_index": "1S-socket0"
         },
         {
           "t_type": 1,
-          "decrease_increase": 0,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 0,
           "id": "T",
           "pre_block_socket_index": "2C-socket0"
         },
         {
-          "decrease_increase": 1,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 1,
           "id": "X",
           "pre_block_socket_index": "3T-socket2"
         },
         {
-          "length": 30.807292938232422,
           "extension_length": 30.807292938232422,
+          "length": 30.807292938232422,
           "id": "r",
           "pre_block_socket_index": "4X-socket0"
         },
         {
-          "length": 75.53443908691406,
+          "angle": 124.95248413085938,
           "radius": 56.09263229370117,
           "dir": 1,
-          "angle": 124.95248413085938,
+          "length": 75.53443908691406,
           "id": "C",
           "pre_block_socket_index": "5r-socket0"
         },
@@ -609,17 +609,17 @@
           "pre_block_socket_index": null
         },
         {
-          "decrease_increase": 1,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 1,
           "id": "X",
           "pre_block_socket_index": "0I-socket0"
         },
         {
           "t_type": 2,
-          "decrease_increase": 1,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 1,
           "id": "T",
           "pre_block_socket_index": "1X-socket0"
         },
@@ -631,10 +631,10 @@
           "pre_block_socket_index": "2T-socket0"
         },
         {
-          "length": 45.091800689697266,
+          "angle": 56.456546783447266,
           "radius": 29.455324172973633,
           "dir": 0,
-          "angle": 56.456546783447266,
+          "length": 45.091800689697266,
           "id": "C",
           "pre_block_socket_index": "3O-socket2"
         },
@@ -695,29 +695,29 @@
           "pre_block_socket_index": null
         },
         {
-          "length": 69.64274597167969,
+          "angle": 111.69617462158203,
           "radius": 50.937400817871094,
           "dir": 1,
-          "angle": 111.69617462158203,
+          "length": 69.64274597167969,
           "id": "C",
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 38.10849380493164,
           "extension_length": 38.10849380493164,
+          "length": 38.10849380493164,
           "id": "r",
           "pre_block_socket_index": "1C-socket0"
         },
         {
-          "decrease_increase": 1,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 1,
           "id": "X",
           "pre_block_socket_index": "2r-socket0"
         },
         {
-          "length": 39.50613021850586,
           "extension_length": 39.50613021850586,
+          "length": 39.50613021850586,
           "id": "R",
           "pre_block_socket_index": "3X-socket0"
         },
@@ -735,15 +735,15 @@
         },
         {
           "t_type": 1,
-          "decrease_increase": 0,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 0,
           "id": "T",
           "pre_block_socket_index": "6S-socket0"
         },
         {
-          "length": 29.980575561523438,
           "extension_length": 29.980575561523438,
+          "length": 29.980575561523438,
           "id": "R",
           "pre_block_socket_index": "7T-socket0"
         }
@@ -803,17 +803,17 @@
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 74.01802062988281,
+          "angle": 121.5405502319336,
           "radius": 54.765769958496094,
           "dir": 1,
-          "angle": 121.5405502319336,
+          "length": 74.01802062988281,
           "id": "C",
           "pre_block_socket_index": "1S-socket0"
         },
         {
-          "decrease_increase": 1,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 1,
           "id": "X",
           "pre_block_socket_index": "2C-socket0"
         },
@@ -825,40 +825,40 @@
           "pre_block_socket_index": "3X-socket2"
         },
         {
-          "length": 40.365543365478516,
+          "angle": 45.822471618652344,
           "radius": 25.31985092163086,
           "dir": 0,
-          "angle": 45.822471618652344,
+          "length": 40.365543365478516,
           "id": "C",
           "pre_block_socket_index": "4O-socket0"
         },
         {
-          "length": 20.625198364257812,
           "extension_length": 20.625198364257812,
+          "length": 20.625198364257812,
           "id": "r",
           "pre_block_socket_index": "5C-socket0"
         },
         {
           "t_type": 2,
-          "decrease_increase": 1,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 1,
           "id": "T",
           "pre_block_socket_index": "6r-socket0"
         },
         {
-          "solid_center_line": 0.0,
-          "length": 24.407470703125,
-          "bottle_len": 20.0,
           "lane_num": 1,
+          "solid_center_line": 0.0,
+          "bottle_len": 20.0,
+          "length": 24.407470703125,
           "id": "Y",
           "pre_block_socket_index": "7T-socket1"
         },
         {
-          "length": 73.08285522460938,
+          "angle": 119.4364242553711,
           "radius": 53.9474983215332,
           "dir": 1,
-          "angle": 119.4364242553711,
+          "length": 73.08285522460938,
           "id": "C",
           "pre_block_socket_index": "8Y-socket0"
         },
@@ -926,25 +926,25 @@
           "pre_block_socket_index": "0I-socket0"
         },
         {
-          "length": 68.33458709716797,
+          "angle": 108.75281524658203,
           "radius": 49.792762756347656,
           "dir": 1,
-          "angle": 108.75281524658203,
+          "length": 68.33458709716797,
           "id": "C",
           "pre_block_socket_index": "1S-socket0"
         },
         {
           "t_type": 2,
-          "decrease_increase": 1,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 1,
           "id": "T",
           "pre_block_socket_index": "2C-socket0"
         },
         {
-          "decrease_increase": 1,
           "radius": 10.0,
           "change_lane_num": 0,
+          "decrease_increase": 1,
           "id": "X",
           "pre_block_socket_index": "3T-socket1"
         },
@@ -956,32 +956,32 @@
           "pre_block_socket_index": "4X-socket1"
         },
         {
-          "length": 26.246315002441406,
           "extension_length": 26.246315002441406,
+          "length": 26.246315002441406,
           "id": "R",
           "pre_block_socket_index": "5O-socket2"
         },
         {
-          "solid_center_line": 0.0,
-          "length": 26.99608612060547,
-          "bottle_len": 20.0,
           "lane_num": 1,
+          "solid_center_line": 0.0,
+          "bottle_len": 20.0,
+          "length": 26.99608612060547,
           "id": "y",
           "pre_block_socket_index": "6R-socket0"
         },
         {
-          "length": 44.4857177734375,
+          "angle": 55.09286117553711,
           "radius": 28.92500114440918,
           "dir": 0,
-          "angle": 55.09286117553711,
+          "length": 44.4857177734375,
           "id": "C",
           "pre_block_socket_index": "7y-socket0"
         },
         {
-          "length": 45.8317756652832,
+          "angle": 58.121490478515625,
           "radius": 30.102802276611328,
           "dir": 0,
-          "angle": 58.121490478515625,
+          "length": 45.8317756652832,
           "id": "C",
           "pre_block_socket_index": "8C-socket0"
         },

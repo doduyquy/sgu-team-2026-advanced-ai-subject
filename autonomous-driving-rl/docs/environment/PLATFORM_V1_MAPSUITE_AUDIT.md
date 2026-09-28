@@ -260,12 +260,13 @@ $$\bar{v}_{\text{required}} = \frac{\text{route\_length\_m}}{100.0\text{ s}} \ti
 
 To ensure map reconstructions are 100% stable:
 1. `PGMap.get_meta_data()["block_sequence"]` serializes exact geometric parameters for every block.
-2. In `scripts/audit_mapsuite_candidates.py`, a strengthened verification test compares the procedural map vs. `MapGenerateMethod.PG_MAP_FILE` reconstruction:
+2. In `scripts/audit_mapsuite_candidates.py`, a strengthened verification test compares the procedural map vs. `MapGenerateMethod.PG_MAP_FILE` reconstruction, enforcing all 6 reported invariants in the pass condition:
    - **Block IDs Match:** `True` (`ISCS`)
+   - **Serialized Block Configuration Match:** `True` (exact equality across all block parameter dictionaries)
    - **Bounding Box Match:** `True`
    - **Route Length Difference:** $0.0000000000\text{ m}$ (exact float match)
    - **Checkpoints Match:** `True`
-   - **Top-Down Render Pixel Equality:** `True` (bit-for-bit identical $512 \times 512$ PNG)
+   - **Top-Down Render Pixel Equality:** `True` (bit-for-bit identical $512 \times 512$ top-down render arrays)
 3. Manifests store both the procedural definition (`sequence`, `seed`) and the exact block dictionary.
 
 ---

@@ -5,6 +5,7 @@ Gate 2 of Research Platform V1.
 Authoritative source: MetaDrive 0.4.3 (commit 85e5dadc6c7436d324348f6e3d8f8e680c06b4db)
 """
 
+import copy
 import csv
 import json
 import math
@@ -133,6 +134,7 @@ def verify_map_roundtrip_reproducibility():
     - serialized block configurations
     - bounding box
     - route total length
+    - navigation checkpoints
     - top-down render pixel equality
     """
     print("\n--- Verifying Map Round-Trip Reproducibility (Procedural vs PG_MAP_FILE) ---")
@@ -153,18 +155,18 @@ def verify_map_roundtrip_reproducibility():
     bbox_orig = m1.road_network.get_bounding_box()
     route_orig = float(env1.agent.navigation.total_length)
     checkpoints_orig = make_jsonable(env1.agent.navigation.checkpoints)
-    block_seq_saved = make_jsonable(m1.get_meta_data()["block_sequence"])
+    block_seq_orig = make_jsonable(m1.get_meta_data()["block_sequence"])
     img_orig = draw_top_down_map(m1, resolution=(512, 512))
     env1.close()
 
-    # 2. Reconstructed generation via PG_MAP_FILE
+    # 2. Reconstructed generation via PG_MAP_FILE (using deepcopy so PG_MAP_FILE does not mutate block_seq_orig)
     env2 = MetaDriveEnv(dict(
         use_render=False,
         num_scenarios=1,
         start_seed=test_seed,
         map_config={
             "type": MapGenerateMethod.PG_MAP_FILE,
-            "config": block_seq_saved
+            "config": copy.deepcopy(block_seq_orig)
         },
         traffic_density=0.0
     ))
@@ -174,24 +176,37 @@ def verify_map_roundtrip_reproducibility():
     bbox_recon = m2.road_network.get_bounding_box()
     route_recon = float(env2.agent.navigation.total_length)
     checkpoints_recon = make_jsonable(env2.agent.navigation.checkpoints)
+    block_seq_recon = make_jsonable(m2.get_meta_data()["block_sequence"])
     img_recon = draw_top_down_map(m2, resolution=(512, 512))
     env2.close()
 
     blocks_match = (blocks_orig == blocks_recon)
+    block_config_match = (block_seq_orig == block_seq_recon)
     bbox_match = (bbox_orig == bbox_recon)
     route_diff = abs(route_orig - route_recon)
+    route_match = (route_diff < 1e-4)
     checkpoints_match = (checkpoints_orig == checkpoints_recon)
     pixel_equal = np.array_equal(img_orig, img_recon)
 
-    print(f"  Block IDs Match:          {blocks_match} ({''.join(blocks_orig)})")
-    print(f"  Bounding Box Match:       {bbox_match}")
-    print(f"  Route Length Diff:        {route_diff:.10e} m")
-    print(f"  Checkpoints Match:        {checkpoints_match}")
-    print(f"  Top-Down Pixel Equality:  {pixel_equal} (bit-for-bit identical 512x512 render)")
+    print(f"  Block IDs Match:                 {blocks_match} ({''.join(blocks_orig)})")
+    print(f"  Serialized Block Config Match:   {block_config_match}")
+    print(f"  Bounding Box Match:              {bbox_match}")
+    print(f"  Route Length Match:              {route_match} (diff: {route_diff:.10e} m)")
+    print(f"  Checkpoints Match:               {checkpoints_match}")
+    print(f"  Top-Down Render Pixel Equality:  {pixel_equal} (bit-for-bit identical 512x512 top-down render arrays)")
 
-    if not (blocks_match and bbox_match and route_diff < 1e-4 and pixel_equal):
-        raise RuntimeError("Map round-trip reproducibility check failed!")
-    print("  Conclusion: Verified round-trip reproducibility under tested configuration.")
+    all_invariants_pass = (
+        blocks_match
+        and block_config_match
+        and bbox_match
+        and route_match
+        and checkpoints_match
+        and pixel_equal
+    )
+
+    if not all_invariants_pass:
+        raise RuntimeError("Map round-trip reproducibility check failed on one or more invariants!")
+    print("  Conclusion: Verified round-trip reproducibility across all 6 invariants under tested configuration.")
 
 
 def run_mapsuite_audit(tier_configs, sweep_seeds, previews_dir):
