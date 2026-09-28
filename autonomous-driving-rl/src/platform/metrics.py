@@ -6,8 +6,11 @@ Pure, unit-testable module independent of Panda3D / simulator engine state.
 """
 
 from dataclasses import asdict, dataclass, field
+import math
 import statistics
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
+
+from src.platform.episode import TerminalReason
 
 
 @dataclass(frozen=True)
@@ -21,7 +24,7 @@ class EpisodeRecord:
     scenario_seed: int
     terminated: bool
     truncated: bool
-    primary_reason: str
+    primary_reason: TerminalReason
     raw_arrival: bool
     clean_success: bool
     final_route_completion: float
@@ -40,8 +43,40 @@ class EpisodeRecord:
     time_to_clean_success_s: Optional[float] = None
     agent_seed: Optional[int] = None
 
+    def __post_init__(self):
+        # Normalize primary_reason to TerminalReason enum if passed as string
+        if isinstance(self.primary_reason, str):
+            try:
+                object.__setattr__(self, "primary_reason", TerminalReason(self.primary_reason))
+            except ValueError:
+                raise ValueError(f"Unknown primary_reason string: {self.primary_reason}")
+
+        if not isinstance(self.primary_reason, TerminalReason):
+            raise ValueError(f"primary_reason must be a TerminalReason, got {type(self.primary_reason)}")
+
+        if self.primary_reason == TerminalReason.UNDETERMINED:
+            raise ValueError("Completed EpisodeRecord cannot have primary_reason=UNDETERMINED")
+
+        if not math.isfinite(self.final_route_completion):
+            raise ValueError(f"final_route_completion must be finite, got {self.final_route_completion}")
+        if not math.isfinite(self.max_route_completion):
+            raise ValueError(f"max_route_completion must be finite, got {self.max_route_completion}")
+
+        if self.episode_steps < 0:
+            raise ValueError(f"episode_steps must be non-negative, got {self.episode_steps}")
+        if self.simulation_time_s < 0:
+            raise ValueError(f"simulation_time_s must be non-negative, got {self.simulation_time_s}")
+
+        if self.clean_success:
+            if not self.raw_arrival or self.primary_reason != TerminalReason.SUCCESS:
+                raise ValueError(
+                    f"clean_success=True requires raw_arrival=True and primary_reason=SUCCESS (got arrival={self.raw_arrival}, reason={self.primary_reason})"
+                )
+
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        data["primary_reason"] = self.primary_reason.value
+        return data
 
 
 @dataclass(frozen=True)
@@ -59,7 +94,7 @@ class AggregateMetrics:
     median_final_route_completion: float
     mean_time_to_clean_success_s: Optional[float]
 
-    # MUTUALLY EXCLUSIVE PRIMARY OUTCOME BREAKDOWN
+    # MUTUALLY EXCLUSIVE PRIMARY OUTCOME BREAKDOWN (Sums to 1.0)
     success_rate: float
     timeout_rate: float
     crash_human_rate: float
@@ -76,8 +111,11 @@ class AggregateMetrics:
     mean_max_route_completion: float
     raw_crash_vehicle_rate: float
     raw_crash_object_rate: float
+    raw_crash_building_rate: float
+    raw_crash_human_rate: float
     raw_crash_sidewalk_rate: float
     raw_out_of_road_rate: float
+    raw_any_safety_event_rate: float
     mean_speed_kmh: float
     max_speed_kmh: float
 
@@ -106,32 +144,53 @@ def compute_aggregate_metrics(records: List[EpisodeRecord]) -> AggregateMetrics:
     raw_arrivals = sum(1 for r in records if r.raw_arrival)
     raw_arrival_rate = round(raw_arrivals / n, 4)
 
-    timeouts = sum(1 for r in records if r.primary_reason == "TIMEOUT")
-    timeout_rate = round(timeouts / n, 4)
-
-    # Mutually exclusive primary outcome rates
+    # Mutually exclusive primary outcome rates driven by TerminalReason enum
     reasons = [r.primary_reason for r in records]
-    crash_human_rate = round(reasons.count("CRASH_HUMAN") / n, 4)
-    crash_vehicle_rate = round(reasons.count("CRASH_VEHICLE") / n, 4)
-    crash_object_rate = round(reasons.count("CRASH_OBJECT") / n, 4)
-    crash_building_rate = round(reasons.count("CRASH_BUILDING") / n, 4)
-    crash_sidewalk_rate = round(reasons.count("CRASH_SIDEWALK") / n, 4)
-    out_of_road_rate = round(reasons.count("OUT_OF_ROAD") / n, 4)
-    unknown_rate = round(reasons.count("UNKNOWN_TERMINATION") / n, 4)
-    success_rate = round(reasons.count("SUCCESS") / n, 4)
+    success_rate = round(reasons.count(TerminalReason.SUCCESS) / n, 4)
+    timeout_rate = round(reasons.count(TerminalReason.TIMEOUT) / n, 4)
+    crash_human_rate = round(reasons.count(TerminalReason.CRASH_HUMAN) / n, 4)
+    crash_vehicle_rate = round(reasons.count(TerminalReason.CRASH_VEHICLE) / n, 4)
+    crash_object_rate = round(reasons.count(TerminalReason.CRASH_OBJECT) / n, 4)
+    crash_building_rate = round(reasons.count(TerminalReason.CRASH_BUILDING) / n, 4)
+    crash_sidewalk_rate = round(reasons.count(TerminalReason.CRASH_SIDEWALK) / n, 4)
+    out_of_road_rate = round(reasons.count(TerminalReason.OUT_OF_ROAD) / n, 4)
+    unknown_rate = round(reasons.count(TerminalReason.UNKNOWN_TERMINATION) / n, 4)
 
     # Overall safety failure rate (any safety failure as primary reason)
     safety_failures = sum(
         1 for r in reasons
-        if r in ("CRASH_HUMAN", "CRASH_VEHICLE", "CRASH_OBJECT", "CRASH_BUILDING", "CRASH_SIDEWALK", "OUT_OF_ROAD")
+        if r in (
+            TerminalReason.CRASH_HUMAN,
+            TerminalReason.CRASH_VEHICLE,
+            TerminalReason.CRASH_OBJECT,
+            TerminalReason.CRASH_BUILDING,
+            TerminalReason.CRASH_SIDEWALK,
+            TerminalReason.OUT_OF_ROAD,
+        )
     )
     safety_failure_rate = round(safety_failures / n, 4)
 
-    # Raw event rates (can overlap / sum > 1.0)
+    # Raw individual event rates (can overlap / sum > 1.0)
     raw_crash_vehicle_rate = round(sum(1 for r in records if r.raw_crash_vehicle) / n, 4)
     raw_crash_object_rate = round(sum(1 for r in records if r.raw_crash_object) / n, 4)
+    raw_crash_building_rate = round(sum(1 for r in records if r.raw_crash_building) / n, 4)
+    raw_crash_human_rate = round(sum(1 for r in records if r.raw_crash_human) / n, 4)
     raw_crash_sidewalk_rate = round(sum(1 for r in records if r.raw_crash_sidewalk) / n, 4)
     raw_out_of_road_rate = round(sum(1 for r in records if r.raw_out_of_road) / n, 4)
+    raw_any_safety_event_rate = round(
+        sum(
+            1 for r in records
+            if (
+                r.raw_crash_vehicle
+                or r.raw_crash_object
+                or r.raw_crash_building
+                or r.raw_crash_human
+                or r.raw_crash_sidewalk
+                or r.raw_out_of_road
+            )
+        ) / n,
+        4
+    )
 
     # Route completion statistics
     final_completions = [r.final_route_completion for r in records]
@@ -185,8 +244,11 @@ def compute_aggregate_metrics(records: List[EpisodeRecord]) -> AggregateMetrics:
         mean_max_route_completion=mean_max_rc,
         raw_crash_vehicle_rate=raw_crash_vehicle_rate,
         raw_crash_object_rate=raw_crash_object_rate,
+        raw_crash_building_rate=raw_crash_building_rate,
+        raw_crash_human_rate=raw_crash_human_rate,
         raw_crash_sidewalk_rate=raw_crash_sidewalk_rate,
         raw_out_of_road_rate=raw_out_of_road_rate,
+        raw_any_safety_event_rate=raw_any_safety_event_rate,
         mean_speed_kmh=mean_spd,
         max_speed_kmh=max_spd,
         mean_episode_return=mean_ret,

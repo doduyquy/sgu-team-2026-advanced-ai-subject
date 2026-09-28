@@ -15,11 +15,11 @@
     "success_bonus": 1.0,
     "safety_penalty": 1.0,
     "timeout_penalty": 0.0,
-    "clip_min": -5.0,
-    "clip_max": 5.0
+    "clip_min": null,
+    "clip_max": null
   },
   "reward_equation": {
-    "formula": "r_t = w_progress * delta_route_completion - (time_penalty_budget / horizon_steps) + r_terminal",
+    "formula": "raw_total = w_progress * delta_route_completion - (time_penalty_budget / horizon_steps) + r_terminal; total_reward = clip(raw_total, clip_min, clip_max)",
     "components": {
       "progress_shaping": "w_progress * (route_completion_t - route_completion_{t-1}). Bounded to ~1.0 over full route regardless of map length.",
       "time_cost": "time_penalty_budget / horizon_steps. Bounded to time_penalty_budget across entire horizon. Discourages standing still without creating speed pressure.",
@@ -28,5 +28,10 @@
       "timeout_terminal": "-timeout_penalty on step budget exhaustion."
     }
   },
-  "safety_precedence_source": "src.platform.episode.SAFETY_FIRST_PRECEDENCE"
+  "safety_precedence_source": "src.platform.episode.SAFETY_FIRST_PRECEDENCE",
+  "route_completion_provenance": {
+    "telemetry_class": "evaluator_internal_only",
+    "agent_input_exposure": false,
+    "description": "route_completion is evaluator/environment-internal telemetry and is NOT part of AgentInput. Only the environment-internal step delta is converted to scalar reward; the agent receives the resulting scalar without privileged global completion state."
+  }
 }

@@ -6,4 +6,4 @@ deliberate_out_of_road,Easy,SCS,11,12,349.6,0.0167,-4.2482,-5.0,OUT_OF_ROAD,Fals
 traffic_cone_collision,Easy,SCS,11,28,349.6,0.0309,0.6436,-5.0,CRASH_OBJECT,False,Final step reward overridden to -crash_object_penalty (-5.0).
 traffic_vehicle_collision,Hard,SCXOCS,2,249,643.0,0.3026,192.2801,-5.0,CRASH_VEHICLE,False,Vehicle collision in roundabout. Final reward overridden to -crash_vehicle_penalty (-5.0).
 clean_success_easy_350m,Easy,SCS,11,407,349.6,0.9879,350.7498,10.0,SUCCESS,True,Clean arrival on 350m corridor. Final step overridden to +success_reward (+10.0).
-clean_success_extreme_939m,Extreme,CrXROSTR,6,1123,938.6,0.9951,966.7389,10.0,SUCCESS,True,Clean arrival on 939m corridor. Return is 2.7x larger than Easy due to route length.
+clean_success_extreme_939m,Extreme,CrXROSTR,6,1123,938.6,0.9951,966.7389,10.0,SUCCESS,True,Clean arrival on 939m corridor. Return is 2.76x larger than Easy due to route length.

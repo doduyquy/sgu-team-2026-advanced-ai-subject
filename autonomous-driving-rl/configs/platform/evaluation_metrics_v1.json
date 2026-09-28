@@ -54,7 +54,7 @@
       },
       {
         "name": "raw_safety_event_rates",
-        "description": "Individual event frequencies allowing overlapping/simultaneous events."
+        "description": "Individual event frequencies allowing overlapping/simultaneous events (crash_vehicle, crash_object, crash_building, crash_human, crash_sidewalk, out_of_road, any_safety_event)."
       },
       {
         "name": "mean_max_route_completion",

@@ -98,7 +98,7 @@ Our source audit and empirical tests revealed 5 fundamental pathologies in MetaD
      - Medium (`SCTCS` s0, $521.1\text{ m}$): Return $= \mathbf{543.29}$
      - Hard (`XTOCS` s19, $496.9\text{ m}$): Return $= \mathbf{516.16}$
      - Extreme (`CrXROSTR` s6, $938.6\text{ m}$): Return $= \mathbf{966.74}$
-   - An agent achieving only 50% route completion on an Extreme map receives $\sim 480$ reward points—drastically outscoring an agent that achieves 100% clean success on an Easy map ($\sim 350$ points). Cumulative return is therefore fundamentally broken as a cross-map benchmark metric.
+   - Based on an analytical estimate derived from meter distance scaling ($0.50 \times 938.6\text{ m} \times 1.0\text{ driving\_reward} + \dots$), an agent achieving 50% route completion on an Extreme map receives $\sim 480$ reward points—drastically outscoring an agent that achieves 100% clean success on an Easy map ($350.75$ points). Cumulative return is therefore fundamentally broken as a cross-map benchmark metric.
 
 2. **Terminal Replacement / Override Semantics:**
    - On the terminal transition, the dense step reward is completely overwritten (`reward = +self.config["success_reward"]`), rather than acting as an additive bonus (`reward += ...`). The final step's progress and speed contribution are completely discarded.
@@ -109,11 +109,11 @@ Our source audit and empirical tests revealed 5 fundamental pathologies in MetaD
 
 4. **Missing Penalties for Critical Failures:**
    - In `done_function()`, `crash_human` and `crash_building` trigger immediate episode termination.
-   - However, in `reward_function()`, neither `crash_human` nor `crash_building` has an explicit penalty branch. The agent receives positive driving/speed reward on the step it hits a pedestrian or structure.
+   - However, in `reward_function()`, `crash_human` and `crash_building` have no dedicated explicit reward penalty; reward falls through to dense step reward unless another earlier reward branch also triggers.
 
-5. **Dead-Code Sidewalk Penalty:**
+5. **Shadowed Sidewalk Penalty:**
    - In `reward_function()`, `elif self._is_out_of_road(vehicle)` precedes `elif vehicle.crash_sidewalk:`.
-   - Because sidewalk contact triggers `_is_out_of_road = True` by default, the sidewalk penalty branch is dead code, and default `crash_sidewalk_penalty = 0.0`.
+   - Under the audited default configuration (`out_of_route_done=False`, `on_continuous_line_done=True`), sidewalk contact triggers `_is_out_of_road()` first, making the sidewalk penalty branch unreachable/shadowed. Default `crash_sidewalk_penalty = 0.0`.
 
 *Empirical evidence:* Committed in `results/audits/reward_metrics/native_reward_cases.csv`.
 
@@ -219,8 +219,8 @@ Evaluation metrics are strictly segregated from training returns:
 ### 2. Secondary Diagnostic Metrics
 - `raw_arrival_rate`: Raw goal line crossing frequency (including collisions).
 - `timeout_rate`: Fraction of episodes truncated by step budget exhaustion.
-- Mutually exclusive primary outcome rates: `crash_human_rate`, `crash_vehicle_rate`, `crash_object_rate`, `crash_building_rate`, `crash_sidewalk_rate`, `out_of_road_rate`.
-- Raw event rates: Individual event frequencies (can sum to $>1.0$ due to simultaneous events).
+- Mutually exclusive primary outcome rates: `crash_human_rate`, `crash_vehicle_rate`, `crash_object_rate`, `crash_building_rate`, `crash_sidewalk_rate`, `out_of_road_rate`, `unknown_termination_rate`.
+- Raw individual safety event rates: `raw_crash_vehicle_rate`, `raw_crash_object_rate`, `raw_crash_building_rate`, `raw_crash_human_rate`, `raw_crash_sidewalk_rate`, `raw_out_of_road_rate`, and `raw_any_safety_event_rate` (individual event frequencies allowing overlapping/simultaneous events).
 - `mean_max_route_completion`: Highest completion reached during the episode (surfaces reversing/backtracking).
 - `mean_speed_kmh` and `max_speed_kmh`.
 
@@ -249,7 +249,7 @@ We audited 8 potential reward hacking modes under Candidate C:
 3. **Near-Goal Crash:** Crashing at 99% progress yields $\approx +0.99 - \text{time} - 1.0 = -0.1$ to $-0.2$, never outscoring an early safe completion or even a conservative partial progression.
 4. **Arrival + Crash Same Step:** Safety-first precedence overrides arrival, awarding $-1.0$ terminal penalty.
 5. **Stationary Timeout:** Yields $-0.25$, making standing still strictly suboptimal.
-6. **Oscillating Progress:** Moving backwards yields negative $\Delta \text{RC}$. Re-traversing previously driven road merely cancels earlier negative deltas without net accumulation.
+6. **Oscillating / Reversing Progress:** In the benchmark vehicle configuration (`enable_reverse=False`), physical reversing is disabled. Mathematically and at the pure helper level, if $\Delta \text{RC} < 0$, RewardSpecV1 awards negative progress reward, ensuring backward motion cannot be exploited to accumulate reward. In an isolated audit-only test with `enable_reverse=True`, backward motion confirmed negative $\Delta \text{RC}$ accumulation.
 7. **Route Transition Spikes:** Audited across intersections, roundabouts, and ramps; step deltas remain smooth ($<0.003$ per step), preventing transition exploitation.
 8. **Lateral Boundary Exploitation:** Steering onto the sidewalk curb triggers `out_of_road` $\implies -1.0$ penalty.
 
