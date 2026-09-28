@@ -40,6 +40,27 @@ class TestEpisodeLifecycle(unittest.TestCase):
         h_huge = compute_route_aware_horizon(2000.0, max_horizon_steps=4000)
         self.assertEqual(h_huge, 4000)
 
+        # Zero length returns min floor
+        h_zero = compute_route_aware_horizon(0.0)
+        self.assertEqual(h_zero, 1000)
+
+    def test_route_aware_horizon_validation_errors(self):
+        # Negative route length
+        with self.assertRaises(ValueError):
+            compute_route_aware_horizon(-10.0)
+        # Non-positive speed
+        with self.assertRaises(ValueError):
+            compute_route_aware_horizon(500.0, reference_floor_speed_kmh=0.0)
+        # Non-positive safety margin
+        with self.assertRaises(ValueError):
+            compute_route_aware_horizon(500.0, safety_margin=0.0)
+        # Non-positive frequency
+        with self.assertRaises(ValueError):
+            compute_route_aware_horizon(500.0, control_frequency_hz=0)
+        # Max horizon < min horizon
+        with self.assertRaises(ValueError):
+            compute_route_aware_horizon(500.0, min_horizon_steps=2000, max_horizon_steps=1000)
+
     def test_clean_success_classification(self):
         raw = {"arrive_dest": True, "out_of_road": False, "crash_vehicle": False}
         outcome = classify_episode_outcome(raw, terminated=True, truncated=False)

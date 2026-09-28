@@ -42,6 +42,8 @@
       "sequence": "SCS",
       "scenario_seed": 11,
       "route_length_m": 349.6,
+      "configured_traffic_density": 0.0,
+      "actual_planned_traffic_count": 0,
       "computed_horizon_steps": 1049,
       "budget_seconds": 104.9,
       "idm_completion_steps": 407,
@@ -53,6 +55,8 @@
       "sequence": "SCSS",
       "scenario_seed": 9,
       "route_length_m": 403.15,
+      "configured_traffic_density": 0.0,
+      "actual_planned_traffic_count": 0,
       "computed_horizon_steps": 1210,
       "budget_seconds": 121.0,
       "idm_completion_steps": 478,
@@ -64,6 +68,8 @@
       "sequence": "SCCS",
       "scenario_seed": 9,
       "route_length_m": 444.15,
+      "configured_traffic_density": 0.0,
+      "actual_planned_traffic_count": 0,
       "computed_horizon_steps": 1333,
       "budget_seconds": 133.3,
       "idm_completion_steps": 533,
@@ -75,6 +81,8 @@
       "sequence": "SCXCS",
       "scenario_seed": 11,
       "route_length_m": 523.75,
+      "configured_traffic_density": 0.08,
+      "actual_planned_traffic_count": 9,
       "computed_horizon_steps": 1572,
       "budget_seconds": 157.2,
       "idm_completion_steps": 383,
@@ -86,6 +94,8 @@
       "sequence": "SCTCS",
       "scenario_seed": 0,
       "route_length_m": 521.06,
+      "configured_traffic_density": 0.08,
+      "actual_planned_traffic_count": 7,
       "computed_horizon_steps": 1564,
       "budget_seconds": 156.4,
       "idm_completion_steps": 629,
@@ -97,10 +107,12 @@
       "sequence": "SCXCCS",
       "scenario_seed": 13,
       "route_length_m": 688.37,
+      "configured_traffic_density": 0.08,
+      "actual_planned_traffic_count": 12,
       "computed_horizon_steps": 2066,
       "budget_seconds": 206.6,
-      "idm_completion_steps": 830,
-      "safety_margin_over_idm": 2.49
+      "idm_completion_steps": 844,
+      "safety_margin_over_idm": 2.45
     },
     "Hard_primary_canonical_SCXOCS_seed2": {
       "tier": "Hard",
@@ -108,10 +120,12 @@
       "sequence": "SCXOCS",
       "scenario_seed": 2,
       "route_length_m": 643.01,
+      "configured_traffic_density": 0.15,
+      "actual_planned_traffic_count": 27,
       "computed_horizon_steps": 1930,
       "budget_seconds": 193.0,
-      "idm_completion_steps": 779,
-      "safety_margin_over_idm": 2.48
+      "idm_completion_steps": 249,
+      "safety_margin_over_idm": "N/A"
     },
     "Hard_alternate_canonical_SCTXrCS_seed1": {
       "tier": "Hard",
@@ -119,10 +133,12 @@
       "sequence": "SCTXrCS",
       "scenario_seed": 1,
       "route_length_m": 748.76,
+      "configured_traffic_density": 0.15,
+      "actual_planned_traffic_count": 28,
       "computed_horizon_steps": 2247,
       "budget_seconds": 224.7,
-      "idm_completion_steps": 897,
-      "safety_margin_over_idm": 2.51
+      "idm_completion_steps": 780,
+      "safety_margin_over_idm": "N/A"
     },
     "Hard_alternate_canonical_XTOCS_seed19": {
       "tier": "Hard",
@@ -130,10 +146,12 @@
       "sequence": "XTOCS",
       "scenario_seed": 19,
       "route_length_m": 496.89,
+      "configured_traffic_density": 0.15,
+      "actual_planned_traffic_count": 17,
       "computed_horizon_steps": 1491,
       "budget_seconds": 149.1,
-      "idm_completion_steps": 599,
-      "safety_margin_over_idm": 2.49
+      "idm_completion_steps": 678,
+      "safety_margin_over_idm": 2.2
     },
     "Extreme_primary_canonical_CrXROSTR_seed6": {
       "tier": "Extreme",
@@ -141,10 +159,12 @@
       "sequence": "CrXROSTR",
       "scenario_seed": 6,
       "route_length_m": 938.58,
+      "configured_traffic_density": 0.25,
+      "actual_planned_traffic_count": 70,
       "computed_horizon_steps": 2816,
       "budget_seconds": 281.6,
-      "idm_completion_steps": 1123,
-      "safety_margin_over_idm": 2.51
+      "idm_completion_steps": 563,
+      "safety_margin_over_idm": "N/A"
     },
     "Extreme_alternate_canonical_SCXOCrTYCS_seed16": {
       "tier": "Extreme",
@@ -152,10 +172,12 @@
       "sequence": "SCXOCrTYCS",
       "scenario_seed": 16,
       "route_length_m": 1051.77,
+      "configured_traffic_density": 0.25,
+      "actual_planned_traffic_count": 79,
       "computed_horizon_steps": 3156,
       "budget_seconds": 315.6,
-      "idm_completion_steps": 1255,
-      "safety_margin_over_idm": 2.51
+      "idm_completion_steps": 618,
+      "safety_margin_over_idm": "N/A"
     },
     "Extreme_alternate_canonical_SCTXORyCCS_seed4": {
       "tier": "Extreme",
@@ -163,10 +185,12 @@
       "sequence": "SCTXORyCCS",
       "scenario_seed": 4,
       "route_length_m": 1003.23,
+      "configured_traffic_density": 0.25,
+      "actual_planned_traffic_count": 58,
       "computed_horizon_steps": 3010,
       "budget_seconds": 301.0,
-      "idm_completion_steps": 1218,
-      "safety_margin_over_idm": 2.47
+      "idm_completion_steps": 405,
+      "safety_margin_over_idm": "N/A"
     }
   }
 }

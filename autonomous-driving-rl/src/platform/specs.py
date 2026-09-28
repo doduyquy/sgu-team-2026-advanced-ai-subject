@@ -26,15 +26,39 @@ def compute_route_aware_horizon(
         nominal_steps = ceil((route_length_m / floor_speed_mps) * safety_margin * control_frequency_hz)
         horizon = max(min_horizon_steps, min(max_horizon_steps, nominal_steps))
 
+    Input Validation:
+        - route_length_m: must be >= 0. If 0, returns min_horizon_steps.
+        - reference_floor_speed_kmh: must be > 0.
+        - safety_margin: must be > 0.
+        - control_frequency_hz: must be > 0.
+        - min_horizon_steps: must be > 0.
+        - max_horizon_steps: must be >= min_horizon_steps.
+
     Design Rules:
         1. Fixed prior to episode reset based solely on scenario metadata.
         2. Never adapts based on agent identity, algorithm Stage, or current episode progress.
         3. Treats horizon as an emergency safety cutoff, not an aggressive speed target.
     """
-    if route_length_m <= 0:
+    if route_length_m < 0:
+        raise ValueError(f"route_length_m must be non-negative, got {route_length_m}")
+    if reference_floor_speed_kmh <= 0:
+        raise ValueError(f"reference_floor_speed_kmh must be strictly positive, got {reference_floor_speed_kmh}")
+    if safety_margin <= 0:
+        raise ValueError(f"safety_margin must be strictly positive, got {safety_margin}")
+    if control_frequency_hz <= 0:
+        raise ValueError(f"control_frequency_hz must be strictly positive, got {control_frequency_hz}")
+    if min_horizon_steps <= 0:
+        raise ValueError(f"min_horizon_steps must be strictly positive, got {min_horizon_steps}")
+    if max_horizon_steps < min_horizon_steps:
+        raise ValueError(
+            f"max_horizon_steps ({max_horizon_steps}) cannot be less than min_horizon_steps ({min_horizon_steps})"
+        )
+
+    # Documented behavior: zero-length route returns minimum horizon floor
+    if route_length_m == 0:
         return min_horizon_steps
 
-    floor_speed_mps = max(reference_floor_speed_kmh / 3.6, 0.1)
+    floor_speed_mps = reference_floor_speed_kmh / 3.6
     nominal_seconds = route_length_m / floor_speed_mps
     budget_seconds = nominal_seconds * safety_margin
     steps = math.ceil(budget_seconds * control_frequency_hz)

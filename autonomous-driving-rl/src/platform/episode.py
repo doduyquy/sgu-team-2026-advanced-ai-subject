@@ -24,7 +24,18 @@ class TerminalReason(str, Enum):
     UNDETERMINED = "UNDETERMINED"
 
 
-# Precedence order for primary event classification:
+# Mapping from normalized reason to simulator raw flag key
+REASON_TO_RAW_FLAG: Dict[TerminalReason, str] = {
+    TerminalReason.CRASH_HUMAN: "crash_human",
+    TerminalReason.CRASH_VEHICLE: "crash_vehicle",
+    TerminalReason.CRASH_OBJECT: "crash_object",
+    TerminalReason.CRASH_BUILDING: "crash_building",
+    TerminalReason.CRASH_SIDEWALK: "crash_sidewalk",
+    TerminalReason.OUT_OF_ROAD: "out_of_road",
+    TerminalReason.SUCCESS: "arrive_dest",
+}
+
+# Single source of truth for terminal event precedence:
 # Safety-critical violations take absolute precedence over task arrival.
 # Arrival takes precedence over step truncation/timeout.
 SAFETY_FIRST_PRECEDENCE: List[TerminalReason] = [
@@ -38,7 +49,7 @@ SAFETY_FIRST_PRECEDENCE: List[TerminalReason] = [
     TerminalReason.TIMEOUT,
 ]
 
-SAFETY_CRITICAL_FLAGS = [
+SAFETY_CRITICAL_FLAGS: List[str] = [
     "crash_human",
     "crash_vehicle",
     "crash_object",
@@ -74,7 +85,7 @@ def classify_episode_outcome(
     """
     Classifies raw environment flags into a deterministic, safety-first primary outcome.
 
-    Precedence Policy:
+    Precedence Policy (driven directly by SAFETY_FIRST_PRECEDENCE):
     1. Critical safety failures (crash human, vehicle, object, building, sidewalk, out-of-road).
     2. Clean task arrival (arrive_dest).
     3. Truncation / timeout (max_step or truncated).
@@ -84,30 +95,26 @@ def classify_episode_outcome(
     Clean Success Semantics:
     clean_success is True IF AND ONLY IF arrive_dest is True AND no safety violation flags occurred.
     """
-    # Defensive copy of flags
     flags = dict(raw_flags) if raw_flags else {}
+    primary = None
 
-    # Check safety failures first in precedence order
-    if flags.get("crash_human", False):
-        primary = TerminalReason.CRASH_HUMAN
-    elif flags.get("crash_vehicle", False):
-        primary = TerminalReason.CRASH_VEHICLE
-    elif flags.get("crash_object", False):
-        primary = TerminalReason.CRASH_OBJECT
-    elif flags.get("crash_building", False):
-        primary = TerminalReason.CRASH_BUILDING
-    elif flags.get("crash_sidewalk", False):
-        primary = TerminalReason.CRASH_SIDEWALK
-    elif flags.get("out_of_road", False):
-        primary = TerminalReason.OUT_OF_ROAD
-    elif flags.get("arrive_dest", False):
-        primary = TerminalReason.SUCCESS
-    elif truncated or flags.get("max_step", False):
-        primary = TerminalReason.TIMEOUT
-    elif terminated:
-        primary = TerminalReason.UNKNOWN_TERMINATION
-    else:
-        primary = TerminalReason.UNDETERMINED
+    # Evaluate precedence driven by SAFETY_FIRST_PRECEDENCE to avoid code drift
+    for reason in SAFETY_FIRST_PRECEDENCE:
+        if reason == TerminalReason.TIMEOUT:
+            if truncated or bool(flags.get("max_step", False)):
+                primary = reason
+                break
+        else:
+            raw_key = REASON_TO_RAW_FLAG.get(reason)
+            if raw_key and bool(flags.get(raw_key, False)):
+                primary = reason
+                break
+
+    if primary is None:
+        if terminated:
+            primary = TerminalReason.UNKNOWN_TERMINATION
+        else:
+            primary = TerminalReason.UNDETERMINED
 
     # Determine clean success: arrival must not be accompanied by any safety violation
     has_safety_violation = any(bool(flags.get(f, False)) for f in SAFETY_CRITICAL_FLAGS)

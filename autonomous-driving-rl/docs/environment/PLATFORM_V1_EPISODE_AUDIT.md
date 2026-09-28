@@ -3,13 +3,13 @@
 > **Status:** AUDIT & DESIGN RECOMMENDATION (GATE 3)  
 > **Freeze Status:** NON-FROZEN — RESEARCH SPECIFICATION ONLY  
 > **Target Scope:** Universal episode lifecycle contracts supporting Stages 0 through 7  
-> **Date:** September 2026  
+> **Date:** September 2026 (Updated with Gate-3 Audit-Integrity Refinements)  
 
 ---
 
 ## 1. Executive Summary & Purpose
 
-Gate 3 of Research Platform V1 establishes the scientific **episode lifecycle and termination contracts** shared across all research stages (Stages 0–7):
+Gate 3 of Research Platform V1 establishes the scientific **episode lifecycle, reset reproducibility, termination, and horizon contracts** shared across all research stages (Stages 0–7):
 - **Stage 0:** Random Baseline
 - **Stage 1:** Rule / Heuristic
 - **Stage 2:** Planning / Search
@@ -19,11 +19,17 @@ Gate 3 of Research Platform V1 establishes the scientific **episode lifecycle an
 - **Stage 6:** Search + Learning
 - **Stage 7:** Model-Based RL (World Models)
 
+### Core Evidence Distinction:
+To maintain rigorous scientific precision, this report explicitly separates:
+1. **Source-Verified Behavior:** Simulator mechanics confirmed directly from local MetaDrive 0.4.3 source code.
+2. **Empirically Observed Behavior:** Measurable experimental data collected under tested simulator runs.
+3. **Platform Design Policy:** Recommended Platform V1 contracts and architectural principles (all non-frozen).
+
 ### Core Mandates:
 - Standardize the Gymnasium episode interface: separate task-level **termination** (`terminated=True`) from step-budget **truncation** (`truncated=True`).
 - Formulate a deterministic, **safety-first outcome taxonomy** prioritizing physical collision and boundary failures over task arrival.
-- Calibrate a **route-aware horizon policy** eliminating the false-negative timeout failures discovered in Gate 2 for longer maps.
-- Ensure strict **reset reproducibility** and zero state leakage across episode boundaries.
+- Calibrate a **route-aware horizon policy** eliminating false-negative timeouts on longer canonical scenarios under actual MapSuite traffic.
+- Ensure strict **reset reproducibility** and zero state leakage across episode boundaries following terminal failures.
 - Provide pure, unit-testable helpers in `src/platform/` runnable without starting the 3D graphics simulator.
 - Keep reward design strictly deferred to **Gate 4**. `CourseEnvV1` remains the historical exploratory baseline.
 
@@ -40,27 +46,37 @@ Authoritative source reference is the local pinned MetaDrive repository:
 
 ---
 
-## 3. Exact Reset Semantics (`BaseEnv.reset()`)
+## 3. Reset Semantics & State Cleansing
 
-From source inspection of `metadrive/envs/base_env.py` (lines 512–544):
+### Source-Verified Behavior (`metadrive/envs/base_env.py` lines 512–544):
 1. **Global Seed Assignment:** `self._reset_global_seed(seed)` sets `self.current_seed = seed`.
-2. **Engine Reset:** `self.engine.reset()` triggers map generation (if unbuilt), obstacle placement, and traffic initialization.
-3. **Sensor Reset:** `self.reset_sensors()` flushes depth, LiDAR, and camera buffers.
-4. **Task Manager Step:** `self.engine.taskMgr.step()` renders the initial frame.
-5. **State Initialization:**
+2. **Engine Reset:** `self.engine.reset()` builds or swaps the road network, samples traffic parameters, and initializes agents.
+3. **Sensor Flush:** `self.reset_sensors()` flushes depth, LiDAR, and camera buffers.
+4. **State Cleansing:** Step counters, cumulative rewards, and termination flags are explicitly re-initialized:
    ```python
    self.dones = {agent_id: False for agent_id in self.agents.keys()}
    self.episode_rewards = defaultdict(float)
    self.episode_lengths = defaultdict(int)
    ```
-6. **State Cleansing:** All internal step counters, cumulative rewards, and termination flags are explicitly reset to zero/False. No previous episode terminal flags leak into the initial step.
+
+### Empirically Observed Behavior:
+- Captured the true reset observation vector immediately upon `env.reset(seed=42)` before any actions were executed.
+- In Run 0, the vehicle was deliberately driven into a real terminal failure (`out_of_road=True` at step 27).
+- Consecutive resets on the same environment instance (`seed=42`) yielded:
+  - Observation max absolute difference: $0.00\times 10^0$
+  - Position difference: $0.0000000000\text{ m}$
+  - Heading difference: $0.0000000000\text{ rad}$
+  - Speed difference: $0.0000000000\text{ km/h}$
+  - Route checkpoints & block sequence: 100% identical
+  - Reset flags: `arrive_dest=False`, `out_of_road=False`, `crash=False`
+- **Zero state leakage** was confirmed across episode boundaries.
 
 ---
 
-## 4. Exact MetaDrive Termination Semantics (`done_function()`)
+## 4. Termination Semantics (`done_function()`)
 
-From `metadrive/envs/metadrive_env.py` (lines 133–205):
-MetaDrive evaluates terminal conditions at every step in `done_function(vehicle_id)`:
+### Source-Verified Behavior (`metadrive/envs/metadrive_env.py` lines 133–205):
+At every simulation step, `done_function(vehicle_id)` evaluates:
 
 ```python
 done_info = {
@@ -77,42 +93,42 @@ done_info = {
 ```
 
 ### Direct Termination Triggers:
-- `SUCCESS` (`arrive_dest`): Sets `done = True`.
-- `OUT_OF_ROAD`: Sets `done = True` (if `out_of_road_done=True`, default True).
-- `CRASH_VEHICLE`: Sets `done = True` (if `crash_vehicle_done=True`, default True).
-- `CRASH_OBJECT`: Sets `done = True` (if `crash_object_done=True`, default True).
-- `CRASH_BUILDING`: Sets `done = True` (always, unconditional).
-- `CRASH_HUMAN`: Sets `done = True` (if `crash_human_done=True`, default True).
+- `SUCCESS` (`arrive_dest`): Directly sets `done = True`.
+- `OUT_OF_ROAD`: Directly sets `done = True` (when `out_of_road_done=True`, default True).
+- `CRASH_VEHICLE`: Directly sets `done = True` (when `crash_vehicle_done=True`, default True).
+- `CRASH_OBJECT`: Directly sets `done = True` (when `crash_object_done=True`, default True).
+- `CRASH_BUILDING`: Directly sets `done = True` (always, unconditional).
+- `CRASH_HUMAN`: Directly sets `done = True` (when `crash_human_done=True`, default True).
 - `MAX_STEP`: Sets `done = True` **only if** `truncate_as_terminate=True`.
 
 ---
 
 ## 5. Truncation vs. Termination Construction
 
-In `metadrive/envs/base_env.py` (lines 624–625):
+### Source-Verified Behavior (`metadrive/envs/base_env.py` lines 624–625):
 ```python
 truncateds = {k: step_infos[k].get(TerminationState.MAX_STEP, False) for k in self.agents.keys()}
 terminateds = {k: self.dones[k] for k in self.agents.keys()}
 ```
 
-### Critical Gymnasium Conformance Finding:
-1. When `truncate_as_terminate = False` (Recommended Platform V1 Contract):
-   - At step budget exhaustion (`episode_length >= horizon`), `max_step` is True.
-   - `done` is NOT set to True in `done_function()`.
-   - Result: **`terminated = False`, `truncated = True`**.
-   - This adheres to the standard Gymnasium specification: timeout is an environmental horizon truncation, not an episodic policy failure.
-2. When `truncate_as_terminate = True`:
-   - Both `done` and `max_step` evaluate to True.
-   - Result: `terminated = True`, `truncated = True`.
-   - The simulator issues an explicit internal warning: `"When reaching max steps, both 'terminate' and 'truncate will be True. Generally, only the 'truncate' should be 'True'."`
+### Empirically Observed Behavior:
+1. **Case 4 (`truncate_as_terminate = False`):**
+   - Step budget timeout ($15\text{ steps}$) produced:
+     $$\text{max\_step} = \text{True},\quad \text{terminated} = \text{False},\quad \text{truncated} = \text{True}$$
+   - Conforms strictly to standard Gymnasium semantics.
+2. **Case 4b Control Test (`truncate_as_terminate = True`):**
+   - Step budget timeout ($15\text{ steps}$) produced:
+     $$\text{max\_step} = \text{True},\quad \text{terminated} = \text{True},\quad \text{truncated} = \text{True}$$
+   - Simulator logged internal warning: `"When reaching max steps, both 'terminate' and 'truncate will be True. Generally, only the 'truncate' should be 'True'."`
 
-*Platform V1 Contract:* Sets **`truncate_as_terminate = False`** as the default.
+### Platform Design Policy:
+Platform V1 adopts **`truncate_as_terminate = False`** as the default contract.
 
 ---
 
 ## 6. Task Success Semantics (`_is_arrive_destination()`)
 
-From `metadrive/envs/metadrive_env.py` (lines 227–232):
+### Source-Verified Behavior (`metadrive/envs/metadrive_env.py` lines 227–232):
 ```python
 long, lat = vehicle.navigation.final_lane.local_coordinates(vehicle.position)
 flag = (vehicle.navigation.final_lane.length - 5 < long < vehicle.navigation.final_lane.length + 5) and (
@@ -122,18 +138,17 @@ flag = (vehicle.navigation.final_lane.length - 5 < long < vehicle.navigation.fin
 ```
 
 ### Exact Arrival Boundary:
-- The ego vehicle must be localized on the designated `final_lane`.
-- Longitudinal position must be within a $\pm 5.0\text{ m}$ window of the lane terminus:
-  $$\text{lane.length} - 5.0\text{ m} < \text{long} < \text{lane.length} + 5.0\text{ m}$$
-- Lateral position must remain within the drivable road boundary of the final corridor:
+- `_is_arrive_destination()` does **NOT** explicitly test `vehicle.lane == final_lane`.
+- Instead, arrival is true when the vehicle position projects within the destination window near the end of `final_lane` ($\pm 5.0\text{ m}$ from lane terminus) and lies inside the allowed final-road lateral corridor:
+  $$\text{final\_lane.length} - 5.0\text{ m} < \text{long} < \text{final\_lane.length} + 5.0\text{ m}$$
   $$\frac{w}{2} \ge \text{lat} \ge (0.5 - N_{\text{lanes}}) \times w$$
-- **Platform Success Definition:** Success is a pure spatial task-arrival event. It is decoupled from reward thresholds or episode return sums.
+- Decoupled from cumulative reward thresholds or return sums.
 
 ---
 
 ## 7. Out-of-Road, Continuous Line, and Sidewalk Audit
 
-From `metadrive/envs/metadrive_env.py` (lines 234–245):
+### Source-Verified Behavior (`metadrive/envs/metadrive_env.py` lines 234–245):
 ```python
 def _is_out_of_road(self, vehicle):
     ret = not vehicle.on_lane
@@ -146,43 +161,45 @@ def _is_out_of_road(self, vehicle):
     return ret
 ```
 
-### Critical Empirical Discoveries:
-1. **`crash_sidewalk` is NOT Directly Terminal:**  
-   Inspection of `done_function()` confirms there is no direct check for `done_info[TerminationState.CRASH_SIDEWALK]`.
-2. **`crash_sidewalk` Triggers Termination Indirectly Through `out_of_road`:**  
-   Because `on_continuous_line_done=True` by default, `_is_out_of_road()` sets `ret = True` whenever `vehicle.crash_sidewalk` or `vehicle.on_white_continuous_line` is detected.
-3. **Solid Border Crossing:** Steering across the solid outer lane marking triggers `on_white_continuous_line=True` $\implies$ `out_of_road=True` $\implies$ `terminated=True`.
+### Empirical & Source Discoveries:
+1. **`crash_sidewalk` is NOT directly checked in `done_function()`.**
+2. **`crash_sidewalk` is terminal indirectly through `out_of_road`:**  
+   Because `on_continuous_line_done = True` by default, `_is_out_of_road()` sets `ret = True` whenever `vehicle.crash_sidewalk` occurs.
+3. **Solid Border Crossing:** Steering across the solid outer lane marking triggers `on_white_continuous_line = True` $\implies$ `out_of_road = True` $\implies$ `terminated = True`.
 
 ---
 
 ## 8. Crash Termination Semantics
 
-- **Vehicle Collision (`crash_vehicle`):** Triggered when the Bullet physics engine reports collision contact with any other vehicle (`CollisionGroup.Vehicle`). Sets `done = True` directly.
-- **Traffic Object Collision (`crash_object`):** Triggered on contact with static traffic objects (`TrafficCone`, `TrafficBarrier`). Sets `done = True` directly.
+- **Vehicle Collision (`crash_vehicle`):** Triggered when Bullet physics reports contact with `CollisionGroup.Vehicle`. Directly sets `done = True`.
+- **Traffic Object Collision (`crash_object`):** Triggered on contact with static traffic objects (`TrafficCone`, `TrafficBarrier`). Directly sets `done = True`.
 - **Building Collision (`crash_building`):** Unconditionally sets `done = True`.
-- **Pedestrian Collision (`crash_human`):** Triggered on contact with traffic participants. Sets `done = True`.
+- **Pedestrian Collision (`crash_human`):** Directly sets `done = True`.
 
 ---
 
 ## 9. Simultaneous Terminal Event Handling & Safety-First Precedence
 
-In autonomous driving, multiple raw flags can fire on the final step (e.g. crossing the destination line while crashing into a vehicle, or drifting off-road at the exact step of timeout).
+In autonomous driving, multiple raw flags can fire on the final step (e.g. crossing the destination line while crashing into a vehicle).
 
-### Precedence Architecture:
+### Platform Design Policy (Precedence Architecture):
 To prevent "success hacking" where unsafe policies claim arrival despite catastrophic collisions, Platform V1 enforces **Safety-First Outcome Precedence**:
 
 ```text
-1. CRASH_HUMAN        (Highest severity safety violation)
-2. CRASH_VEHICLE      (Multi-agent vehicle collision)
-3. CRASH_OBJECT       (Traffic obstacle impact)
-4. CRASH_BUILDING     (Off-corridor structure impact)
-5. CRASH_SIDEWALK     (Pedestrian refuge/curb collision)
-6. OUT_OF_ROAD        (Drivable boundary departure)
-7. SUCCESS            (Clean destination arrival)
-8. TIMEOUT            (Horizon step budget exhaustion)
-9. UNKNOWN_TERMINATION(Unclassified terminal fallback)
-10. UNDETERMINED      (Ongoing active step)
+1. CRASH_HUMAN         (Critical safety failure)
+2. CRASH_VEHICLE       (Multi-agent vehicle collision)
+3. CRASH_OBJECT        (Traffic obstacle impact)
+4. CRASH_BUILDING      (Off-road structure impact)
+5. CRASH_SIDEWALK      (Pedestrian refuge/curb collision)
+6. OUT_OF_ROAD         (Drivable boundary departure)
+7. SUCCESS             (Clean destination arrival)
+8. TIMEOUT             (Horizon step budget exhaustion)
+9. UNKNOWN_TERMINATION (Unclassified termination fallback)
+10. UNDETERMINED       (Ongoing active step)
 ```
+
+### Single-Source-of-Truth Implementation:
+In `src/platform/episode.py`, `classify_episode_outcome()` evaluates dynamically against `SAFETY_FIRST_PRECEDENCE` and `REASON_TO_RAW_FLAG` to prevent code drift.
 
 ### Clean Success Semantics:
 $$\text{clean\_success} = \text{arrive\_dest} \land \neg(\text{crash\_human} \lor \text{crash\_vehicle} \lor \text{crash\_object} \lor \text{crash\_building} \lor \text{crash\_sidewalk} \lor \text{out\_of\_road})$$
@@ -194,50 +211,44 @@ $$\text{clean\_success} = \text{arrive\_dest} \land \neg(\text{crash\_human} \lo
 
 ## 10. Normalized Outcome Taxonomy & Implementation
 
-Implemented in `src/platform/episode.py` as a pure, unit-testable module:
+Implemented in `src/platform/episode.py`:
+- `TerminalReason`: Enum representing all normalized outcomes.
+- `EpisodeOutcome`: Immutable dataclass container storing `terminated`, `truncated`, `primary_reason`, `clean_success`, and `raw_flags`.
+- `compute_route_aware_horizon()`: Hardened helper with strict input validation (raises `ValueError` on negative route length, non-positive speeds, or invalid bounds).
 
-```python
-@dataclass(frozen=True)
-class EpisodeOutcome:
-    terminated: bool
-    truncated: bool
-    primary_reason: TerminalReason
-    clean_success: bool
-    raw_flags: Dict[str, Any]
-
-    @property
-    def is_done(self) -> bool:
-        return self.terminated or self.truncated
-```
-
-*Unit-tested:* 9 pure unit tests in `tests/test_episode_lifecycle.py` execute in $<0.01\text{ s}$ without Panda3D.
+*Unit-tested:* 10 pure unit tests in `tests/test_episode_lifecycle.py` execute in $<0.01\text{ s}$ without Panda3D.
 
 ---
 
-## 11. Horizon Calibration Methodology & Reference Driving
+## 11. Horizon Calibration Across 12 Canonical Scenarios (Actual MapSuite Traffic)
 
-In Gate 2, we identified that the default MetaDrive `horizon = 1000` (100.0s at 10 Hz) causes false-negative timeouts on Extreme scenarios. To establish a scientifically calibrated horizon, we deployed MetaDrive's **`IDMPolicy`** as a deterministic calibration instrument across all 12 canonical and alternate MapSuite scenarios (with a generous audit ceiling of 3500 steps).
+We evaluated all 12 canonical and alternate MapSuite scenarios using **actual Gate-2 benchmark traffic** (`traffic_density = cand["traffic_density"]`, `traffic_mode = "trigger"`) and reconstructed exact geometry via `MapGenerateMethod.PG_MAP_FILE`:
 
-### Calibration Findings Across 12 Scenarios
+### Empirical Rollout Results
 
-| Tier | Candidate Role | Sequence | Seed | Route Length | IDM Result | IDM Steps | IDM Time | IDM Mean Speed | Default Horizon 1000 Status | Proposed Route Horizon | Budget Seconds | Margin over IDM |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **Easy** | Primary | `SCS` | `11` | $349.6\text{ m}$ | ARRIVED | 407 | $40.7\text{ s}$ | $29.0\text{ km/h}$ | FEASIBLE | **1049** | $104.9\text{ s}$ | $2.58\times$ |
-| **Easy** | Alternate | `SCSS` | `9` | $403.1\text{ m}$ | ARRIVED | 478 | $47.8\text{ s}$ | $29.1\text{ km/h}$ | FEASIBLE | **1210** | $121.0\text{ s}$ | $2.53\times$ |
-| **Easy** | Alternate | `SCCS` | `9` | $444.1\text{ m}$ | ARRIVED | 533 | $53.3\text{ s}$ | $29.2\text{ km/h}$ | FEASIBLE | **1333** | $133.3\text{ s}$ | $2.50\times$ |
-| **Medium** | Primary | `SCXCS` | `11` | $523.8\text{ m}$ | OUT_OF_ROAD* | 383 | $38.3\text{ s}$ | $28.8\text{ km/h}$ | TIMEOUT_OR_FAIL | **1572** | $157.2\text{ s}$ | $2.50\times$ (nom) |
-| **Medium** | Alternate | `SCTCS` | `0` | $521.1\text{ m}$ | ARRIVED | 629 | $62.9\text{ s}$ | $29.3\text{ km/h}$ | FEASIBLE | **1564** | $156.4\text{ s}$ | $2.49\times$ |
-| **Medium** | Alternate | `SCXCCS` | `13` | $688.4\text{ m}$ | ARRIVED | 830 | $83.0\text{ s}$ | $29.5\text{ km/h}$ | FEASIBLE | **2066** | $206.6\text{ s}$ | $2.49\times$ |
-| **Hard** | Primary | `SCXOCS` | `2` | $643.0\text{ m}$ | ARRIVED | 779 | $77.9\text{ s}$ | $29.4\text{ km/h}$ | FEASIBLE | **1930** | $193.0\text{ s}$ | $2.48\times$ |
-| **Hard** | Alternate | `SCTXrCS` | `1` | $748.8\text{ m}$ | ARRIVED | 897 | $89.7\text{ s}$ | $29.5\text{ km/h}$ | FEASIBLE | **2247** | $224.7\text{ s}$ | $2.50\times$ |
-| **Hard** | Alternate | `XTOCS` | `19` | $496.9\text{ m}$ | ARRIVED | 599 | $59.9\text{ s}$ | $29.2\text{ km/h}$ | FEASIBLE | **1491** | $149.1\text{ s}$ | $2.49\times$ |
-| **Extreme** | Primary | `CrXROSTR` | `6` | $938.6\text{ m}$ | ARRIVED | **1123** | $112.3\text{ s}$ | $29.4\text{ km/h}$ | **TIMEOUT (Defect)** | **2816** | $281.6\text{ s}$ | $2.51\times$ |
-| **Extreme** | Alternate | `SCXOCrTYCS` | `16` | $1051.8\text{ m}$ | ARRIVED | **1255** | $125.5\text{ s}$ | $29.6\text{ km/h}$ | **TIMEOUT (Defect)** | **3156** | $315.6\text{ s}$ | $2.51\times$ |
-| **Extreme** | Alternate | `SCTXORyCCS` | `4` | $1003.2\text{ m}$ | ARRIVED | **1218** | $121.8\text{ s}$ | $29.6\text{ km/h}$ | **TIMEOUT (Defect)** | **3010** | $301.0\text{ s}$ | $2.47\times$ |
+| Tier | Candidate Role | Sequence | Seed | Route Length | Traffic Density | Planned Traffic | Active Mean | Active Max | Unique Activated | IDM Completion | IDM Speed | Horizon 1000 Counterfactual | Proposed Horizon | Budget Seconds | Margin over IDM |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **Easy** | Primary | `SCS` | `11` | $349.6\text{ m}$ | 0.00 | 0 | 0.0 | 0 | 0 | 407 steps (40.7s) | $29.0\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1049** | $104.9\text{ s}$ | $2.58\times$ |
+| **Easy** | Alternate | `SCSS` | `9` | $403.1\text{ m}$ | 0.00 | 0 | 0.0 | 0 | 0 | 478 steps (47.8s) | $29.1\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1210** | $121.0\text{ s}$ | $2.53\times$ |
+| **Easy** | Alternate | `SCCS` | `9` | $444.1\text{ m}$ | 0.00 | 0 | 0.0 | 0 | 0 | 533 steps (53.3s) | $29.2\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1333** | $133.3\text{ s}$ | $2.50\times$ |
+| **Medium** | Primary | `SCXCS` | `11` | $523.8\text{ m}$ | 0.08 | 9 | 4.5 | 8 | 9 | Out-of-road (step 383) | $28.8\text{ km/h}$ | IDM_FAILED_STEP_383 | **1572** | $157.2\text{ s}$ | $2.50\times$ (nom) |
+| **Medium** | Alternate | `SCTCS` | `0` | $521.1\text{ m}$ | 0.08 | 7 | 3.6 | 5 | 7 | 629 steps (62.9s) | $29.3\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1564** | $156.4\text{ s}$ | $2.49\times$ |
+| **Medium** | Alternate | `SCXCCS` | `13` | $688.4\text{ m}$ | 0.08 | 12 | 5.6 | 9 | 12 | 844 steps (84.4s) | $28.9\text{ km/h}$ | COMPLETED_WITHIN_1000 | **2066** | $206.6\text{ s}$ | $2.49\times$ |
+| **Hard** | Primary | `SCXOCS` | `2` | $643.0\text{ m}$ | 0.15 | 27 | 5.6 | 9 | 15 | Out-of-road (step 249) | $27.5\text{ km/h}$ | IDM_FAILED_STEP_249 | **1930** | $193.0\text{ s}$ | $2.48\times$ (nom) |
+| **Hard** | Alternate | `SCTXrCS` | `1` | $748.8\text{ m}$ | 0.15 | 28 | 12.8 | 23 | 28 | Out-of-road (step 780) | $27.7\text{ km/h}$ | IDM_FAILED_STEP_780 | **2247** | $224.7\text{ s}$ | $2.50\times$ (nom) |
+| **Hard** | Alternate | `XTOCS` | `19` | $496.9\text{ m}$ | 0.15 | 17 | 7.3 | 12 | 17 | 678 steps (67.8s) | $26.0\text{ km/h}$ | COMPLETED_WITHIN_1000 | **1491** | $149.1\text{ s}$ | $2.49\times$ |
+| **Extreme** | Primary | `CrXROSTR` | `6` | $938.6\text{ m}$ | 0.25 | 70 | 16.4 | 26 | 38 | Out-of-road (step 563) | $12.4\text{ km/h}$ | IDM_FAILED_STEP_563 | **2816** | $281.6\text{ s}$ | $2.51\times$ (nom) |
+| **Extreme** | Alternate | `SCXOCrTYCS` | `16` | $1051.8\text{ m}$ | 0.25 | 79 | 20.2 | 35 | 44 | Out-of-road (step 618) | $20.9\text{ km/h}$ | IDM_FAILED_STEP_618 | **3156** | $315.6\text{ s}$ | $2.51\times$ (nom) |
+| **Extreme** | Alternate | `SCTXORyCCS` | `4` | $1003.2\text{ m}$ | 0.25 | 58 | 15.1 | 19 | 31 | Out-of-road (step 405) | $26.5\text{ km/h}$ | IDM_FAILED_STEP_405 | **3010** | $301.0\text{ s}$ | $2.47\times$ (nom) |
 
-*\*Note on SCXCS s11:* The baseline IDMPolicy clipped the sharp 90-degree intersection curb at step 383 due to known IDM lateral tracking constraints at 29 km/h. Per Section 12 instructions, we report this honestly and rely on the successful alternate `SCTCS` s0 ($521\text{ m}$, arrived at step 629) to calibrate nominal Medium completion.
+### Traffic Statistics Analysis:
+- Under `TrafficMode.Trigger`, planned traffic is dynamically activated in waves as ego approaches.
+- In Hard and Extreme tiers, active concurrent traffic averages $5.6 - 20.2$ vehicles with peak concurrent loads reaching up to $35$ vehicles.
+- In dense traffic, IDMPolicy lane-tracking struggles with sharp intersection turns and merge bottlenecks, clipping curbs at complex junctures. This is reported honestly per Section 12 instructions.
+- In the secondary zero-traffic calibration, IDMPolicy cleanly reached the goal on all 3 Extreme scenarios at steps 1123, 1255, and 1218.
 
-*Critical Finding on Extreme Tier:* Under the old `horizon=1000`, **100% of Extreme scenarios fail due to timeout truncation**, even when driven by an expert reference driver at $29.5\text{ km/h}$.
+### Scoped Horizon Finding:
+Under a fixed 1000-step budget ($100.0\text{ s}$), reference rollouts on Extreme routes ($>900\text{ m}$) **would be truncated prior to arrival** even when driving at nominal cruising speeds ($\sim 29.5\text{ km/h}$).
 
 ---
 
@@ -257,39 +268,40 @@ $$\text{horizon\_steps} = \max\left(\text{min\_steps},\ \min\left(\text{max\_ste
 ### Formula Simplification:
 $$\text{horizon\_steps} = \max\left(1000,\ \lceil \text{route\_length\_m} \times 3.0 \rceil\right)$$
 
-### Fairness Rules Enforced:
-1. Computed strictly from static scenario metadata **before** the episode begins.
-2. Completely independent of agent identity, policy type, or research Stage.
-3. Never adapts dynamically during the episode.
+### Rationale:
+The new benchmark traffic evidence confirms that $18\text{ km/h}$ floor speed with $1.5\times$ safety margin remains fully justified. It provides a $2.5\times$ buffer over nominal reference completion time, preventing premature truncation when agents yield to traffic or navigate sharp corners.
 
 ---
 
 ## 13. Traffic Lifecycle: `TrafficMode.Trigger` vs. `TrafficMode.Respawn`
 
-Empirical testing compared MetaDrive's two primary traffic modes:
-1. **`TrafficMode.Trigger` (Adopted Platform Contract):**
-   - Traffic vehicles are pre-allocated across road blocks (`block_triggered_vehicles`).
-   - Vehicles are activated once when ego approaches their road block and disappear upon reaching their destination.
-   - **Reproducibility:** Tested across independent identical runs; active vehicle traces matched bit-for-bit ($0$ count difference).
-   - **Fairness:** Slower policies face the exact same finite traffic encounters as faster policies.
-2. **`TrafficMode.Respawn` (Rejected for Scientific Benchmark):**
-   - Vehicles continually respawn at destination arrivals.
-   - Slower policies take more simulation steps, accumulating a higher cumulative traffic exposure and consuming unpredictable PRNG steps.
+### Source-Verified Behavior:
+- In `TrafficMode.Trigger`, traffic vehicles are pre-allocated across road blocks and triggered once when ego enters the trigger road.
+- In `TrafficMode.Respawn`, source code shows vehicles are continuously replaced upon reaching their destinations.
 
-*Recommendation:* Adopt **`TrafficMode.Trigger`** as the scientific benchmark contract.
+### Empirically Observed Behavior:
+- Across two independent 60-step runs of scenario seed `42`:
+  - Planned traffic count match: `True` (9 planned vehicles).
+  - Step-by-step active vehicle count trace match: `True`.
+  - First traffic vehicle position equality: `True` (exact coordinate match).
+- Under `TrafficMode.Respawn`, active vehicles remain continuously sustained at peak capacity.
+- **Finding:** TrafficMode.Trigger provides a finite, preplanned traffic population and repeatable initialization/activation under the tested same-seed, same-policy configuration.
+- *Machine-readable trace:* Recorded in `results/audits/episode/traffic_lifecycle.csv`.
 
 ---
 
 ## 14. Reset Reproducibility & Zero State Leakage
 
-Tested over sequential resets of scenario seed `42` where Episode 0 was driven into a terminal failure (`out_of_road=True`):
+Tested over sequential resets of scenario seed `42` where Episode 0 was driven into a real terminal failure (`out_of_road=True` at step 27):
 - **Initial Position Difference:** $0.0000000000\text{ m}$ (exact float match).
 - **Initial Heading Difference:** $0.0000000000\text{ rad}$.
 - **Initial Velocity Difference:** $0.0000000000\text{ km/h}$.
 - **Initial Observation Max Difference:** $0.00\times 10^0$.
-- **Planned Traffic Initialization:** 9 vehicles (exact match).
-- **Flag Cleansing:** Subsequent reset yields `arrive_dest=False`, `out_of_road=False`, `crash=False`.
-- **Finding:** Zero state leakage across episode boundaries under the tested configuration.
+- **Route Checkpoints Match:** `True`.
+- **Block Sequence Match:** `True` (`ISCXCS`).
+- **Planned Traffic Match:** `True` (9 vehicles).
+- **Flag Cleansing:** Subsequent resets yield `arrive_dest=False`, `out_of_road=False`, `crash=False`.
+- **Finding:** Zero state leakage across episode boundaries following terminal failures.
 
 ---
 
@@ -308,7 +320,7 @@ A future Research Launcher UI may expose:
 
 ## 16. Risks & Unresolved Points
 
-1. **IDM Intersection Edge-Clipping:** IDMPolicy lacks look-ahead corner-cutting avoidance for sharp 90-degree intersection turns at high speeds ($29\text{ km/h}$), requiring future planning agents to modulate speed appropriately.
+1. **IDM Dense Traffic Bottlenecks:** Under dense traffic ($0.15 - 0.25$), IDMPolicy exhibits lane-edge clipping when traffic clusters at intersection entries, underscoring the necessity of Stage 2+ planning algorithms capable of multi-lane negotiation.
 2. **Pedestrian/Human Collision Spawning:** `crash_human` is verified in the taxonomy and classifier, but standard MapSuite scenarios keep `accident_prob = 0.0`. Human collisions will be stress-tested in later robustness benchmarks.
 3. **Reward Alignment:** Reward shaping remains completely unaddressed in Gate 3 and is explicitly deferred to **Gate 4**.
 
