@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "spec_name": "EvaluationMetricsV1",
+    "status": "NON-FROZEN RESEARCH SPECIFICATION",
+    "gate": "Gate 4 (Research Platform V1)",
+    "pinned_metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "pinned_metadrive_version": "0.4.3"
+  },
+  "metric_hierarchy": {
+    "PRIMARY_BENCHMARK_METRICS": [
+      {
+        "name": "clean_success_rate",
+        "description": "Proportion of episodes reaching destination terminus with zero safety violations.",
+        "type": "higher_is_better",
+        "range": "[0.0, 1.0]"
+      },
+      {
+        "name": "safety_failure_rate",
+        "description": "Proportion of episodes terminating due to any physical collision or road departure.",
+        "type": "lower_is_better",
+        "range": "[0.0, 1.0]"
+      },
+      {
+        "name": "mean_final_route_completion",
+        "description": "Mean fraction of global route completed at episode termination.",
+        "type": "higher_is_better",
+        "range": "[0.0, 1.0]"
+      },
+      {
+        "name": "median_final_route_completion",
+        "description": "Median fraction of global route completed (robust to outlier early crashes).",
+        "type": "higher_is_better",
+        "range": "[0.0, 1.0]"
+      },
+      {
+        "name": "mean_time_to_clean_success_s",
+        "description": "Mean simulation time in seconds to reach clean arrival, computed strictly over successful episodes (null if 0 successes).",
+        "type": "lower_is_better",
+        "range": "[0.0, inf)"
+      }
+    ],
+    "SECONDARY_DIAGNOSTIC_METRICS": [
+      {
+        "name": "raw_arrival_rate",
+        "description": "Proportion of episodes crossing destination line, regardless of whether a collision occurred."
+      },
+      {
+        "name": "timeout_rate",
+        "description": "Proportion of episodes truncated by step budget exhaustion."
+      },
+      {
+        "name": "primary_outcome_rates",
+        "description": "Mutually exclusive rates for crash_human, crash_vehicle, crash_object, crash_building, crash_sidewalk, out_of_road, unknown_termination."
+      },
+      {
+        "name": "raw_safety_event_rates",
+        "description": "Individual event frequencies allowing overlapping/simultaneous events (crash_vehicle, crash_object, crash_building, crash_human, crash_sidewalk, out_of_road, any_safety_event)."
+      },
+      {
+        "name": "mean_max_route_completion",
+        "description": "Highest route completion attained during episode (surfaces backtracking behavior)."
+      },
+      {
+        "name": "mean_speed_kmh",
+        "description": "Average vehicle speed across episodes."
+      },
+      {
+        "name": "max_speed_kmh",
+        "description": "Peak vehicle speed attained."
+      }
+    ],
+    "TRAINING_DIAGNOSTICS_ONLY": [
+      {
+        "name": "mean_episode_return",
+        "description": "Mean cumulative RL reward return. Strictly classified as a training diagnostic; never used for benchmark ranking."
+      },
+      {
+        "name": "mean_episode_steps",
+        "description": "Average decision steps per episode."
+      }
+    ]
+  }
+}
