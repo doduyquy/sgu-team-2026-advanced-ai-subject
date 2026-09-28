@@ -1,0 +1,13 @@
+tier,candidate_role,provisional_rank,sequence,scenario_seed,route_length_m,idm_completed,idm_completion_steps,idm_completion_time_s,idm_mean_speed_kmh,planned_traffic_count,default_horizon_1000_status,proposed_route_aware_horizon_steps,proposed_budget_seconds,safety_margin_over_idm,terminal_arrive_dest,terminal_out_of_road,took_sec
+Easy,primary_canonical,1,SCS,11,349.6,True,407,40.7,28.97,0,FEASIBLE,1049,104.9,2.58,True,False,0.5
+Easy,alternate_canonical,2,SCSS,9,403.15,True,478,47.8,29.15,0,FEASIBLE,1210,121.0,2.53,True,False,2.0
+Easy,alternate_canonical,3,SCCS,9,444.15,True,533,53.3,29.24,0,FEASIBLE,1333,133.3,2.5,True,False,3.0
+Medium,primary_canonical,1,SCXCS,11,523.75,False,383,38.3,28.76,9,TIMEOUT_OR_FAILED,1572,157.2,N/A,False,True,2.5
+Medium,alternate_canonical,2,SCTCS,0,521.06,True,629,62.9,29.28,7,FEASIBLE,1564,156.4,2.49,True,False,2.9
+Medium,alternate_canonical,3,SCXCCS,13,688.37,True,830,83.0,29.47,12,FEASIBLE,2066,206.6,2.49,True,False,5.1
+Hard,primary_canonical,1,SCXOCS,2,643.01,True,779,77.9,29.36,27,FEASIBLE,1930,193.0,2.48,True,False,4.5
+Hard,alternate_canonical,2,SCTXrCS,1,748.76,True,897,89.7,29.5,28,FEASIBLE,2247,224.7,2.51,True,False,4.9
+Hard,alternate_canonical,3,XTOCS,19,496.89,True,599,59.9,29.21,17,FEASIBLE,1491,149.1,2.49,True,False,3.6
+Extreme,primary_canonical,1,CrXROSTR,6,938.58,True,1123,112.3,29.45,70,TIMEOUT_OR_FAILED,2816,281.6,2.51,True,False,6.4
+Extreme,alternate_canonical,2,SCXOCrTYCS,16,1051.77,True,1255,125.5,29.6,79,TIMEOUT_OR_FAILED,3156,315.6,2.51,True,False,7.2
+Extreme,alternate_canonical,3,SCTXORyCCS,4,1003.23,True,1218,121.8,29.57,58,TIMEOUT_OR_FAILED,3010,301.0,2.47,True,False,6.6
