@@ -1,0 +1,996 @@
+{
+  "Easy": [
+    {
+      "tier": "Easy",
+      "candidate_role": "primary_canonical",
+      "provisional_tier_rank": 1,
+      "sequence": "SCS",
+      "scenario_seed": 11,
+      "route_length_m": 349.6,
+      "block_count": 4,
+      "block_ids": "ISCS",
+      "decision_block_count": 0,
+      "branching_choice_score": 0,
+      "traffic_density": 0.0,
+      "planned_traffic_vehicle_count": 0,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 12.59,
+      "preview_image": "results/audits/mapsuite/previews/easy_rank1_SCS_seed11.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1S0_0_",
+        "2C0_0_",
+        "2C0_1_",
+        "3S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "length": 77.99282836914062,
+          "id": "S",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "angle": 108.8008804321289,
+          "radius": 49.81145095825195,
+          "dir": 1,
+          "length": 68.35594940185547,
+          "id": "C",
+          "pre_block_socket_index": "1S-socket0"
+        },
+        {
+          "length": 45.37316131591797,
+          "id": "S",
+          "pre_block_socket_index": "2C-socket0"
+        }
+      ]
+    },
+    {
+      "tier": "Easy",
+      "candidate_role": "alternate_canonical",
+      "provisional_tier_rank": 2,
+      "sequence": "SCSS",
+      "scenario_seed": 9,
+      "route_length_m": 403.15,
+      "block_count": 5,
+      "block_ids": "ISCSS",
+      "decision_block_count": 0,
+      "branching_choice_score": 0,
+      "traffic_density": 0.0,
+      "planned_traffic_vehicle_count": 0,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 14.51,
+      "preview_image": "results/audits/mapsuite/previews/easy_rank2_SCSS_seed9.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1S0_0_",
+        "2C0_0_",
+        "2C0_1_",
+        "3S0_0_",
+        "4S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "length": 61.285865783691406,
+          "id": "S",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "angle": 109.30752563476562,
+          "radius": 50.00848388671875,
+          "dir": 1,
+          "length": 68.58112335205078,
+          "id": "C",
+          "pre_block_socket_index": "1S-socket0"
+        },
+        {
+          "length": 54.25770950317383,
+          "id": "S",
+          "pre_block_socket_index": "2C-socket0"
+        },
+        {
+          "length": 60.265953063964844,
+          "id": "S",
+          "pre_block_socket_index": "3S-socket0"
+        }
+      ]
+    },
+    {
+      "tier": "Easy",
+      "candidate_role": "alternate_canonical",
+      "provisional_tier_rank": 3,
+      "sequence": "SCCS",
+      "scenario_seed": 9,
+      "route_length_m": 444.15,
+      "block_count": 5,
+      "block_ids": "ISCCS",
+      "decision_block_count": 0,
+      "branching_choice_score": 0,
+      "traffic_density": 0.0,
+      "planned_traffic_vehicle_count": 0,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 15.99,
+      "preview_image": "results/audits/mapsuite/previews/easy_rank3_SCCS_seed9.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1S0_0_",
+        "2C0_0_",
+        "2C0_1_",
+        "3C0_0_",
+        "3C0_1_",
+        "4S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "length": 61.285865783691406,
+          "id": "S",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "angle": 109.30752563476562,
+          "radius": 50.00848388671875,
+          "dir": 1,
+          "length": 68.58112335205078,
+          "id": "C",
+          "pre_block_socket_index": "1S-socket0"
+        },
+        {
+          "angle": 77.07984161376953,
+          "radius": 37.475494384765625,
+          "dir": 0,
+          "length": 54.25770950317383,
+          "id": "C",
+          "pre_block_socket_index": "2C-socket0"
+        },
+        {
+          "length": 60.265953063964844,
+          "id": "S",
+          "pre_block_socket_index": "3C-socket0"
+        }
+      ]
+    }
+  ],
+  "Medium": [
+    {
+      "tier": "Medium",
+      "candidate_role": "primary_canonical",
+      "provisional_tier_rank": 1,
+      "sequence": "SCXCS",
+      "scenario_seed": 11,
+      "route_length_m": 523.75,
+      "block_count": 6,
+      "block_ids": "ISCXCS",
+      "decision_block_count": 1,
+      "branching_choice_score": 3,
+      "traffic_density": 0.08,
+      "planned_traffic_vehicle_count": 9,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 18.86,
+      "preview_image": "results/audits/mapsuite/previews/medium_rank1_SCXCS_seed11.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1S0_0_",
+        "2C0_0_",
+        "2C0_1_",
+        "3X0_0_",
+        "3X0_1_",
+        "4C0_0_",
+        "4C0_1_",
+        "5S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "length": 77.99282836914062,
+          "id": "S",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "angle": 108.8008804321289,
+          "radius": 49.81145095825195,
+          "dir": 1,
+          "length": 68.35594940185547,
+          "id": "C",
+          "pre_block_socket_index": "1S-socket0"
+        },
+        {
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 0,
+          "id": "X",
+          "pre_block_socket_index": "2C-socket0"
+        },
+        {
+          "angle": 68.25543975830078,
+          "radius": 34.04378128051758,
+          "dir": 0,
+          "length": 50.335750579833984,
+          "id": "C",
+          "pre_block_socket_index": "3X-socket0"
+        },
+        {
+          "length": 75.26400756835938,
+          "id": "S",
+          "pre_block_socket_index": "4C-socket0"
+        }
+      ]
+    },
+    {
+      "tier": "Medium",
+      "candidate_role": "alternate_canonical",
+      "provisional_tier_rank": 2,
+      "sequence": "SCTCS",
+      "scenario_seed": 0,
+      "route_length_m": 521.06,
+      "block_count": 6,
+      "block_ids": "ISCTCS",
+      "decision_block_count": 1,
+      "branching_choice_score": 2,
+      "traffic_density": 0.08,
+      "planned_traffic_vehicle_count": 7,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 18.76,
+      "preview_image": "results/audits/mapsuite/previews/medium_rank2_SCTCS_seed0.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1S0_0_",
+        "2C0_0_",
+        "2C0_1_",
+        "3T1_0_",
+        "3T1_1_",
+        "4C0_0_",
+        "4C0_1_",
+        "5S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "length": 71.3259048461914,
+          "id": "S",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "angle": 124.05485534667969,
+          "radius": 55.74355697631836,
+          "dir": 1,
+          "length": 75.13549041748047,
+          "id": "C",
+          "pre_block_socket_index": "1S-socket0"
+        },
+        {
+          "t_type": 2,
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 1,
+          "id": "T",
+          "pre_block_socket_index": "2C-socket0"
+        },
+        {
+          "angle": 54.36149597167969,
+          "radius": 28.640581130981445,
+          "dir": 0,
+          "length": 44.16066360473633,
+          "id": "C",
+          "pre_block_socket_index": "3T-socket1"
+        },
+        {
+          "length": 51.55717468261719,
+          "id": "S",
+          "pre_block_socket_index": "4C-socket0"
+        }
+      ]
+    },
+    {
+      "tier": "Medium",
+      "candidate_role": "alternate_canonical",
+      "provisional_tier_rank": 3,
+      "sequence": "SCXCCS",
+      "scenario_seed": 13,
+      "route_length_m": 688.37,
+      "block_count": 7,
+      "block_ids": "ISCXCCS",
+      "decision_block_count": 1,
+      "branching_choice_score": 3,
+      "traffic_density": 0.08,
+      "planned_traffic_vehicle_count": 12,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 24.78,
+      "preview_image": "results/audits/mapsuite/previews/medium_rank3_SCXCCS_seed13.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1S0_0_",
+        "2C0_0_",
+        "2C0_1_",
+        "3X1_0_",
+        "3X1_1_",
+        "4C0_0_",
+        "4C0_1_",
+        "5C0_0_",
+        "5C0_1_",
+        "6S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "length": 53.838401794433594,
+          "id": "S",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "angle": 126.83197784423828,
+          "radius": 56.82354736328125,
+          "dir": 1,
+          "length": 76.36976623535156,
+          "id": "C",
+          "pre_block_socket_index": "1S-socket0"
+        },
+        {
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 0,
+          "id": "X",
+          "pre_block_socket_index": "2C-socket0"
+        },
+        {
+          "angle": 104.94206237792969,
+          "radius": 48.3108024597168,
+          "dir": 1,
+          "length": 66.64091491699219,
+          "id": "C",
+          "pre_block_socket_index": "3X-socket1"
+        },
+        {
+          "angle": 66.25931549072266,
+          "radius": 33.267513275146484,
+          "dir": 0,
+          "length": 49.448585510253906,
+          "id": "C",
+          "pre_block_socket_index": "4C-socket0"
+        },
+        {
+          "length": 46.607086181640625,
+          "id": "S",
+          "pre_block_socket_index": "5C-socket0"
+        }
+      ]
+    }
+  ],
+  "Hard": [
+    {
+      "tier": "Hard",
+      "candidate_role": "primary_canonical",
+      "provisional_tier_rank": 1,
+      "sequence": "SCXOCS",
+      "scenario_seed": 2,
+      "route_length_m": 643.01,
+      "block_count": 7,
+      "block_ids": "ISCXOCS",
+      "decision_block_count": 2,
+      "branching_choice_score": 6,
+      "traffic_density": 0.15,
+      "planned_traffic_vehicle_count": 27,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 23.15,
+      "preview_image": "results/audits/mapsuite/previews/hard_rank1_SCXOCS_seed2.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1S0_0_",
+        "2C0_0_",
+        "2C0_1_",
+        "3X2_0_",
+        "3X2_1_",
+        "4O0_0_",
+        "4O0_1_",
+        "4O1_0_",
+        "4O1_1_",
+        "4O1_2_",
+        "4O1_3_",
+        "5C0_0_",
+        "5C0_1_",
+        "6S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "length": 50.867462158203125,
+          "id": "S",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "angle": 71.36212158203125,
+          "radius": 35.25193405151367,
+          "dir": 0,
+          "length": 51.71649932861328,
+          "id": "C",
+          "pre_block_socket_index": "1S-socket0"
+        },
+        {
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 0,
+          "id": "X",
+          "pre_block_socket_index": "2C-socket0"
+        },
+        {
+          "exit_radius": 9.371184349060059,
+          "inner_radius": 28.113554000854492,
+          "angle": 60.0,
+          "id": "O",
+          "pre_block_socket_index": "3X-socket2"
+        },
+        {
+          "angle": 114.26669311523438,
+          "radius": 51.93704605102539,
+          "dir": 1,
+          "length": 70.78519439697266,
+          "id": "C",
+          "pre_block_socket_index": "4O-socket1"
+        },
+        {
+          "length": 69.18008422851562,
+          "id": "S",
+          "pre_block_socket_index": "5C-socket0"
+        }
+      ]
+    },
+    {
+      "tier": "Hard",
+      "candidate_role": "alternate_canonical",
+      "provisional_tier_rank": 2,
+      "sequence": "SCTXrCS",
+      "scenario_seed": 1,
+      "route_length_m": 748.76,
+      "block_count": 8,
+      "block_ids": "ISCTXrCS",
+      "decision_block_count": 3,
+      "branching_choice_score": 6,
+      "traffic_density": 0.15,
+      "planned_traffic_vehicle_count": 28,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 26.96,
+      "preview_image": "results/audits/mapsuite/previews/hard_rank2_SCTXrCS_seed1.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1S0_0_",
+        "2C0_0_",
+        "2C0_1_",
+        "3T2_0_",
+        "3T2_1_",
+        "4X0_0_",
+        "4X0_1_",
+        "5r0_0_",
+        "5r0_1_",
+        "5r0_2_",
+        "6C0_0_",
+        "6C0_1_",
+        "7S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "length": 78.58954620361328,
+          "id": "S",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "angle": 50.49522399902344,
+          "radius": 27.13703155517578,
+          "dir": 0,
+          "length": 42.44232177734375,
+          "id": "C",
+          "pre_block_socket_index": "1S-socket0"
+        },
+        {
+          "t_type": 1,
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 0,
+          "id": "T",
+          "pre_block_socket_index": "2C-socket0"
+        },
+        {
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 1,
+          "id": "X",
+          "pre_block_socket_index": "3T-socket2"
+        },
+        {
+          "extension_length": 30.807292938232422,
+          "length": 30.807292938232422,
+          "id": "r",
+          "pre_block_socket_index": "4X-socket0"
+        },
+        {
+          "angle": 124.95248413085938,
+          "radius": 56.09263229370117,
+          "dir": 1,
+          "length": 75.53443908691406,
+          "id": "C",
+          "pre_block_socket_index": "5r-socket0"
+        },
+        {
+          "length": 77.74331665039062,
+          "id": "S",
+          "pre_block_socket_index": "6C-socket0"
+        }
+      ]
+    },
+    {
+      "tier": "Hard",
+      "candidate_role": "alternate_canonical",
+      "provisional_tier_rank": 3,
+      "sequence": "XTOCS",
+      "scenario_seed": 19,
+      "route_length_m": 496.89,
+      "block_count": 6,
+      "block_ids": "IXTOCS",
+      "decision_block_count": 3,
+      "branching_choice_score": 8,
+      "traffic_density": 0.15,
+      "planned_traffic_vehicle_count": 17,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 17.89,
+      "preview_image": "results/audits/mapsuite/previews/hard_rank3_XTOCS_seed19.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1X0_0_",
+        "1X0_1_",
+        "2T0_0_",
+        "2T0_1_",
+        "3O0_0_",
+        "3O0_1_",
+        "3O1_0_",
+        "3O1_1_",
+        "3O2_0_",
+        "3O2_1_",
+        "3O2_2_",
+        "3O2_3_",
+        "4C0_0_",
+        "4C0_1_",
+        "5S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 1,
+          "id": "X",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "t_type": 2,
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 1,
+          "id": "T",
+          "pre_block_socket_index": "1X-socket0"
+        },
+        {
+          "exit_radius": 13.137937545776367,
+          "inner_radius": 39.41381072998047,
+          "angle": 60.0,
+          "id": "O",
+          "pre_block_socket_index": "2T-socket0"
+        },
+        {
+          "angle": 56.456546783447266,
+          "radius": 29.455324172973633,
+          "dir": 0,
+          "length": 45.091800689697266,
+          "id": "C",
+          "pre_block_socket_index": "3O-socket2"
+        },
+        {
+          "length": 51.17229080200195,
+          "id": "S",
+          "pre_block_socket_index": "4C-socket0"
+        }
+      ]
+    }
+  ],
+  "Extreme": [
+    {
+      "tier": "Extreme",
+      "candidate_role": "primary_canonical",
+      "provisional_tier_rank": 1,
+      "sequence": "CrXROSTR",
+      "scenario_seed": 6,
+      "route_length_m": 938.58,
+      "block_count": 9,
+      "block_ids": "ICrXROSTR",
+      "decision_block_count": 6,
+      "branching_choice_score": 11,
+      "traffic_density": 0.25,
+      "planned_traffic_vehicle_count": 70,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 33.79,
+      "preview_image": "results/audits/mapsuite/previews/extreme_rank1_CrXROSTR_seed6.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1C0_0_",
+        "1C0_1_",
+        "2r0_0_",
+        "2r0_1_",
+        "2r0_2_",
+        "3X0_0_",
+        "3X0_1_",
+        "4R0_0_",
+        "4R0_1_",
+        "5O0_0_",
+        "5O0_1_",
+        "5O1_0_",
+        "5O1_1_",
+        "5O1_2_",
+        "5O1_3_",
+        "6S0_0_",
+        "7T0_0_",
+        "7T0_1_",
+        "8R0_0_",
+        "8R0_1_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "angle": 111.69617462158203,
+          "radius": 50.937400817871094,
+          "dir": 1,
+          "length": 69.64274597167969,
+          "id": "C",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "extension_length": 38.10849380493164,
+          "length": 38.10849380493164,
+          "id": "r",
+          "pre_block_socket_index": "1C-socket0"
+        },
+        {
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 1,
+          "id": "X",
+          "pre_block_socket_index": "2r-socket0"
+        },
+        {
+          "extension_length": 39.50613021850586,
+          "length": 39.50613021850586,
+          "id": "R",
+          "pre_block_socket_index": "3X-socket0"
+        },
+        {
+          "exit_radius": 7.2586140632629395,
+          "inner_radius": 21.775840759277344,
+          "angle": 60.0,
+          "id": "O",
+          "pre_block_socket_index": "4R-socket0"
+        },
+        {
+          "length": 44.36674499511719,
+          "id": "S",
+          "pre_block_socket_index": "5O-socket1"
+        },
+        {
+          "t_type": 1,
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 0,
+          "id": "T",
+          "pre_block_socket_index": "6S-socket0"
+        },
+        {
+          "extension_length": 29.980575561523438,
+          "length": 29.980575561523438,
+          "id": "R",
+          "pre_block_socket_index": "7T-socket0"
+        }
+      ]
+    },
+    {
+      "tier": "Extreme",
+      "candidate_role": "alternate_canonical",
+      "provisional_tier_rank": 2,
+      "sequence": "SCXOCrTYCS",
+      "scenario_seed": 16,
+      "route_length_m": 1051.77,
+      "block_count": 11,
+      "block_ids": "ISCXOCrTYCS",
+      "decision_block_count": 5,
+      "branching_choice_score": 10,
+      "traffic_density": 0.25,
+      "planned_traffic_vehicle_count": 79,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 37.86,
+      "preview_image": "results/audits/mapsuite/previews/extreme_rank2_SCXOCrTYCS_seed16.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1S0_0_",
+        "2C0_0_",
+        "2C0_1_",
+        "3X2_0_",
+        "3X2_1_",
+        "4O0_0_",
+        "4O0_1_",
+        "4O0_2_",
+        "4O0_3_",
+        "5C0_0_",
+        "5C0_1_",
+        "6r0_0_",
+        "6r0_1_",
+        "6r0_2_",
+        "7T1_0_",
+        "7T1_1_",
+        "8Y0_0_",
+        "8Y0_1_",
+        "9C0_0_",
+        "9C0_1_",
+        "10S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "length": 55.36665344238281,
+          "id": "S",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "angle": 121.5405502319336,
+          "radius": 54.765769958496094,
+          "dir": 1,
+          "length": 74.01802062988281,
+          "id": "C",
+          "pre_block_socket_index": "1S-socket0"
+        },
+        {
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 1,
+          "id": "X",
+          "pre_block_socket_index": "2C-socket0"
+        },
+        {
+          "exit_radius": 11.05783462524414,
+          "inner_radius": 33.17350387573242,
+          "angle": 60.0,
+          "id": "O",
+          "pre_block_socket_index": "3X-socket2"
+        },
+        {
+          "angle": 45.822471618652344,
+          "radius": 25.31985092163086,
+          "dir": 0,
+          "length": 40.365543365478516,
+          "id": "C",
+          "pre_block_socket_index": "4O-socket0"
+        },
+        {
+          "extension_length": 20.625198364257812,
+          "length": 20.625198364257812,
+          "id": "r",
+          "pre_block_socket_index": "5C-socket0"
+        },
+        {
+          "t_type": 2,
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 1,
+          "id": "T",
+          "pre_block_socket_index": "6r-socket0"
+        },
+        {
+          "lane_num": 1,
+          "solid_center_line": 0.0,
+          "bottle_len": 20.0,
+          "length": 24.407470703125,
+          "id": "Y",
+          "pre_block_socket_index": "7T-socket1"
+        },
+        {
+          "angle": 119.4364242553711,
+          "radius": 53.9474983215332,
+          "dir": 1,
+          "length": 73.08285522460938,
+          "id": "C",
+          "pre_block_socket_index": "8Y-socket0"
+        },
+        {
+          "length": 79.27931213378906,
+          "id": "S",
+          "pre_block_socket_index": "9C-socket0"
+        }
+      ]
+    },
+    {
+      "tier": "Extreme",
+      "candidate_role": "alternate_canonical",
+      "provisional_tier_rank": 3,
+      "sequence": "SCTXORyCCS",
+      "scenario_seed": 4,
+      "route_length_m": 1003.23,
+      "block_count": 11,
+      "block_ids": "ISCTXORyCCS",
+      "decision_block_count": 5,
+      "branching_choice_score": 10,
+      "traffic_density": 0.25,
+      "planned_traffic_vehicle_count": 58,
+      "episode_budget_seconds": 100.0,
+      "required_avg_speed_kmh_for_horizon_1000": 36.12,
+      "preview_image": "results/audits/mapsuite/previews/extreme_rank3_SCTXORyCCS_seed4.png",
+      "selection_basis": "Human-reviewed selection based on structural tier intent, representative median route length, visual topology inspection, and pedagogical progression.",
+      "checkpoints": [
+        ">",
+        ">>",
+        ">>>",
+        "1S0_0_",
+        "2C0_0_",
+        "2C0_1_",
+        "3T1_0_",
+        "3T1_1_",
+        "4X1_0_",
+        "4X1_1_",
+        "5O0_0_",
+        "5O0_1_",
+        "5O1_0_",
+        "5O1_1_",
+        "5O2_0_",
+        "5O2_1_",
+        "5O2_2_",
+        "5O2_3_",
+        "6R0_0_",
+        "6R0_1_",
+        "7y0_0_",
+        "7y0_1_",
+        "8C0_0_",
+        "8C0_1_",
+        "9C0_0_",
+        "9C0_1_",
+        "10S0_0_"
+      ],
+      "exact_block_sequence": [
+        {
+          "id": "I",
+          "pre_block_socket_index": null
+        },
+        {
+          "length": 71.86336517333984,
+          "id": "S",
+          "pre_block_socket_index": "0I-socket0"
+        },
+        {
+          "angle": 108.75281524658203,
+          "radius": 49.792762756347656,
+          "dir": 1,
+          "length": 68.33458709716797,
+          "id": "C",
+          "pre_block_socket_index": "1S-socket0"
+        },
+        {
+          "t_type": 2,
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 1,
+          "id": "T",
+          "pre_block_socket_index": "2C-socket0"
+        },
+        {
+          "radius": 10.0,
+          "change_lane_num": 0,
+          "decrease_increase": 1,
+          "id": "X",
+          "pre_block_socket_index": "3T-socket1"
+        },
+        {
+          "exit_radius": 12.374032974243164,
+          "inner_radius": 37.122100830078125,
+          "angle": 60.0,
+          "id": "O",
+          "pre_block_socket_index": "4X-socket1"
+        },
+        {
+          "extension_length": 26.246315002441406,
+          "length": 26.246315002441406,
+          "id": "R",
+          "pre_block_socket_index": "5O-socket2"
+        },
+        {
+          "lane_num": 1,
+          "solid_center_line": 0.0,
+          "bottle_len": 20.0,
+          "length": 26.99608612060547,
+          "id": "y",
+          "pre_block_socket_index": "6R-socket0"
+        },
+        {
+          "angle": 55.09286117553711,
+          "radius": 28.92500114440918,
+          "dir": 0,
+          "length": 44.4857177734375,
+          "id": "C",
+          "pre_block_socket_index": "7y-socket0"
+        },
+        {
+          "angle": 58.121490478515625,
+          "radius": 30.102802276611328,
+          "dir": 0,
+          "length": 45.8317756652832,
+          "id": "C",
+          "pre_block_socket_index": "8C-socket0"
+        },
+        {
+          "length": 57.11479187011719,
+          "id": "S",
+          "pre_block_socket_index": "9C-socket0"
+        }
+      ]
+    }
+  ]
+}
