@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "protocol_name": "EvaluationProtocolV1",
+    "spec_version": "1.0.0",
+    "status": "LOCKED-FOR-PLATFORM-V1",
+    "gate": "Gate 5 (Research Platform V1)",
+    "pinned_metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "pinned_metadrive_version": "0.4.3",
+    "benchmark_contract_sha256": "0bf95af0faaf84fcb8f2d0b09de5226231d717e2e267555178514933d6cee3fb",
+    "test_manifest_sha256": "3e55a55b77887423413f612f50ba213d8329e1aa941364488160ba8b72463370"
+  },
+  "evaluation_rules": {
+    "paired_evaluation": "All algorithms must evaluate the exact same ordered test cases from test_case_manifest.csv.",
+    "test_set_holdout": "TEST geometries (12 canonicals) are strictly held out. No training, hyperparameter search, or checkpoint selection allowed on TEST.",
+    "validation_usage": "VALIDATION cases (96 cases) exist solely for hyperparameter tuning, ablation studies, and model checkpoint selection.",
+    "replicate_reporting": "Stochastic/learning agents report mean \u00b1 std across 3 independent training replicates (seeds 101, 202, 303). Deterministic methods report 1 run per environment case.",
+    "tier_scorecards": "Primary benchmark reporting uses per-tier scorecards (Easy, Medium, Hard, Extreme) on Gate-4 primary metrics. Geometric-mean success mega-score is explicitly prohibited."
+  },
+  "test_suite_summary": {
+    "test_cases_count": 60,
+    "test_geometries_count": 12,
+    "test_environment_seeds": [
+      9101,
+      9102,
+      9103,
+      9104,
+      9105
+    ],
+    "cases_per_tier": {
+      "Easy": 15,
+      "Medium": 15,
+      "Hard": 15,
+      "Extreme": 15
+    }
+  },
+  "validation_suite_summary": {
+    "validation_cases_count": 96,
+    "validation_geometries_count": 48,
+    "validation_environment_seeds": [
+      5101,
+      5102
+    ]
+  },
+  "training_suite_summary": {
+    "training_geometries_count": 180,
+    "seed_derivation": "derive_seed(training_run_seed, 'environment', episode_index, geometry_id)"
+  }
+}

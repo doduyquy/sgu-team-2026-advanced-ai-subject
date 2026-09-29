@@ -1,0 +1,37 @@
+{
+  "benchmark_contract_sha256": "0bf95af0faaf84fcb8f2d0b09de5226231d717e2e267555178514933d6cee3fb",
+  "test_manifest_sha256": "3e55a55b77887423413f612f50ba213d8329e1aa941364488160ba8b72463370",
+  "geometry_split_manifest_sha256": "0f73cf4e909040ea55ca4e77b4d8a98924090f32a9223258e9045412978fd0d2",
+  "contract_payload": {
+    "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "metadrive_version": "0.4.3",
+    "platform_specification_gate": "Gate 5",
+    "observation_spec_version": "1.0.0",
+    "action_spec_version": "1.0.0",
+    "episode_spec_version": "1.0.0",
+    "reward_spec_version": "1.0.0",
+    "evaluation_metrics_version": "1.0.0",
+    "scenario_split_version": "1.0.0",
+    "seed_plan_version": "1.0.0",
+    "geometry_split_manifest_sha256": "0f73cf4e909040ea55ca4e77b4d8a98924090f32a9223258e9045412978fd0d2",
+    "test_case_manifest_sha256": "3e55a55b77887423413f612f50ba213d8329e1aa941364488160ba8b72463370",
+    "split_salt": "platform-v1-geometry-split-v1",
+    "protocol_order_seed": 424242,
+    "test_environment_seeds": [
+      9101,
+      9102,
+      9103,
+      9104,
+      9105
+    ],
+    "validation_environment_seeds": [
+      5101,
+      5102
+    ],
+    "agent_replicate_seeds": [
+      101,
+      202,
+      303
+    ]
+  }
+}
