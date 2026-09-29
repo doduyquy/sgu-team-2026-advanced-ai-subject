@@ -220,23 +220,30 @@ class TrafficContextV1:
         if true_mask_count != self.active_count:
             raise ValueError(f"validity_mask True count ({true_mask_count}) does not match active_count ({self.active_count})")
 
+        # Verify active slots consistency between actors tuple and actors_array
+        for idx in range(self.active_count):
+            if not self.validity_mask[idx]:
+                raise ValueError(f"Active slot {idx} must have validity_mask=True")
+            if not np.allclose(self.actors_array[idx], self.actors[idx].to_tuple(), atol=1e-4):
+                raise ValueError(f"actors_array[{idx}] does not match actors[{idx}].to_tuple()")
+
         # Verify padded invalid slots are zeroed out
         for idx in range(self.active_count, self.capacity):
             if self.validity_mask[idx]:
                 raise ValueError(f"Slot {idx} beyond active_count must have validity_mask=False")
             if not np.all(self.actors_array[idx] == 0.0):
                 raise ValueError(f"Padded slot {idx} must be zeroed out in actors_array")
+            if self.actors[idx].to_tuple() != (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0):
+                raise ValueError(f"Padded actor {idx} must be zero-valued")
 
-        # Enforce defensive immutability on exported arrays
-        if self.actors_array.flags.writeable:
-            arr_copy = np.array(self.actors_array, dtype=np.float32, copy=True)
-            arr_copy.flags.writeable = False
-            object.__setattr__(self, "actors_array", arr_copy)
+        # Always defensive copy to prevent retaining aliases to caller-owned memory
+        arr_copy = np.array(self.actors_array, dtype=np.float32, copy=True)
+        arr_copy.flags.writeable = False
+        object.__setattr__(self, "actors_array", arr_copy)
 
-        if self.validity_mask.flags.writeable:
-            mask_copy = np.array(self.validity_mask, dtype=bool, copy=True)
-            mask_copy.flags.writeable = False
-            object.__setattr__(self, "validity_mask", mask_copy)
+        mask_copy = np.array(self.validity_mask, dtype=bool, copy=True)
+        mask_copy.flags.writeable = False
+        object.__setattr__(self, "validity_mask", mask_copy)
 
     @classmethod
     def empty(cls, capacity: int = 8, radius_m: float = 50.0) -> "TrafficContextV1":
@@ -325,6 +332,14 @@ class TaskContextV1:
             raise ValueError(f"lookahead_count must be positive, got {self.lookahead_count}")
         if self.lookahead_spacing_m <= 0.0:
             raise ValueError(f"lookahead_spacing_m must be positive, got {self.lookahead_spacing_m}")
+        expected_range = self.lookahead_count * self.lookahead_spacing_m
+        if abs(self.lookahead_range_m - expected_range) > 1e-4:
+            raise ValueError(f"lookahead_range_m ({self.lookahead_range_m}) must equal lookahead_count * spacing ({expected_range})")
+        if not math.isfinite(self.current_lane_width) or self.current_lane_width <= 0.0:
+            raise ValueError(f"current_lane_width must be positive finite float, got {self.current_lane_width}")
+        if len(self.navigation_goal_direction) != 2 or not all(math.isfinite(x) for x in self.navigation_goal_direction):
+            raise ValueError(f"navigation_goal_direction must be 2 finite floats, got {self.navigation_goal_direction}")
+
         if len(self.waypoints) != self.lookahead_count:
             raise ValueError(f"TaskContext waypoints length must equal lookahead_count {self.lookahead_count}, got {len(self.waypoints)}")
         if self.waypoints_array.shape != (self.lookahead_count, 3):
@@ -335,15 +350,25 @@ class TaskContextV1:
         if not np.all(np.isfinite(self.waypoints_array)):
             raise ValueError("waypoints_array contains non-finite values.")
 
-        if self.waypoints_array.flags.writeable:
-            wp_copy = np.array(self.waypoints_array, dtype=np.float32, copy=True)
-            wp_copy.flags.writeable = False
-            object.__setattr__(self, "waypoints_array", wp_copy)
+        # Consistency check between waypoints and waypoints_array
+        for idx in range(self.lookahead_count):
+            if self.validity_mask[idx]:
+                if not np.allclose(self.waypoints_array[idx], self.waypoints[idx].to_tuple(), atol=1e-4):
+                    raise ValueError(f"waypoints_array[{idx}] does not match waypoints[{idx}].to_tuple()")
+            else:
+                if not np.all(self.waypoints_array[idx] == 0.0):
+                    raise ValueError(f"Invalid waypoint {idx} must be zeroed out in waypoints_array")
+                if self.waypoints[idx].to_tuple() != (0.0, 0.0, 0.0):
+                    raise ValueError(f"Invalid waypoint {idx} must be zero-valued in waypoints tuple")
 
-        if self.validity_mask.flags.writeable:
-            m_copy = np.array(self.validity_mask, dtype=bool, copy=True)
-            m_copy.flags.writeable = False
-            object.__setattr__(self, "validity_mask", m_copy)
+        # Always defensive copy to prevent retaining aliases to caller-owned memory
+        wp_copy = np.array(self.waypoints_array, dtype=np.float32, copy=True)
+        wp_copy.flags.writeable = False
+        object.__setattr__(self, "waypoints_array", wp_copy)
+
+        m_copy = np.array(self.validity_mask, dtype=bool, copy=True)
+        m_copy.flags.writeable = False
+        object.__setattr__(self, "validity_mask", m_copy)
 
     @classmethod
     def empty(cls, lookahead_count: int = 20, lookahead_spacing_m: float = 2.5) -> "TaskContextV1":

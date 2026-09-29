@@ -1,0 +1,16 @@
+adapter_id,agent_action,canonical_steering,canonical_throttle_brake,env_step_accepted,returned_obs_shape,technical_status
+continuous_box2_v1,"[0.0, 0.0]",0.0,0.0,True,"(259,)",CERTIFIED_EXECUTED
+continuous_box2_v1,"[-1.0, 0.6]",-1.0,0.6,True,"(259,)",CERTIFIED_EXECUTED
+continuous_box2_v1,"[1.0, -0.8]",1.0,-0.8,True,"(259,)",CERTIFIED_EXECUTED
+discrete25_native_v1,0,-1.0,-1.0,True,"(259,)",CERTIFIED_EXECUTED
+discrete25_native_v1,12,0.0,0.0,True,"(259,)",CERTIFIED_EXECUTED
+discrete25_native_v1,24,1.0,1.0,True,"(259,)",CERTIFIED_EXECUTED
+discrete9_lowbranch_v1,0,-0.6,-0.8,True,"(259,)",CERTIFIED_EXECUTED
+discrete9_lowbranch_v1,1,0.0,-0.8,True,"(259,)",CERTIFIED_EXECUTED
+discrete9_lowbranch_v1,2,0.6,-0.8,True,"(259,)",CERTIFIED_EXECUTED
+discrete9_lowbranch_v1,3,-0.6,0.0,True,"(259,)",CERTIFIED_EXECUTED
+discrete9_lowbranch_v1,4,0.0,0.0,True,"(259,)",CERTIFIED_EXECUTED
+discrete9_lowbranch_v1,5,0.6,0.0,True,"(259,)",CERTIFIED_EXECUTED
+discrete9_lowbranch_v1,6,-0.6,0.6,True,"(259,)",CERTIFIED_EXECUTED
+discrete9_lowbranch_v1,7,0.0,0.6,True,"(259,)",CERTIFIED_EXECUTED
+discrete9_lowbranch_v1,8,0.6,0.6,True,"(259,)",CERTIFIED_EXECUTED

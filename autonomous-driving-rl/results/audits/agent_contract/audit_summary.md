@@ -28,5 +28,5 @@
 
 ## 5. Additive Cryptographic Hashes
 - **`gate5_benchmark_contract_sha256`:** `9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77` (locked, untouched)
-- **`agent_contract_sha256`:** `02f9b3cfef041f5530b1e7b68a957aa96331b1b81ff4e1442e001c6f9863c03d`
-- **`platform_runtime_contract_sha256`:** `da08c7e544d4df0296ac1db0e44a0bf9d564b0373c89b7bfa67907fa3d5b1b43`
+- **`agent_contract_sha256`:** `6d2eb58e8d9d4cbeb205abff05673ff3b0adcafa9a7ae04ac61f4209d7860770`
+- **`platform_runtime_contract_sha256`:** `7c0a7e065272b77cb99577cceaea7f55f0ce5d2ba2a5b21d86de259c207238fd`

@@ -7,6 +7,7 @@ Research Platform V1 and all agent families (Stages 0 to 7).
 """
 
 from abc import ABC, abstractmethod
+import copy
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 import math
@@ -74,6 +75,12 @@ class AgentPublicEpisodeContext:
     mode: str = "INFERENCE"  # "INFERENCE" (frozen evaluation) or "TRAINING"
 
     def __post_init__(self):
+        if self.control_frequency_hz <= 0:
+            raise ValueError(f"control_frequency_hz must be positive, got {self.control_frequency_hz}")
+        if self.control_dt_s <= 0.0:
+            raise ValueError(f"control_dt_s must be positive, got {self.control_dt_s}")
+        if self.horizon_steps <= 0:
+            raise ValueError(f"horizon_steps must be positive, got {self.horizon_steps}")
         if self.mode not in ("INFERENCE", "TRAINING"):
             raise ValueError(f"mode must be 'INFERENCE' or 'TRAINING', got '{self.mode}'")
 
@@ -337,7 +344,9 @@ def build_agent_contract_core(
     status: str = "LOCKED-FOR-PLATFORM-V1",
     custom_rules: Optional[Dict[str, Any]] = None,
     custom_adapter_grids: Optional[Dict[str, Any]] = None,
-    custom_latency_boundary: Optional[Dict[str, Any]] = None
+    custom_latency_boundary: Optional[Dict[str, Any]] = None,
+    custom_agent_input_schema: Optional[Dict[str, Any]] = None,
+    custom_forbidden_fields: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """
     Builds the authoritative, complete machine-readable AgentContractV1 core dictionary.
@@ -404,6 +413,62 @@ def build_agent_contract_core(
     if custom_latency_boundary:
         latency_boundary.update(custom_latency_boundary)
 
+    default_input_schema = {
+        "core_observation": {
+            "dimensions": 259,
+            "dtype": "float32",
+            "normalized_range": [0.0, 1.0],
+            "bounds_tolerance": 1e-4,
+            "subvectors": {
+                "ego_state": [0, 9],
+                "navigation_checkpoints": [9, 19],
+                "lidar_rays": [19, 259]
+            },
+            "derived_views": ["ego_state", "navigation_vector", "lidar_points"],
+            "immutability": "read-only defensive array copy (writeable=False)"
+        },
+        "traffic_context": {
+            "capacity": 8,
+            "radius_m": 50.0,
+            "actor_features_dim": 7,
+            "actor_features": [
+                "relative_position_x",
+                "relative_position_y",
+                "relative_velocity_x",
+                "relative_velocity_y",
+                "relative_heading",
+                "length",
+                "width"
+            ],
+            "coordinate_frame": "ego-centric (forward +x, left +y)",
+            "ordering": "Euclidean distance ascending with deterministic tie-breaking (distance, x_rel, y_rel)",
+            "actors_array_shape": [8, 7],
+            "validity_mask_shape": [8]
+        },
+        "task_context": {
+            "lookahead_count": 20,
+            "lookahead_spacing_m": 2.5,
+            "lookahead_range_m": 50.0,
+            "current_lane_width": {
+                "dtype": "float32",
+                "units": "meters",
+                "source_semantics": "current reference lane width from navigation.get_current_lane_width()",
+                "mapsuite_v1_observed_standard_m": 3.5
+            },
+            "navigation_goal_direction": "2D normalized direction unit vector",
+            "route_end_within_lookahead": "Boolean flag indicating whether reference route terminates within lookahead",
+            "coordinate_frame": "ego-centric relative waypoints (lookahead_distance_m, relative_x, relative_y, relative_heading)",
+            "waypoints_array_shape": [20, 3],
+            "validity_mask_shape": [20],
+            "evaluator_progress_metrics_excluded": True
+        }
+    }
+    input_schema = dict(default_input_schema)
+    if custom_agent_input_schema:
+        input_schema.update(custom_agent_input_schema)
+
+    forbidden_fields = custom_forbidden_fields if custom_forbidden_fields is not None else sorted(list(FORBIDDEN_EVALUATOR_FIELDS))
+
     return {
         "metadata": {
             "contract_name": "AgentContractV1",
@@ -418,47 +483,12 @@ def build_agent_contract_core(
             "certified_profiles": ["STATE_DECISION_V1", "CORE_ONLY_V1"],
             "parity_principle": rules["information_parity_principle"]
         },
-        "agent_input_schema": {
-            "core_observation": {
-                "dimensions": 259,
-                "dtype": "float32",
-                "normalized_range": [0.0, 1.0],
-                "bounds_tolerance": 1e-4,
-                "subvectors": {
-                    "ego_state": [0, 9],
-                    "navigation_checkpoints": [9, 19],
-                    "lidar_rays": [19, 259]
-                },
-                "immutability": "read-only defensive array copy (writeable=False)"
-            },
-            "traffic_context": {
-                "capacity": 8,
-                "radius_m": 50.0,
-                "actor_features_dim": 7,
-                "actor_features": [
-                    "relative_position_x",
-                    "relative_position_y",
-                    "relative_velocity_x",
-                    "relative_velocity_y",
-                    "relative_heading",
-                    "length",
-                    "width"
-                ],
-                "coordinate_frame": "ego-centric (forward +x, left +y)",
-                "ordering": "Euclidean distance ascending with deterministic tie-breaking (distance, x_rel, y_rel)"
-            },
-            "task_context": {
-                "lookahead_count": 20,
-                "lookahead_spacing_m": 2.5,
-                "lookahead_range_m": 50.0,
-                "current_lane_width_m": 3.5,
-                "navigation_goal_direction": "2D normalized direction unit vector",
-                "route_end_within_lookahead": "Boolean flag indicating whether reference route terminates within lookahead",
-                "coordinate_frame": "ego-centric relative waypoints (lookahead_distance_m, relative_x, relative_y, relative_heading)",
-                "evaluator_progress_metrics_excluded": True
-            }
+        "runtime_vs_serialized_surface": {
+            "runtime_object_surface": "Exposes both high-level structured immutable objects (CoreObservationV1, TrafficActorV1, RouteWaypointV1) and high-performance read-only NumPy array views (actors_array, waypoints_array, validity_mask).",
+            "serialized_surface": "Produces JSON-safe nested dictionaries via to_dict(); redundant array views are omitted from serialization to maintain clean data payloads."
         },
-        "forbidden_evaluator_fields": sorted(list(FORBIDDEN_EVALUATOR_FIELDS)),
+        "agent_input_schema": input_schema,
+        "forbidden_evaluator_fields": forbidden_fields,
         "public_episode_context": {
             "allowed_fields": [
                 "control_frequency_hz",
@@ -472,6 +502,14 @@ def build_agent_contract_core(
                 "tier", "split", "case_id", "environment_seed", "geometry_sha256"
             ]
         },
+        "agent_descriptor_schema": {
+            "fields": [
+                "agent_id", "agent_version", "input_profile_id", "action_adapter_id",
+                "inference_stochasticity", "stateful_within_episode", "method_family"
+            ],
+            "allowed_inference_stochasticity": ["deterministic", "stochastic"],
+            "notes": "Harness metadata only; never alters environment information profile."
+        },
         "agent_policy_lifecycle": {
             "interface_type": "AgentPolicy (Python Protocol)",
             "methods": [
@@ -483,7 +521,15 @@ def build_agent_contract_core(
         },
         "agent_decision_schema": {
             "action_payload": "Raw action to be consumed by declared action adapter",
-            "diagnostics": "Optional JSON-safe bounded primitive dictionary (logging only, max depth 4, max 50 keys)"
+            "diagnostics": "Optional JSON-safe bounded primitive dictionary (logging only, max depth 4, max 50 keys, max 100 sequence items, string keys required, finite floats only)"
+        },
+        "diagnostics_limits": {
+            "max_depth": 4,
+            "max_keys": 50,
+            "max_sequence_items": 100,
+            "string_keys_required": True,
+            "finite_floats_required": True,
+            "allowed_primitive_types": ["str", "int", "float", "bool", "NoneType", "list", "tuple", "dict"]
         },
         "technical_failure_reasons": [e.value for e in TechnicalFailureReason],
         "actuator_contract": {

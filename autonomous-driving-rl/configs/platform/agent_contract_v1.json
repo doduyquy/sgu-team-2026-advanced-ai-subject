@@ -15,6 +15,10 @@
     ],
     "parity_principle": "Every benchmark-compliant agent receives the exact same AgentInputV1 under a declared profile. No hidden platform privileges based on algorithm family or stage label."
   },
+  "runtime_vs_serialized_surface": {
+    "runtime_object_surface": "Exposes both high-level structured immutable objects (CoreObservationV1, TrafficActorV1, RouteWaypointV1) and high-performance read-only NumPy array views (actors_array, waypoints_array, validity_mask).",
+    "serialized_surface": "Produces JSON-safe nested dictionaries via to_dict(); redundant array views are omitted from serialization to maintain clean data payloads."
+  },
   "agent_input_schema": {
     "core_observation": {
       "dimensions": 259,
@@ -38,6 +42,11 @@
           259
         ]
       },
+      "derived_views": [
+        "ego_state",
+        "navigation_vector",
+        "lidar_points"
+      ],
       "immutability": "read-only defensive array copy (writeable=False)"
     },
     "traffic_context": {
@@ -54,16 +63,35 @@
         "width"
       ],
       "coordinate_frame": "ego-centric (forward +x, left +y)",
-      "ordering": "Euclidean distance ascending with deterministic tie-breaking (distance, x_rel, y_rel)"
+      "ordering": "Euclidean distance ascending with deterministic tie-breaking (distance, x_rel, y_rel)",
+      "actors_array_shape": [
+        8,
+        7
+      ],
+      "validity_mask_shape": [
+        8
+      ]
     },
     "task_context": {
       "lookahead_count": 20,
       "lookahead_spacing_m": 2.5,
       "lookahead_range_m": 50.0,
-      "current_lane_width_m": 3.5,
+      "current_lane_width": {
+        "dtype": "float32",
+        "units": "meters",
+        "source_semantics": "current reference lane width from navigation.get_current_lane_width()",
+        "mapsuite_v1_observed_standard_m": 3.5
+      },
       "navigation_goal_direction": "2D normalized direction unit vector",
       "route_end_within_lookahead": "Boolean flag indicating whether reference route terminates within lookahead",
       "coordinate_frame": "ego-centric relative waypoints (lookahead_distance_m, relative_x, relative_y, relative_heading)",
+      "waypoints_array_shape": [
+        20,
+        3
+      ],
+      "validity_mask_shape": [
+        20
+      ],
       "evaluator_progress_metrics_excluded": true
     }
   },
@@ -120,6 +148,22 @@
       "geometry_sha256"
     ]
   },
+  "agent_descriptor_schema": {
+    "fields": [
+      "agent_id",
+      "agent_version",
+      "input_profile_id",
+      "action_adapter_id",
+      "inference_stochasticity",
+      "stateful_within_episode",
+      "method_family"
+    ],
+    "allowed_inference_stochasticity": [
+      "deterministic",
+      "stochastic"
+    ],
+    "notes": "Harness metadata only; never alters environment information profile."
+  },
   "agent_policy_lifecycle": {
     "interface_type": "AgentPolicy (Python Protocol)",
     "methods": [
@@ -131,7 +175,24 @@
   },
   "agent_decision_schema": {
     "action_payload": "Raw action to be consumed by declared action adapter",
-    "diagnostics": "Optional JSON-safe bounded primitive dictionary (logging only, max depth 4, max 50 keys)"
+    "diagnostics": "Optional JSON-safe bounded primitive dictionary (logging only, max depth 4, max 50 keys, max 100 sequence items, string keys required, finite floats only)"
+  },
+  "diagnostics_limits": {
+    "max_depth": 4,
+    "max_keys": 50,
+    "max_sequence_items": 100,
+    "string_keys_required": true,
+    "finite_floats_required": true,
+    "allowed_primitive_types": [
+      "str",
+      "int",
+      "float",
+      "bool",
+      "NoneType",
+      "list",
+      "tuple",
+      "dict"
+    ]
   },
   "technical_failure_reasons": [
     "AGENT_EXCEPTION",

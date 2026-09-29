@@ -422,6 +422,11 @@ class TestAgentPolicyLifecycleAndFixtures(unittest.TestCase):
         dec = AgentDecision(action_payload=[0.0, 0.0], diagnostics=valid_diag)
         self.assertEqual(dec.diagnostics["step"], 1)
 
+        # Verify to_dict returns an independent deep copy (mutation does not affect original)
+        d = dec.to_dict()
+        d["diagnostics"]["nested"]["a"].append(4)
+        self.assertEqual(len(dec.diagnostics["nested"]["a"]), 3)
+
         # Non-finite float rejected
         with self.assertRaises(ValueError):
             AgentDecision(action_payload=[0.0, 0.0], diagnostics={"nan_val": float("nan")})
@@ -434,6 +439,32 @@ class TestAgentPolicyLifecycleAndFixtures(unittest.TestCase):
         deep_diag = {"l1": {"l2": {"l3": {"l4": {"l5": "too_deep"}}}}}
         with self.assertRaises(ValueError):
             AgentDecision(action_payload=[0.0, 0.0], diagnostics=deep_diag)
+
+    def test_public_context_validation(self):
+        # Valid context
+        ctx = AgentPublicEpisodeContext(
+            control_frequency_hz=10,
+            control_dt_s=0.1,
+            horizon_steps=1000,
+            mode="INFERENCE"
+        )
+        self.assertEqual(ctx.control_frequency_hz, 10)
+
+        # Invalid frequency
+        with self.assertRaises(ValueError):
+            AgentPublicEpisodeContext(control_frequency_hz=0)
+
+        # Invalid dt
+        with self.assertRaises(ValueError):
+            AgentPublicEpisodeContext(control_dt_s=-0.1)
+
+        # Invalid horizon
+        with self.assertRaises(ValueError):
+            AgentPublicEpisodeContext(horizon_steps=0)
+
+        # Invalid mode
+        with self.assertRaises(ValueError):
+            AgentPublicEpisodeContext(mode="TESTING")
 
     def test_invalid_output_handling(self):
         adapter = ContinuousBox2Adapter()
@@ -494,6 +525,29 @@ class TestAgentContractHashMutations(unittest.TestCase):
         h_default = canonical_json_sha256(core_default)
 
         core_mutated = build_agent_contract_core(custom_latency_boundary={"nominal_realtime_budget_ms": 50.0})
+        h_mutated = canonical_json_sha256(core_mutated)
+
+        self.assertNotEqual(h_default, h_mutated)
+
+    def test_agent_input_schema_mutation_changes_hash(self):
+        core_default = build_agent_contract_core()
+        h_default = canonical_json_sha256(core_default)
+
+        # Mutate public AgentInput schema
+        mutated_input_schema = copy.deepcopy(core_default["agent_input_schema"])
+        mutated_input_schema["core_observation"]["dimensions"] = 260
+        core_mutated = build_agent_contract_core(custom_agent_input_schema=mutated_input_schema)
+        h_mutated = canonical_json_sha256(core_mutated)
+
+        self.assertNotEqual(h_default, h_mutated)
+
+    def test_forbidden_fields_mutation_changes_hash(self):
+        core_default = build_agent_contract_core()
+        h_default = canonical_json_sha256(core_default)
+
+        # Mutate forbidden fields registry
+        mutated_forbidden = list(core_default["forbidden_evaluator_fields"]) + ["custom_prohibited_telemetry"]
+        core_mutated = build_agent_contract_core(custom_forbidden_fields=mutated_forbidden)
         h_mutated = canonical_json_sha256(core_mutated)
 
         self.assertNotEqual(h_default, h_mutated)

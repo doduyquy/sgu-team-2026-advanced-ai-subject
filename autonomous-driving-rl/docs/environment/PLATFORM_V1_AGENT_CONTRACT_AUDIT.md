@@ -106,11 +106,12 @@ The platform supports two explicit, machine-readable information profiles:
 
 ### Empirical Capacity Calibration (`traffic_context_capacity.csv`):
 Calibrated across 16 representative TRAIN and VALIDATION scenarios loaded directly from `geometry_split_manifest.csv` under densities $0.0$ to $0.25$ and seeds $5101/5102$:
-- **Split Governance:** Zero TEST geometries used for capacity calibration (asserted `split != "TEST"` on every scenario).
+- **Split Governance:** Zero TEST geometries used for capacity calibration (asserted `split != "TEST"` and verified `geometry_hash_match == True` on every scenario).
 - **Radius:** $50.0\text{ m}$ (matches Gate-1 LiDAR range limit).
-- **Observed Concurrent Actors:** Max concurrent actors within $50\text{ m}$ across calibration suite was **5 actors** (observed on Extreme `CrXROSTR` and `SCXOCrTYCS`).
-- **Fixed Capacity Selected:** $\mathbf{N = 8\text{ actors}}$ (provides adequate safety margin over observed maximum).
-- **Overflow Rate:** **`0.0%`** (zero overflow events across all 16 scenarios and 1500+ decision cycles).
+- **Route Traversal Coverage:** Used pinned MetaDrive `IDMPolicy` to traverse scenarios up to 250 steps, actively triggering road blocks and traffic spawns.
+- **Observed Concurrent Actors:** Max concurrent actors within $50\text{ m}$ across calibration suite reached exactly **8 actors** (observed on Extreme `CrXROSTR` seed 12, env 5102), with peak mean local actor count of $4.33$.
+- **Fixed Capacity Selected:** $\mathbf{N = 8\text{ actors}}$ (accommodates the maximum observed active traffic concurrency).
+- **Overflow Rate:** **`0.0%`** (zero overflow events across all 16 scenarios and 3700+ decision cycles).
 - **Ordering:** Deterministically sorted by Euclidean distance ascending, with deterministic tie-breaking on $(x_{rel}, y_{rel})$.
 - **Masking:** When fewer than 8 actors are nearby, remaining slots contain zeros with `validity_mask[i] = False`.
 
@@ -211,8 +212,8 @@ Operates at nominal 10 Hz ($dt = 0.10\text{ s}$, decision repeat = 5 over physic
 ### Anti-Silent Clipping Mandate:
 Any invalid action (NaN, Inf, wrong dimension, or out-of-bounds such as $[1.05, 0.0]$) raises `InvalidActionError` immediately. Silent clipping is strictly forbidden in benchmark mode.
 
-### Simulator-Backed Execution Check:
-Verified that 15 representative actions across all three certified adapters execute directly into MetaDrive continuous physics without clipping or error.
+### Simulator-Backed Execution Evidence (`action_adapter_execution.csv`):
+Verified that 15 representative actions across all three certified adapters execute directly into MetaDrive continuous physics (`env.step()`) without clipping or error, outputting validated 259D observations.
 
 ---
 
@@ -225,40 +226,48 @@ To ensure mutation-proof scientific provenance without invalidating Gate-5 finge
 ```json
 {
   "gate5_benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
-  "agent_contract_sha256": "02f9b3cfef041f5530b1e7b68a957aa96331b1b81ff4e1442e001c6f9863c03d",
-  "platform_runtime_contract_sha256": "da08c7e544d4df0296ac1db0e44a0bf9d564b0373c89b7bfa67907fa3d5b1b43"
+  "agent_contract_sha256": "6d2eb58e8d9d4cbeb205abff05673ff3b0adcafa9a7ae04ac61f4209d7860770",
+  "platform_runtime_contract_sha256": "7c0a7e065272b77cb99577cceaea7f55f0ce5d2ba2a5b21d86de259c207238fd"
 }
 ```
 
 $$\text{platform\_runtime\_contract\_sha256} = \text{SHA256}(\text{canonical\_json}(\{\text{gate5\_benchmark\_contract\_sha256}, \text{agent\_contract\_sha256}, \dots\}))$$
 
-All discrete adapter coordinate grids (25 entries for Discrete25, 9 entries for Discrete9), public context schemas, and latency boundaries are fingerprinted inside `agent_contract_sha256`. Mutating any mapping or rule immediately alters the fingerprint.
+All discrete adapter coordinate grids (25 entries for Discrete25, 9 entries for Discrete9), public context schemas, descriptor definitions, diagnostics limits, and latency boundaries are fingerprinted inside `agent_contract_sha256`. Mutating any mapping or rule immediately alters the fingerprint.
 
 ---
 
 ## 13. Unit Tests & Verification Summary
 
-Implemented in `tests/test_agent_contract.py` (31 pure unit tests executing in $<0.04\text{ s}$ without Panda3D):
+Implemented in `tests/test_agent_contract.py` (34 pure unit tests executing in $<0.04\text{ s}$ without Panda3D):
 - Verified `CoreObservationV1` shape `(259,)`, float32 dtype, subvectors, and normalized `[0.0, 1.0]` bounds enforcement (-0.01 and 1.01 rejected).
 - Verified non-finite rejection (NaN and Inf).
 - Verified defensive immutability (mutating exported array raises `ValueError`).
-- Verified `TrafficContextV1` empty state, actor sorting, active count, and validity masking.
-- Verified `TaskContextV1` lookahead waypoints, lane width, goal direction, and route end flag.
+- Verified `TrafficContextV1` empty state, actor sorting, active count, array consistency, and validity masking.
+- Verified `TaskContextV1` lookahead waypoints, lane width, goal direction, array consistency, and route end flag.
 - Verified absence of all 34 forbidden evaluator fields in `AgentInputV1` and `AgentPublicEpisodeContext`.
+- Verified `AgentPublicEpisodeContext` validation (rejects non-positive frequency, dt, horizon, or invalid mode).
 - Verified `ContinuousBox2Adapter` edge cases and out-of-bounds rejection without silent clipping.
 - Verified `Discrete25Adapter` all 25 index mappings and invalid index rejection.
 - Verified `Discrete9Adapter` all 9 index mappings and invalid index rejection.
 - Verified deterministic fixture repeatability.
 - Verified stochastic fixture repeatability under same `agent_seed` and variation under differing `agent_seed`.
 - Verified stateful fixture episodic reset preserves static learned weights.
-- Verified `AgentDecision` JSON-safe bounded diagnostics validation.
+- Verified `AgentDecision` JSON-safe bounded diagnostics validation and deepcopy isolation in `to_dict()`.
 - Verified invalid output technical failure handling (NaN, out-of-bounds, exceptions).
-- Verified contract hash mutation sensitivity (altering Discrete9, Discrete25, rules, or latency boundaries strictly alters `agent_contract_sha256`).
+- Verified contract hash mutation sensitivity:
+  - Discrete9 coordinate mutation alters hash.
+  - Discrete25 coordinate mutation alters hash.
+  - Public AgentInput schema mutation alters hash.
+  - Forbidden evaluator field list mutation alters hash.
+  - Evaluation rule mutation alters hash.
+  - Latency measurement boundary mutation alters hash.
+  - Whitespace/indentation JSON formatting preserves identical hash.
 
 ---
 
 ## 14. Regression & Integrity Validation
-- Pure unit tests: **77 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 31).
+- Pure unit tests: **80 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 34).
 - `CourseEnvV1`: Reset observation shape `(35,)` verified.
 - `evaluate_random.py`: Completed 20 evaluation episodes cleanly.
 - Gates 1 through 5 contracts remained completely untouched.
