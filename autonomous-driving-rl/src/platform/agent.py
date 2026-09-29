@@ -450,16 +450,31 @@ def build_agent_contract_core(
             "lookahead_spacing_m": 2.5,
             "lookahead_range_m": 50.0,
             "current_lane_width": {
-                "dtype": "float32",
+                "python_type": "float",
                 "units": "meters",
+                "finite": True,
+                "positive": True,
                 "source_semantics": "current reference lane width from navigation.get_current_lane_width()",
                 "mapsuite_v1_observed_standard_m": 3.5
             },
-            "navigation_goal_direction": "2D normalized direction unit vector",
-            "route_end_within_lookahead": "Boolean flag indicating whether reference route terminates within lookahead",
+            "navigation_goal_direction": {
+                "python_type": "tuple",
+                "length": 2,
+                "finite": True,
+                "normalized_unit_norm": True,
+                "source_semantics": "2D normalized direction unit vector towards active checkpoint"
+            },
+            "route_end_within_lookahead": {
+                "python_type": "bool",
+                "source_semantics": "Boolean flag indicating whether reference route terminates within lookahead window (NOT episode termination)"
+            },
             "coordinate_frame": "ego-centric relative waypoints (lookahead_distance_m, relative_x, relative_y, relative_heading)",
+            "waypoints_tuple_length": 20,
+            "waypoint_fields": ["lookahead_distance_m", "relative_x", "relative_y", "relative_heading"],
             "waypoints_array_shape": [20, 3],
+            "waypoints_array_dtype": "float32",
             "validity_mask_shape": [20],
+            "validity_mask_dtype": "bool",
             "evaluator_progress_metrics_excluded": True
         }
     }
@@ -486,6 +501,17 @@ def build_agent_contract_core(
         "runtime_vs_serialized_surface": {
             "runtime_object_surface": "Exposes both high-level structured immutable objects (CoreObservationV1, TrafficActorV1, RouteWaypointV1) and high-performance read-only NumPy array views (actors_array, waypoints_array, validity_mask).",
             "serialized_surface": "Produces JSON-safe nested dictionaries via to_dict(); redundant array views are omitted from serialization to maintain clean data payloads."
+        },
+        "runtime_dataclass_schemas": {
+            "AgentInputV1": ["profile_id", "core_observation", "traffic_context", "task_context", "step_index"],
+            "CoreObservationV1": ["features"],
+            "TrafficActorV1": ["relative_position_x", "relative_position_y", "relative_velocity_x", "relative_velocity_y", "relative_heading", "length", "width"],
+            "TrafficContextV1": ["capacity", "radius_m", "actors", "actors_array", "validity_mask", "active_count", "overflow_count"],
+            "RouteWaypointV1": ["lookahead_distance_m", "relative_x", "relative_y", "relative_heading"],
+            "TaskContextV1": ["lookahead_count", "lookahead_spacing_m", "lookahead_range_m", "current_lane_width", "navigation_goal_direction", "waypoints", "waypoints_array", "validity_mask", "route_end_within_lookahead"],
+            "AgentPublicEpisodeContext": ["control_frequency_hz", "control_dt_s", "horizon_steps", "input_profile_id", "action_adapter_id", "mode"],
+            "AgentDescriptor": ["agent_id", "agent_version", "input_profile_id", "action_adapter_id", "inference_stochasticity", "stateful_within_episode", "method_family"],
+            "AgentDecision": ["action_payload", "diagnostics"]
         },
         "agent_input_schema": input_schema,
         "forbidden_evaluator_fields": forbidden_fields,

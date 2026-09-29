@@ -5,6 +5,7 @@ Pure unit tests executing in <0.05s without simulator / Panda3D dependencies.
 
 import copy
 import json
+import math
 from pathlib import Path
 import unittest
 
@@ -562,6 +563,77 @@ class TestAgentContractHashMutations(unittest.TestCase):
         h2 = canonical_json_sha256(reloaded)
 
         self.assertEqual(h1, h2)
+
+
+class TestRuntimeSchemaIntrospectionAndConsistency(unittest.TestCase):
+    def test_dataclass_runtime_field_introspection(self):
+        import dataclasses
+        core = build_agent_contract_core()
+        schema_map = core["runtime_dataclass_schemas"]
+
+        classes = [
+            AgentInputV1,
+            CoreObservationV1,
+            TrafficActorV1,
+            TrafficContextV1,
+            RouteWaypointV1,
+            TaskContextV1,
+            AgentPublicEpisodeContext,
+            AgentDescriptor,
+            AgentDecision
+        ]
+
+        for cls in classes:
+            name = cls.__name__
+            self.assertIn(name, schema_map, f"Class {name} missing from contract runtime_dataclass_schemas")
+            actual_fields = [f.name for f in dataclasses.fields(cls)]
+            declared_fields = schema_map[name]
+            self.assertEqual(
+                actual_fields,
+                declared_fields,
+                f"Field mismatch for {name}: runtime={actual_fields} vs contract={declared_fields}"
+            )
+
+    def test_runtime_value_and_type_consistency(self):
+        core = build_agent_contract_core()
+
+        # CoreObservation check
+        obs = CoreObservationV1(np.zeros((259,), dtype=np.float32))
+        self.assertEqual(list(obs.features.shape), core["agent_input_schema"]["core_observation"]["dimensions"] if isinstance(core["agent_input_schema"]["core_observation"]["dimensions"], list) else [259])
+        self.assertEqual(obs.features.dtype, np.float32)
+
+        # TrafficContext check
+        tc = TrafficContextV1.empty(capacity=8, radius_m=50.0)
+        self.assertEqual(list(tc.actors_array.shape), core["agent_input_schema"]["traffic_context"]["actors_array_shape"])
+        self.assertEqual(tc.actors_array.dtype, np.float32)
+        self.assertEqual(list(tc.validity_mask.shape), core["agent_input_schema"]["traffic_context"]["validity_mask_shape"])
+        self.assertEqual(tc.validity_mask.dtype, bool)
+
+        # TaskContext check
+        task = TaskContextV1.empty(lookahead_count=20, lookahead_spacing_m=2.5)
+        self.assertEqual(list(task.waypoints_array.shape), core["agent_input_schema"]["task_context"]["waypoints_array_shape"])
+        self.assertEqual(task.waypoints_array.dtype, np.float32)
+        self.assertEqual(list(task.validity_mask.shape), core["agent_input_schema"]["task_context"]["validity_mask_shape"])
+        self.assertEqual(task.validity_mask.dtype, bool)
+        self.assertIsInstance(task.current_lane_width, float)
+        self.assertGreater(task.current_lane_width, 0.0)
+        self.assertTrue(math.isfinite(task.current_lane_width))
+
+        # Goal direction unit norm check
+        gx, gy = task.navigation_goal_direction
+        self.assertTrue(math.isfinite(gx) and math.isfinite(gy))
+        self.assertAlmostEqual(math.hypot(gx, gy), 1.0, places=3)
+
+    def test_runtime_schema_top_level_field_mutation_changes_hash(self):
+        core_default = build_agent_contract_core()
+        h_default = canonical_json_sha256(core_default)
+
+        # Mutate a top-level field in runtime_dataclass_schemas
+        mutated_core = copy.deepcopy(core_default)
+        mutated_core["runtime_dataclass_schemas"]["AgentInputV1"].append("unexpected_field")
+        h_mutated = canonical_json_sha256(mutated_core)
+
+        self.assertNotEqual(h_default, h_mutated)
 
 
 if __name__ == "__main__":

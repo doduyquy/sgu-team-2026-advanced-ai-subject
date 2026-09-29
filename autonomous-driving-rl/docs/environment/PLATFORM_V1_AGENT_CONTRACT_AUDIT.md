@@ -226,8 +226,8 @@ To ensure mutation-proof scientific provenance without invalidating Gate-5 finge
 ```json
 {
   "gate5_benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
-  "agent_contract_sha256": "6d2eb58e8d9d4cbeb205abff05673ff3b0adcafa9a7ae04ac61f4209d7860770",
-  "platform_runtime_contract_sha256": "7c0a7e065272b77cb99577cceaea7f55f0ce5d2ba2a5b21d86de259c207238fd"
+  "agent_contract_sha256": "325428fa0dd3e114b7aaa5af1c85640c3c759bce037a0e8d7effc3260fa5fe43",
+  "platform_runtime_contract_sha256": "3cbe3c66bacbda3e70c6b4b9daffe4edccf2d0e09b703bf9675dec66643d8e46"
 }
 ```
 
@@ -239,7 +239,7 @@ All discrete adapter coordinate grids (25 entries for Discrete25, 9 entries for 
 
 ## 13. Unit Tests & Verification Summary
 
-Implemented in `tests/test_agent_contract.py` (34 pure unit tests executing in $<0.04\text{ s}$ without Panda3D):
+Implemented in `tests/test_agent_contract.py` (37 pure unit tests executing in $<0.04\text{ s}$ without Panda3D):
 - Verified `CoreObservationV1` shape `(259,)`, float32 dtype, subvectors, and normalized `[0.0, 1.0]` bounds enforcement (-0.01 and 1.01 rejected).
 - Verified non-finite rejection (NaN and Inf).
 - Verified defensive immutability (mutating exported array raises `ValueError`).
@@ -255,10 +255,13 @@ Implemented in `tests/test_agent_contract.py` (34 pure unit tests executing in $
 - Verified stateful fixture episodic reset preserves static learned weights.
 - Verified `AgentDecision` JSON-safe bounded diagnostics validation and deepcopy isolation in `to_dict()`.
 - Verified invalid output technical failure handling (NaN, out-of-bounds, exceptions).
+- Verified runtime dataclass schema introspection alignment across all 9 public classes.
+- Verified runtime value and type consistency across contract schemas.
 - Verified contract hash mutation sensitivity:
   - Discrete9 coordinate mutation alters hash.
   - Discrete25 coordinate mutation alters hash.
   - Public AgentInput schema mutation alters hash.
+  - Top-level runtime dataclass schema field mutation alters hash.
   - Forbidden evaluator field list mutation alters hash.
   - Evaluation rule mutation alters hash.
   - Latency measurement boundary mutation alters hash.
@@ -267,7 +270,7 @@ Implemented in `tests/test_agent_contract.py` (34 pure unit tests executing in $
 ---
 
 ## 14. Regression & Integrity Validation
-- Pure unit tests: **80 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 34).
+- Pure unit tests: **83 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 37).
 - `CourseEnvV1`: Reset observation shape `(35,)` verified.
 - `evaluate_random.py`: Completed 20 evaluation episodes cleanly.
 - Gates 1 through 5 contracts remained completely untouched.

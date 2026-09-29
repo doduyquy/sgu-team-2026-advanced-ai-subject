@@ -339,6 +339,9 @@ class TaskContextV1:
             raise ValueError(f"current_lane_width must be positive finite float, got {self.current_lane_width}")
         if len(self.navigation_goal_direction) != 2 or not all(math.isfinite(x) for x in self.navigation_goal_direction):
             raise ValueError(f"navigation_goal_direction must be 2 finite floats, got {self.navigation_goal_direction}")
+        goal_norm = math.hypot(float(self.navigation_goal_direction[0]), float(self.navigation_goal_direction[1]))
+        if abs(goal_norm - 1.0) > 1e-2:
+            raise ValueError(f"navigation_goal_direction must be an approximately normalized unit vector, got norm={goal_norm:.4f}")
 
         if len(self.waypoints) != self.lookahead_count:
             raise ValueError(f"TaskContext waypoints length must equal lookahead_count {self.lookahead_count}, got {len(self.waypoints)}")
