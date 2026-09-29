@@ -81,16 +81,55 @@ class AgentPublicEpisodeContext:
         return asdict(self)
 
 
+def validate_diagnostics_payload(data: Any, max_depth: int = 4, current_depth: int = 0) -> None:
+    """Recursively validates that diagnostics contain only JSON-safe bounded primitives."""
+    if current_depth > max_depth:
+        raise ValueError(f"Diagnostics payload exceeds maximum nesting depth {max_depth}")
+
+    if data is None or isinstance(data, (bool, str, int)):
+        return
+    if isinstance(data, (float, np.floating)):
+        if not math.isfinite(data):
+            raise ValueError(f"Diagnostics contains non-finite float: {data}")
+        return
+    if isinstance(data, (list, tuple)):
+        if len(data) > 100:
+            raise ValueError(f"Diagnostics sequence exceeds maximum item limit 100: {len(data)}")
+        for item in data:
+            validate_diagnostics_payload(item, max_depth, current_depth + 1)
+        return
+    if isinstance(data, dict):
+        if len(data) > 50:
+            raise ValueError(f"Diagnostics dictionary exceeds maximum key limit 50: {len(data)}")
+        for k, v in data.items():
+            if not isinstance(k, str):
+                raise TypeError(f"Diagnostics dictionary keys must be strings, got {type(k)}")
+            validate_diagnostics_payload(v, max_depth, current_depth + 1)
+        return
+
+    raise TypeError(
+        f"Illegal object in AgentDecision diagnostics: {type(data)} ({data}). "
+        "Only JSON-safe bounded primitives (str, int, float, bool, None, list, dict) are permitted."
+    )
+
+
 @dataclass(frozen=True)
 class AgentDecision:
     """
     Immutable container returned by an agent policy at each decision cycle.
+    Diagnostics are logging/telemetry only and must be JSON-safe bounded primitives.
     """
     action_payload: Any
-    diagnostics: Optional[Dict[str, Any]] = None  # Logging/telemetry only; never alters simulation
+    diagnostics: Optional[Dict[str, Any]] = None
+
+    def __post_init__(self):
+        if self.diagnostics is not None:
+            if not isinstance(self.diagnostics, dict):
+                raise TypeError(f"diagnostics must be a dict or None, got {type(self.diagnostics)}")
+            validate_diagnostics_payload(self.diagnostics)
 
     def to_dict(self) -> Dict[str, Any]:
-        diag = dict(self.diagnostics) if self.diagnostics else None
+        diag = copy.deepcopy(self.diagnostics) if self.diagnostics else None
         return {"action_payload": self.action_payload, "diagnostics": diag}
 
 
@@ -290,3 +329,188 @@ class InvalidOutputFixtureAgent:
 
     def close(self) -> None:
         pass
+
+
+def build_agent_contract_core(
+    pinned_commit: str = "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    pinned_version: str = "0.4.3",
+    status: str = "LOCKED-FOR-PLATFORM-V1",
+    custom_rules: Optional[Dict[str, Any]] = None,
+    custom_adapter_grids: Optional[Dict[str, Any]] = None,
+    custom_latency_boundary: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    Builds the authoritative, complete machine-readable AgentContractV1 core dictionary.
+    Locks public AgentInput schema, actuator contract, certified adapter mappings,
+    evaluation rules, and latency measurement boundary for canonical hashing.
+    """
+    d25_adapter = Discrete25Adapter()
+    d25_mappings = []
+    for idx in range(25):
+        act = d25_adapter.to_canonical(idx)
+        d25_mappings.append({
+            "action_index": idx,
+            "steering": round(act.steering, 4),
+            "throttle_brake": round(act.throttle_brake, 4)
+        })
+
+    d9_adapter = Discrete9Adapter()
+    d9_mappings = []
+    for idx in range(9):
+        act = d9_adapter.to_canonical(idx)
+        d9_mappings.append({
+            "action_index": idx,
+            "steering": round(act.steering, 4),
+            "throttle_brake": round(act.throttle_brake, 4)
+        })
+
+    if custom_adapter_grids:
+        if "discrete25" in custom_adapter_grids:
+            d25_mappings = custom_adapter_grids["discrete25"]
+        if "discrete9" in custom_adapter_grids:
+            d9_mappings = custom_adapter_grids["discrete9"]
+
+    default_rules = {
+        "no_online_learning_during_evaluation": (
+            "AgentPolicy.act() receives zero rewards, returns, or evaluation outcomes during INFERENCE mode. "
+            "Cross-episode online adaptation is strictly prohibited."
+        ),
+        "stateful_policy_reset": (
+            "reset() must clear episodic recurrent hidden states while preserving static learned parameters."
+        ),
+        "information_parity_principle": (
+            "Every benchmark-compliant agent receives the exact same AgentInputV1 under a declared profile. "
+            "No hidden platform privileges based on algorithm family or stage label."
+        )
+    }
+    rules = dict(default_rules)
+    if custom_rules:
+        rules.update(custom_rules)
+
+    default_latency = {
+        "start_event": "Immediately before agent.act(agent_input) is invoked",
+        "stop_event": "Immediately after AgentDecision is returned",
+        "excluded_components": [
+            "AgentInput assembly",
+            "ActionAdapter conversion",
+            "environment step (physics)",
+            "rendering",
+            "logging"
+        ],
+        "nominal_realtime_budget_ms": 100.0,
+        "enforcement_policy": "Diagnostic measurement boundary; hard real-time cutoff is not enforced in platform simulation."
+    }
+    latency_boundary = dict(default_latency)
+    if custom_latency_boundary:
+        latency_boundary.update(custom_latency_boundary)
+
+    return {
+        "metadata": {
+            "contract_name": "AgentContractV1",
+            "spec_version": "1.0.0",
+            "status": status,
+            "gate": "Gate 6 (Research Platform V1)",
+            "pinned_metadrive_commit": pinned_commit,
+            "pinned_metadrive_version": pinned_version,
+        },
+        "information_profiles": {
+            "main_profile_id": "STATE_DECISION_V1",
+            "certified_profiles": ["STATE_DECISION_V1", "CORE_ONLY_V1"],
+            "parity_principle": rules["information_parity_principle"]
+        },
+        "agent_input_schema": {
+            "core_observation": {
+                "dimensions": 259,
+                "dtype": "float32",
+                "normalized_range": [0.0, 1.0],
+                "bounds_tolerance": 1e-4,
+                "subvectors": {
+                    "ego_state": [0, 9],
+                    "navigation_checkpoints": [9, 19],
+                    "lidar_rays": [19, 259]
+                },
+                "immutability": "read-only defensive array copy (writeable=False)"
+            },
+            "traffic_context": {
+                "capacity": 8,
+                "radius_m": 50.0,
+                "actor_features_dim": 7,
+                "actor_features": [
+                    "relative_position_x",
+                    "relative_position_y",
+                    "relative_velocity_x",
+                    "relative_velocity_y",
+                    "relative_heading",
+                    "length",
+                    "width"
+                ],
+                "coordinate_frame": "ego-centric (forward +x, left +y)",
+                "ordering": "Euclidean distance ascending with deterministic tie-breaking (distance, x_rel, y_rel)"
+            },
+            "task_context": {
+                "lookahead_count": 20,
+                "lookahead_spacing_m": 2.5,
+                "lookahead_range_m": 50.0,
+                "current_lane_width_m": 3.5,
+                "navigation_goal_direction": "2D normalized direction unit vector",
+                "route_end_within_lookahead": "Boolean flag indicating whether reference route terminates within lookahead",
+                "coordinate_frame": "ego-centric relative waypoints (lookahead_distance_m, relative_x, relative_y, relative_heading)",
+                "evaluator_progress_metrics_excluded": True
+            }
+        },
+        "forbidden_evaluator_fields": sorted(list(FORBIDDEN_EVALUATOR_FIELDS)),
+        "public_episode_context": {
+            "allowed_fields": [
+                "control_frequency_hz",
+                "control_dt_s",
+                "horizon_steps",
+                "input_profile_id",
+                "action_adapter_id",
+                "mode (INFERENCE | TRAINING)"
+            ],
+            "excluded_fields": [
+                "tier", "split", "case_id", "environment_seed", "geometry_sha256"
+            ]
+        },
+        "agent_policy_lifecycle": {
+            "interface_type": "AgentPolicy (Python Protocol)",
+            "methods": [
+                "descriptor -> AgentDescriptor",
+                "reset(public_context, agent_seed) -> None",
+                "act(agent_input) -> AgentDecision",
+                "close() -> None"
+            ]
+        },
+        "agent_decision_schema": {
+            "action_payload": "Raw action to be consumed by declared action adapter",
+            "diagnostics": "Optional JSON-safe bounded primitive dictionary (logging only, max depth 4, max 50 keys)"
+        },
+        "technical_failure_reasons": [e.value for e in TechnicalFailureReason],
+        "actuator_contract": {
+            "canonical_physical_action": "Continuous Box(-1.0, 1.0, shape=(2,)) [steering, throttle_brake]",
+            "control_frequency_hz": 10,
+            "nominal_decision_dt_s": 0.10,
+            "invalid_action_policy": "Loud rejection via InvalidActionError (Technical Failure); silent clipping strictly forbidden",
+            "certified_adapters": {
+                "continuous_box2_v1": {
+                    "type": "Box(2)",
+                    "range": [-1.0, 1.0],
+                    "identity": True
+                },
+                "discrete25_native_v1": {
+                    "type": "Discrete(25)",
+                    "steering_grid": Discrete25Adapter.STEERING_VALUES,
+                    "throttle_grid": Discrete25Adapter.THROTTLE_VALUES,
+                    "mappings": d25_mappings
+                },
+                "discrete9_lowbranch_v1": {
+                    "type": "Discrete(9)",
+                    "steering_grid": Discrete9Adapter.STEERING_LEVELS,
+                    "throttle_grid": Discrete9Adapter.THROTTLE_LEVELS,
+                    "mappings": d9_mappings
+                }
+            }
+        },
+        "evaluation_rules": rules,
+        "latency_measurement_boundary": latency_boundary
+    }

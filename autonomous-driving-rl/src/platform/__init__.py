@@ -77,6 +77,7 @@ from src.platform.agent import (
     SeededRandomFixtureAgent,
     StatefulCounterFixtureAgent,
     TechnicalFailureReason,
+    build_agent_contract_core,
 )
 
 __all__ = [
@@ -121,6 +122,7 @@ __all__ = [
     "TrafficActorV1",
     "TrafficContextV1",
     "assign_geometry_splits",
+    "build_agent_contract_core",
     "build_agent_input",
     "build_evaluation_protocol_core",
     "build_test_cases",

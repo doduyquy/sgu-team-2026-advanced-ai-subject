@@ -281,9 +281,7 @@
         "relative_velocity_y": 0.0,
         "relative_heading": 0.0,
         "length": 0.0,
-        "width": 0.0,
-        "distance": 0.0,
-        "valid": false
+        "width": 0.0
       },
       {
         "relative_position_x": 0.0,
@@ -292,9 +290,7 @@
         "relative_velocity_y": 0.0,
         "relative_heading": 0.0,
         "length": 0.0,
-        "width": 0.0,
-        "distance": 0.0,
-        "valid": false
+        "width": 0.0
       },
       {
         "relative_position_x": 0.0,
@@ -303,9 +299,7 @@
         "relative_velocity_y": 0.0,
         "relative_heading": 0.0,
         "length": 0.0,
-        "width": 0.0,
-        "distance": 0.0,
-        "valid": false
+        "width": 0.0
       },
       {
         "relative_position_x": 0.0,
@@ -314,9 +308,7 @@
         "relative_velocity_y": 0.0,
         "relative_heading": 0.0,
         "length": 0.0,
-        "width": 0.0,
-        "distance": 0.0,
-        "valid": false
+        "width": 0.0
       },
       {
         "relative_position_x": 0.0,
@@ -325,9 +317,7 @@
         "relative_velocity_y": 0.0,
         "relative_heading": 0.0,
         "length": 0.0,
-        "width": 0.0,
-        "distance": 0.0,
-        "valid": false
+        "width": 0.0
       },
       {
         "relative_position_x": 0.0,
@@ -336,9 +326,7 @@
         "relative_velocity_y": 0.0,
         "relative_heading": 0.0,
         "length": 0.0,
-        "width": 0.0,
-        "distance": 0.0,
-        "valid": false
+        "width": 0.0
       },
       {
         "relative_position_x": 0.0,
@@ -347,9 +335,7 @@
         "relative_velocity_y": 0.0,
         "relative_heading": 0.0,
         "length": 0.0,
-        "width": 0.0,
-        "distance": 0.0,
-        "valid": false
+        "width": 0.0
       },
       {
         "relative_position_x": 0.0,
@@ -358,9 +344,7 @@
         "relative_velocity_y": 0.0,
         "relative_heading": 0.0,
         "length": 0.0,
-        "width": 0.0,
-        "distance": 0.0,
-        "valid": false
+        "width": 0.0
       }
     ],
     "validity_mask": [
@@ -379,152 +363,131 @@
     "lookahead_spacing_m": 2.5,
     "lookahead_range_m": 50.0,
     "current_lane_width": 3.5,
-    "speed_limit_kmh": 80.0,
     "navigation_goal_direction": [
       0.8191,
       -0.5737
     ],
-    "is_route_terminated": false,
+    "route_end_within_lookahead": false,
     "waypoints": [
       {
         "lookahead_distance_m": 2.5,
         "relative_x": 2.5,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 5.0,
         "relative_x": 5.0,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 7.5,
         "relative_x": 7.5,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 10.0,
         "relative_x": 10.0,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 12.5,
         "relative_x": 12.5,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 15.0,
         "relative_x": 15.0,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 17.5,
         "relative_x": 17.5,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 20.0,
         "relative_x": 20.0,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 22.5,
         "relative_x": 22.5,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 25.0,
         "relative_x": 25.0,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 27.5,
         "relative_x": 27.5,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 30.0,
         "relative_x": 30.0,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 32.5,
         "relative_x": 32.5,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 35.0,
         "relative_x": 35.0,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 37.5,
         "relative_x": 37.5,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 40.0,
         "relative_x": 40.0,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 42.5,
         "relative_x": 42.5,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 45.0,
         "relative_x": 45.0,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 47.5,
         "relative_x": 47.5,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       },
       {
         "lookahead_distance_m": 50.0,
         "relative_x": 50.0,
         "relative_y": 0.0,
-        "relative_heading": 0.0,
-        "valid": true
+        "relative_heading": 0.0
       }
     ],
     "validity_mask": [

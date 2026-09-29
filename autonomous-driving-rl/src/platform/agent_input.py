@@ -74,10 +74,12 @@ class CoreObservationV1:
       0..8   (9D)  : Ego vehicle state (heading theta diff, steering, velocity x/y, gyro, angular vel)
       9..18  (10D) : Navigation checkpoints vector (5 relative checkpoint directions)
       19..258(240D): 360-degree LiDAR cloud points distance rays in [0.0, 1.0]
+    Normalized range contract: strictly [0.0, 1.0].
     """
     features: np.ndarray
 
     def __post_init__(self):
+        # Convert floating input safely to float32
         if not isinstance(self.features, np.ndarray):
             object.__setattr__(self, "features", np.asarray(self.features, dtype=np.float32))
 
@@ -85,10 +87,20 @@ class CoreObservationV1:
             raise ValueError(f"CoreObservation features must have shape (259,), got {self.features.shape}")
 
         if not np.issubdtype(self.features.dtype, np.floating):
-            raise TypeError(f"CoreObservation features must be float32, got {self.features.dtype}")
+            raise TypeError(f"CoreObservation features must be floating type, got {self.features.dtype}")
 
         if not np.all(np.isfinite(self.features)):
             raise ValueError("CoreObservation contains non-finite values (NaN or Inf).")
+
+        # Explicit bounds validation: normalized range [0.0, 1.0] with small numerical tolerance (1e-4)
+        TOLERANCE = 1e-4
+        if np.any(self.features < -TOLERANCE) or np.any(self.features > 1.0 + TOLERANCE):
+            min_val = float(np.min(self.features))
+            max_val = float(np.max(self.features))
+            raise ValueError(
+                f"CoreObservation features violate declared normalized range [0.0, 1.0]: "
+                f"min={min_val:.4f}, max={max_val:.4f}"
+            )
 
         # Defensive copy and read-only enforcement
         copied = np.array(self.features, dtype=np.float32, copy=True)
@@ -120,6 +132,7 @@ class TrafficActorV1:
       -x: Backward (behind ego)
       +y: Left (ego lateral left)
       -y: Right (ego lateral right)
+    Contains exactly 7 numeric actor features matching the declared schema.
     """
     relative_position_x: float  # meters
     relative_position_y: float  # meters
@@ -128,23 +141,44 @@ class TrafficActorV1:
     relative_heading: float     # radians in [-pi, pi]
     length: float               # meters
     width: float                # meters
-    distance: float             # Euclidean distance in meters
-    valid: bool                 # True for detected vehicle, False for padded slot
+
+    def __post_init__(self):
+        for field_name in (
+            "relative_position_x", "relative_position_y",
+            "relative_velocity_x", "relative_velocity_y",
+            "relative_heading", "length", "width"
+        ):
+            val = getattr(self, field_name)
+            if not isinstance(val, (int, float, np.floating)):
+                raise TypeError(f"TrafficActor field '{field_name}' must be numeric, got {type(val)}")
+            if not math.isfinite(val):
+                raise ValueError(f"TrafficActor field '{field_name}' must be finite, got {val}")
+
+        if self.length < 0.0 or self.width < 0.0:
+            raise ValueError(f"TrafficActor dimensions must be non-negative, got length={self.length}, width={self.width}")
 
     def to_tuple(self) -> Tuple[float, float, float, float, float, float, float]:
         """Returns 7D numeric tuple [rel_pos_x, rel_pos_y, rel_vel_x, rel_vel_y, rel_heading, length, width]."""
         return (
-            self.relative_position_x,
-            self.relative_position_y,
-            self.relative_velocity_x,
-            self.relative_velocity_y,
-            self.relative_heading,
-            self.length,
-            self.width,
+            float(self.relative_position_x),
+            float(self.relative_position_y),
+            float(self.relative_velocity_x),
+            float(self.relative_velocity_y),
+            float(self.relative_heading),
+            float(self.length),
+            float(self.width),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+    def to_dict(self) -> Dict[str, float]:
+        return {
+            "relative_position_x": float(self.relative_position_x),
+            "relative_position_y": float(self.relative_position_y),
+            "relative_velocity_x": float(self.relative_velocity_x),
+            "relative_velocity_y": float(self.relative_velocity_y),
+            "relative_heading": float(self.relative_heading),
+            "length": float(self.length),
+            "width": float(self.width),
+        }
 
 
 @dataclass(frozen=True)
@@ -163,13 +197,35 @@ class TrafficContextV1:
     overflow_count: int = 0
 
     def __post_init__(self):
-        # Validate lengths
+        if self.capacity <= 0:
+            raise ValueError(f"capacity must be positive, got {self.capacity}")
+        if self.radius_m <= 0.0:
+            raise ValueError(f"radius_m must be positive, got {self.radius_m}")
+        if not (0 <= self.active_count <= self.capacity):
+            raise ValueError(f"active_count must be in [0, {self.capacity}], got {self.active_count}")
+        if self.overflow_count < 0:
+            raise ValueError(f"overflow_count must be non-negative, got {self.overflow_count}")
+
         if len(self.actors) != self.capacity:
             raise ValueError(f"TrafficContext actors tuple length must equal capacity {self.capacity}, got {len(self.actors)}")
         if self.actors_array.shape != (self.capacity, 7):
             raise ValueError(f"TrafficContext actors_array must have shape ({self.capacity}, 7), got {self.actors_array.shape}")
         if self.validity_mask.shape != (self.capacity,):
             raise ValueError(f"TrafficContext validity_mask must have shape ({self.capacity},), got {self.validity_mask.shape}")
+
+        if not np.all(np.isfinite(self.actors_array)):
+            raise ValueError("actors_array contains non-finite values.")
+
+        true_mask_count = int(np.sum(self.validity_mask))
+        if true_mask_count != self.active_count:
+            raise ValueError(f"validity_mask True count ({true_mask_count}) does not match active_count ({self.active_count})")
+
+        # Verify padded invalid slots are zeroed out
+        for idx in range(self.active_count, self.capacity):
+            if self.validity_mask[idx]:
+                raise ValueError(f"Slot {idx} beyond active_count must have validity_mask=False")
+            if not np.all(self.actors_array[idx] == 0.0):
+                raise ValueError(f"Padded slot {idx} must be zeroed out in actors_array")
 
         # Enforce defensive immutability on exported arrays
         if self.actors_array.flags.writeable:
@@ -192,9 +248,7 @@ class TrafficContextV1:
             relative_velocity_y=0.0,
             relative_heading=0.0,
             length=0.0,
-            width=0.0,
-            distance=0.0,
-            valid=False
+            width=0.0
         )
         actors = tuple(empty_actor for _ in range(capacity))
         actors_arr = np.zeros((capacity, 7), dtype=np.float32)
@@ -227,13 +281,25 @@ class RouteWaypointV1:
     relative_x: float            # Forward coordinate relative to ego (meters)
     relative_y: float            # Lateral coordinate relative to ego (meters)
     relative_heading: float      # Heading deviation relative to ego heading (radians in [-pi, pi])
-    valid: bool                  # True if waypoint lies within route, False if beyond destination
+
+    def __post_init__(self):
+        for field_name in ("lookahead_distance_m", "relative_x", "relative_y", "relative_heading"):
+            val = getattr(self, field_name)
+            if not isinstance(val, (int, float, np.floating)):
+                raise TypeError(f"RouteWaypoint field '{field_name}' must be numeric, got {type(val)}")
+            if not math.isfinite(val):
+                raise ValueError(f"RouteWaypoint field '{field_name}' must be finite, got {val}")
 
     def to_tuple(self) -> Tuple[float, float, float]:
-        return (self.relative_x, self.relative_y, self.relative_heading)
+        return (float(self.relative_x), float(self.relative_y), float(self.relative_heading))
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+    def to_dict(self) -> Dict[str, float]:
+        return {
+            "lookahead_distance_m": float(self.lookahead_distance_m),
+            "relative_x": float(self.relative_x),
+            "relative_y": float(self.relative_y),
+            "relative_heading": float(self.relative_heading),
+        }
 
 
 @dataclass(frozen=True)
@@ -241,25 +307,33 @@ class TaskContextV1:
     """
     Read-only public planning context providing ego-relative route lookahead.
     Contains NO evaluator private progress scalars (no route_completion, no total distance).
+    route_end_within_lookahead indicates only that the designated reference route ends within
+    the sampled lookahead distance; it does NOT indicate episode termination.
     """
     lookahead_count: int = 20
     lookahead_spacing_m: float = 2.5
     lookahead_range_m: float = 50.0
     current_lane_width: float = 3.5
-    speed_limit_kmh: float = 80.0
     navigation_goal_direction: Tuple[float, float] = (1.0, 0.0)  # (cos_angle, sin_angle) to next checkpoint
     waypoints: Tuple[RouteWaypointV1, ...] = field(default_factory=tuple)
     waypoints_array: np.ndarray = field(default_factory=lambda: np.zeros((20, 3), dtype=np.float32))
     validity_mask: np.ndarray = field(default_factory=lambda: np.zeros((20,), dtype=bool))
-    is_route_terminated: bool = False
+    route_end_within_lookahead: bool = False
 
     def __post_init__(self):
+        if self.lookahead_count <= 0:
+            raise ValueError(f"lookahead_count must be positive, got {self.lookahead_count}")
+        if self.lookahead_spacing_m <= 0.0:
+            raise ValueError(f"lookahead_spacing_m must be positive, got {self.lookahead_spacing_m}")
         if len(self.waypoints) != self.lookahead_count:
             raise ValueError(f"TaskContext waypoints length must equal lookahead_count {self.lookahead_count}, got {len(self.waypoints)}")
         if self.waypoints_array.shape != (self.lookahead_count, 3):
             raise ValueError(f"TaskContext waypoints_array shape must be ({self.lookahead_count}, 3), got {self.waypoints_array.shape}")
         if self.validity_mask.shape != (self.lookahead_count,):
             raise ValueError(f"TaskContext validity_mask shape must be ({self.lookahead_count},), got {self.validity_mask.shape}")
+
+        if not np.all(np.isfinite(self.waypoints_array)):
+            raise ValueError("waypoints_array contains non-finite values.")
 
         if self.waypoints_array.flags.writeable:
             wp_copy = np.array(self.waypoints_array, dtype=np.float32, copy=True)
@@ -278,8 +352,7 @@ class TaskContextV1:
             lookahead_distance_m=0.0,
             relative_x=0.0,
             relative_y=0.0,
-            relative_heading=0.0,
-            valid=False
+            relative_heading=0.0
         )
         waypoints = tuple(empty_wp for _ in range(lookahead_count))
         wps_arr = np.zeros((lookahead_count, 3), dtype=np.float32)
@@ -289,12 +362,11 @@ class TaskContextV1:
             lookahead_spacing_m=lookahead_spacing_m,
             lookahead_range_m=lookahead_count * lookahead_spacing_m,
             current_lane_width=3.5,
-            speed_limit_kmh=80.0,
             navigation_goal_direction=(1.0, 0.0),
             waypoints=waypoints,
             waypoints_array=wps_arr,
             validity_mask=valid_mask,
-            is_route_terminated=False
+            route_end_within_lookahead=False
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -303,9 +375,8 @@ class TaskContextV1:
             "lookahead_spacing_m": self.lookahead_spacing_m,
             "lookahead_range_m": self.lookahead_range_m,
             "current_lane_width": self.current_lane_width,
-            "speed_limit_kmh": self.speed_limit_kmh,
             "navigation_goal_direction": list(self.navigation_goal_direction),
-            "is_route_terminated": self.is_route_terminated,
+            "route_end_within_lookahead": self.route_end_within_lookahead,
             "waypoints": [w.to_dict() for w in self.waypoints],
             "validity_mask": self.validity_mask.tolist(),
         }
@@ -403,43 +474,44 @@ def extract_traffic_context(
         length = float(getattr(v, "LENGTH", 4.5))
         width = float(getattr(v, "WIDTH", 1.8))
 
-        detected.append(TrafficActorV1(
+        actor = TrafficActorV1(
             relative_position_x=float(round(x_rel, 4)),
             relative_position_y=float(round(y_rel, 4)),
             relative_velocity_x=float(round(vx_rel, 4)),
             relative_velocity_y=float(round(vy_rel, 4)),
             relative_heading=float(round(hd_diff, 4)),
             length=float(round(length, 2)),
-            width=float(round(width, 2)),
-            distance=float(round(dist, 4)),
-            valid=True
-        ))
+            width=float(round(width, 2))
+        )
+        detected.append((dist, actor))
 
     # Deterministic sorting: distance ascending, tie-breaker: (x_rel, y_rel)
-    detected_sorted = sorted(detected, key=lambda a: (a.distance, a.relative_position_x, a.relative_position_y))
+    detected_sorted = sorted(detected, key=lambda item: (item[0], item[1].relative_position_x, item[1].relative_position_y))
 
     active_count = len(detected_sorted)
     overflow_count = max(0, active_count - capacity)
-    selected_actors = detected_sorted[:capacity]
+    selected_items = detected_sorted[:capacity]
 
     # Create padded slots to fixed capacity
-    padded_actors = list(selected_actors)
+    padded_actors = [item[1] for item in selected_items]
+    valid_flags = [True] * len(padded_actors)
+
+    empty_actor = TrafficActorV1(
+        relative_position_x=0.0,
+        relative_position_y=0.0,
+        relative_velocity_x=0.0,
+        relative_velocity_y=0.0,
+        relative_heading=0.0,
+        length=0.0,
+        width=0.0
+    )
     while len(padded_actors) < capacity:
-        padded_actors.append(TrafficActorV1(
-            relative_position_x=0.0,
-            relative_position_y=0.0,
-            relative_velocity_x=0.0,
-            relative_velocity_y=0.0,
-            relative_heading=0.0,
-            length=0.0,
-            width=0.0,
-            distance=0.0,
-            valid=False
-        ))
+        padded_actors.append(empty_actor)
+        valid_flags.append(False)
 
     actors_tuple = tuple(padded_actors)
     actors_arr = np.array([a.to_tuple() for a in actors_tuple], dtype=np.float32)
-    valid_mask = np.array([a.valid for a in actors_tuple], dtype=bool)
+    valid_mask = np.array(valid_flags, dtype=bool)
 
     return TrafficContextV1(
         capacity=capacity,
@@ -470,9 +542,6 @@ def extract_task_context(
 
     current_lane = navigation.current_lane
     lane_width = float(navigation.get_current_lane_width())
-    speed_limit = float(getattr(current_lane, "speed_limit", 80.0))
-    if speed_limit > 200.0:  # MetaDrive default unconstrained speed limit placeholder is 1000
-        speed_limit = 80.0
 
     # Direction to next navigation checkpoint
     navi_info = navigation.get_navi_info()
@@ -506,7 +575,8 @@ def extract_task_context(
     # Sample waypoints along route
     long_s, _ = current_lane.local_coordinates(ego_pos) if current_lane else (0.0, 0.0)
     sampled_waypoints = []
-    is_terminated = False
+    valid_flags = []
+    route_ended = False
 
     for k in range(1, lookahead_count + 1):
         target_s = long_s + k * lookahead_spacing_m
@@ -527,39 +597,38 @@ def extract_task_context(
                     lookahead_distance_m=float(round(k * lookahead_spacing_m, 2)),
                     relative_x=float(round(x_rel, 4)),
                     relative_y=float(round(y_rel, 4)),
-                    relative_heading=float(round(th_rel, 4)),
-                    valid=True
+                    relative_heading=float(round(th_rel, 4))
                 ))
+                valid_flags.append(True)
                 found = True
                 break
             else:
                 temp_s -= l.length
 
         if not found:
-            is_terminated = True
+            route_ended = True
             sampled_waypoints.append(RouteWaypointV1(
                 lookahead_distance_m=float(round(k * lookahead_spacing_m, 2)),
                 relative_x=0.0,
                 relative_y=0.0,
-                relative_heading=0.0,
-                valid=False
+                relative_heading=0.0
             ))
+            valid_flags.append(False)
 
     waypoints_tuple = tuple(sampled_waypoints)
     wps_arr = np.array([w.to_tuple() for w in waypoints_tuple], dtype=np.float32)
-    valid_mask = np.array([w.valid for w in waypoints_tuple], dtype=bool)
+    valid_mask = np.array(valid_flags, dtype=bool)
 
     return TaskContextV1(
         lookahead_count=lookahead_count,
         lookahead_spacing_m=lookahead_spacing_m,
         lookahead_range_m=lookahead_count * lookahead_spacing_m,
         current_lane_width=float(round(lane_width, 2)),
-        speed_limit_kmh=float(round(speed_limit, 2)),
         navigation_goal_direction=goal_dir,
         waypoints=waypoints_tuple,
         waypoints_array=wps_arr,
         validity_mask=valid_mask,
-        is_route_terminated=is_terminated
+        route_end_within_lookahead=route_ended
     )
 
 

@@ -105,11 +105,12 @@ The platform supports two explicit, machine-readable information profiles:
   7. `width` (m)
 
 ### Empirical Capacity Calibration (`traffic_context_capacity.csv`):
-Calibrated across representative TRAIN and VALIDATION scenarios under densities $0.0$ to $0.25$:
+Calibrated across 16 representative TRAIN and VALIDATION scenarios loaded directly from `geometry_split_manifest.csv` under densities $0.0$ to $0.25$ and seeds $5101/5102$:
+- **Split Governance:** Zero TEST geometries used for capacity calibration (asserted `split != "TEST"` on every scenario).
 - **Radius:** $50.0\text{ m}$ (matches Gate-1 LiDAR range limit).
-- **Observed Concurrent Actors:** Max concurrent actors within $50\text{ m}$ across calibration suite was **2 actors**.
-- **Fixed Capacity Selected:** $\mathbf{N = 8\text{ actors}}$ (provides $>4\times$ safety margin over observed maximum).
-- **Overflow Rate:** **`0.0%`** (zero overflow events across the calibration suite).
+- **Observed Concurrent Actors:** Max concurrent actors within $50\text{ m}$ across calibration suite was **5 actors** (observed on Extreme `CrXROSTR` and `SCXOCrTYCS`).
+- **Fixed Capacity Selected:** $\mathbf{N = 8\text{ actors}}$ (provides adequate safety margin over observed maximum).
+- **Overflow Rate:** **`0.0%`** (zero overflow events across all 16 scenarios and 1500+ decision cycles).
 - **Ordering:** Deterministically sorted by Euclidean distance ascending, with deterministic tie-breaking on $(x_{rel}, y_{rel})$.
 - **Masking:** When fewer than 8 actors are nearby, remaining slots contain zeros with `validity_mask[i] = False`.
 
@@ -118,13 +119,21 @@ Calibrated across representative TRAIN and VALIDATION scenarios under densities 
 ## 7. TaskContextV1: Read-Only Route Lookahead
 
 `TaskContextV1` provides ego-relative geometric reference route information required by trajectory planners and search algorithms:
+
+### Structural Calibration on VALIDATION Geometries (`task_context_calibration.csv`):
+Evaluated three candidate lookahead configurations across all road topology families on VALIDATION splits:
+1. **Candidate A ($10\text{ waypoints} \times 2.5\text{ m} = 25.0\text{ m}$ lookahead, 30 floats):** Insufficient lookahead horizon; fails to preview complete curve transitions and multi-lane intersection geometries.
+2. **Candidate B ($20\text{ waypoints} \times 2.5\text{ m} = 50.0\text{ m}$ lookahead, 60 floats) — SELECTED:** Structurally optimal. Lookahead range ($50.0\text{ m}$) perfectly matches the sensor LiDAR range ($50.0\text{ m}$); $2.5\text{ m}$ spacing provides high geometric fidelity to trace sharp curves ($R \approx 20\text{ m}$) without representation bloat.
+3. **Candidate C ($20\text{ waypoints} \times 5.0\text{ m} = 100.0\text{ m}$ lookahead, 60 floats):** Excessive lookahead extending beyond local visibility; coarse $5.0\text{ m}$ spacing blunts curve curvature and intersection turning points.
+
+### Schema Specification:
 - **Lookahead Waypoints:** Exactly $K = 20$ waypoints sampled at $\Delta s = 2.5\text{ m}$ spacing along the designated route centerline (total lookahead range: $50.0\text{ m}$).
-- **Waypoint Fields:** `(relative_x, relative_y, relative_heading)`.
+- **Waypoint Fields:** `(lookahead_distance_m, relative_x, relative_y, relative_heading)`.
 - **Lane Width:** $3.5\text{ m}$ (audited standard).
-- **Speed Limit:** $80.0\text{ km/h}$ (nominal speed target).
+- **Speed Semantics:** Road speed limits are omitted from `TaskContextV1` because MapSuiteV1 does not define meaningful lane speed limits (MetaDrive default unconstrained placeholder is 1000). Platform V1 does not invent synthetic road speed targets.
 - **Goal Direction:** Normalized 2D vector $(\cos \Delta\theta, \sin \Delta\theta)$ towards the active checkpoint.
-- **Route Termination Flag:** `is_route_terminated` indicates if destination occurs within lookahead horizon.
-- **Topological Validation (`task_context_validation.csv`):** Verified 100% finite, valid construction across all road topologies (Straight, Curve, Intersection, T-intersection, Roundabout, Ramp, Merge/Split) and all 12 canonical test geometries.
+- **Route End Flag:** `route_end_within_lookahead` indicates only that the designated reference route ends within the lookahead window; it does **not** indicate episode termination.
+- **Topological Technical Validation (`task_context_validation.csv`):** Verified 100% finite, valid construction across all road topologies and all 12 canonical test geometries (technical compatibility verification only; zero agent performance tuning).
 
 ---
 
@@ -173,8 +182,9 @@ class AgentPolicy(Protocol):
 ### Key Lifecycle Principles:
 1. **Public Context at Reset:** Contains only `control_frequency_hz` (10), `control_dt_s` (0.1), `horizon_steps`, `input_profile_id`, `action_adapter_id`, and `mode` (`"INFERENCE"` or `"TRAINING"`).
 2. **Episodic Reset vs. Static Parameters:** `reset()` resets recurrent internal episodic memory (e.g. RNN hidden state, search tree cache). Static learned neural network parameters remain untouched.
-3. **No Online Learning in Evaluation Mode:** During benchmark evaluation (`mode = "INFERENCE"`), `act()` receives zero reward or outcome feedback. Cross-episode online adaptation is strictly prohibited.
-4. **Seed Isolation:** `agent_seed` seeds agent-side stochasticity (e.g. action sampling noise) and is strictly isolated from simulator `environment_seed`.
+3. **Diagnostics Validation (Option A):** `AgentDecision.diagnostics` is validated recursively to guarantee it contains strictly JSON-safe bounded primitives (`str`, `int`, `float`, `bool`, `None`, and bounded lists/dicts up to depth 4 and 50 keys). Live simulator, engine, or model handles are rejected immediately with `TypeError`.
+4. **No Online Learning in Evaluation Mode:** During benchmark evaluation (`mode = "INFERENCE"`), `act()` receives zero reward or outcome feedback. Cross-episode online adaptation is strictly prohibited.
+5. **Seed Isolation:** `agent_seed` seeds agent-side stochasticity (e.g. action sampling noise) and is strictly isolated from simulator `environment_seed`.
 
 ---
 
@@ -201,34 +211,39 @@ Operates at nominal 10 Hz ($dt = 0.10\text{ s}$, decision repeat = 5 over physic
 ### Anti-Silent Clipping Mandate:
 Any invalid action (NaN, Inf, wrong dimension, or out-of-bounds such as $[1.05, 0.0]$) raises `InvalidActionError` immediately. Silent clipping is strictly forbidden in benchmark mode.
 
+### Simulator-Backed Execution Check:
+Verified that 15 representative actions across all three certified adapters execute directly into MetaDrive continuous physics without clipping or error.
+
 ---
 
 ## 12. Additive Cryptographic Hashes
 
 To ensure mutation-proof scientific provenance without invalidating Gate-5 fingerprints:
 - Gate-5 `benchmark_contract_sha256` remains locked and untouched: `9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77`.
-- Gate-6 defines additive schema and runtime contract hashes:
+- Gate-6 defines complete additive schema and runtime contract hashes:
 
 ```json
 {
   "gate5_benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
-  "agent_contract_sha256": "97c7266ecc73a7559dc7c5f7358ea3e74203b644dba2a0e06b0f629458d438dc",
-  "platform_runtime_contract_sha256": "5696a0585ed64ef4a31c1b571dc408f6caeec5f9c1d52d6465392c8d55c042a3"
+  "agent_contract_sha256": "02f9b3cfef041f5530b1e7b68a957aa96331b1b81ff4e1442e001c6f9863c03d",
+  "platform_runtime_contract_sha256": "da08c7e544d4df0296ac1db0e44a0bf9d564b0373c89b7bfa67907fa3d5b1b43"
 }
 ```
 
 $$\text{platform\_runtime\_contract\_sha256} = \text{SHA256}(\text{canonical\_json}(\{\text{gate5\_benchmark\_contract\_sha256}, \text{agent\_contract\_sha256}, \dots\}))$$
 
+All discrete adapter coordinate grids (25 entries for Discrete25, 9 entries for Discrete9), public context schemas, and latency boundaries are fingerprinted inside `agent_contract_sha256`. Mutating any mapping or rule immediately alters the fingerprint.
+
 ---
 
 ## 13. Unit Tests & Verification Summary
 
-Implemented in `tests/test_agent_contract.py` (21 pure unit tests executing in $<0.04\text{ s}$ without Panda3D):
-- Verified `CoreObservationV1` shape `(259,)`, float32 dtype, and subvectors.
+Implemented in `tests/test_agent_contract.py` (31 pure unit tests executing in $<0.04\text{ s}$ without Panda3D):
+- Verified `CoreObservationV1` shape `(259,)`, float32 dtype, subvectors, and normalized `[0.0, 1.0]` bounds enforcement (-0.01 and 1.01 rejected).
 - Verified non-finite rejection (NaN and Inf).
 - Verified defensive immutability (mutating exported array raises `ValueError`).
-- Verified `TrafficContextV1` empty state, actor sorting, and validity masking.
-- Verified `TaskContextV1` lookahead waypoints, lane width, and speed limit.
+- Verified `TrafficContextV1` empty state, actor sorting, active count, and validity masking.
+- Verified `TaskContextV1` lookahead waypoints, lane width, goal direction, and route end flag.
 - Verified absence of all 34 forbidden evaluator fields in `AgentInputV1` and `AgentPublicEpisodeContext`.
 - Verified `ContinuousBox2Adapter` edge cases and out-of-bounds rejection without silent clipping.
 - Verified `Discrete25Adapter` all 25 index mappings and invalid index rejection.
@@ -236,12 +251,14 @@ Implemented in `tests/test_agent_contract.py` (21 pure unit tests executing in $
 - Verified deterministic fixture repeatability.
 - Verified stochastic fixture repeatability under same `agent_seed` and variation under differing `agent_seed`.
 - Verified stateful fixture episodic reset preserves static learned weights.
+- Verified `AgentDecision` JSON-safe bounded diagnostics validation.
 - Verified invalid output technical failure handling (NaN, out-of-bounds, exceptions).
+- Verified contract hash mutation sensitivity (altering Discrete9, Discrete25, rules, or latency boundaries strictly alters `agent_contract_sha256`).
 
 ---
 
 ## 14. Regression & Integrity Validation
-- Pure unit tests: **67 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 21).
+- Pure unit tests: **77 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 31).
 - `CourseEnvV1`: Reset observation shape `(35,)` verified.
 - `evaluate_random.py`: Completed 20 evaluation episodes cleanly.
 - Gates 1 through 5 contracts remained completely untouched.

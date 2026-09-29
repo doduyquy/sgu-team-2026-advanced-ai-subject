@@ -5,6 +5,7 @@ Pure unit tests executing in <0.05s without simulator / Panda3D dependencies.
 
 import copy
 import json
+from pathlib import Path
 import unittest
 
 import numpy as np
@@ -27,6 +28,8 @@ from src.platform.agent import (
     SeededRandomFixtureAgent,
     StatefulCounterFixtureAgent,
     TechnicalFailureReason,
+    build_agent_contract_core,
+    validate_diagnostics_payload,
 )
 from src.platform.agent_input import (
     AgentInputV1,
@@ -56,6 +59,16 @@ class TestCoreObservation(unittest.TestCase):
         self.assertEqual(obs.navigation_vector.shape, (10,))
         self.assertEqual(obs.lidar_points.shape, (240,))
 
+    def test_floating_dtype_conversion_and_validation(self):
+        # Converts float64 or list safely to float32
+        list_features = [0.5] * 259
+        obs = CoreObservationV1(list_features)
+        self.assertEqual(obs.features.dtype, np.float32)
+
+        float64_features = np.ones((259,), dtype=np.float64) * 0.5
+        obs64 = CoreObservationV1(float64_features)
+        self.assertEqual(obs64.features.dtype, np.float32)
+
     def test_invalid_shape_rejection(self):
         with self.assertRaises(ValueError):
             CoreObservationV1(np.zeros((35,), dtype=np.float32))
@@ -74,6 +87,27 @@ class TestCoreObservation(unittest.TestCase):
         with self.assertRaises(ValueError):
             CoreObservationV1(inf_feat)
 
+    def test_normalized_bounds_enforcement(self):
+        # Reject -0.01
+        below_feat = np.copy(self.valid_features)
+        below_feat[0] = -0.01
+        with self.assertRaises(ValueError):
+            CoreObservationV1(below_feat)
+
+        # Reject 1.01
+        above_feat = np.copy(self.valid_features)
+        above_feat[5] = 1.01
+        with self.assertRaises(ValueError):
+            CoreObservationV1(above_feat)
+
+        # Valid 0.0 and 1.0 boundary values accepted
+        edge_feat = np.zeros((259,), dtype=np.float32)
+        edge_feat[0] = 0.0
+        edge_feat[-1] = 1.0
+        obs = CoreObservationV1(edge_feat)
+        self.assertAlmostEqual(obs.features[0], 0.0)
+        self.assertAlmostEqual(obs.features[-1], 1.0)
+
     def test_defensive_immutability(self):
         obs = CoreObservationV1(self.valid_features)
         # Verify read-only flag
@@ -81,11 +115,11 @@ class TestCoreObservation(unittest.TestCase):
 
         # Mutating exported array must raise ValueError
         with self.assertRaises(ValueError):
-            obs.features[0] = 999.0
+            obs.features[0] = 0.9
 
         # Mutating original source features must not affect CoreObservation
-        self.valid_features[0] = 999.0
-        self.assertNotEqual(obs.features[0], 999.0)
+        self.valid_features[0] = 0.9
+        self.assertNotEqual(obs.features[0], 0.9)
 
 
 class TestTrafficContext(unittest.TestCase):
@@ -100,14 +134,39 @@ class TestTrafficContext(unittest.TestCase):
         self.assertFalse(tc.actors_array.flags.writeable)
         self.assertFalse(tc.validity_mask.flags.writeable)
 
+    def test_traffic_actor_fields_and_validation(self):
+        actor = TrafficActorV1(
+            relative_position_x=12.5,
+            relative_position_y=-1.75,
+            relative_velocity_x=3.2,
+            relative_velocity_y=0.1,
+            relative_heading=0.05,
+            length=4.6,
+            width=1.85
+        )
+        t = actor.to_tuple()
+        self.assertEqual(len(t), 7)
+        d = actor.to_dict()
+        self.assertEqual(len(d), 7)
+        self.assertNotIn("distance", d)
+        self.assertNotIn("valid", d)
+
+        # Non-finite rejection
+        with self.assertRaises(ValueError):
+            TrafficActorV1(float("nan"), 0.0, 0.0, 0.0, 0.0, 4.5, 1.8)
+
+        # Negative dimensions rejection
+        with self.assertRaises(ValueError):
+            TrafficActorV1(10.0, 0.0, 0.0, 0.0, 0.0, -4.5, 1.8)
+
     def test_actors_sorting_and_validity_mask(self):
-        a1 = TrafficActorV1(10.0, 0.0, 0.0, 0.0, 0.0, 4.5, 1.8, 10.0, True)
-        a2 = TrafficActorV1(5.0, 0.0, 0.0, 0.0, 0.0, 4.5, 1.8, 5.0, True)
-        empty = TrafficActorV1(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, False)
+        a1 = TrafficActorV1(10.0, 0.0, 0.0, 0.0, 0.0, 4.5, 1.8)
+        a2 = TrafficActorV1(5.0, 0.0, 0.0, 0.0, 0.0, 4.5, 1.8)
+        empty = TrafficActorV1(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
         actors = (a2, a1) + tuple(empty for _ in range(6))
         arr = np.array([a.to_tuple() for a in actors], dtype=np.float32)
-        mask = np.array([a.valid for a in actors], dtype=bool)
+        mask = np.array([True, True, False, False, False, False, False, False], dtype=bool)
 
         tc = TrafficContextV1(
             capacity=8,
@@ -122,8 +181,21 @@ class TestTrafficContext(unittest.TestCase):
         self.assertTrue(tc.validity_mask[0])
         self.assertTrue(tc.validity_mask[1])
         self.assertFalse(tc.validity_mask[2])
-        self.assertEqual(tc.actors[0].distance, 5.0)
-        self.assertEqual(tc.actors[1].distance, 10.0)
+        self.assertEqual(tc.actors[0].relative_position_x, 5.0)
+        self.assertEqual(tc.actors[1].relative_position_x, 10.0)
+
+    def test_malformed_traffic_context_rejection(self):
+        actors = tuple(TrafficActorV1(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) for _ in range(8))
+        arr = np.zeros((8, 7), dtype=np.float32)
+        mask = np.zeros((8,), dtype=bool)
+
+        # Negative capacity
+        with self.assertRaises(ValueError):
+            TrafficContextV1(capacity=0, radius_m=50.0, actors=(), actors_array=np.zeros((0, 7)), validity_mask=np.zeros((0,)))
+
+        # Mask mismatch with active_count
+        with self.assertRaises(ValueError):
+            TrafficContextV1(capacity=8, radius_m=50.0, actors=actors, actors_array=arr, validity_mask=mask, active_count=2)
 
 
 class TestTaskContext(unittest.TestCase):
@@ -134,6 +206,7 @@ class TestTaskContext(unittest.TestCase):
         self.assertEqual(tc.waypoints_array.shape, (20, 3))
         self.assertEqual(tc.validity_mask.shape, (20,))
         self.assertFalse(any(tc.validity_mask))
+        self.assertFalse(tc.route_end_within_lookahead)
         self.assertFalse(tc.waypoints_array.flags.writeable)
         self.assertFalse(tc.validity_mask.flags.writeable)
 
@@ -144,27 +217,28 @@ class TestTaskContext(unittest.TestCase):
                 lookahead_distance_m=i * 2.5,
                 relative_x=i * 2.5,
                 relative_y=0.0,
-                relative_heading=0.0,
-                valid=True
+                relative_heading=0.0
             ))
         wps_arr = np.array([w.to_tuple() for w in wps], dtype=np.float32)
-        mask = np.array([w.valid for w in wps], dtype=bool)
+        mask = np.ones((20,), dtype=bool)
 
         tc = TaskContextV1(
             lookahead_count=20,
             lookahead_spacing_m=2.5,
             lookahead_range_m=50.0,
             current_lane_width=3.5,
-            speed_limit_kmh=80.0,
             navigation_goal_direction=(1.0, 0.0),
             waypoints=tuple(wps),
             waypoints_array=wps_arr,
             validity_mask=mask,
-            is_route_terminated=False
+            route_end_within_lookahead=False
         )
         self.assertTrue(all(tc.validity_mask))
         self.assertEqual(tc.waypoints[0].relative_x, 2.5)
         self.assertEqual(tc.waypoints[-1].relative_x, 50.0)
+        d = tc.to_dict()
+        self.assertNotIn("speed_limit_kmh", d)
+        self.assertIn("route_end_within_lookahead", d)
 
 
 class TestAgentInputAndInformationBoundary(unittest.TestCase):
@@ -336,6 +410,31 @@ class TestAgentPolicyLifecycleAndFixtures(unittest.TestCase):
         dec2 = agent.act(self.sample_input)
         self.assertEqual(dec2.diagnostics["step_counter"], 1)
 
+    def test_diagnostics_validation(self):
+        # Valid JSON-safe bounded primitives
+        valid_diag = {
+            "step": 1,
+            "score": 0.95,
+            "valid": True,
+            "label": "test",
+            "nested": {"a": [1, 2, 3]}
+        }
+        dec = AgentDecision(action_payload=[0.0, 0.0], diagnostics=valid_diag)
+        self.assertEqual(dec.diagnostics["step"], 1)
+
+        # Non-finite float rejected
+        with self.assertRaises(ValueError):
+            AgentDecision(action_payload=[0.0, 0.0], diagnostics={"nan_val": float("nan")})
+
+        # Illegal non-primitive object rejected
+        with self.assertRaises(TypeError):
+            AgentDecision(action_payload=[0.0, 0.0], diagnostics={"live_obj": object()})
+
+        # Excessively deep structure rejected
+        deep_diag = {"l1": {"l2": {"l3": {"l4": {"l5": "too_deep"}}}}}
+        with self.assertRaises(ValueError):
+            AgentDecision(action_payload=[0.0, 0.0], diagnostics=deep_diag)
+
     def test_invalid_output_handling(self):
         adapter = ContinuousBox2Adapter()
 
@@ -355,6 +454,60 @@ class TestAgentPolicyLifecycleAndFixtures(unittest.TestCase):
         agent_ex = InvalidOutputFixtureAgent(invalid_mode="exception")
         with self.assertRaises(RuntimeError):
             agent_ex.act(self.sample_input)
+
+
+class TestAgentContractHashMutations(unittest.TestCase):
+    def test_discrete9_mutation_changes_hash(self):
+        core_default = build_agent_contract_core()
+        h_default = canonical_json_sha256(core_default)
+
+        # Mutate one Discrete9 action
+        mutated_grid = copy.deepcopy(core_default["actuator_contract"]["certified_adapters"]["discrete9_lowbranch_v1"]["mappings"])
+        mutated_grid[0]["steering"] = -0.55  # Changed from -0.6
+        core_mutated = build_agent_contract_core(custom_adapter_grids={"discrete9": mutated_grid})
+        h_mutated = canonical_json_sha256(core_mutated)
+
+        self.assertNotEqual(h_default, h_mutated)
+
+    def test_discrete25_mutation_changes_hash(self):
+        core_default = build_agent_contract_core()
+        h_default = canonical_json_sha256(core_default)
+
+        mutated_grid = copy.deepcopy(core_default["actuator_contract"]["certified_adapters"]["discrete25_native_v1"]["mappings"])
+        mutated_grid[0]["steering"] = -0.99
+        core_mutated = build_agent_contract_core(custom_adapter_grids={"discrete25": mutated_grid})
+        h_mutated = canonical_json_sha256(core_mutated)
+
+        self.assertNotEqual(h_default, h_mutated)
+
+    def test_evaluation_rule_mutation_changes_hash(self):
+        core_default = build_agent_contract_core()
+        h_default = canonical_json_sha256(core_default)
+
+        core_mutated = build_agent_contract_core(custom_rules={"no_online_learning_during_evaluation": "Mutated rule"})
+        h_mutated = canonical_json_sha256(core_mutated)
+
+        self.assertNotEqual(h_default, h_mutated)
+
+    def test_latency_boundary_mutation_changes_hash(self):
+        core_default = build_agent_contract_core()
+        h_default = canonical_json_sha256(core_default)
+
+        core_mutated = build_agent_contract_core(custom_latency_boundary={"nominal_realtime_budget_ms": 50.0})
+        h_mutated = canonical_json_sha256(core_mutated)
+
+        self.assertNotEqual(h_default, h_mutated)
+
+    def test_json_whitespace_invariance(self):
+        core = build_agent_contract_core()
+        h1 = canonical_json_sha256(core)
+
+        # Serialize with indentation and reload
+        indented_json = json.dumps(core, indent=4)
+        reloaded = json.loads(indented_json)
+        h2 = canonical_json_sha256(reloaded)
+
+        self.assertEqual(h1, h2)
 
 
 if __name__ == "__main__":
