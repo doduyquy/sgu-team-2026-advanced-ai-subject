@@ -1,0 +1,29 @@
+{
+  "spec_version": "1.0.0",
+  "status": "LOCKED-FOR-PLATFORM-V1",
+  "geometry_split_salt": "platform-v1-geometry-split-v1",
+  "protocol_order_seed": 424242,
+  "test_environment_seeds": [
+    9101,
+    9102,
+    9103,
+    9104,
+    9105
+  ],
+  "validation_environment_seeds": [
+    5101,
+    5102
+  ],
+  "agent_replicate_seeds": [
+    101,
+    202,
+    303
+  ],
+  "seed_taxonomy_rules": {
+    "geometry_generation_seed": "Controls procedural road geometry sampling (0..19). Frozen in geometry manifest.",
+    "environment_seed": "Controls traffic spawn and simulator stochasticity for a fixed geometry. Test pool: 9101..9105.",
+    "agent_seed": "Controls agent-side RNG (action sampling, weight init). Independent replicates: 101, 202, 303.",
+    "training_run_seed": "Root seed for training replicates; training env seeds are derived deterministically via derive_seed().",
+    "protocol_order_seed": "Fixed seed (424242) for deterministic test case shuffling across all algorithms."
+  }
+}

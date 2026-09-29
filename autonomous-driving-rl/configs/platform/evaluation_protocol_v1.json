@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "protocol_name": "EvaluationProtocolV1",
+    "spec_version": "1.0.0",
+    "status": "LOCKED-FOR-PLATFORM-V1",
+    "gate": "Gate 5 (Research Platform V1)",
+    "pinned_metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "pinned_metadrive_version": "0.4.3",
+    "benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+    "test_manifest_sha256": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77"
+  },
+  "evaluation_rules": {
+    "paired_evaluation": "All algorithms must evaluate the exact same ordered test cases from test_case_manifest.csv.",
+    "test_set_holdout": "TEST geometries (12 canonicals) are strictly held out. No training, hyperparameter search, or checkpoint selection allowed on TEST.",
+    "validation_usage": "VALIDATION cases (96 cases) exist solely for hyperparameter tuning, ablation studies, and model checkpoint selection.",
+    "replicate_reporting": "Stochastic inference methods report mean \u00b1 std across 3 independent replicates (agent seeds 101, 202, 303). Learned methods train 3 independent models on training run seeds 101, 202, 303. Genuinely deterministic methods report 1 run per environment case.",
+    "tier_scorecards": "Primary benchmark reporting uses per-tier scorecards (Easy, Medium, Hard, Extreme) on Gate-4 primary metrics. Geometric-mean success mega-score is explicitly prohibited."
+  },
+  "test_suite_summary": {
+    "test_cases_count": 60,
+    "test_geometries_count": 12,
+    "test_environment_seeds": [
+      9101,
+      9102,
+      9103,
+      9104,
+      9105
+    ],
+    "cases_per_tier": {
+      "Easy": 15,
+      "Medium": 15,
+      "Hard": 15,
+      "Extreme": 15
+    }
+  },
+  "validation_suite_summary": {
+    "validation_cases_count": 96,
+    "validation_geometries_count": 48,
+    "validation_environment_seeds": [
+      5101,
+      5102
+    ],
+    "cases_per_tier": {
+      "Easy": 24,
+      "Medium": 24,
+      "Hard": 24,
+      "Extreme": 24
+    }
+  },
+  "training_suite_summary": {
+    "training_geometries_count": 180,
+    "seed_derivation": "derive_seed(training_run_seed, 'environment', episode_index, geometry_id)"
+  }
+}

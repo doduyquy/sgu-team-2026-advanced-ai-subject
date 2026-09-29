@@ -1,0 +1,16 @@
+{
+  "spec_version": "1.0.0",
+  "status": "LOCKED-FOR-PLATFORM-V1",
+  "total_geometries": 240,
+  "train_count": 180,
+  "validation_count": 48,
+  "test_count": 12,
+  "train_per_tier": 45,
+  "validation_per_tier": 12,
+  "test_per_tier": 3,
+  "train_per_sequence": 15,
+  "validation_per_sequence": 4,
+  "test_per_sequence": 1,
+  "split_salt": "platform-v1-geometry-split-v1",
+  "geometry_split_manifest_sha256": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481"
+}

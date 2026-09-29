@@ -1,0 +1,12 @@
+{
+  "status": "VALID",
+  "total_geometries": 240,
+  "train_count": 180,
+  "validation_count": 48,
+  "test_count": 12,
+  "leakage_detected": false,
+  "split_balance_verified": true,
+  "canonical_test_identities_verified": true,
+  "duplicate_geometry_groups_count": 0,
+  "duplicate_geometry_groups": []
+}

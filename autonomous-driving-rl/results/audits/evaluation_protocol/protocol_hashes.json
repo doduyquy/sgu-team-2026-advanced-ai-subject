@@ -1,0 +1,44 @@
+{
+  "benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+  "test_manifest_sha256": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77",
+  "geometry_split_manifest_sha256": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481",
+  "validation_case_manifest_sha256": "10afc2afcfd1c3e8e6f201448bdeb79ee5b07b3c0ec92e8e6e1adb7c10f42ac1",
+  "evaluation_protocol_core_sha256": "30b78e6e1b2d0b84d2c74326080a59dc57d5a42d0d400a60edd161d76ad5209e",
+  "contract_payload": {
+    "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "metadrive_version": "0.4.3",
+    "platform_specification_gate": "Gate 5",
+    "observation_schema_sha256": "3b76413fb7c191f47a16f59fb879cc92dd3ea379d340011290dd6cf482ed07ac",
+    "action_schema_sha256": "f042c413f1ad9fab849434fe1c5394ce1bd43616f6fcf09d6b94e02e91d138d6",
+    "mapsuite_manifest_sha256": "ae048a80c1bfc475a15ababc64f51a41ca8f7494a4b3d93bc2af6fcf7aebba08",
+    "canonical_candidates_sha256": "ea44f5525b76bcd6339fb42c41a20d5f0482fd314c42cbed5385a619b51f3084",
+    "episode_spec_sha256": "b51bd75545a894ffa35e92149d0f666bcc7d9e449d6b84d4632540461aac823e",
+    "reward_spec_sha256": "673f9e18f8384ed9b981f3099ea9eb53082bc40c0ac5ab9a7d95a732db392388",
+    "evaluation_metrics_sha256": "4b3bd1ea18c1bb6cd1fd91675948eb7f0f907bcb0bb063abeade57cfdda2e751",
+    "scenario_split_spec_sha256": "4e77783c5685d021babe5c00d7a03bebacc10eb252e5e056285c65b9e3f986b6",
+    "seed_plan_spec_sha256": "61a9e0c9106f415aa3d5bae0523069035f5e027eda7273382f93cee72ee5d57a",
+    "geometry_split_manifest_sha256": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481",
+    "test_case_manifest_sha256": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77",
+    "validation_case_manifest_sha256": "10afc2afcfd1c3e8e6f201448bdeb79ee5b07b3c0ec92e8e6e1adb7c10f42ac1",
+    "evaluation_protocol_core_sha256": "30b78e6e1b2d0b84d2c74326080a59dc57d5a42d0d400a60edd161d76ad5209e",
+    "split_salt": "platform-v1-geometry-split-v1",
+    "protocol_order_seed": 424242,
+    "test_environment_seeds": [
+      9101,
+      9102,
+      9103,
+      9104,
+      9105
+    ],
+    "validation_environment_seeds": [
+      5101,
+      5102
+    ],
+    "agent_replicate_seeds": [
+      101,
+      202,
+      303
+    ],
+    "evaluation_protocol_version": "1.0.0"
+  }
+}
