@@ -1,0 +1,136 @@
+{
+  "metadata": {
+    "contract_name": "AgentContractV1",
+    "spec_version": "1.0.0",
+    "status": "LOCKED-FOR-PLATFORM-V1",
+    "gate": "Gate 6 (Research Platform V1)",
+    "pinned_metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "pinned_metadrive_version": "0.4.3"
+  },
+  "information_profiles": {
+    "main_profile_id": "STATE_DECISION_V1",
+    "certified_profiles": [
+      "STATE_DECISION_V1",
+      "CORE_ONLY_V1"
+    ],
+    "parity_principle": "Same information rights for all agents. Planners, heuristics, and learning policies receive the exact same AgentInputV1 under a given profile."
+  },
+  "agent_input_schema": {
+    "core_observation": {
+      "dimensions": 259,
+      "dtype": "float32",
+      "normalized_range": [
+        0.0,
+        1.0
+      ],
+      "subvectors": {
+        "ego_state": [
+          0,
+          9
+        ],
+        "navigation_checkpoints": [
+          9,
+          19
+        ],
+        "lidar_rays": [
+          19,
+          259
+        ]
+      },
+      "immutability": "read-only defensive array copy"
+    },
+    "traffic_context": {
+      "capacity": 8,
+      "radius_m": 50.0,
+      "actor_features_dim": 7,
+      "actor_features": [
+        "relative_position_x (m)",
+        "relative_position_y (m)",
+        "relative_velocity_x (m/s)",
+        "relative_velocity_y (m/s)",
+        "relative_heading (rad)",
+        "length (m)",
+        "width (m)"
+      ],
+      "coordinate_frame": "ego-centric (forward +x, left +y)",
+      "ordering": "Euclidean distance ascending with deterministic tie-breaking"
+    },
+    "task_context": {
+      "lookahead_count": 20,
+      "lookahead_spacing_m": 2.5,
+      "lookahead_range_m": 50.0,
+      "current_lane_width_m": 3.5,
+      "speed_limit_kmh": 80.0,
+      "coordinate_frame": "ego-centric relative waypoints (x, y, heading_diff)",
+      "evaluator_progress_metrics_excluded": true
+    }
+  },
+  "forbidden_evaluator_fields": [
+    "arrive_dest",
+    "candidate_role",
+    "case_id",
+    "case_result",
+    "clean_success",
+    "crash_building",
+    "crash_human",
+    "crash_object",
+    "crash_sidewalk",
+    "crash_vehicle",
+    "difficulty_tier",
+    "distance_along_route",
+    "env_seed",
+    "environment_seed",
+    "episode_return",
+    "future_outcome",
+    "geometry_generation_seed",
+    "geometry_sha256",
+    "ground_truth_trajectory",
+    "max_route_completion",
+    "out_of_road",
+    "percent_complete",
+    "primary_terminal_reason",
+    "protocol_order_index",
+    "reward",
+    "reward_breakdown",
+    "route_completion",
+    "split",
+    "terminal_reason",
+    "terminated",
+    "test_manifest_position",
+    "test_score",
+    "tier",
+    "truncated"
+  ],
+  "public_episode_context": {
+    "allowed_fields": [
+      "control_frequency_hz",
+      "control_dt_s",
+      "horizon_steps",
+      "input_profile_id",
+      "action_adapter_id",
+      "mode (INFERENCE | TRAINING)"
+    ],
+    "excluded_fields": [
+      "tier",
+      "split",
+      "case_id",
+      "environment_seed",
+      "geometry_sha256"
+    ]
+  },
+  "actuator_contract": {
+    "canonical_physical_action": "Continuous Box(-1.0, 1.0, shape=(2,)) [steering, throttle_brake]",
+    "control_frequency_hz": 10,
+    "nominal_decision_dt_s": 0.1,
+    "invalid_action_policy": "Loud rejection via InvalidActionError (Technical Failure); silent clipping strictly forbidden",
+    "certified_adapters": [
+      "continuous_box2_v1",
+      "discrete25_native_v1",
+      "discrete9_lowbranch_v1"
+    ]
+  },
+  "evaluation_rules": {
+    "no_online_learning_during_evaluation": "AgentPolicy.act() receives zero rewards, returns, or evaluation outcomes during INFERENCE mode. Cross-episode online adaptation is strictly prohibited.",
+    "stateful_policy_reset": "reset() must clear episodic recurrent hidden states while preserving static learned parameters."
+  }
+}

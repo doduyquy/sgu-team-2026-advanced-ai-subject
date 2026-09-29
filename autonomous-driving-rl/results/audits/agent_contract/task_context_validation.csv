@@ -1,0 +1,13 @@
+tier,sequence,scenario_seed,candidate_role,lookahead_count,lookahead_range_m,current_lane_width,speed_limit_kmh,waypoints_all_finite,is_route_terminated,technical_validation_status
+Easy,SCS,11,primary_canonical,20,50.0,3.5,80.0,True,False,VALID
+Easy,SCSS,9,alternate_canonical,20,50.0,3.5,80.0,True,False,VALID
+Easy,SCCS,9,alternate_canonical,20,50.0,3.5,80.0,True,False,VALID
+Medium,SCXCS,11,primary_canonical,20,50.0,3.5,80.0,True,False,VALID
+Medium,SCTCS,0,alternate_canonical,20,50.0,3.5,80.0,True,False,VALID
+Medium,SCXCCS,13,alternate_canonical,20,50.0,3.5,80.0,True,False,VALID
+Hard,SCXOCS,2,primary_canonical,20,50.0,3.5,80.0,True,False,VALID
+Hard,SCTXrCS,1,alternate_canonical,20,50.0,3.5,80.0,True,False,VALID
+Hard,XTOCS,19,alternate_canonical,20,50.0,3.5,80.0,True,False,VALID
+Extreme,CrXROSTR,6,primary_canonical,20,50.0,3.5,80.0,True,False,VALID
+Extreme,SCXOCrTYCS,16,alternate_canonical,20,50.0,3.5,80.0,True,False,VALID
+Extreme,SCTXORyCCS,4,alternate_canonical,20,50.0,3.5,80.0,True,False,VALID

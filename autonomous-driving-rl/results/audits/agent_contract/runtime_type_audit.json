@@ -1,0 +1,12 @@
+{
+  "status": "PASSED",
+  "forbidden_modules_prohibited": [
+    "metadrive",
+    "panda3d",
+    "direct"
+  ],
+  "illegal_objects_count": 0,
+  "illegal_objects": [],
+  "isolation_verified": true,
+  "notes": "AgentInput contains only pure portable Python types and read-only NumPy arrays. Zero live simulator handles."
+}
