@@ -604,6 +604,7 @@ class TestRuntimeSchemaIntrospectionAndConsistency(unittest.TestCase):
 
         # TrafficContext check
         tc = TrafficContextV1.empty(capacity=8, radius_m=50.0)
+        self.assertEqual(len(tc.actors), core["agent_input_schema"]["traffic_context"]["actors_tuple_length"])
         self.assertEqual(list(tc.actors_array.shape), core["agent_input_schema"]["traffic_context"]["actors_array_shape"])
         self.assertEqual(tc.actors_array.dtype, np.float32)
         self.assertEqual(list(tc.validity_mask.shape), core["agent_input_schema"]["traffic_context"]["validity_mask_shape"])
@@ -611,6 +612,7 @@ class TestRuntimeSchemaIntrospectionAndConsistency(unittest.TestCase):
 
         # TaskContext check
         task = TaskContextV1.empty(lookahead_count=20, lookahead_spacing_m=2.5)
+        self.assertEqual(len(task.waypoints), core["agent_input_schema"]["task_context"]["waypoints_tuple_length"])
         self.assertEqual(list(task.waypoints_array.shape), core["agent_input_schema"]["task_context"]["waypoints_array_shape"])
         self.assertEqual(task.waypoints_array.dtype, np.float32)
         self.assertEqual(list(task.validity_mask.shape), core["agent_input_schema"]["task_context"]["validity_mask_shape"])

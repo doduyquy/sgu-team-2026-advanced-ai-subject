@@ -940,11 +940,12 @@ def compute_contract_hashes(agent_contract_path, project_root):
 def verify_contract_hashes_against_disk(contract_hashes_path, agent_contract_path, adapter_csv_path):
     """
     Code-to-Contract and Disk Self-Consistency Verification:
-    1. Rebuilds code_core = build_agent_contract_core() from Python code/constants.
-    2. Loads disk_core from agent_contract_v1.json.
-    3. Asserts canonical_json_sha256(code_core) == canonical_json_sha256(disk_core).
-    4. Asserts Discrete25 and Discrete9 mappings in code match action_adapter_mappings.csv and disk JSON.
-    5. Asserts agent_contract_sha256 and platform_runtime_contract_sha256 match contract_hashes.json.
+    1. Introspects all 9 runtime dataclasses via dataclasses.fields() and verifies 100% schema alignment.
+    2. Verifies representative runtime array shapes, dtypes, and value semantics against disk declarations.
+    3. Rebuilds code_core = build_agent_contract_core() from Python code/constants.
+    4. Loads disk_core from agent_contract_v1.json and asserts bit-for-bit equality.
+    5. Asserts Discrete25 and Discrete9 mappings in code match action_adapter_mappings.csv and disk JSON.
+    6. Asserts agent_contract_sha256 and platform_runtime_contract_sha256 match contract_hashes.json.
     """
     print("\n--- Verifying Contract Hashes and Code-to-Disk Self-Consistency ---")
     with open(contract_hashes_path, "r", encoding="utf-8") as f:
@@ -954,7 +955,66 @@ def verify_contract_hashes_against_disk(contract_hashes_path, agent_contract_pat
     with open(adapter_csv_path, "r", encoding="utf-8") as f:
         adapter_csv_rows = list(csv.DictReader(f))
 
-    # A. Rebuild contract core from current Python code
+    # A. Dataclass Runtime Field Introspection
+    import dataclasses
+    from src.platform.agent_input import (
+        AgentInputV1, CoreObservationV1, TrafficActorV1, TrafficContextV1,
+        RouteWaypointV1, TaskContextV1
+    )
+    from src.platform.agent import (
+        AgentPublicEpisodeContext, AgentDescriptor, AgentDecision
+    )
+
+    dataclass_targets = [
+        AgentInputV1, CoreObservationV1, TrafficActorV1, TrafficContextV1,
+        RouteWaypointV1, TaskContextV1, AgentPublicEpisodeContext, AgentDescriptor, AgentDecision
+    ]
+    declared_schemas = disk_core.get("runtime_dataclass_schemas", {})
+
+    for cls in dataclass_targets:
+        c_name = cls.__name__
+        if c_name not in declared_schemas:
+            raise AssertionError(f"FATAL: {c_name} missing from contract runtime_dataclass_schemas!")
+        actual_fields = [f.name for f in dataclasses.fields(cls)]
+        expected_fields = declared_schemas[c_name]
+        if actual_fields != expected_fields:
+            raise AssertionError(
+                f"FATAL: Runtime dataclass drift in {c_name}!\n"
+                f"Actual fields:   {actual_fields}\n"
+                f"Declared fields: {expected_fields}"
+            )
+    print("  [OK] all 9 runtime dataclass schemas match disk contract")
+
+    # B. Representative Runtime Value and Type Consistency
+    sample_obs = CoreObservationV1(np.zeros((259,), dtype=np.float32))
+    assert sample_obs.features.shape == (259,)
+    assert sample_obs.features.dtype == np.float32
+
+    sample_tc = TrafficContextV1.empty(capacity=8, radius_m=50.0)
+    assert len(sample_tc.actors) == 8
+    assert sample_tc.actors_array.shape == (8, 7)
+    assert sample_tc.actors_array.dtype == np.float32
+    assert sample_tc.validity_mask.shape == (8,)
+    assert sample_tc.validity_mask.dtype == bool
+
+    sample_task = TaskContextV1.empty(lookahead_count=20, lookahead_spacing_m=2.5)
+    assert len(sample_task.waypoints) == 20
+    assert sample_task.waypoints_array.shape == (20, 3)
+    assert sample_task.waypoints_array.dtype == np.float32
+    assert sample_task.validity_mask.shape == (20,)
+    assert sample_task.validity_mask.dtype == bool
+    assert isinstance(sample_task.current_lane_width, float)
+    assert math.isfinite(sample_task.current_lane_width) and sample_task.current_lane_width > 0.0
+
+    gx, gy = sample_task.navigation_goal_direction
+    assert math.isfinite(gx) and math.isfinite(gy)
+    assert abs(math.hypot(gx, gy) - 1.0) < 1e-2
+
+    print("  [OK] representative runtime array shapes/dtypes match disk contract")
+    print("  [OK] current_lane_width runtime semantics match contract")
+    print("  [OK] navigation_goal_direction unit-norm contract verified")
+
+    # C. Rebuild contract core from current Python code
     code_core = build_agent_contract_core(
         pinned_commit=EXPECTED_COMMIT,
         pinned_version=EXPECTED_VERSION,
@@ -970,9 +1030,9 @@ def verify_contract_hashes_against_disk(contract_hashes_path, agent_contract_pat
             f"Code core hash: {code_hash}\n"
             f"Disk JSON hash: {disk_hash}"
         )
-    print(f"  [OK] Python code_core matches disk agent_contract_v1.json bit-for-bit ({code_hash[:16]}...)!")
+    print("  [OK] code core == disk core")
 
-    # B. Verify adapter mappings consistency
+    # D. Verify adapter mappings consistency
     d25_csv = [r for r in adapter_csv_rows if r["adapter_id"] == "discrete25_native_v1"]
     d25_code = code_core["actuator_contract"]["certified_adapters"]["discrete25_native_v1"]["mappings"]
     assert len(d25_csv) == len(d25_code) == 25
@@ -980,7 +1040,7 @@ def verify_contract_hashes_against_disk(contract_hashes_path, agent_contract_pat
         assert int(c_row["agent_action_input"]) == k_dict["action_index"]
         assert round(float(c_row["canonical_steering"]), 4) == k_dict["steering"]
         assert round(float(c_row["canonical_throttle_brake"]), 4) == k_dict["throttle_brake"]
-    print("  [OK] Discrete25 mappings in code match action_adapter_mappings.csv!")
+    print("  [OK] Discrete25 code == JSON == CSV")
 
     d9_csv = [r for r in adapter_csv_rows if r["adapter_id"] == "discrete9_lowbranch_v1"]
     d9_code = code_core["actuator_contract"]["certified_adapters"]["discrete9_lowbranch_v1"]["mappings"]
@@ -989,17 +1049,17 @@ def verify_contract_hashes_against_disk(contract_hashes_path, agent_contract_pat
         assert int(c_row["agent_action_input"]) == k_dict["action_index"]
         assert round(float(c_row["canonical_steering"]), 4) == k_dict["steering"]
         assert round(float(c_row["canonical_throttle_brake"]), 4) == k_dict["throttle_brake"]
-    print("  [OK] Discrete9 mappings in code match action_adapter_mappings.csv!")
+    print("  [OK] Discrete9 code == JSON == CSV")
 
-    # C. Verify stored contract hashes
+    # E. Verify stored contract hashes
     if disk_hash != stored_hashes["agent_contract_sha256"]:
         raise AssertionError("FATAL: agent_contract_sha256 mismatch with stored contract_hashes.json!")
-    print(f"  [OK] agent_contract_sha256 ({disk_hash[:16]}...) matches stored hash!")
+    print(f"  [OK] agent_contract_sha256 ({disk_hash[:16]}...)")
 
     recomputed_runtime = canonical_json_sha256(stored_hashes["runtime_contract_payload"])
     if recomputed_runtime != stored_hashes["platform_runtime_contract_sha256"]:
         raise AssertionError("FATAL: platform_runtime_contract_sha256 payload mismatch!")
-    print(f"  [OK] platform_runtime_contract_sha256 ({recomputed_runtime[:16]}...) is self-consistent!")
+    print(f"  [OK] platform_runtime_contract_sha256 ({recomputed_runtime[:16]}...)")
 
 
 def generate_summary_markdown(summary_md_path, hashes_data):
@@ -1016,8 +1076,8 @@ def generate_summary_markdown(summary_md_path, hashes_data):
         f.write("- **Parity Mandate:** Same information rights across all agent stages (Stage 0 to Stage 7).\n")
         f.write("- **Primary Profile:** `STATE_DECISION_V1` (state-based decision making, not perception benchmark).\n")
         f.write("- **`CoreObservationV1`:** Exactly 259D float32 defensive array (`writeable=False`). Normalized range `[0.0, 1.0]` strictly enforced. Mutating exported array raises `ValueError`.\n")
-        f.write("- **`TrafficContextV1`:** State-based structured local context with fixed capacity $N=8$ actors inside $50.0\\text{ m}$ radius. Calibrated on TRAIN/VAL only (0 overflow events). Deterministically sorted by Euclidean distance.\n")
-        f.write("- **`TaskContextV1`:** Read-only ego-relative lookahead waypoints (20 points at $2.5\\text{ m}$ spacing up to $50.0\\text{ m}$). Lane width $3.5\\text{ m}$. Speed limit removed (no invented road speed limit). Evaluator private progress scalars (`route_completion`, arrival flags, returns) strictly excluded.\n\n")
+        f.write("- **`TrafficContextV1`:** State-based structured local context with fixed capacity $N=8$ actors inside $50.0\\text{ m}$ radius. $N=8$ matches the maximum concurrency observed in the audited TRAIN/VAL suite (observed max = 8, overflow = 0 / 3727 audited steps). overflow_count remains the explicit mechanism for future unseen exceedance. Deterministically sorted by Euclidean distance.\n")
+        f.write("- **`TaskContextV1`:** Read-only ego-relative lookahead waypoints (20 points at $2.5\\text{ m}$ spacing up to $50.0\\text{ m}$, selected as design compromise matching $50.0\\text{ m}$ sensor range). Lane width: dynamic runtime float from `navigation.get_current_lane_width()` ($3.5\\text{ m}$ is observed MapSuiteV1 standard value, not constant schema). Speed limit removed (no invented road speed limit). Evaluator private progress scalars (`route_completion`, arrival flags, returns) strictly excluded.\n\n")
 
         f.write("## 3. Security & Telemetry Segregation\n")
         f.write("- **Runtime Isolation:** Recursive object graph traversal verified 0 live handles to `metadrive`, `panda3d`, `direct`, engine, or vehicle objects.\n")

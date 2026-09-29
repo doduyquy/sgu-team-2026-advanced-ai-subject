@@ -9,8 +9,8 @@
 - **Parity Mandate:** Same information rights across all agent stages (Stage 0 to Stage 7).
 - **Primary Profile:** `STATE_DECISION_V1` (state-based decision making, not perception benchmark).
 - **`CoreObservationV1`:** Exactly 259D float32 defensive array (`writeable=False`). Normalized range `[0.0, 1.0]` strictly enforced. Mutating exported array raises `ValueError`.
-- **`TrafficContextV1`:** State-based structured local context with fixed capacity $N=8$ actors inside $50.0\text{ m}$ radius. Calibrated on TRAIN/VAL only (0 overflow events). Deterministically sorted by Euclidean distance.
-- **`TaskContextV1`:** Read-only ego-relative lookahead waypoints (20 points at $2.5\text{ m}$ spacing up to $50.0\text{ m}$). Lane width $3.5\text{ m}$. Speed limit removed (no invented road speed limit). Evaluator private progress scalars (`route_completion`, arrival flags, returns) strictly excluded.
+- **`TrafficContextV1`:** State-based structured local context with fixed capacity $N=8$ actors inside $50.0\text{ m}$ radius. $N=8$ matches the maximum concurrency observed in the audited TRAIN/VAL suite (observed max = 8, overflow = 0 / 3727 audited steps). overflow_count remains the explicit mechanism for future unseen exceedance. Deterministically sorted by Euclidean distance.
+- **`TaskContextV1`:** Read-only ego-relative lookahead waypoints (20 points at $2.5\text{ m}$ spacing up to $50.0\text{ m}$, selected as design compromise matching $50.0\text{ m}$ sensor range). Lane width: dynamic runtime float from `navigation.get_current_lane_width()` ($3.5\text{ m}$ is observed MapSuiteV1 standard value, not constant schema). Speed limit removed (no invented road speed limit). Evaluator private progress scalars (`route_completion`, arrival flags, returns) strictly excluded.
 
 ## 3. Security & Telemetry Segregation
 - **Runtime Isolation:** Recursive object graph traversal verified 0 live handles to `metadrive`, `panda3d`, `direct`, engine, or vehicle objects.
@@ -28,5 +28,5 @@
 
 ## 5. Additive Cryptographic Hashes
 - **`gate5_benchmark_contract_sha256`:** `9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77` (locked, untouched)
-- **`agent_contract_sha256`:** `325428fa0dd3e114b7aaa5af1c85640c3c759bce037a0e8d7effc3260fa5fe43`
-- **`platform_runtime_contract_sha256`:** `3cbe3c66bacbda3e70c6b4b9daffe4edccf2d0e09b703bf9675dec66643d8e46`
+- **`agent_contract_sha256`:** `53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb`
+- **`platform_runtime_contract_sha256`:** `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad`

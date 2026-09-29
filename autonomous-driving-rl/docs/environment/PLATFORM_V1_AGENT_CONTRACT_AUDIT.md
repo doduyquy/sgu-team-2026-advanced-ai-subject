@@ -226,8 +226,8 @@ To ensure mutation-proof scientific provenance without invalidating Gate-5 finge
 ```json
 {
   "gate5_benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
-  "agent_contract_sha256": "325428fa0dd3e114b7aaa5af1c85640c3c759bce037a0e8d7effc3260fa5fe43",
-  "platform_runtime_contract_sha256": "3cbe3c66bacbda3e70c6b4b9daffe4edccf2d0e09b703bf9675dec66643d8e46"
+  "agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+  "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad"
 }
 ```
 

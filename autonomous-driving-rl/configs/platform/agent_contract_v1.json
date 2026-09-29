@@ -130,15 +130,21 @@
         "length",
         "width"
       ],
-      "coordinate_frame": "ego-centric (forward +x, left +y)",
-      "ordering": "Euclidean distance ascending with deterministic tie-breaking (distance, x_rel, y_rel)",
+      "actors_tuple_length": 8,
       "actors_array_shape": [
         8,
         7
       ],
+      "actors_array_dtype": "float32",
       "validity_mask_shape": [
         8
-      ]
+      ],
+      "validity_mask_dtype": "bool",
+      "active_count_semantics": "number of valid selected actors in [0, capacity]",
+      "overflow_count_semantics": "number of additional in-radius actors omitted because capacity was exceeded",
+      "padding_semantics": "invalid slots zero-valued and validity_mask=False",
+      "coordinate_frame": "ego-centric (forward +x, left +y)",
+      "ordering": "Euclidean distance ascending with deterministic tie-breaking (distance, x_rel, y_rel)"
     },
     "task_context": {
       "lookahead_count": 20,
