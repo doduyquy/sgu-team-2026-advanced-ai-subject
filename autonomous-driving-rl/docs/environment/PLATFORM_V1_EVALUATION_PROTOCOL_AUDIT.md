@@ -256,7 +256,8 @@ To guarantee that benchmark results are verifiable and mutation-proof, Platform 
 
 ```json
 {
-  "benchmark_contract_sha256": "c273e3e1376eb6b4349824f5be8bc909cf5208c40edbdbe22802c1e2e979648b",
+  "benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+  "evaluation_protocol_core_sha256": "30b78e6e1b2d0b84d2c74326080a59dc57d5a42d0d400a60edd161d76ad5209e",
   "test_manifest_sha256": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77",
   "geometry_split_manifest_sha256": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481",
   "validation_case_manifest_sha256": "10afc2afcfd1c3e8e6f201448bdeb79ee5b07b3c0ec92e8e6e1adb7c10f42ac1"
@@ -267,13 +268,14 @@ To guarantee that benchmark results are verifiable and mutation-proof, Platform 
 Hashes describe **semantic protocol content**, not local filesystem line endings or indentation formatting:
 - **JSON Contracts:** Parsed via `json.load()` and hashed with `canonical_json_sha256(parsed_object)` (`sort_keys=True, separators=(",", ":")`). Completely invariant to CRLF vs. LF line endings and whitespace.
 - **CSV Manifests:** Parsed via `csv.DictReader(f)` where each row is normalized into a dictionary with sorted keys, and the list of rows is encoded via `canonical_json_sha256`. Completely invariant to CRLF vs. LF and column order.
+- **Protocol Rules Integrity:** `evaluation_protocol_core_sha256` fingerprints all evaluation rules (`paired_evaluation`, `test_set_holdout`, `validation_usage`, `replicate_reporting`, `tier_scorecards`) and case summaries, embedding this fingerprint into `benchmark_contract_sha256`.
 
 The `benchmark_contract_sha256` digest securely incorporates the canonical content hashes of contracts across Gates 1 through 5:
 - Gate 1 schema definitions (`observation_schema.json`, `action_schema.json`)
 - Gate 2 candidate manifest and canonical configurations (`mapsuite_v1_candidates.json`, `canonical_candidates.json`)
 - Gate 3 episode specification (`episode_spec_v1.json`)
 - Gate 4 reward and evaluation metric specifications (`reward_spec_v1.json`, `evaluation_metrics_v1.json`)
-- Gate 5 scenario split, seed plan, and evaluation protocol manifests and specifications (`scenario_split_v1.json`, `seed_plan_v1.json`, `geometry_split_manifest.csv`, `test_case_manifest.csv`, `validation_case_manifest.csv`)
+- Gate 5 scenario split, seed plan, evaluation protocol core, and manifests (`scenario_split_v1.json`, `seed_plan_v1.json`, `evaluation_protocol_core`, `geometry_split_manifest.csv`, `test_case_manifest.csv`, `validation_case_manifest.csv`)
 
 ### Circular Hashing Elimination & Single-Run Consistency:
 `evaluation_protocol_v1.json` embeds `benchmark_contract_sha256` and is **not** part of its own input hash. After writing all artifacts, `verify_contract_hashes_against_disk()` recomputes all contract hashes from disk and asserts bit-for-bit equality against `protocol_hashes.json`. A single clean run produces a fully self-consistent repository state.
@@ -291,7 +293,7 @@ requires an explicit **protocol version bump** (`EvaluationProtocolV2`), produci
 
 ## 14. Unit Tests & Verification Summary
 
-Implemented in `tests/test_evaluation_protocol.py` (17 pure unit tests executing in $<0.05\text{ s}$ without Panda3D):
+Implemented in `tests/test_evaluation_protocol.py` (20 pure unit tests executing in $<0.05\text{ s}$ without Panda3D):
 - Verified exact 240-geometry universe.
 - Verified 180 Train / 48 Validation / 12 Test counts.
 - Verified 45/12/3 tier balance and 15/4/1 sequence balance.
@@ -308,11 +310,15 @@ Implemented in `tests/test_evaluation_protocol.py` (17 pure unit tests executing
 - Verified canonical JSON formatting invariance (CRLF vs LF, compact vs indented).
 - Verified canonical CSV formatting invariance (CRLF vs LF line endings).
 - Verified committed manifest integrity directly from disk.
+- Verified that mutating an evaluation rule changes `evaluation_protocol_core_sha256`.
+- Verified that case builders use supplied Gate-3 `HorizonPolicy`.
+- Verified that varying `safety_margin` dynamically modifies computed horizons.
+- Verified that current `EpisodeSpecV1` reproduces the locked 60 test and 96 validation case horizons.
 
 ---
 
 ## 15. Regression & Integrity Validation
-- Pure unit tests: **43 total tests pass across repo** (`test_episode_lifecycle`, `test_reward_metrics`, `test_evaluation_protocol`).
+- Pure unit tests: **46 total tests pass across repo** (`test_episode_lifecycle`, `test_reward_metrics`, `test_evaluation_protocol`).
 - `CourseEnvV1`: Reset OK (shape `35,`).
 - `evaluate_random.py`: Completed 20 evaluation episodes cleanly.
 - Gate-1, Gate-2, Gate-3, and Gate-4 contracts remain completely untouched.

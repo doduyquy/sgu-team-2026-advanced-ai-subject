@@ -29,10 +29,12 @@ from src.platform import (
     AggregateMetrics,
     EvaluationCase,
     GeometryRecord,
+    HorizonPolicy,
     ScenarioSplitV1,
     SeedPlanV1,
     SplitRole,
     assign_geometry_splits,
+    build_evaluation_protocol_core,
     build_test_cases,
     build_validation_cases,
     canonical_csv_file_sha256,
@@ -334,13 +336,20 @@ def audit_geometry_splits(candidates_metrics_path, canonical_candidates_path, ou
     return geometries, canon_matches, split_manifest_sha256
 
 
-def audit_test_and_val_cases(geometries, test_csv_path, val_csv_path):
+def audit_test_and_val_cases(geometries, test_csv_path, val_csv_path, episode_spec_path):
     """
     Builds and writes the 60 test cases and 96 validation cases.
+    Loads authoritative horizon calculation policy from Gate-3 EpisodeSpecV1.
     Verifies route-aware horizon computation with full-precision route length.
     """
     print("\n--- Building Test and Validation Evaluation Case Manifests ---")
     seed_plan = SeedPlanV1()
+
+    # Load authoritative horizon policy parameters from Gate-3 episode_spec_v1.json
+    with open(episode_spec_path, "r", encoding="utf-8") as f:
+        ep_spec_data = json.load(f)
+    horizon_policy = HorizonPolicy.from_episode_spec(ep_spec_data)
+    print(f"  [EPISODE SPEC] Loaded horizon policy: floor_speed={horizon_policy.reference_floor_speed_kmh}km/h, margin={horizon_policy.safety_margin}, freq={horizon_policy.control_frequency_hz}Hz, bounds=[{horizon_policy.min_horizon_steps}, {horizon_policy.max_horizon_steps}]")
 
     test_geoms = [g for g in geometries if g.split == SplitRole.TEST]
     val_geoms = [g for g in geometries if g.split == SplitRole.VALIDATION]
@@ -348,15 +357,15 @@ def audit_test_and_val_cases(geometries, test_csv_path, val_csv_path):
     # Check whether full-precision route length alters any horizons
     test_horizon_diffs = 0
     for g in test_geoms:
-        h_full = compute_route_aware_horizon(g.route_length_m)
-        h_round = compute_route_aware_horizon(round(g.route_length_m, 2))
+        h_full = horizon_policy.compute_horizon(g.route_length_m)
+        h_round = horizon_policy.compute_horizon(round(g.route_length_m, 2))
         if h_full != h_round:
             test_horizon_diffs += 1
 
     val_horizon_diffs = 0
     for g in val_geoms:
-        h_full = compute_route_aware_horizon(g.route_length_m)
-        h_round = compute_route_aware_horizon(round(g.route_length_m, 2))
+        h_full = horizon_policy.compute_horizon(g.route_length_m)
+        h_round = horizon_policy.compute_horizon(round(g.route_length_m, 2))
         if h_full != h_round:
             val_horizon_diffs += 1
 
@@ -365,12 +374,14 @@ def audit_test_and_val_cases(geometries, test_csv_path, val_csv_path):
     test_cases = build_test_cases(
         test_geometries=test_geoms,
         test_env_seeds=seed_plan.test_environment_seeds,
-        protocol_order_seed=seed_plan.protocol_order_seed
+        protocol_order_seed=seed_plan.protocol_order_seed,
+        horizon_policy=horizon_policy
     )
     val_cases = build_validation_cases(
         validation_geometries=val_geoms,
         val_env_seeds=seed_plan.validation_environment_seeds,
-        protocol_order_seed=seed_plan.protocol_order_seed
+        protocol_order_seed=seed_plan.protocol_order_seed,
+        horizon_policy=horizon_policy
     )
 
     print(f"  Test Cases Built:             {len(test_cases)} (60 expected, 15 per tier)")
@@ -698,6 +709,8 @@ def write_seed_plan_config(configs_dir):
 
 
 def generate_protocol_hashes(
+    test_cases,
+    val_cases,
     split_csv_path,
     test_csv_path,
     val_csv_path,
@@ -708,7 +721,8 @@ def generate_protocol_hashes(
 ):
     """
     Computes deterministic benchmark and protocol fingerprints from final authoritative contract contents.
-    Uses canonical JSON and CSV content hashes to ensure complete independence from OS line endings (CRLF vs LF).
+    Includes evaluation_protocol_core_sha256 inside contract_payload, ensuring all rules and case summaries
+    are cryptographically locked without circular hashing.
     """
     print("\n--- Computing Benchmark Contract & Protocol Fingerprints ---")
 
@@ -725,7 +739,11 @@ def generate_protocol_hashes(
     reward_spec_path = configs_platform / "reward_spec_v1.json"
     eval_metrics_path = configs_platform / "evaluation_metrics_v1.json"
 
-    # Hashing final authoritative Gate 1-5 contracts via canonical content hashing
+    # 1. Build evaluation protocol core and fingerprint its semantic rules
+    protocol_core = build_evaluation_protocol_core(test_cases, val_cases)
+    evaluation_protocol_core_sha256 = canonical_json_sha256(protocol_core)
+
+    # 2. Hashing final authoritative Gate 1-5 contracts via canonical content hashing
     contract_payload = {
         "metadrive_commit": EXPECTED_COMMIT,
         "metadrive_version": EXPECTED_VERSION,
@@ -742,6 +760,7 @@ def generate_protocol_hashes(
         "geometry_split_manifest_sha256": canonical_csv_file_sha256(split_csv_path),
         "test_case_manifest_sha256": canonical_csv_file_sha256(test_csv_path),
         "validation_case_manifest_sha256": canonical_csv_file_sha256(val_csv_path),
+        "evaluation_protocol_core_sha256": evaluation_protocol_core_sha256,
         "split_salt": "platform-v1-geometry-split-v1",
         "protocol_order_seed": 424242,
         "test_environment_seeds": [9101, 9102, 9103, 9104, 9105],
@@ -760,69 +779,28 @@ def generate_protocol_hashes(
         "test_manifest_sha256": test_manifest_hash,
         "geometry_split_manifest_sha256": split_manifest_hash,
         "validation_case_manifest_sha256": val_manifest_hash,
+        "evaluation_protocol_core_sha256": evaluation_protocol_core_sha256,
         "contract_payload": contract_payload
     }
 
     with open(output_json_path, "w", encoding="utf-8") as f:
         json.dump(hashes_data, f, indent=2)
     print(f"[SAVED] Protocol hashes saved to: {output_json_path}")
-    print(f"  benchmark_contract_sha256: {benchmark_contract_hash}")
-    print(f"  test_manifest_sha256:      {test_manifest_hash}")
-    print(f"  geometry_split_manifest:   {split_manifest_hash}")
-    return hashes_data
+    print(f"  evaluation_protocol_core_sha256: {evaluation_protocol_core_sha256}")
+    print(f"  benchmark_contract_sha256:       {benchmark_contract_hash}")
+    print(f"  test_manifest_sha256:            {test_manifest_hash}")
+    print(f"  geometry_split_manifest:         {split_manifest_hash}")
+    return hashes_data, protocol_core
 
 
-def write_evaluation_protocol_config(configs_dir, test_cases, val_cases, hashes_data):
+def write_evaluation_protocol_config(configs_dir, protocol_core, hashes_data):
     """
     Writes authoritative configs/platform/evaluation_protocol_v1.json.
     Does not hash itself, avoiding circular hashing.
     """
-    seed_plan = SeedPlanV1()
-    protocol_manifest = {
-        "metadata": {
-            "protocol_name": "EvaluationProtocolV1",
-            "spec_version": "1.0.0",
-            "status": "LOCKED-FOR-PLATFORM-V1",
-            "gate": "Gate 5 (Research Platform V1)",
-            "pinned_metadrive_commit": EXPECTED_COMMIT,
-            "pinned_metadrive_version": EXPECTED_VERSION,
-            "benchmark_contract_sha256": hashes_data["benchmark_contract_sha256"],
-            "test_manifest_sha256": hashes_data["test_manifest_sha256"],
-        },
-        "evaluation_rules": {
-            "paired_evaluation": "All algorithms must evaluate the exact same ordered test cases from test_case_manifest.csv.",
-            "test_set_holdout": "TEST geometries (12 canonicals) are strictly held out. No training, hyperparameter search, or checkpoint selection allowed on TEST.",
-            "validation_usage": "VALIDATION cases (96 cases) exist solely for hyperparameter tuning, ablation studies, and model checkpoint selection.",
-            "replicate_reporting": "Stochastic inference methods report mean ± std across 3 independent replicates (agent seeds 101, 202, 303). Learned methods train 3 independent models on training run seeds 101, 202, 303. Genuinely deterministic methods report 1 run per environment case.",
-            "tier_scorecards": "Primary benchmark reporting uses per-tier scorecards (Easy, Medium, Hard, Extreme) on Gate-4 primary metrics. Geometric-mean success mega-score is explicitly prohibited."
-        },
-        "test_suite_summary": {
-            "test_cases_count": len(test_cases),
-            "test_geometries_count": 12,
-            "test_environment_seeds": seed_plan.test_environment_seeds,
-            "cases_per_tier": {
-                "Easy": sum(1 for c in test_cases if c.tier == "Easy"),
-                "Medium": sum(1 for c in test_cases if c.tier == "Medium"),
-                "Hard": sum(1 for c in test_cases if c.tier == "Hard"),
-                "Extreme": sum(1 for c in test_cases if c.tier == "Extreme"),
-            }
-        },
-        "validation_suite_summary": {
-            "validation_cases_count": len(val_cases),
-            "validation_geometries_count": 48,
-            "validation_environment_seeds": seed_plan.validation_environment_seeds,
-            "cases_per_tier": {
-                "Easy": sum(1 for c in val_cases if c.tier == "Easy"),
-                "Medium": sum(1 for c in val_cases if c.tier == "Medium"),
-                "Hard": sum(1 for c in val_cases if c.tier == "Hard"),
-                "Extreme": sum(1 for c in val_cases if c.tier == "Extreme"),
-            }
-        },
-        "training_suite_summary": {
-            "training_geometries_count": 180,
-            "seed_derivation": "derive_seed(training_run_seed, 'environment', episode_index, geometry_id)"
-        }
-    }
+    protocol_manifest = copy.deepcopy(protocol_core)
+    protocol_manifest["metadata"]["benchmark_contract_sha256"] = hashes_data["benchmark_contract_sha256"]
+    protocol_manifest["metadata"]["test_manifest_sha256"] = hashes_data["test_manifest_sha256"]
 
     out_path = configs_dir / "evaluation_protocol_v1.json"
     with open(out_path, "w", encoding="utf-8") as f:
@@ -869,6 +847,22 @@ def verify_contract_hashes_against_disk(protocol_hashes_path, project_root):
         if disk_hash != stored_hash:
             raise AssertionError(f"FATAL: Disk hash mismatch for {label} ({path.name}): disk={disk_hash} != stored={stored_hash}")
         print(f"  [OK] {label:24s}: {disk_hash[:16]}... matches disk")
+
+    # Verify evaluation_protocol_core reconstructed from evaluation_protocol_v1.json
+    eval_proto_path = project_root / "configs" / "platform" / "evaluation_protocol_v1.json"
+    with open(eval_proto_path, "r", encoding="utf-8") as f:
+        disk_proto = json.load(f)
+
+    disk_core = copy.deepcopy(disk_proto)
+    disk_core["metadata"].pop("benchmark_contract_sha256", None)
+    disk_core["metadata"].pop("test_manifest_sha256", None)
+    recomputed_core_hash = canonical_json_sha256(disk_core)
+
+    if recomputed_core_hash != payload["evaluation_protocol_core_sha256"]:
+        raise AssertionError(
+            f"FATAL: evaluation_protocol_core_sha256 mismatch! disk={recomputed_core_hash} != payload={payload['evaluation_protocol_core_sha256']}"
+        )
+    print(f"  [OK] {'evaluation_protocol_core':24s}: {recomputed_core_hash[:16]}... matches disk")
 
     recomputed_benchmark_hash = canonical_json_sha256(payload)
     if stored["benchmark_contract_sha256"] != recomputed_benchmark_hash:
@@ -952,11 +946,12 @@ def main():
         candidates_metrics_path, canonical_candidates_path, split_csv_path, integrity_json_path
     )
 
-    # 3. Build test and validation case manifests
+    # 3. Build test and validation case manifests using Gate-3 EpisodeSpecV1 horizon policy
     test_csv_path = results_dir / "test_case_manifest.csv"
     val_csv_path = results_dir / "validation_case_manifest.csv"
+    episode_spec_path = configs_dir / "episode_spec_v1.json"
     test_cases, val_cases, test_manifest_sha256, val_manifest_sha256, horizon_stats = audit_test_and_val_cases(
-        geometries, test_csv_path, val_csv_path
+        geometries, test_csv_path, val_csv_path, episode_spec_path
     )
 
     # 4. Construct and write scenario_split_v1.json (using the final geometry_split_manifest_sha256)
@@ -971,7 +966,9 @@ def main():
 
     # 7. Hash the final authoritative Gate 1-5 contracts via canonical content hashing
     hashes_json_path = results_dir / "protocol_hashes.json"
-    hashes_data = generate_protocol_hashes(
+    hashes_data, protocol_core = generate_protocol_hashes(
+        test_cases=test_cases,
+        val_cases=val_cases,
         split_csv_path=split_csv_path,
         test_csv_path=test_csv_path,
         val_csv_path=val_csv_path,
@@ -982,7 +979,7 @@ def main():
     )
 
     # 8. Write evaluation_protocol_v1.json containing the final benchmark_contract_sha256
-    write_evaluation_protocol_config(configs_dir, test_cases, val_cases, hashes_data)
+    write_evaluation_protocol_config(configs_dir, protocol_core, hashes_data)
 
     # 9. Verify all contract hashes recomputed directly from disk match protocol_hashes.json
     verify_contract_hashes_against_disk(hashes_json_path, project_root)

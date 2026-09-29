@@ -29,7 +29,7 @@
 - **Validation Suite:** Exactly 96 cases (48 validation geometries x 2 validation env seeds: `5101, 5102`). Exactly 24 cases per tier.
 
 ## 5. Benchmark Locking & Contract Hashes
-- **`benchmark_contract_sha256`:** `c273e3e1376eb6b4349824f5be8bc909cf5208c40edbdbe22802c1e2e979648b`
+- **`benchmark_contract_sha256`:** `9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77`
 - **`test_manifest_sha256`:** `0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77`
 - **`geometry_split_manifest_sha256`:** `3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481`
 

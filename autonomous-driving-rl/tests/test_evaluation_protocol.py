@@ -13,10 +13,12 @@ from src.platform import (
     AggregateMetrics,
     EvaluationCase,
     GeometryRecord,
+    HorizonPolicy,
     ScenarioSplitV1,
     SeedPlanV1,
     SplitRole,
     assign_geometry_splits,
+    build_evaluation_protocol_core,
     build_test_cases,
     build_validation_cases,
     canonical_csv_file_sha256,
@@ -378,6 +380,59 @@ class TestEvaluationProtocol(unittest.TestCase):
         # Ensure all 240 true hashes are distinct (0 duplicate geometry groups)
         hashes = [r["geometry_sha256"] for r in rows]
         self.assertEqual(len(hashes), len(set(hashes)))
+
+    def test_evaluation_protocol_core_rule_change_alters_hash(self):
+        test_geoms = [g for g in self.geometries if g.split == SplitRole.TEST]
+        val_geoms = [g for g in self.geometries if g.split == SplitRole.VALIDATION]
+        test_cases = build_test_cases(test_geoms, [9101, 9102])
+        val_cases = build_validation_cases(val_geoms, [5101])
+
+        core_default = build_evaluation_protocol_core(test_cases, val_cases)
+        h_default = canonical_json_sha256(core_default)
+
+        # Mutate paired_evaluation rule
+        core_mutated = build_evaluation_protocol_core(
+            test_cases,
+            val_cases,
+            custom_rules={"paired_evaluation": "Mutated paired evaluation rule text."}
+        )
+        h_mutated = canonical_json_sha256(core_mutated)
+
+        self.assertNotEqual(h_default, h_mutated)
+
+    def test_case_builders_use_supplied_horizon_policy(self):
+        test_geoms = [g for g in self.geometries if g.split == SplitRole.TEST]
+        policy_default = HorizonPolicy(safety_margin=1.5)
+        policy_larger = HorizonPolicy(safety_margin=2.0)
+
+        cases_default = build_test_cases(test_geoms, [9101], horizon_policy=policy_default)
+        cases_larger = build_test_cases(test_geoms, [9101], horizon_policy=policy_larger)
+
+        # Safety margin 2.0 must produce larger horizon steps than 1.5, proving no hardcoded 1.5
+        for cd, cl in zip(cases_default, cases_larger):
+            self.assertGreater(cl.horizon_steps, cd.horizon_steps)
+
+    def test_episode_spec_v1_values_reproduce_locked_horizons(self):
+        project_root = Path(__file__).resolve().parent.parent
+        ep_spec_path = project_root / "configs" / "platform" / "episode_spec_v1.json"
+        manifest_csv = project_root / "results" / "audits" / "evaluation_protocol" / "test_case_manifest.csv"
+
+        if not ep_spec_path.exists() or not manifest_csv.exists():
+            self.skipTest("episode_spec_v1.json or test_case_manifest.csv missing")
+
+        with open(ep_spec_path, "r", encoding="utf-8") as f:
+            ep_spec_data = json.load(f)
+        policy = HorizonPolicy.from_episode_spec(ep_spec_data)
+
+        test_geoms = [g for g in self.geometries if g.split == SplitRole.TEST]
+        cases = build_test_cases(test_geoms, [9101, 9102, 9103, 9104, 9105], horizon_policy=policy)
+
+        with open(manifest_csv, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            locked_horizons = {r["case_id"]: int(r["horizon_steps"]) for r in reader}
+
+        for c in cases:
+            self.assertEqual(c.horizon_steps, locked_horizons[c.case_id])
 
 
 if __name__ == "__main__":

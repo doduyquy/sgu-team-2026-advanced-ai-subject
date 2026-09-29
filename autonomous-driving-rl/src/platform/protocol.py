@@ -146,6 +146,40 @@ class ScenarioSplitV1:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class HorizonPolicy:
+    """Immutable parameter container for route-aware episode horizon calculation from Gate-3 EpisodeSpec."""
+    reference_floor_speed_kmh: float = 18.0
+    safety_margin: float = 1.5
+    control_frequency_hz: int = 10
+    min_horizon_steps: int = 1000
+    max_horizon_steps: int = 4000
+
+    @classmethod
+    def from_episode_spec(cls, spec_dict: Dict[str, Any]) -> "HorizonPolicy":
+        ep_spec = spec_dict.get("episode_specification", spec_dict)
+        return cls(
+            reference_floor_speed_kmh=float(ep_spec["reference_floor_speed_kmh"]),
+            safety_margin=float(ep_spec["safety_margin"]),
+            control_frequency_hz=int(ep_spec["control_frequency_hz"]),
+            min_horizon_steps=int(ep_spec["min_horizon_steps"]),
+            max_horizon_steps=int(ep_spec["max_horizon_steps"]),
+        )
+
+    def compute_horizon(self, route_length_m: float) -> int:
+        return compute_route_aware_horizon(
+            route_length_m=route_length_m,
+            reference_floor_speed_kmh=self.reference_floor_speed_kmh,
+            safety_margin=self.safety_margin,
+            control_frequency_hz=self.control_frequency_hz,
+            min_horizon_steps=self.min_horizon_steps,
+            max_horizon_steps=self.max_horizon_steps,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
 def assign_geometry_splits(
     candidates_metrics: List[Dict[str, Any]],
     canonical_candidates_manifest: Dict[str, List[Dict[str, Any]]],
@@ -483,26 +517,21 @@ def build_test_cases(
     test_geometries: List[GeometryRecord],
     test_env_seeds: List[int],
     protocol_order_seed: int = 424242,
+    horizon_policy: Optional[HorizonPolicy] = None,
 ) -> List[EvaluationCase]:
     """
     Builds the 60 canonical test evaluation cases (12 geometries x 5 environment seeds)
-    using Gate-3 compute_route_aware_horizon and propagating geometry traffic_density.
+    using Gate-3 compute_route_aware_horizon via HorizonPolicy and propagating geometry traffic_density.
     """
+    policy = horizon_policy or HorizonPolicy()
     raw_cases = []
     case_idx = 1
     for geom in sorted(test_geometries, key=lambda g: (g.tier, g.sequence, g.geometry_generation_seed)):
         for env_seed in sorted(test_env_seeds):
             case_id = f"test/{geom.tier}/{geom.sequence}/geom-{geom.geometry_generation_seed}/env-{env_seed}"
 
-            # Gate-3 canonical route-aware horizon computation
-            horizon = compute_route_aware_horizon(
-                route_length_m=geom.route_length_m,
-                reference_floor_speed_kmh=18.0,
-                safety_margin=1.5,
-                control_frequency_hz=10,
-                min_horizon_steps=1000,
-                max_horizon_steps=4000
-            )
+            # Gate-3 canonical route-aware horizon computation via HorizonPolicy
+            horizon = policy.compute_horizon(geom.route_length_m)
 
             raw_cases.append({
                 "case_id": case_id,
@@ -549,24 +578,19 @@ def build_validation_cases(
     validation_geometries: List[GeometryRecord],
     val_env_seeds: List[int],
     protocol_order_seed: int = 424242,
+    horizon_policy: Optional[HorizonPolicy] = None,
 ) -> List[EvaluationCase]:
     """
     Builds the 96 validation cases (48 geometries x 2 environment seeds).
     """
+    policy = horizon_policy or HorizonPolicy()
     raw_cases = []
     case_idx = 1
     for geom in sorted(validation_geometries, key=lambda g: (g.tier, g.sequence, g.geometry_generation_seed)):
         for env_seed in sorted(val_env_seeds):
             case_id = f"val/{geom.tier}/{geom.sequence}/geom-{geom.geometry_generation_seed}/env-{env_seed}"
 
-            horizon = compute_route_aware_horizon(
-                route_length_m=geom.route_length_m,
-                reference_floor_speed_kmh=18.0,
-                safety_margin=1.5,
-                control_frequency_hz=10,
-                min_horizon_steps=1000,
-                max_horizon_steps=4000
-            )
+            horizon = policy.compute_horizon(geom.route_length_m)
 
             raw_cases.append({
                 "case_id": case_id,
@@ -607,6 +631,72 @@ def build_validation_cases(
         ))
 
     return eval_cases
+
+
+def build_evaluation_protocol_core(
+    test_cases: List[EvaluationCase],
+    val_cases: List[EvaluationCase],
+    test_environment_seeds: Optional[List[int]] = None,
+    validation_environment_seeds: Optional[List[int]] = None,
+    custom_rules: Optional[Dict[str, str]] = None,
+    pinned_commit: str = "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    pinned_version: str = "0.4.3"
+) -> Dict[str, Any]:
+    """
+    Builds the authoritative EvaluationProtocolV1 core content WITHOUT hash fingerprints.
+    Captures protocol metadata, evaluation rules, and case suite summaries for canonical hashing.
+    """
+    default_rules = {
+        "paired_evaluation": "All algorithms must evaluate the exact same ordered test cases from test_case_manifest.csv.",
+        "test_set_holdout": "TEST geometries (12 canonicals) are strictly held out. No training, hyperparameter search, or checkpoint selection allowed on TEST.",
+        "validation_usage": "VALIDATION cases (96 cases) exist solely for hyperparameter tuning, ablation studies, and model checkpoint selection.",
+        "replicate_reporting": "Stochastic inference methods report mean \u00b1 std across 3 independent replicates (agent seeds 101, 202, 303). Learned methods train 3 independent models on training run seeds 101, 202, 303. Genuinely deterministic methods report 1 run per environment case.",
+        "tier_scorecards": "Primary benchmark reporting uses per-tier scorecards (Easy, Medium, Hard, Extreme) on Gate-4 primary metrics. Geometric-mean success mega-score is explicitly prohibited."
+    }
+    rules = dict(default_rules)
+    if custom_rules:
+        rules.update(custom_rules)
+
+    t_seeds = test_environment_seeds or sorted(list(set(c.environment_seed for c in test_cases)))
+    v_seeds = validation_environment_seeds or sorted(list(set(c.environment_seed for c in val_cases)))
+
+    return {
+        "metadata": {
+            "protocol_name": "EvaluationProtocolV1",
+            "spec_version": "1.0.0",
+            "status": "LOCKED-FOR-PLATFORM-V1",
+            "gate": "Gate 5 (Research Platform V1)",
+            "pinned_metadrive_commit": pinned_commit,
+            "pinned_metadrive_version": pinned_version,
+        },
+        "evaluation_rules": rules,
+        "test_suite_summary": {
+            "test_cases_count": len(test_cases),
+            "test_geometries_count": len(set((c.sequence, c.geometry_generation_seed) for c in test_cases)),
+            "test_environment_seeds": t_seeds,
+            "cases_per_tier": {
+                "Easy": sum(1 for c in test_cases if c.tier == "Easy"),
+                "Medium": sum(1 for c in test_cases if c.tier == "Medium"),
+                "Hard": sum(1 for c in test_cases if c.tier == "Hard"),
+                "Extreme": sum(1 for c in test_cases if c.tier == "Extreme"),
+            }
+        },
+        "validation_suite_summary": {
+            "validation_cases_count": len(val_cases),
+            "validation_geometries_count": len(set((c.sequence, c.geometry_generation_seed) for c in val_cases)),
+            "validation_environment_seeds": v_seeds,
+            "cases_per_tier": {
+                "Easy": sum(1 for c in val_cases if c.tier == "Easy"),
+                "Medium": sum(1 for c in val_cases if c.tier == "Medium"),
+                "Hard": sum(1 for c in val_cases if c.tier == "Hard"),
+                "Extreme": sum(1 for c in val_cases if c.tier == "Extreme"),
+            }
+        },
+        "training_suite_summary": {
+            "training_geometries_count": 180,
+            "seed_derivation": "derive_seed(training_run_seed, 'environment', episode_index, geometry_id)"
+        }
+    }
 
 
 def compute_macro_metrics(tier_scorecards: Dict[str, AggregateMetrics]) -> Dict[str, Any]:

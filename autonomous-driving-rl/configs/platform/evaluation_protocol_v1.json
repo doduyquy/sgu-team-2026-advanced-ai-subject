@@ -6,7 +6,7 @@
     "gate": "Gate 5 (Research Platform V1)",
     "pinned_metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
     "pinned_metadrive_version": "0.4.3",
-    "benchmark_contract_sha256": "c273e3e1376eb6b4349824f5be8bc909cf5208c40edbdbe22802c1e2e979648b",
+    "benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
     "test_manifest_sha256": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77"
   },
   "evaluation_rules": {
