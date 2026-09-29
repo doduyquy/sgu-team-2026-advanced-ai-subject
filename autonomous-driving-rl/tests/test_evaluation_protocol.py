@@ -3,6 +3,7 @@ Unit tests for Platform V1 scientific evaluation protocol, scenario splits, and 
 Pure, unit-testable tests running in <0.05s without Panda3D / MetaDrive.
 """
 
+import copy
 import csv
 import json
 from pathlib import Path
@@ -20,6 +21,8 @@ from src.platform import (
     build_validation_cases,
     canonical_json_sha256,
     compute_macro_metrics,
+    compute_manifest_sha256,
+    compute_route_aware_horizon,
     derive_seed,
     validate_split_integrity,
 )
@@ -63,7 +66,6 @@ class TestEvaluationProtocol(unittest.TestCase):
             self.assertEqual(t_val, 12, f"Tier {t} val count mismatch")
             self.assertEqual(t_test, 3, f"Tier {t} test count mismatch")
 
-        # Per sequence: 15 train, 4 val, 1 test
         sequences = set(g.sequence for g in self.geometries)
         self.assertEqual(len(sequences), 12)
         for seq in sequences:
@@ -86,9 +88,7 @@ class TestEvaluationProtocol(unittest.TestCase):
         train_keys = set((g.tier, g.sequence, g.geometry_generation_seed) for g in self.geometries if g.split == SplitRole.TRAIN)
         val_keys = set((g.tier, g.sequence, g.geometry_generation_seed) for g in self.geometries if g.split == SplitRole.VALIDATION)
 
-        # Exact match with test keys
         self.assertEqual(test_keys, canon_keys)
-        # Zero canonical keys in train or val
         self.assertEqual(len(canon_keys.intersection(train_keys)), 0)
         self.assertEqual(len(canon_keys.intersection(val_keys)), 0)
 
@@ -98,8 +98,48 @@ class TestEvaluationProtocol(unittest.TestCase):
         self.assertFalse(report["leakage_detected"])
         self.assertTrue(report["split_balance_verified"])
 
+    def test_pairwise_split_leakage_detection(self):
+        # Corrupt one train geometry to share the hash of a test geometry
+        corrupted = list(self.geometries)
+        test_hash = next(g.geometry_sha256 for g in corrupted if g.split == SplitRole.TEST)
+        train_idx = next(i for i, g in enumerate(corrupted) if g.split == SplitRole.TRAIN)
+        g_orig = corrupted[train_idx]
+        corrupted[train_idx] = GeometryRecord(
+            geometry_id=g_orig.geometry_id,
+            tier=g_orig.tier,
+            sequence=g_orig.sequence,
+            geometry_generation_seed=g_orig.geometry_generation_seed,
+            split=g_orig.split,
+            candidate_role=g_orig.candidate_role,
+            block_ids=g_orig.block_ids,
+            route_length_m=g_orig.route_length_m,
+            traffic_density=g_orig.traffic_density,
+            geometry_sha256=test_hash,  # Leaked test hash!
+            geometry_hash_source=g_orig.geometry_hash_source,
+            exact_block_sequence=g_orig.exact_block_sequence
+        )
+        with self.assertRaises(ValueError):
+            validate_split_integrity(corrupted)
+
+    def test_exact_block_geometry_hashing(self):
+        block_seq_1 = [
+            {"id": "I", "pre_block_socket_index": None},
+            {"id": "S", "length": 50.0, "pre_block_socket_index": "0I-socket0"}
+        ]
+        block_seq_2 = copy.deepcopy(block_seq_1)
+
+        # Same geometry content must yield identical hash
+        h1 = canonical_json_sha256(block_seq_1)
+        h2 = canonical_json_sha256(block_seq_2)
+        self.assertEqual(h1, h2)
+
+        # Mutating one parameter must change hash
+        block_seq_mutated = copy.deepcopy(block_seq_1)
+        block_seq_mutated[1]["length"] = 55.0
+        h_mut = canonical_json_sha256(block_seq_mutated)
+        self.assertNotEqual(h1, h_mut)
+
     def test_deterministic_split_reproducibility(self):
-        # Running assign_geometry_splits twice with same salt produces bit-for-bit identical records
         geoms_run2 = assign_geometry_splits(self.metrics, self.canon_manifest, self.split_salt)
         self.assertEqual(
             [g.to_dict() for g in self.geometries],
@@ -107,7 +147,6 @@ class TestEvaluationProtocol(unittest.TestCase):
         )
 
     def test_derive_seed_deterministic(self):
-        # derive_seed must be 100% deterministic and produce 31-bit integers
         s1 = derive_seed(101, "environment", 0, "geom_easy_SCS_seed11")
         s2 = derive_seed(101, "environment", 0, "geom_easy_SCS_seed11")
         s3 = derive_seed(101, "environment", 1, "geom_easy_SCS_seed11")
@@ -124,14 +163,20 @@ class TestEvaluationProtocol(unittest.TestCase):
         cases = build_test_cases(test_geoms, test_env_seeds, protocol_order_seed=424242)
 
         self.assertEqual(len(cases), 60)
-        # All case IDs must be globally unique
         case_ids = [c.case_id for c in cases]
         self.assertEqual(len(case_ids), len(set(case_ids)))
 
-        # Exactly 15 cases per tier
         for t in ("Easy", "Medium", "Hard", "Extreme"):
             tier_cases = [c for c in cases if c.tier == t]
             self.assertEqual(len(tier_cases), 15)
+
+        # Check Gate-3 horizon helper reuse
+        for c in cases:
+            geom = next(g for g in test_geoms if g.sequence == c.sequence and g.geometry_generation_seed == c.geometry_generation_seed)
+            expected_horizon = compute_route_aware_horizon(geom.route_length_m)
+            self.assertEqual(c.horizon_steps, expected_horizon)
+            # Check traffic density propagation
+            self.assertEqual(c.traffic_density, geom.traffic_density)
 
     def test_validation_case_manifest_generation(self):
         val_geoms = [g for g in self.geometries if g.split == SplitRole.VALIDATION]
@@ -147,7 +192,6 @@ class TestEvaluationProtocol(unittest.TestCase):
             self.assertEqual(len(tier_cases), 24)
 
     def test_macro_metrics_equal_tier_weighted(self):
-        # Create mock tier scorecards with known values
         def mock_scorecard(succ_rate, fail_rate, comp):
             return AggregateMetrics(
                 total_episodes=15,
@@ -188,20 +232,17 @@ class TestEvaluationProtocol(unittest.TestCase):
             "Extreme": mock_scorecard(0.2, 0.8, 0.5),
         }
         macro = compute_macro_metrics(cards)
-        # Expected macro clean success: (1.0 + 0.8 + 0.6 + 0.2) / 4 = 2.6 / 4 = 0.65
         self.assertAlmostEqual(macro["macro_clean_success_rate"], 0.65, places=5)
-        # Expected macro safety fail: (0.0 + 0.2 + 0.4 + 0.8) / 4 = 1.4 / 4 = 0.35
         self.assertAlmostEqual(macro["macro_safety_failure_rate"], 0.35, places=5)
-        # Explicit rejection of geometric-mean mega-score
         self.assertIsNone(macro["geometric_mean_success_score"])
 
-    def test_manifest_lock_detects_mutation(self):
+    def test_production_manifest_hashing_detects_mutation(self):
         test_geoms = [g for g in self.geometries if g.split == SplitRole.TEST]
         test_env_seeds = [9101, 9102, 9103, 9104, 9105]
         cases = build_test_cases(test_geoms, test_env_seeds, protocol_order_seed=424242)
 
-        # Baseline manifest hash
-        hash_1 = canonical_json_sha256([c.to_dict() for c in cases])
+        # Baseline hash via production helper compute_manifest_sha256
+        hash_1 = compute_manifest_sha256(cases)
 
         # Mutate one environment seed in one test case
         mutated_cases = list(cases)
@@ -220,9 +261,8 @@ class TestEvaluationProtocol(unittest.TestCase):
             traffic_density=c0.traffic_density,
             horizon_steps=c0.horizon_steps
         )
-        hash_2 = canonical_json_sha256([c.to_dict() for c in mutated_cases])
+        hash_2 = compute_manifest_sha256(mutated_cases)
 
-        # Any mutation must immediately change the lock hash
         self.assertNotEqual(hash_1, hash_2)
 
 

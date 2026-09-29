@@ -133,7 +133,9 @@ $$\text{geometry\_sha256} = \text{SHA256}(\text{json.dumps}(\text{exact\_block\_
 - Sequence+Seed pair overlap: **`0` pairs** (completely disjoint).
 - Test geometry hash in Train: **`0` matches**.
 - Test geometry hash in Validation: **`0` matches**.
-- Split status: **`VALID`** (verified by `tests/test_evaluation_protocol.py`).
+- Train geometry hash in Validation: **`0` matches**.
+- Duplicate geometry groups detected: **`0`** (every geometry in the 240 universe has a unique SHA-256 block fingerprint).
+- Split status: **`VALID`** (verified by `tests/test_evaluation_protocol.py` and `scripts/audit_evaluation_protocol.py`).
 
 ---
 
@@ -237,11 +239,18 @@ To guarantee that benchmark results are verifiable and mutation-proof, Platform 
 
 ```json
 {
-  "benchmark_contract_sha256": "0bf95af0faaf84fcb8f2d0b09de5226231d717e2e267555178514933d6cee3fb",
-  "test_manifest_sha256": "4736f1cbfa0459da01f3db98f240ef0306c589b2512ad57018fc6778f6ea49a1",
-  "geometry_split_manifest_sha256": "9b1c7da49db84643c9ba8d1469e71536b3d5b0d0c3ebaa55e2d6333909778c18"
+  "benchmark_contract_sha256": "469b0a8a19500bf202d2aa907fcfabad26204a67c7a8ed6efae9afd6ae2d067b",
+  "test_manifest_sha256": "634d89430ee9e1ddadeb82ad02c683a114c940c146a686c2d27e858ac5e3ebc7",
+  "geometry_split_manifest_sha256": "769f056e2524db955fa6cfdaa2336148227298e2796dfbe031cfdf3a54b7a323"
 }
 ```
+
+The `benchmark_contract_sha256` digest securely incorporates the canonical content hashes of contracts across Gates 1 through 5:
+- Gate 1 schema definitions (`observation_v1.json`, `action_v1.json`)
+- Gate 2 candidate manifest and canonical configurations (`candidate_metrics.csv`, `canonical_candidates.json`)
+- Gate 3 episode specification (`episode_spec_v1.json`)
+- Gate 4 reward and evaluation metric specifications (`reward_spec_v1.json`, `evaluation_metrics_v1.json`)
+- Gate 5 scenario split, seed plan, and evaluation protocol manifests and specifications (`scenario_split_v1.json`, `seed_plan_v1.json`, `evaluation_protocol_v1.json`, `geometry_split_manifest.csv`, `test_case_manifest.csv`, `validation_case_manifest.csv`)
 
 ### Version Bump Policy:
 Any modification to:
@@ -256,14 +265,16 @@ requires an explicit **protocol version bump** (`EvaluationProtocolV2`), produci
 
 ## 14. Unit Tests & Verification Summary
 
-Implemented in `tests/test_evaluation_protocol.py` (11 pure unit tests executing in $0.02\text{ s}$ without Panda3D):
+Implemented in `tests/test_evaluation_protocol.py` (13 pure unit tests executing in $<0.03\text{ s}$ without Panda3D):
 - Verified exact 240-geometry universe.
 - Verified 180 Train / 48 Validation / 12 Test counts.
 - Verified 45/12/3 tier balance and 15/4/1 sequence balance.
 - Verified all 12 Gate-2 canonicals in Test only; 0 canonicals in Train/Validation.
-- Verified zero geometry hash or sequence+seed leakage.
+- Verified zero geometry hash or sequence+seed leakage across pairwise split sets.
+- Verified zero duplicate geometry groups across the 240 universe.
 - Verified deterministic split assignment reproducibility.
 - Verified deterministic `derive_seed()` 31-bit integer generation.
+- Verified traffic density propagation and route-aware horizon computation in test/validation case builders.
 - Verified uniqueness of all 60 test case IDs and 96 validation case IDs.
 - Verified equal-tier macro metric calculation and absence of geometric-mean mega-scores.
 - Verified that mutating even a single environment seed changes `test_manifest_sha256`.
@@ -271,7 +282,7 @@ Implemented in `tests/test_evaluation_protocol.py` (11 pure unit tests executing
 ---
 
 ## 15. Regression & Integrity Validation
-- Pure unit tests: **37 total tests pass across repo** (`test_episode_lifecycle`, `test_reward_metrics`, `test_evaluation_protocol`).
+- Pure unit tests: **39 total tests pass across repo** (`test_episode_lifecycle`, `test_reward_metrics`, `test_evaluation_protocol`).
 - `CourseEnvV1`: Reset OK (shape `35,`).
 - `evaluate_random.py`: Completed 20 evaluation episodes cleanly.
 - Gate-1, Gate-2, Gate-3, and Gate-4 contracts remain completely untouched.

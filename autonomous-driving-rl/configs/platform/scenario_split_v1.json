@@ -12,5 +12,5 @@
   "validation_per_sequence": 4,
   "test_per_sequence": 1,
   "split_salt": "platform-v1-geometry-split-v1",
-  "geometry_split_manifest_sha256": "0f73cf4e909040ea55ca4e77b4d8a98924090f32a9223258e9045412978fd0d2"
+  "geometry_split_manifest_sha256": "769f056e2524db955fa6cfdaa2336148227298e2796dfbe031cfdf3a54b7a323"
 }

@@ -13,6 +13,7 @@ import math
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from src.platform.metrics import AggregateMetrics
+from src.platform.specs import compute_route_aware_horizon
 
 
 class SplitRole(str, Enum):
@@ -55,7 +56,9 @@ class GeometryRecord:
     candidate_role: str
     block_ids: str
     route_length_m: float
+    traffic_density: float
     geometry_sha256: str
+    geometry_hash_source: str = "pinned_regeneration"
     exact_block_sequence: Optional[List[Dict[str, Any]]] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -127,7 +130,8 @@ class ScenarioSplitV1:
 def assign_geometry_splits(
     candidates_metrics: List[Dict[str, Any]],
     canonical_candidates_manifest: Dict[str, List[Dict[str, Any]]],
-    split_salt: str = "platform-v1-geometry-split-v1"
+    split_salt: str = "platform-v1-geometry-split-v1",
+    geometry_hashes_lookup: Optional[Dict[Tuple[str, int], str]] = None
 ) -> List[GeometryRecord]:
     """
     Deterministic stratified split of the 240 candidate geometries:
@@ -136,28 +140,23 @@ def assign_geometry_splits(
     - First 15 -> TRAIN (180 total, 45 per tier).
     - Final 4 -> VALIDATION (48 total, 12 per tier).
     """
-    # 1. Identify canonical test geometries
     test_canonical_lookup = {}
     for tier, cands in canonical_candidates_manifest.items():
         for c in cands:
             key = (tier, c["sequence"], int(c["scenario_seed"]))
             test_canonical_lookup[key] = c
 
-    # Group metrics by sequence
     seq_map = {}
     for m in candidates_metrics:
         tier = m["difficulty_tier"]
         seq = m["sequence"]
-        seed = int(m["scenario_seed"])
         seq_map.setdefault((tier, seq), []).append(m)
 
     records = []
 
     for (tier, seq), metrics_list in sorted(seq_map.items()):
-        # Sort by seed
         metrics_list_sorted = sorted(metrics_list, key=lambda x: int(x["scenario_seed"]))
 
-        # Find canonical test candidate for this sequence
         test_entries = [m for m in metrics_list_sorted if (tier, seq, int(m["scenario_seed"])) in test_canonical_lookup]
         if len(test_entries) != 1:
             raise ValueError(f"Expected exactly 1 test canonical candidate for {tier} {seq}, found {len(test_entries)}")
@@ -165,12 +164,10 @@ def assign_geometry_splits(
         test_seed = int(test_metric["scenario_seed"])
         test_cand_meta = test_canonical_lookup[(tier, seq, test_seed)]
 
-        # The remaining 19 candidates
         remaining = [m for m in metrics_list_sorted if int(m["scenario_seed"]) != test_seed]
         if len(remaining) != 19:
             raise ValueError(f"Expected exactly 19 non-test candidates for {tier} {seq}, found {len(remaining)}")
 
-        # Deterministic SHA-256 sorting for stratified train/val assignment
         def compute_sort_key(item):
             s = int(item["scenario_seed"])
             hash_input = f"{split_salt}_{tier}_{seq}_{s}"
@@ -180,10 +177,19 @@ def assign_geometry_splits(
         train_metrics = remaining_sorted[:15]
         val_metrics = remaining_sorted[15:]
 
-        # Create GeometryRecord for TEST
+        # TEST Record
         test_geom_id = f"geom_{tier.lower()}_{seq}_seed{test_seed}"
         exact_blocks = test_cand_meta.get("exact_block_sequence")
-        geom_hash = canonical_json_sha256(exact_blocks) if exact_blocks else hashlib.sha256(f"{seq}_{test_seed}".encode()).hexdigest()
+        if exact_blocks:
+            test_geom_hash = canonical_json_sha256(exact_blocks)
+            test_source = "gate2_stored_exact"
+        else:
+            test_geom_hash = (
+                geometry_hashes_lookup.get((seq, test_seed))
+                if geometry_hashes_lookup
+                else canonical_json_sha256(f"{seq}_{test_seed}")
+            )
+            test_source = "pinned_regeneration"
 
         records.append(GeometryRecord(
             geometry_id=test_geom_id,
@@ -194,13 +200,20 @@ def assign_geometry_splits(
             candidate_role=test_cand_meta.get("candidate_role", "canonical_test"),
             block_ids=test_metric["block_ids"],
             route_length_m=float(test_metric["route_total_length_m"]),
-            geometry_sha256=geom_hash,
+            traffic_density=float(test_metric["traffic_density"]),
+            geometry_sha256=test_geom_hash,
+            geometry_hash_source=test_source,
             exact_block_sequence=exact_blocks
         ))
 
-        # Create GeometryRecords for TRAIN
+        # TRAIN Records
         for m in train_metrics:
             s = int(m["scenario_seed"])
+            g_hash = (
+                geometry_hashes_lookup.get((seq, s))
+                if geometry_hashes_lookup
+                else canonical_json_sha256(f"{seq}_{s}")
+            )
             records.append(GeometryRecord(
                 geometry_id=f"geom_{tier.lower()}_{seq}_seed{s}",
                 tier=tier,
@@ -210,13 +223,20 @@ def assign_geometry_splits(
                 candidate_role="pool_candidate",
                 block_ids=m["block_ids"],
                 route_length_m=float(m["route_total_length_m"]),
-                geometry_sha256=hashlib.sha256(f"{seq}_{s}_{m['block_ids']}_{m['route_total_length_m']}".encode()).hexdigest(),
+                traffic_density=float(m["traffic_density"]),
+                geometry_sha256=g_hash,
+                geometry_hash_source="pinned_regeneration",
                 exact_block_sequence=None
             ))
 
-        # Create GeometryRecords for VALIDATION
+        # VALIDATION Records
         for m in val_metrics:
             s = int(m["scenario_seed"])
+            g_hash = (
+                geometry_hashes_lookup.get((seq, s))
+                if geometry_hashes_lookup
+                else canonical_json_sha256(f"{seq}_{s}")
+            )
             records.append(GeometryRecord(
                 geometry_id=f"geom_{tier.lower()}_{seq}_seed{s}",
                 tier=tier,
@@ -226,7 +246,9 @@ def assign_geometry_splits(
                 candidate_role="pool_candidate",
                 block_ids=m["block_ids"],
                 route_length_m=float(m["route_total_length_m"]),
-                geometry_sha256=hashlib.sha256(f"{seq}_{s}_{m['block_ids']}_{m['route_total_length_m']}".encode()).hexdigest(),
+                traffic_density=float(m["traffic_density"]),
+                geometry_sha256=g_hash,
+                geometry_hash_source="pinned_regeneration",
                 exact_block_sequence=None
             ))
 
@@ -235,8 +257,9 @@ def assign_geometry_splits(
 
 def validate_split_integrity(records: List[GeometryRecord]) -> Dict[str, Any]:
     """
-    Verifies that split assignment invariants strictly hold.
-    Fails loudly if any overlap, leakage, count mismatch, or duplicate occurs.
+    Verifies that split assignment invariants strictly hold across counts,
+    balance, sequence+seed identities, and all pairwise geometry hash intersections.
+    Fails loudly if any violation occurs.
     """
     if len(records) != 240:
         raise ValueError(f"Total geometries must be 240, got {len(records)}")
@@ -252,7 +275,7 @@ def validate_split_integrity(records: List[GeometryRecord]) -> Dict[str, Any]:
     if len(test_recs) != 12:
         raise ValueError(f"Expected 12 TEST geometries, got {len(test_recs)}")
 
-    # Check tier counts
+    # Tier counts
     for tier in ("Easy", "Medium", "Hard", "Extreme"):
         t_tr = sum(1 for r in train_recs if r.tier == tier)
         t_vl = sum(1 for r in val_recs if r.tier == tier)
@@ -260,7 +283,16 @@ def validate_split_integrity(records: List[GeometryRecord]) -> Dict[str, Any]:
         if t_tr != 45 or t_vl != 12 or t_ts != 3:
             raise ValueError(f"Tier {tier} balance mismatch: {t_tr} train, {t_vl} val, {t_ts} test")
 
-    # Sequence + Seed pair overlap check
+    # Sequence counts
+    sequences = set(r.sequence for r in records)
+    for seq in sequences:
+        s_tr = sum(1 for r in train_recs if r.sequence == seq)
+        s_vl = sum(1 for r in val_recs if r.sequence == seq)
+        s_ts = sum(1 for r in test_recs if r.sequence == seq)
+        if s_tr != 15 or s_vl != 4 or s_ts != 1:
+            raise ValueError(f"Sequence {seq} balance mismatch: {s_tr} train, {s_vl} val, {s_ts} test")
+
+    # Identity pair overlap check
     train_pairs = {(r.sequence, r.geometry_generation_seed) for r in train_recs}
     val_pairs = {(r.sequence, r.geometry_generation_seed) for r in val_recs}
     test_pairs = {(r.sequence, r.geometry_generation_seed) for r in test_recs}
@@ -272,15 +304,35 @@ def validate_split_integrity(records: List[GeometryRecord]) -> Dict[str, Any]:
     if val_pairs.intersection(test_pairs):
         raise ValueError("Leakage detected: sequence+seed pair in both VALIDATION and TEST")
 
-    # Geometry hash overlap check
-    test_hashes = {r.geometry_sha256 for r in test_recs}
+    # Pairwise split hash intersection checks
     train_hashes = {r.geometry_sha256 for r in train_recs}
     val_hashes = {r.geometry_sha256 for r in val_recs}
+    test_hashes = {r.geometry_sha256 for r in test_recs}
 
-    if test_hashes.intersection(train_hashes):
-        raise ValueError("Leakage detected: test geometry hash present in TRAIN")
-    if test_hashes.intersection(val_hashes):
-        raise ValueError("Leakage detected: test geometry hash present in VALIDATION")
+    leakage_train_val = train_hashes.intersection(val_hashes)
+    leakage_train_test = train_hashes.intersection(test_hashes)
+    leakage_val_test = val_hashes.intersection(test_hashes)
+
+    if leakage_train_val:
+        raise ValueError(f"Leakage detected between TRAIN and VALIDATION: {len(leakage_train_val)} duplicate hashes")
+    if leakage_train_test:
+        raise ValueError(f"Leakage detected between TRAIN and TEST: {len(leakage_train_test)} duplicate hashes")
+    if leakage_val_test:
+        raise ValueError(f"Leakage detected between VALIDATION and TEST: {len(leakage_val_test)} duplicate hashes")
+
+    # Scan universe for duplicate geometry hashes
+    hash_to_geoms = {}
+    for r in records:
+        hash_to_geoms.setdefault(r.geometry_sha256, []).append(r)
+
+    duplicate_groups = []
+    for h, group in hash_to_geoms.items():
+        if len(group) > 1:
+            duplicate_groups.append({
+                "geometry_sha256": h,
+                "count": len(group),
+                "geometries": [f"{g.sequence}_seed{g.geometry_generation_seed} ({g.split.value})" for g in group]
+            })
 
     return {
         "status": "VALID",
@@ -289,36 +341,44 @@ def validate_split_integrity(records: List[GeometryRecord]) -> Dict[str, Any]:
         "validation_count": len(val_recs),
         "test_count": len(test_recs),
         "leakage_detected": False,
-        "split_balance_verified": True
+        "split_balance_verified": True,
+        "duplicate_geometry_groups_count": len(duplicate_groups),
+        "duplicate_geometry_groups": duplicate_groups,
     }
+
+
+def compute_manifest_sha256(cases: List[EvaluationCase]) -> str:
+    """
+    Computes production canonical SHA-256 fingerprint from an ordered evaluation case list.
+    """
+    cases_dict = [c.to_dict() for c in sorted(cases, key=lambda x: x.protocol_order_index)]
+    return canonical_json_sha256(cases_dict)
 
 
 def build_test_cases(
     test_geometries: List[GeometryRecord],
     test_env_seeds: List[int],
     protocol_order_seed: int = 424242,
-    density_map: Optional[Dict[str, float]] = None,
-    horizons_map: Optional[Dict[str, int]] = None
 ) -> List[EvaluationCase]:
     """
     Builds the 60 canonical test evaluation cases (12 geometries x 5 environment seeds)
-    ordered deterministically by protocol_order_seed.
+    using Gate-3 compute_route_aware_horizon and propagating geometry traffic_density.
     """
-    default_densities = {"Easy": 0.0, "Medium": 0.08, "Hard": 0.15, "Extreme": 0.25}
-    densities = density_map or default_densities
-
     raw_cases = []
     case_idx = 1
     for geom in sorted(test_geometries, key=lambda g: (g.tier, g.sequence, g.geometry_generation_seed)):
         for env_seed in sorted(test_env_seeds):
             case_id = f"test/{geom.tier}/{geom.sequence}/geom-{geom.geometry_generation_seed}/env-{env_seed}"
-            density = densities.get(geom.tier, 0.0)
 
-            # Route-aware horizon
-            if horizons_map and geom.geometry_id in horizons_map:
-                horizon = horizons_map[geom.geometry_id]
-            else:
-                horizon = max(1000, math.ceil(geom.route_length_m * 3.0))
+            # Gate-3 canonical route-aware horizon computation
+            horizon = compute_route_aware_horizon(
+                route_length_m=geom.route_length_m,
+                reference_floor_speed_kmh=18.0,
+                safety_margin=1.5,
+                control_frequency_hz=10,
+                min_horizon_steps=1000,
+                max_horizon_steps=4000
+            )
 
             raw_cases.append({
                 "case_id": case_id,
@@ -330,12 +390,11 @@ def build_test_cases(
                 "geometry_generation_seed": geom.geometry_generation_seed,
                 "geometry_sha256": geom.geometry_sha256,
                 "environment_seed": env_seed,
-                "traffic_density": density,
+                "traffic_density": geom.traffic_density,
                 "horizon_steps": horizon,
             })
             case_idx += 1
 
-    # Deterministic shuffling via protocol_order_seed
     def order_key(case_dict):
         k = f"{protocol_order_seed}_{case_dict['case_id']}"
         return hashlib.sha256(k.encode("utf-8")).hexdigest()
@@ -366,21 +425,24 @@ def build_validation_cases(
     validation_geometries: List[GeometryRecord],
     val_env_seeds: List[int],
     protocol_order_seed: int = 424242,
-    density_map: Optional[Dict[str, float]] = None,
 ) -> List[EvaluationCase]:
     """
     Builds the 96 validation cases (48 geometries x 2 environment seeds).
     """
-    default_densities = {"Easy": 0.0, "Medium": 0.08, "Hard": 0.15, "Extreme": 0.25}
-    densities = density_map or default_densities
-
     raw_cases = []
     case_idx = 1
     for geom in sorted(validation_geometries, key=lambda g: (g.tier, g.sequence, g.geometry_generation_seed)):
         for env_seed in sorted(val_env_seeds):
             case_id = f"val/{geom.tier}/{geom.sequence}/geom-{geom.geometry_generation_seed}/env-{env_seed}"
-            density = densities.get(geom.tier, 0.0)
-            horizon = max(1000, math.ceil(geom.route_length_m * 3.0))
+
+            horizon = compute_route_aware_horizon(
+                route_length_m=geom.route_length_m,
+                reference_floor_speed_kmh=18.0,
+                safety_margin=1.5,
+                control_frequency_hz=10,
+                min_horizon_steps=1000,
+                max_horizon_steps=4000
+            )
 
             raw_cases.append({
                 "case_id": case_id,
@@ -392,7 +454,7 @@ def build_validation_cases(
                 "geometry_generation_seed": geom.geometry_generation_seed,
                 "geometry_sha256": geom.geometry_sha256,
                 "environment_seed": env_seed,
-                "traffic_density": density,
+                "traffic_density": geom.traffic_density,
                 "horizon_steps": horizon,
             })
             case_idx += 1

@@ -1,20 +1,21 @@
 {
-  "benchmark_contract_sha256": "0bf95af0faaf84fcb8f2d0b09de5226231d717e2e267555178514933d6cee3fb",
-  "test_manifest_sha256": "3e55a55b77887423413f612f50ba213d8329e1aa941364488160ba8b72463370",
-  "geometry_split_manifest_sha256": "0f73cf4e909040ea55ca4e77b4d8a98924090f32a9223258e9045412978fd0d2",
+  "benchmark_contract_sha256": "469b0a8a19500bf202d2aa907fcfabad26204a67c7a8ed6efae9afd6ae2d067b",
+  "test_manifest_sha256": "634d89430ee9e1ddadeb82ad02c683a114c940c146a686c2d27e858ac5e3ebc7",
+  "geometry_split_manifest_sha256": "769f056e2524db955fa6cfdaa2336148227298e2796dfbe031cfdf3a54b7a323",
   "contract_payload": {
     "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
     "metadrive_version": "0.4.3",
     "platform_specification_gate": "Gate 5",
-    "observation_spec_version": "1.0.0",
-    "action_spec_version": "1.0.0",
-    "episode_spec_version": "1.0.0",
-    "reward_spec_version": "1.0.0",
-    "evaluation_metrics_version": "1.0.0",
-    "scenario_split_version": "1.0.0",
-    "seed_plan_version": "1.0.0",
-    "geometry_split_manifest_sha256": "0f73cf4e909040ea55ca4e77b4d8a98924090f32a9223258e9045412978fd0d2",
-    "test_case_manifest_sha256": "3e55a55b77887423413f612f50ba213d8329e1aa941364488160ba8b72463370",
+    "observation_schema_sha256": "b45089beabbead69223d5bd26aba36fcfffcafa8888d077d6cda9bfb4661ec6a",
+    "action_schema_sha256": "77658d0e39c7c5b790312ab87e3911cc9b945d2a27d32322cc73583c8aaab870",
+    "mapsuite_manifest_sha256": "e90a87b15ac7bca6b651b96006940b7848fffc60ed6b970389d8552068f70bbe",
+    "episode_spec_sha256": "6b4e968f6b9d9c08509afe7dd8d69553b18332fd83cba66559f4367e455686c1",
+    "reward_spec_sha256": "eb40d74927c6c661c7b4aa3fe87eaf31b272644056b7956e89ee8b0d12926b41",
+    "evaluation_metrics_sha256": "90aba708d1448bec822ba1bffb31560a522afd5dc6d318a14203daad37306bad",
+    "scenario_split_spec_sha256": "5c5eeffa83a72aa6b278fabd6d9f106f6b12279615e400ccc7de93fb99058a42",
+    "seed_plan_spec_sha256": "910fdf2cdf95c153a7549d8747368927174ac3cf2da4a056a36fcebc8e07b78b",
+    "geometry_split_manifest_sha256": "769f056e2524db955fa6cfdaa2336148227298e2796dfbe031cfdf3a54b7a323",
+    "test_case_manifest_sha256": "634d89430ee9e1ddadeb82ad02c683a114c940c146a686c2d27e858ac5e3ebc7",
     "split_salt": "platform-v1-geometry-split-v1",
     "protocol_order_seed": 424242,
     "test_environment_seeds": [
@@ -32,6 +33,7 @@
       101,
       202,
       303
-    ]
+    ],
+    "evaluation_protocol_version": "1.0.0"
   }
 }

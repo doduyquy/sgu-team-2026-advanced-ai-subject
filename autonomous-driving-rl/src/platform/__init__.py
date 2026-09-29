@@ -34,6 +34,7 @@ from src.platform.protocol import (
     build_validation_cases,
     canonical_json_sha256,
     compute_macro_metrics,
+    compute_manifest_sha256,
     derive_seed,
     validate_split_integrity,
 )
@@ -60,6 +61,7 @@ __all__ = [
     "classify_episode_outcome",
     "compute_aggregate_metrics",
     "compute_macro_metrics",
+    "compute_manifest_sha256",
     "compute_route_aware_horizon",
     "derive_seed",
     "validate_split_integrity",

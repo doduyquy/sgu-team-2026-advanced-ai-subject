@@ -7,6 +7,7 @@
 
 ## 2. Geometry Split Architecture (180 Train / 48 Validation / 12 Test)
 - **Universe Verification:** Exactly 240 geometries audited from Gate-2 candidate metrics (12 sequence families x 20 procedural seeds).
+- **True Geometry Fingerprinting:** All 240 geometries fingerprinted from canonical serialized block sequences. Zero duplicate geometry hashes detected across the 240 universe.
 - **Stratified Split Method:** Stratified per sequence family using deterministic SHA-256 assignment (`platform-v1-geometry-split-v1`).
 - **Split Counts:**
   - **TRAIN:** 180 geometries (45 per tier, 15 per sequence family)
@@ -26,9 +27,9 @@
 - **Validation Suite:** Exactly 96 cases (48 validation geometries x 2 validation env seeds: `5101, 5102`). Exactly 24 cases per tier.
 
 ## 5. Benchmark Locking & Contract Hashes
-- **`benchmark_contract_sha256`:** `0bf95af0faaf84fcb8f2d0b09de5226231d717e2e267555178514933d6cee3fb`
-- **`test_manifest_sha256`:** `3e55a55b77887423413f612f50ba213d8329e1aa941364488160ba8b72463370`
-- **`geometry_split_manifest_sha256`:** `0f73cf4e909040ea55ca4e77b4d8a98924090f32a9223258e9045412978fd0d2`
+- **`benchmark_contract_sha256`:** `469b0a8a19500bf202d2aa907fcfabad26204a67c7a8ed6efae9afd6ae2d067b`
+- **`test_manifest_sha256`:** `634d89430ee9e1ddadeb82ad02c683a114c940c146a686c2d27e858ac5e3ebc7`
+- **`geometry_split_manifest_sha256`:** `769f056e2524db955fa6cfdaa2336148227298e2796dfbe031cfdf3a54b7a323`
 
 ## 6. Evaluation Principles
 - **Paired Evaluation:** All algorithms evaluate the identical ordered 60 test cases.
