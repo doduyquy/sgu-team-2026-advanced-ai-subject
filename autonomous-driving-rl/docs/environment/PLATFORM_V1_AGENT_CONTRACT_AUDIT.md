@@ -123,16 +123,16 @@ Calibrated across 16 representative TRAIN and VALIDATION scenarios loaded direct
 
 ### Structural Calibration on VALIDATION Geometries (`task_context_calibration.csv`):
 Evaluated three candidate lookahead configurations across all road topology families on VALIDATION splits:
-1. **Candidate A ($10\text{ waypoints} \times 2.5\text{ m} = 25.0\text{ m}$ lookahead, 30 floats):** Insufficient lookahead horizon; fails to preview complete curve transitions and multi-lane intersection geometries.
-2. **Candidate B ($20\text{ waypoints} \times 2.5\text{ m} = 50.0\text{ m}$ lookahead, 60 floats) — SELECTED:** Structurally optimal. Lookahead range ($50.0\text{ m}$) perfectly matches the sensor LiDAR range ($50.0\text{ m}$); $2.5\text{ m}$ spacing provides high geometric fidelity to trace sharp curves ($R \approx 20\text{ m}$) without representation bloat.
-3. **Candidate C ($20\text{ waypoints} \times 5.0\text{ m} = 100.0\text{ m}$ lookahead, 60 floats):** Excessive lookahead extending beyond local visibility; coarse $5.0\text{ m}$ spacing blunts curve curvature and intersection turning points.
+1. **Candidate A ($10\text{ waypoints} \times 2.5\text{ m} = 25.0\text{ m}$ lookahead, 30 floats):** 25.0m is shorter than the declared 50.0m local decision horizon.
+2. **Candidate B ($20\text{ waypoints} \times 2.5\text{ m} = 50.0\text{ m}$ lookahead, 60 floats) — Status: SELECTED_DESIGN_COMPROMISE:** 50.0m matches the declared 50.0m local decision horizon and sensor LiDAR range, using 2.5m sampling.
+3. **Candidate C ($20\text{ waypoints} \times 5.0\text{ m} = 100.0\text{ m}$ lookahead, 60 floats):** 100.0m exceeds the declared 50.0m local decision horizon and 5.0m sampling is coarser.
 
 ### Schema Specification:
 - **Lookahead Waypoints:** Exactly $K = 20$ waypoints sampled at $\Delta s = 2.5\text{ m}$ spacing along the designated route centerline (total lookahead range: $50.0\text{ m}$).
 - **Waypoint Fields:** `(lookahead_distance_m, relative_x, relative_y, relative_heading)`.
-- **Lane Width:** $3.5\text{ m}$ (audited standard).
+- **`current_lane_width`:** Dynamic runtime Python float in meters sourced from `navigation.get_current_lane_width()`. Must be finite and $> 0$. $3.5\text{ m}$ is the currently observed MapSuiteV1 standard value, not an abstract schema constant.
 - **Speed Semantics:** Road speed limits are omitted from `TaskContextV1` because MapSuiteV1 does not define meaningful lane speed limits (MetaDrive default unconstrained placeholder is 1000). Platform V1 does not invent synthetic road speed targets.
-- **Goal Direction:** Normalized 2D vector $(\cos \Delta\theta, \sin \Delta\theta)$ towards the active checkpoint.
+- **Goal Direction:** Normalized 2D vector $(\cos \Delta\theta, \sin \Delta\theta)$ towards the active checkpoint (enforced approximately unit norm).
 - **Route End Flag:** `route_end_within_lookahead` indicates only that the designated reference route ends within the lookahead window; it does **not** indicate episode termination.
 - **Topological Technical Validation (`task_context_validation.csv`):** Verified 100% finite, valid construction across all road topologies and all 12 canonical test geometries (technical compatibility verification only; zero agent performance tuning).
 

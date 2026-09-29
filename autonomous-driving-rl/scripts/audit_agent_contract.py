@@ -471,9 +471,9 @@ def audit_task_context_calibration(output_csv_path, split_manifest_path):
     ]
 
     candidate_configs = [
-        ("Candidate_A_Short", 10, 2.5, 25.0),
-        ("Candidate_B_Optimal", 20, 2.5, 50.0),
-        ("Candidate_C_Coarse", 20, 5.0, 100.0),
+        ("Candidate_A_25m", 10, 2.5, 25.0),
+        ("Candidate_B_50m", 20, 2.5, 50.0),
+        ("Candidate_C_100m", 20, 5.0, 100.0),
     ]
 
     rows = []
@@ -532,11 +532,11 @@ def audit_task_context_calibration(output_csv_path, split_manifest_path):
 
                 # Predeclared structural selection criteria derived from measured metrics:
                 if range_m < 50.0:
-                    verdict = "INSUFFICIENT_RANGE (25.0m lookahead fails to preview full 50.0m local decision range)"
+                    verdict = "INSUFFICIENT_RANGE (25.0m lookahead is shorter than declared 50.0m local decision horizon)"
                 elif spacing > 2.5:
-                    verdict = "EXCESSIVE_STEP_SIZE (Coarse 5.0m spacing blunts sharp curvature; 100.0m exceeds local sensor range)"
+                    verdict = "EXCESSIVE_STEP_SIZE (Coarse 5.0m spacing blunts sharp curvature; 100.0m exceeds declared 50.0m local horizon)"
                 else:
-                    verdict = "SELECTED_DESIGN_COMPROMISE (Matches 50.0m sensor range; 2.5m spacing provides adequate curvature resolution)"
+                    verdict = "SELECTED_DESIGN_COMPROMISE (50.0m matches declared local decision horizon; 2.5m spacing provides adequate curvature resolution)"
 
                 rows.append({
                     "topology_family": topo_name,
