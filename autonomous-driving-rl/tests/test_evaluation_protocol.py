@@ -19,6 +19,8 @@ from src.platform import (
     assign_geometry_splits,
     build_test_cases,
     build_validation_cases,
+    canonical_csv_file_sha256,
+    canonical_json_file_sha256,
     canonical_json_sha256,
     compute_macro_metrics,
     compute_manifest_sha256,
@@ -34,14 +36,41 @@ class TestEvaluationProtocol(unittest.TestCase):
         project_root = Path(__file__).resolve().parent.parent
         metrics_csv = project_root / "results" / "audits" / "mapsuite" / "candidate_metrics.csv"
         canon_json = project_root / "results" / "audits" / "mapsuite" / "canonical_candidates.json"
+        manifest_csv = project_root / "results" / "audits" / "evaluation_protocol" / "geometry_split_manifest.csv"
 
         with open(metrics_csv, "r", encoding="utf-8") as f:
             cls.metrics = list(csv.DictReader(f))
         with open(canon_json, "r", encoding="utf-8") as f:
             cls.canon_manifest = json.load(f)
 
+        cls.canon_keys = set()
+        for tier, cands in cls.canon_manifest.items():
+            for c in cands:
+                cls.canon_keys.add((c["sequence"], int(c["scenario_seed"])))
+
+        # Load production exact-hash lookup from geometry_split_manifest.csv if available
+        geometry_data_lookup = {}
+        if manifest_csv.exists():
+            with open(manifest_csv, "r", encoding="utf-8") as f:
+                manifest_rows = list(csv.DictReader(f))
+            for r in manifest_rows:
+                seq = r["sequence"]
+                s = int(r["geometry_generation_seed"])
+                geometry_data_lookup[(seq, s)] = {
+                    "geometry_sha256": r["geometry_sha256"],
+                    "route_length_m": float(r["route_length_m"]),
+                    "block_ids": r["block_ids"],
+                    "geometry_hash_source": r["geometry_hash_source"]
+                }
+
         cls.split_salt = "platform-v1-geometry-split-v1"
-        cls.geometries = assign_geometry_splits(cls.metrics, cls.canon_manifest, cls.split_salt)
+        cls.geometry_data_lookup = geometry_data_lookup if geometry_data_lookup else None
+        cls.geometries = assign_geometry_splits(
+            cls.metrics,
+            cls.canon_manifest,
+            cls.split_salt,
+            geometry_data_lookup=cls.geometry_data_lookup
+        )
 
     def test_240_geometry_universe(self):
         self.assertEqual(len(self.metrics), 240)
@@ -93,10 +122,34 @@ class TestEvaluationProtocol(unittest.TestCase):
         self.assertEqual(len(canon_keys.intersection(val_keys)), 0)
 
     def test_zero_leakage_and_integrity_validation(self):
-        report = validate_split_integrity(self.geometries)
+        report = validate_split_integrity(self.geometries, expected_test_identities=self.canon_keys)
         self.assertEqual(report["status"], "VALID")
         self.assertFalse(report["leakage_detected"])
         self.assertTrue(report["split_balance_verified"])
+        self.assertTrue(report["canonical_test_identities_verified"])
+        self.assertEqual(report["duplicate_geometry_groups_count"], 0)
+
+    def test_canonical_test_identity_validation_enforcement(self):
+        # Corrupt test geometries by swapping one canonical for a non-canonical
+        corrupted = list(self.geometries)
+        test_idx = next(i for i, g in enumerate(corrupted) if g.split == SplitRole.TEST)
+        g_orig = corrupted[test_idx]
+        corrupted[test_idx] = GeometryRecord(
+            geometry_id=g_orig.geometry_id,
+            tier=g_orig.tier,
+            sequence=g_orig.sequence,
+            geometry_generation_seed=999,  # Invalid seed not in canonicals!
+            split=g_orig.split,
+            candidate_role=g_orig.candidate_role,
+            block_ids=g_orig.block_ids,
+            route_length_m=g_orig.route_length_m,
+            traffic_density=g_orig.traffic_density,
+            geometry_sha256=g_orig.geometry_sha256,
+            geometry_hash_source=g_orig.geometry_hash_source,
+            exact_block_sequence=g_orig.exact_block_sequence
+        )
+        with self.assertRaises(ValueError):
+            validate_split_integrity(corrupted, expected_test_identities=self.canon_keys)
 
     def test_pairwise_split_leakage_detection(self):
         # Corrupt one train geometry to share the hash of a test geometry
@@ -121,6 +174,40 @@ class TestEvaluationProtocol(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_split_integrity(corrupted)
 
+    def test_canonical_json_formatting_invariance(self):
+        # Semantically identical JSON objects with different whitespace/newlines
+        data_compact = '{"a":1,"b":[2,3],"c":{"d":"value"}}'
+        data_formatted = '{\n  "c": {\n    "d": "value"\n  },\n  "a": 1,\n  "b": [\n    2,\n    3\n  ]\n}\r\n'
+
+        obj1 = json.loads(data_compact)
+        obj2 = json.loads(data_formatted)
+
+        h1 = canonical_json_sha256(obj1)
+        h2 = canonical_json_sha256(obj2)
+        self.assertEqual(h1, h2)
+
+    def test_canonical_csv_formatting_invariance(self):
+        # Test CRLF vs LF invariance in CSV content hashing
+        import tempfile
+        content_lf = "col_a,col_b\nval1,val2\nval3,val4\n"
+        content_crlf = "col_a,col_b\r\nval1,val2\r\nval3,val4\r\n"
+
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="", delete=False) as f_lf:
+            f_lf.write(content_lf)
+            path_lf = Path(f_lf.name)
+
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="", delete=False) as f_crlf:
+            f_crlf.write(content_crlf)
+            path_crlf = Path(f_crlf.name)
+
+        try:
+            h_lf = canonical_csv_file_sha256(path_lf)
+            h_crlf = canonical_csv_file_sha256(path_crlf)
+            self.assertEqual(h_lf, h_crlf)
+        finally:
+            path_lf.unlink(missing_ok=True)
+            path_crlf.unlink(missing_ok=True)
+
     def test_exact_block_geometry_hashing(self):
         block_seq_1 = [
             {"id": "I", "pre_block_socket_index": None},
@@ -140,7 +227,12 @@ class TestEvaluationProtocol(unittest.TestCase):
         self.assertNotEqual(h1, h_mut)
 
     def test_deterministic_split_reproducibility(self):
-        geoms_run2 = assign_geometry_splits(self.metrics, self.canon_manifest, self.split_salt)
+        geoms_run2 = assign_geometry_splits(
+            self.metrics,
+            self.canon_manifest,
+            self.split_salt,
+            geometry_data_lookup=self.geometry_data_lookup
+        )
         self.assertEqual(
             [g.to_dict() for g in self.geometries],
             [g.to_dict() for g in geoms_run2]
@@ -264,6 +356,28 @@ class TestEvaluationProtocol(unittest.TestCase):
         hash_2 = compute_manifest_sha256(mutated_cases)
 
         self.assertNotEqual(hash_1, hash_2)
+
+    def test_committed_manifest_integrity(self):
+        project_root = Path(__file__).resolve().parent.parent
+        manifest_csv = project_root / "results" / "audits" / "evaluation_protocol" / "geometry_split_manifest.csv"
+        if not manifest_csv.exists():
+            self.skipTest("geometry_split_manifest.csv does not exist yet")
+
+        with open(manifest_csv, "r", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+
+        self.assertEqual(len(rows), 240)
+        train_count = sum(1 for r in rows if r["split"].upper() == "TRAIN")
+        val_count = sum(1 for r in rows if r["split"].upper() == "VALIDATION")
+        test_count = sum(1 for r in rows if r["split"].upper() == "TEST")
+
+        self.assertEqual(train_count, 180)
+        self.assertEqual(val_count, 48)
+        self.assertEqual(test_count, 12)
+
+        # Ensure all 240 true hashes are distinct (0 duplicate geometry groups)
+        hashes = [r["geometry_sha256"] for r in rows]
+        self.assertEqual(len(hashes), len(set(hashes)))
 
 
 if __name__ == "__main__":

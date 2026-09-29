@@ -67,15 +67,25 @@ From source inspection of `metadrive/engine/base_engine.py` (lines 96, 563–570
 ### Empirical Seed Channel Audit (`seed_channel_reproducibility.csv`)
 Tested across Medium (`SCXCS` s11), Hard (`SCXOCS` s2), and Extreme (`CrXROSTR` s6) primary canonicals:
 1. **Case A (Same Env Seed 9101 across 2 independent runs):**
-   - Initial ego position difference: **`0.0000000000e+00 m`**
+   - Initial ego position difference: **`0.000000e+00 m`**
+   - Initial observation max difference: **`0.000000e+00`**
+   - Initial heading theta difference: **`0.000000e+00`**
    - Planned traffic count match: **`True`** (Medium: 9 veh, Hard: 27 veh, Extreme: 70 veh)
-   - First traffic vehicle position equality: **`True`** (Medium: `(110.004, 0.0)`, Hard: `(70.004, 3.5)`, Extreme: `(93.624, -79.079)`)
+   - Traffic state signatures at step 0: **100% match** (Run 1: `e6845188b1d2aebd`, Run 2: `e6845188b1d2aebd`)
+   - Traffic state signatures at step 30: **100% match** (Medium: `501467a4ac2d5cdf`, Hard: `9ee1ed52a92647d8`, Extreme: `f70b55c1d264d1c1`)
 2. **Case B (Different Env Seeds 9101 vs. 9102 on Fixed Geometry):**
    - Geometry hash & bounding box: **100% identical**
    - Planned traffic count: **Identical**
-   - Traffic vehicle spawn positions: **Differ significantly** (e.g. Medium seed 9101: `(110.004, 0.0)` vs. seed 9102: `(60.004, -0.0)`)
-3. **Case C (Agent Seed Isolation Control):**
-   - Varying agent RNG seed while holding environment actions identical yields **`0.00e+00 m`** environment change. Agent stochasticity is strictly isolated outside MetaDrive.
+   - Traffic vehicle spawn positions & step 30 signatures: **Differ significantly**
+     - Medium step 30: seed 9101 (`501467a4ac2d5cdf`) vs. seed 9102 (`57a65571f94bebff`)
+     - Hard step 30: seed 9101 (`9ee1ed52a92647d8`) vs. seed 9102 (`b8b28aed76bd4dae`)
+     - Extreme step 30: seed 9101 (`f70b55c1d264d1c1`) vs. seed 9102 (`f8ef4e373d3add70`)
+3. **Case C (Agent Seed Isolation Control - Option A):**
+   - Executed two independent MetaDrive simulator instances with the same geometry and `environment_seed = 9101`, holding environment actions identical while assigning separate external agent RNG instances (`agent_seed = 101` vs. `agent_seed = 202`).
+   - Initial ego position difference: **`0.000000e+00 m`**
+   - Initial observation max difference: **`0.000000e+00`**
+   - Traffic state signatures at steps 0 and 30: **100% match** across all tiers.
+   - Formal conclusion: Changing an external agent RNG object has no effect when that RNG is not fed into environment configuration/actions. Agent stochasticity is strictly isolated outside MetaDrive.
 
 ---
 
@@ -125,12 +135,19 @@ For each of the 12 sequence families:
 Every geometry receives a canonical SHA-256 fingerprint:
 $$\text{geometry\_sha256} = \text{SHA256}(\text{json.dumps}(\text{exact\_block\_sequence},\ \text{sort\_keys}=\text{True}))$$
 
+### Full-Precision Regeneration & Verification:
+- All 240 geometries are re-synthesized via pinned MetaDrive (`85e5dadc6c7436d324348f6e3d8f8e680c06b4db`, v0.4.3).
+- Full-precision route lengths are captured directly from agent navigation and compared against Gate-2 `candidate_metrics.csv` values; all match within $\le 0.05\text{ m}$ tolerance (accounting only for 2-decimal rounding).
+- For all 12 canonical test geometries, route length is measured from reconstruction of the authoritative `PG_MAP_FILE` geometry.
+- Impact on horizons: Recomputing route-aware horizons with full-precision route length changed **0/12 test horizons** and **0/48 validation horizons**.
+
 ### Leakage Invariants Verified (`split_integrity.json`):
 - Total geometries: exactly 240.
 - TRAIN count: 180; VALIDATION count: 48; TEST count: 12.
 - Tier balance: 45 Train / 12 Val / 3 Test for each tier.
 - Sequence balance: 15 Train / 4 Val / 1 Test for each sequence family.
 - Sequence+Seed pair overlap: **`0` pairs** (completely disjoint).
+- Canonical test sequestering: All 12 Gate-2 human-reviewed canonical geometries occupy TEST slots; zero canonicals in TRAIN or VALIDATION.
 - Test geometry hash in Train: **`0` matches**.
 - Test geometry hash in Validation: **`0` matches**.
 - Train geometry hash in Validation: **`0` matches**.
@@ -239,18 +256,27 @@ To guarantee that benchmark results are verifiable and mutation-proof, Platform 
 
 ```json
 {
-  "benchmark_contract_sha256": "469b0a8a19500bf202d2aa907fcfabad26204a67c7a8ed6efae9afd6ae2d067b",
-  "test_manifest_sha256": "634d89430ee9e1ddadeb82ad02c683a114c940c146a686c2d27e858ac5e3ebc7",
-  "geometry_split_manifest_sha256": "769f056e2524db955fa6cfdaa2336148227298e2796dfbe031cfdf3a54b7a323"
+  "benchmark_contract_sha256": "c273e3e1376eb6b4349824f5be8bc909cf5208c40edbdbe22802c1e2e979648b",
+  "test_manifest_sha256": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77",
+  "geometry_split_manifest_sha256": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481",
+  "validation_case_manifest_sha256": "10afc2afcfd1c3e8e6f201448bdeb79ee5b07b3c0ec92e8e6e1adb7c10f42ac1"
 }
 ```
 
+### Canonical Content Hashing Methodology:
+Hashes describe **semantic protocol content**, not local filesystem line endings or indentation formatting:
+- **JSON Contracts:** Parsed via `json.load()` and hashed with `canonical_json_sha256(parsed_object)` (`sort_keys=True, separators=(",", ":")`). Completely invariant to CRLF vs. LF line endings and whitespace.
+- **CSV Manifests:** Parsed via `csv.DictReader(f)` where each row is normalized into a dictionary with sorted keys, and the list of rows is encoded via `canonical_json_sha256`. Completely invariant to CRLF vs. LF and column order.
+
 The `benchmark_contract_sha256` digest securely incorporates the canonical content hashes of contracts across Gates 1 through 5:
-- Gate 1 schema definitions (`observation_v1.json`, `action_v1.json`)
-- Gate 2 candidate manifest and canonical configurations (`candidate_metrics.csv`, `canonical_candidates.json`)
+- Gate 1 schema definitions (`observation_schema.json`, `action_schema.json`)
+- Gate 2 candidate manifest and canonical configurations (`mapsuite_v1_candidates.json`, `canonical_candidates.json`)
 - Gate 3 episode specification (`episode_spec_v1.json`)
 - Gate 4 reward and evaluation metric specifications (`reward_spec_v1.json`, `evaluation_metrics_v1.json`)
-- Gate 5 scenario split, seed plan, and evaluation protocol manifests and specifications (`scenario_split_v1.json`, `seed_plan_v1.json`, `evaluation_protocol_v1.json`, `geometry_split_manifest.csv`, `test_case_manifest.csv`, `validation_case_manifest.csv`)
+- Gate 5 scenario split, seed plan, and evaluation protocol manifests and specifications (`scenario_split_v1.json`, `seed_plan_v1.json`, `geometry_split_manifest.csv`, `test_case_manifest.csv`, `validation_case_manifest.csv`)
+
+### Circular Hashing Elimination & Single-Run Consistency:
+`evaluation_protocol_v1.json` embeds `benchmark_contract_sha256` and is **not** part of its own input hash. After writing all artifacts, `verify_contract_hashes_against_disk()` recomputes all contract hashes from disk and asserts bit-for-bit equality against `protocol_hashes.json`. A single clean run produces a fully self-consistent repository state.
 
 ### Version Bump Policy:
 Any modification to:
@@ -265,11 +291,12 @@ requires an explicit **protocol version bump** (`EvaluationProtocolV2`), produci
 
 ## 14. Unit Tests & Verification Summary
 
-Implemented in `tests/test_evaluation_protocol.py` (13 pure unit tests executing in $<0.03\text{ s}$ without Panda3D):
+Implemented in `tests/test_evaluation_protocol.py` (17 pure unit tests executing in $<0.05\text{ s}$ without Panda3D):
 - Verified exact 240-geometry universe.
 - Verified 180 Train / 48 Validation / 12 Test counts.
 - Verified 45/12/3 tier balance and 15/4/1 sequence balance.
 - Verified all 12 Gate-2 canonicals in Test only; 0 canonicals in Train/Validation.
+- Verified canonical test identity enforcement (fails loudly if canonical missing or leaked).
 - Verified zero geometry hash or sequence+seed leakage across pairwise split sets.
 - Verified zero duplicate geometry groups across the 240 universe.
 - Verified deterministic split assignment reproducibility.
@@ -278,11 +305,14 @@ Implemented in `tests/test_evaluation_protocol.py` (13 pure unit tests executing
 - Verified uniqueness of all 60 test case IDs and 96 validation case IDs.
 - Verified equal-tier macro metric calculation and absence of geometric-mean mega-scores.
 - Verified that mutating even a single environment seed changes `test_manifest_sha256`.
+- Verified canonical JSON formatting invariance (CRLF vs LF, compact vs indented).
+- Verified canonical CSV formatting invariance (CRLF vs LF line endings).
+- Verified committed manifest integrity directly from disk.
 
 ---
 
 ## 15. Regression & Integrity Validation
-- Pure unit tests: **39 total tests pass across repo** (`test_episode_lifecycle`, `test_reward_metrics`, `test_evaluation_protocol`).
+- Pure unit tests: **43 total tests pass across repo** (`test_episode_lifecycle`, `test_reward_metrics`, `test_evaluation_protocol`).
 - `CourseEnvV1`: Reset OK (shape `35,`).
 - `evaluate_random.py`: Completed 20 evaluation episodes cleanly.
 - Gate-1, Gate-2, Gate-3, and Gate-4 contracts remain completely untouched.

@@ -8,12 +8,14 @@
 ## 2. Geometry Split Architecture (180 Train / 48 Validation / 12 Test)
 - **Universe Verification:** Exactly 240 geometries audited from Gate-2 candidate metrics (12 sequence families x 20 procedural seeds).
 - **True Geometry Fingerprinting:** All 240 geometries fingerprinted from canonical serialized block sequences. Zero duplicate geometry hashes detected across the 240 universe.
+- **Full-Precision Route Lengths:** Regenerated directly from agent navigation and reconstructed PG_MAP_FILE geometries; verified against Gate-2 CSV values within rounding tolerance.
+- **Horizon Invariance:** Recomputing route-aware horizons with full-precision route length changed 0/12 test horizons and 0/48 validation horizons.
 - **Stratified Split Method:** Stratified per sequence family using deterministic SHA-256 assignment (`platform-v1-geometry-split-v1`).
 - **Split Counts:**
   - **TRAIN:** 180 geometries (45 per tier, 15 per sequence family)
   - **VALIDATION:** 48 geometries (12 per tier, 4 per sequence family)
   - **TEST:** 12 geometries (3 per tier, 1 per sequence family - all Gate-2 human-reviewed canonicals)
-- **Zero Leakage:** Complete disjointness verified; zero sequence+seed pair overlap, zero test geometry hash in train/val.
+- **Zero Leakage:** Complete disjointness verified; zero sequence+seed pair overlap, zero test geometry hash in train/val, zero canonical test geometries in train/val.
 
 ## 3. Seed Taxonomy & Stochasticity Channels
 - **`geometry_generation_seed` (0..19):** Controls procedural map generation. Frozen in geometry manifests.
@@ -27,9 +29,9 @@
 - **Validation Suite:** Exactly 96 cases (48 validation geometries x 2 validation env seeds: `5101, 5102`). Exactly 24 cases per tier.
 
 ## 5. Benchmark Locking & Contract Hashes
-- **`benchmark_contract_sha256`:** `469b0a8a19500bf202d2aa907fcfabad26204a67c7a8ed6efae9afd6ae2d067b`
-- **`test_manifest_sha256`:** `634d89430ee9e1ddadeb82ad02c683a114c940c146a686c2d27e858ac5e3ebc7`
-- **`geometry_split_manifest_sha256`:** `769f056e2524db955fa6cfdaa2336148227298e2796dfbe031cfdf3a54b7a323`
+- **`benchmark_contract_sha256`:** `c273e3e1376eb6b4349824f5be8bc909cf5208c40edbdbe22802c1e2e979648b`
+- **`test_manifest_sha256`:** `0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77`
+- **`geometry_split_manifest_sha256`:** `3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481`
 
 ## 6. Evaluation Principles
 - **Paired Evaluation:** All algorithms evaluate the identical ordered 60 test cases.

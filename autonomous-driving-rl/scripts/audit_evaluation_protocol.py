@@ -35,9 +35,12 @@ from src.platform import (
     assign_geometry_splits,
     build_test_cases,
     build_validation_cases,
+    canonical_csv_file_sha256,
+    canonical_json_file_sha256,
     canonical_json_sha256,
     compute_macro_metrics,
     compute_manifest_sha256,
+    compute_route_aware_horizon,
     derive_seed,
     validate_split_integrity,
 )
@@ -124,11 +127,32 @@ def make_jsonable(obj):
     return obj
 
 
-def regenerate_240_geometry_hashes(canon_manifest):
+def measure_canonical_test_reconstruction(exact_block_seq):
+    """
+    Measures the full-precision route length and block IDs by reconstructing
+    the exact PG_MAP_FILE geometry in MetaDrive.
+    """
+    test_env = MetaDriveEnv(dict(
+        use_render=False,
+        num_scenarios=1,
+        start_seed=9101,
+        map_config={"type": MapGenerateMethod.PG_MAP_FILE, "config": copy.deepcopy(exact_block_seq)},
+        traffic_density=0.0
+    ))
+    test_env.reset(seed=9101)
+    recon_len = float(test_env.agent.navigation.total_length)
+    recon_block_ids = "".join(b.ID for b in test_env.current_map.blocks)
+    test_env.close()
+    return recon_len, recon_block_ids
+
+
+def regenerate_240_geometry_hashes(canon_manifest, candidates_metrics_path):
     """
     Regenerates all 240 candidate geometries using pinned MetaDrive 0.4.3 under exact Gate-2 settings.
     Computes true geometry_sha256 from exact_block_sequence.
-    Verifies that the 12 canonical test geometries match the Gate-2 stored exact block configs.
+    Captures full-precision route length from agent navigation and compares against Gate-2 CSV route length.
+    For the 12 canonical test geometries, measures full-precision route length from reconstruction of exact PG_MAP_FILE.
+    Verifies that the 12 canonical test geometries match Gate-2 stored exact block configs.
     """
     print("\n--- Regenerating and Fingerprinting All 240 Candidate Geometries ---")
     test_seqs = [
@@ -138,16 +162,26 @@ def regenerate_240_geometry_hashes(canon_manifest):
         "CrXROSTR", "SCXOCrTYCS", "SCTXORyCCS"
     ]
 
-    # Pre-extract canonical hashes from stored exact_block_sequence
-    canon_stored_hashes = {}
+    with open(candidates_metrics_path, "r", encoding="utf-8") as f:
+        metrics_list = list(csv.DictReader(f))
+    metrics_lookup = {(m["sequence"], int(m["scenario_seed"])): m for m in metrics_list}
+
+    # Pre-extract canonical hashes and configs from stored exact_block_sequence
+    canon_stored_lookup = {}
     for tier, cands in canon_manifest.items():
         for c in cands:
             seq = c["sequence"]
             seed = int(c["scenario_seed"])
-            h_stored = canonical_json_sha256(make_jsonable(c["exact_block_sequence"]))
-            canon_stored_hashes[(seq, seed)] = h_stored
+            clean_exact = make_jsonable(c["exact_block_sequence"])
+            h_stored = canonical_json_sha256(clean_exact)
+            canon_stored_lookup[(seq, seed)] = {
+                "stored_hash": h_stored,
+                "exact_blocks": clean_exact,
+                "csv_route_len": float(c["route_length_m"]),
+                "candidate_role": c.get("candidate_role", "canonical_test")
+            }
 
-    geometry_hashes_lookup = {}
+    geometry_data_lookup = {}
     canonical_regeneration_matches = {}
 
     for seq in test_seqs:
@@ -160,38 +194,85 @@ def regenerate_240_geometry_hashes(canon_manifest):
         ))
         for s in range(20):
             env.reset(seed=s)
-            raw_blocks = env.current_map.get_meta_data()["block_sequence"]
+            m = env.current_map
+            raw_blocks = m.get_meta_data()["block_sequence"]
             clean_blocks = make_jsonable(raw_blocks)
             h_recon = canonical_json_sha256(clean_blocks)
+            route_len_full = float(env.agent.navigation.total_length)
+            block_ids = "".join(b.ID for b in m.blocks)
 
-            if (seq, s) in canon_stored_hashes:
-                h_stored = canon_stored_hashes[(seq, s)]
+            # Verification against Gate-2 candidate_metrics.csv
+            csv_metric = metrics_lookup.get((seq, s))
+            if csv_metric is None:
+                raise ValueError(f"Missing Gate-2 metrics entry for {seq} seed {s}")
+            csv_len = float(csv_metric["route_total_length_m"])
+            len_diff = abs(route_len_full - csv_len)
+            # Gate-2 CSV route length was rounded to 2 decimal places; tolerance is 0.05m
+            if len_diff > 0.05:
+                raise ValueError(
+                    f"Route length mismatch for {seq} seed {s}: regenerated={route_len_full:.6f}m, "
+                    f"csv={csv_len:.2f}m, diff={len_diff:.4f}m exceeds 0.05m tolerance!"
+                )
+
+            if (seq, s) in canon_stored_lookup:
+                c_meta = canon_stored_lookup[(seq, s)]
+                h_stored = c_meta["stored_hash"]
                 matches = (h_stored == h_recon)
                 canonical_regeneration_matches[(seq, s)] = {
                     "stored_exact_hash": h_stored,
                     "regenerated_hash": h_recon,
                     "matches": matches
                 }
-                # Stored exact configuration is authoritative for canonical test geometries
-                geometry_hashes_lookup[(seq, s)] = h_stored
+                geometry_data_lookup[(seq, s)] = {
+                    "geometry_sha256": h_stored,
+                    "route_length_m": route_len_full,
+                    "block_ids": block_ids,
+                    "exact_block_sequence": clean_blocks,
+                    "geometry_hash_source": "gate2_stored_exact"
+                }
             else:
-                geometry_hashes_lookup[(seq, s)] = h_recon
+                geometry_data_lookup[(seq, s)] = {
+                    "geometry_sha256": h_recon,
+                    "route_length_m": route_len_full,
+                    "block_ids": block_ids,
+                    "exact_block_sequence": clean_blocks,
+                    "geometry_hash_source": "pinned_regeneration"
+                }
 
         env.close()
-        print(f"  {seq:12s}: 20 geometries regenerated and fingerprinted.")
+        print(f"  {seq:12s}: 20 geometries regenerated and verified against Gate-2 metrics.")
+
+    # Authoritative reconstruction of the 12 canonical test geometries from PG_MAP_FILE
+    print("  Measuring full-precision route lengths from exact PG_MAP_FILE reconstruction of 12 test canonicals...")
+    for (seq, s), c_meta in sorted(canon_stored_lookup.items()):
+        rec_len, rec_block_ids = measure_canonical_test_reconstruction(c_meta["exact_blocks"])
+        rec_len_diff = abs(rec_len - c_meta["csv_route_len"])
+        if rec_len_diff > 0.05:
+            raise ValueError(
+                f"Canonical test reconstructed route length mismatch for {seq} seed {s}: "
+                f"reconstructed={rec_len:.6f}m, stored_json={c_meta['csv_route_len']:.2f}m, "
+                f"diff={rec_len_diff:.4f}m exceeds 0.05m tolerance!"
+            )
+        geometry_data_lookup[(seq, s)] = {
+            "geometry_sha256": c_meta["stored_hash"],
+            "route_length_m": rec_len,
+            "block_ids": rec_block_ids,
+            "exact_block_sequence": c_meta["exact_blocks"],
+            "geometry_hash_source": "gate2_stored_exact"
+        }
 
     all_match = all(v["matches"] for v in canonical_regeneration_matches.values())
     print(f"  All 12 Canonical Test Geometries Match Stored Gate-2 Configurations: {all_match}")
     if not all_match:
         raise RuntimeError("Canonical test geometry regeneration mismatch against stored Gate-2 config!")
 
-    return geometry_hashes_lookup, canonical_regeneration_matches
+    return geometry_data_lookup, canonical_regeneration_matches
 
 
 def audit_geometry_splits(candidates_metrics_path, canonical_candidates_path, output_csv_path, integrity_json_path):
     """
     Audits the exact 240-geometry universe and executes the deterministic stratified split.
-    Uses true exact-block geometry_sha256 fingerprints.
+    Uses true exact-block geometry_sha256 fingerprints and full-precision route lengths.
     """
     print("\n--- Auditing 240-Geometry Universe and Stratified Splits ---")
     with open(candidates_metrics_path, "r", encoding="utf-8") as f:
@@ -199,23 +280,32 @@ def audit_geometry_splits(candidates_metrics_path, canonical_candidates_path, ou
     with open(canonical_candidates_path, "r", encoding="utf-8") as f:
         canon_manifest = json.load(f)
 
-    # 1. Regenerate true exact-block geometry hashes for all 240 geometries
-    geometry_hashes_lookup, canon_matches = regenerate_240_geometry_hashes(canon_manifest)
+    # 1. Regenerate true exact-block geometry data for all 240 geometries
+    geometry_data_lookup, canon_matches = regenerate_240_geometry_hashes(canon_manifest, candidates_metrics_path)
 
-    # 2. Perform stratified split
+    # 2. Perform stratified split with full-precision route length and true block hashes
     split_salt = "platform-v1-geometry-split-v1"
-    geometries = assign_geometry_splits(metrics, canon_manifest, split_salt, geometry_hashes_lookup)
+    geometries = assign_geometry_splits(
+        metrics, canon_manifest, split_salt, geometry_data_lookup=geometry_data_lookup
+    )
 
-    # 3. Validate integrity
-    integrity_report = validate_split_integrity(geometries)
+    # 3. Expected canonical test identities set
+    expected_test_identities = set()
+    for tier, cands in canon_manifest.items():
+        for c in cands:
+            expected_test_identities.add((c["sequence"], int(c["scenario_seed"])))
+
+    # 4. Validate integrity including canonical test sequestering
+    integrity_report = validate_split_integrity(geometries, expected_test_identities=expected_test_identities)
     print(f"  Total Geometries:             {len(geometries)} (240 expected)")
     print(f"  Train Geometries:             {integrity_report['train_count']} (180 expected)")
     print(f"  Validation Geometries:        {integrity_report['validation_count']} (48 expected)")
     print(f"  Test Geometries:              {integrity_report['test_count']} (12 expected)")
+    print(f"  Canonical Identities Check:   {integrity_report['canonical_test_identities_verified']}")
     print(f"  Duplicate Geometry Groups:    {integrity_report['duplicate_geometry_groups_count']} (0 duplicates expected)")
     print(f"  Split Integrity Status:       {integrity_report['status']}")
 
-    # 4. Save geometry split manifest CSV
+    # 5. Save geometry split manifest CSV
     fieldnames = [
         "geometry_id", "tier", "sequence", "geometry_generation_seed",
         "candidate_role", "split", "route_length_m", "traffic_density",
@@ -233,61 +323,90 @@ def audit_geometry_splits(candidates_metrics_path, canonical_candidates_path, ou
         writer.writerows(csv_rows)
     print(f"[SAVED] Geometry split manifest saved to: {output_csv_path}")
 
-    # 5. Save integrity JSON
+    # 6. Save integrity JSON
     with open(integrity_json_path, "w", encoding="utf-8") as f:
         json.dump(integrity_report, f, indent=2)
     print(f"[SAVED] Split integrity report saved to: {integrity_json_path}")
 
-    return geometries, canon_matches
+    # Compute canonical CSV content hash for geometry split manifest
+    split_manifest_sha256 = canonical_csv_file_sha256(output_csv_path)
+
+    return geometries, canon_matches, split_manifest_sha256
 
 
 def audit_test_and_val_cases(geometries, test_csv_path, val_csv_path):
     """
     Builds and writes the 60 test cases and 96 validation cases.
+    Verifies route-aware horizon computation with full-precision route length.
     """
     print("\n--- Building Test and Validation Evaluation Case Manifests ---")
     seed_plan = SeedPlanV1()
 
-    # 1. Test cases (12 test geometries x 5 test env seeds = 60 cases)
     test_geoms = [g for g in geometries if g.split == SplitRole.TEST]
+    val_geoms = [g for g in geometries if g.split == SplitRole.VALIDATION]
+
+    # Check whether full-precision route length alters any horizons
+    test_horizon_diffs = 0
+    for g in test_geoms:
+        h_full = compute_route_aware_horizon(g.route_length_m)
+        h_round = compute_route_aware_horizon(round(g.route_length_m, 2))
+        if h_full != h_round:
+            test_horizon_diffs += 1
+
+    val_horizon_diffs = 0
+    for g in val_geoms:
+        h_full = compute_route_aware_horizon(g.route_length_m)
+        h_round = compute_route_aware_horizon(round(g.route_length_m, 2))
+        if h_full != h_round:
+            val_horizon_diffs += 1
+
+    print(f"  Horizon changes from full precision: Test={test_horizon_diffs}/12, Val={val_horizon_diffs}/48")
+
     test_cases = build_test_cases(
         test_geometries=test_geoms,
         test_env_seeds=seed_plan.test_environment_seeds,
         protocol_order_seed=seed_plan.protocol_order_seed
     )
+    val_cases = build_validation_cases(
+        validation_geometries=val_geoms,
+        val_env_seeds=seed_plan.validation_environment_seeds,
+        protocol_order_seed=seed_plan.protocol_order_seed
+    )
+
     print(f"  Test Cases Built:             {len(test_cases)} (60 expected, 15 per tier)")
+    print(f"  Validation Cases Built:       {len(val_cases)} (96 expected, 24 per tier)")
 
     fieldnames = [
         "case_index", "case_id", "tier", "sequence", "candidate_role",
         "geometry_generation_seed", "geometry_sha256", "environment_seed",
         "traffic_density", "horizon_steps", "protocol_order_index"
     ]
+
     with open(test_csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        for c in test_cases:
+        for c in sorted(test_cases, key=lambda x: x.protocol_order_index):
             d = c.to_dict()
             writer.writerow({k: d[k] for k in fieldnames})
     print(f"[SAVED] Test case manifest saved to: {test_csv_path}")
 
-    # 2. Validation cases (48 validation geometries x 2 val env seeds = 96 cases)
-    val_geoms = [g for g in geometries if g.split == SplitRole.VALIDATION]
-    val_cases = build_validation_cases(
-        validation_geometries=val_geoms,
-        val_env_seeds=seed_plan.validation_environment_seeds,
-        protocol_order_seed=seed_plan.protocol_order_seed
-    )
-    print(f"  Validation Cases Built:       {len(val_cases)} (96 expected, 24 per tier)")
-
     with open(val_csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        for c in val_cases:
+        for c in sorted(val_cases, key=lambda x: x.protocol_order_index):
             d = c.to_dict()
             writer.writerow({k: d[k] for k in fieldnames})
     print(f"[SAVED] Validation case manifest saved to: {val_csv_path}")
 
-    return test_cases, val_cases
+    test_manifest_sha256 = canonical_csv_file_sha256(test_csv_path)
+    val_manifest_sha256 = canonical_csv_file_sha256(val_csv_path)
+
+    # Invariance check: compute_manifest_sha256(test_cases) == test_manifest_sha256
+    computed_hash = compute_manifest_sha256(test_cases)
+    if computed_hash != test_manifest_sha256:
+        raise RuntimeError(f"Manifest hashing mismatch! In-memory={computed_hash}, Disk-CSV={test_manifest_sha256}")
+
+    return test_cases, val_cases, test_manifest_sha256, val_manifest_sha256, (test_horizon_diffs, val_horizon_diffs)
 
 
 def get_traffic_signature(tm):
@@ -312,7 +431,8 @@ def audit_seed_channels(canonical_candidates_path, output_csv_path):
     Simulator-backed seed channel experiment:
     CASE A: Same geometry, same environment seed across independent runs -> reproducible state/traffic signatures at steps 0, 10, 20, 30.
     CASE B: Same geometry, different environment seeds -> identical geometry, different traffic placement/signatures.
-    CASE C: Same environment case, independent agent RNG objects with identical actions -> environment initialization unchanged.
+    CASE C: (Option A) Two independent MetaDrive instances with same geometry and same env_seed=9101, but independent external
+            agent RNG instances (101 vs 202) stepped with identical deterministic actions -> verifies external RNG has zero simulator effect.
     """
     print("\n--- Auditing Seed Channels & Stochasticity Separation ---")
     with open(canonical_candidates_path, "r", encoding="utf-8") as f:
@@ -357,7 +477,8 @@ def audit_seed_channels(canonical_candidates_path, output_csv_path):
                 obs, r, tm_f, tc_f, info = env.step([0.0, 0.6])
                 if s in (10, 20, 30):
                     signatures[s] = get_traffic_signature(tm)
-                if tm_f or tc_f: break
+                if tm_f or tc_f:
+                    break
             env.close()
             runs_a.append({
                 "pos_init": pos_init,
@@ -368,9 +489,15 @@ def audit_seed_channels(canonical_candidates_path, output_csv_path):
             })
 
         diff_pos_a = math.hypot(runs_a[1]["pos_init"][0] - runs_a[0]["pos_init"][0], runs_a[1]["pos_init"][1] - runs_a[0]["pos_init"][1])
+        diff_heading_a = abs(runs_a[1]["heading_init"] - runs_a[0]["heading_init"])
         same_planned_a = (runs_a[0]["planned_traffic"] == runs_a[1]["planned_traffic"])
         same_sigs_a = (runs_a[0]["signatures"] == runs_a[1]["signatures"])
         diff_obs_a = float(np.max(np.abs(runs_a[1]["obs_init"] - runs_a[0]["obs_init"])))
+
+        sig0_hash_a1 = canonical_json_sha256(runs_a[0]["signatures"][0])[:16]
+        sig0_hash_a2 = canonical_json_sha256(runs_a[1]["signatures"][0])[:16]
+        sig30_hash_a1 = canonical_json_sha256(runs_a[0]["signatures"][30])[:16]
+        sig30_hash_a2 = canonical_json_sha256(runs_a[1]["signatures"][30])[:16]
 
         print(f"  Case A (Same env seed 9101): planned_match={same_planned_a}, sigs_match={same_sigs_a}, obs_diff={diff_obs_a:.2e}, pos_diff={diff_pos_a:.2e} m")
 
@@ -389,6 +516,12 @@ def audit_seed_channels(canonical_candidates_path, output_csv_path):
             "traffic_signature_match": same_sigs_a,
             "traffic_state_differs": (not same_sigs_a),
             "ego_init_diff_m": round(diff_pos_a, 6),
+            "obs_init_max_diff": round(diff_obs_a, 8),
+            "heading_init_diff": round(diff_heading_a, 8),
+            "traffic_sig_step0_hash_run1": sig0_hash_a1,
+            "traffic_sig_step0_hash_run2": sig0_hash_a2,
+            "traffic_sig_step30_hash_run1": sig30_hash_a1,
+            "traffic_sig_step30_hash_run2": sig30_hash_a2,
             "notes": "Same env seed 9101 reproduced identical traffic state signatures and ego states across independent runs."
         })
 
@@ -404,6 +537,9 @@ def audit_seed_channels(canonical_candidates_path, output_csv_path):
             need_inverse_traffic=False
         ))
         obs_b, info_b = env_b.reset(seed=9102)
+        pos_init_b = (float(env_b.agent.position[0]), float(env_b.agent.position[1]))
+        heading_init_b = float(env_b.agent.heading_theta)
+        obs_b_init = np.copy(obs_b)
         tm_b = env_b.engine.traffic_manager
         planned_b = len(tm_b.traffic_vehicles) + sum(len(bv.vehicles) for bv in tm_b.block_triggered_vehicles)
         sigs_b = {0: get_traffic_signature(tm_b)}
@@ -411,10 +547,18 @@ def audit_seed_channels(canonical_candidates_path, output_csv_path):
             obs_b, r, tm_f, tc_f, info_b = env_b.step([0.0, 0.6])
             if s in (10, 20, 30):
                 sigs_b[s] = get_traffic_signature(tm_b)
-            if tm_f or tc_f: break
+            if tm_f or tc_f:
+                break
         env_b.close()
 
+        diff_pos_b = math.hypot(pos_init_b[0] - runs_a[0]["pos_init"][0], pos_init_b[1] - runs_a[0]["pos_init"][1])
+        diff_heading_b = abs(heading_init_b - runs_a[0]["heading_init"])
+        diff_obs_b = float(np.max(np.abs(obs_b_init - runs_a[0]["obs_init"])))
         traffic_differs_b = (runs_a[0]["signatures"] != sigs_b)
+
+        sig0_hash_b = canonical_json_sha256(sigs_b[0])[:16]
+        sig30_hash_b = canonical_json_sha256(sigs_b[30])[:16]
+
         print(f"  Case B (Env seed 9101 vs 9102): geom_match=True, traffic_differs={traffic_differs_b}")
 
         rows.append({
@@ -431,20 +575,62 @@ def audit_seed_channels(canonical_candidates_path, output_csv_path):
             "planned_traffic_match": (runs_a[0]["planned_traffic"] == planned_b),
             "traffic_signature_match": (not traffic_differs_b),
             "traffic_state_differs": traffic_differs_b,
-            "ego_init_diff_m": 0.0,
+            "ego_init_diff_m": round(diff_pos_b, 6),
+            "obs_init_max_diff": round(diff_obs_b, 8),
+            "heading_init_diff": round(diff_heading_b, 8),
+            "traffic_sig_step0_hash_run1": sig0_hash_a1,
+            "traffic_sig_step0_hash_run2": sig0_hash_b,
+            "traffic_sig_step30_hash_run1": sig30_hash_a1,
+            "traffic_sig_step30_hash_run2": sig30_hash_b,
             "notes": "Different env seeds produced distinct vehicle spawn positions and traffic state signatures on fixed geometry."
         })
 
-        # CASE C: Real Agent Seed Isolation Control
-        # Two independent runs with same geometry and same env seed 9101, but independent agent RNG instances (101 vs 202)
+        # CASE C: Real Agent Seed Isolation Control (Option A)
+        # Run two independent MetaDrive instances with the same geometry and same env_seed=9101,
+        # but with external agent RNG instances (agent_seed=101 vs agent_seed=202).
+        # We step both with the exact same deterministic action sequence and verify:
+        # Changing an external agent RNG object has no effect when that RNG is not fed into environment configuration/actions.
         agent_rng_1 = np.random.RandomState(101)
         agent_rng_2 = np.random.RandomState(202)
-        # Verify RNGs produce different random draws
-        draw_1 = agent_rng_1.rand()
-        draw_2 = agent_rng_2.rand()
-        assert draw_1 != draw_2
+        assert agent_rng_1.rand() != agent_rng_2.rand()
 
-        # Intentionally hold environment actions identical for the isolation control
+        # Run instance 2 with agent_seed=202 and identical deterministic actions
+        env_c = MetaDriveEnv(dict(
+            use_render=False,
+            num_scenarios=1,
+            start_seed=9101,
+            map_config={"type": MapGenerateMethod.PG_MAP_FILE, "config": copy.deepcopy(block_seq)},
+            traffic_density=density,
+            traffic_mode="trigger",
+            random_traffic=False,
+            need_inverse_traffic=False
+        ))
+        obs_c, info_c = env_c.reset(seed=9101)
+        pos_init_c = (float(env_c.agent.position[0]), float(env_c.agent.position[1]))
+        heading_init_c = float(env_c.agent.heading_theta)
+        obs_c_init = np.copy(obs_c)
+        tm_c = env_c.engine.traffic_manager
+        planned_c = len(tm_c.traffic_vehicles) + sum(len(bv.vehicles) for bv in tm_c.block_triggered_vehicles)
+        sigs_c = {0: get_traffic_signature(tm_c)}
+        for s in range(1, 31):
+            obs_c, r, tm_f, tc_f, info_c = env_c.step([0.0, 0.6])
+            if s in (10, 20, 30):
+                sigs_c[s] = get_traffic_signature(tm_c)
+            if tm_f or tc_f:
+                break
+        env_c.close()
+
+        diff_pos_c = math.hypot(pos_init_c[0] - runs_a[0]["pos_init"][0], pos_init_c[1] - runs_a[0]["pos_init"][1])
+        diff_heading_c = abs(heading_init_c - runs_a[0]["heading_init"])
+        diff_obs_c = float(np.max(np.abs(obs_c_init - runs_a[0]["obs_init"])))
+        same_sigs_c = (runs_a[0]["signatures"] == sigs_c)
+        same_planned_c = (runs_a[0]["planned_traffic"] == planned_c)
+
+        sig0_hash_c = canonical_json_sha256(sigs_c[0])[:16]
+        sig30_hash_c = canonical_json_sha256(sigs_c[30])[:16]
+
+        print(f"  Case C (Agent Seed Isolation 101 vs 202): sigs_match={same_sigs_c}, obs_diff={diff_obs_c:.2e}, pos_diff={diff_pos_c:.2e} m")
+
         rows.append({
             "experiment_case": "CaseC_AgentSeed_Isolation_Control",
             "tier": tier,
@@ -456,11 +642,17 @@ def audit_seed_channels(canonical_candidates_path, output_csv_path):
             "agent_seed_1": 101,
             "agent_seed_2": 202,
             "geometry_match": True,
-            "planned_traffic_match": True,
-            "traffic_signature_match": True,
-            "traffic_state_differs": False,
-            "ego_init_diff_m": 0.0,
-            "notes": f"Agent-side RNG objects (seeds 101 vs 202) are external; holding actions identical verified zero simulator environment impact."
+            "planned_traffic_match": same_planned_c,
+            "traffic_signature_match": same_sigs_c,
+            "traffic_state_differs": (not same_sigs_c),
+            "ego_init_diff_m": round(diff_pos_c, 6),
+            "obs_init_max_diff": round(diff_obs_c, 8),
+            "heading_init_diff": round(diff_heading_c, 8),
+            "traffic_sig_step0_hash_run1": sig0_hash_a1,
+            "traffic_sig_step0_hash_run2": sig0_hash_c,
+            "traffic_sig_step30_hash_run1": sig30_hash_a1,
+            "traffic_sig_step30_hash_run2": sig30_hash_c,
+            "notes": "Changing an external agent RNG object has no effect when that RNG is not fed into environment configuration/actions."
         })
 
     with open(output_csv_path, "w", newline="", encoding="utf-8") as f:
@@ -472,93 +664,22 @@ def audit_seed_channels(canonical_candidates_path, output_csv_path):
     return rows
 
 
-def get_file_content_sha256(filepath: Path) -> str:
-    """Computes SHA-256 from raw file bytes."""
-    with open(filepath, "rb") as f:
-        return hashlib.sha256(f.read()).hexdigest()
-
-
-def generate_protocol_hashes(test_cases, split_csv_path, output_json_path, project_root):
-    """
-    Computes deterministic benchmark and protocol fingerprints from actual file contents.
-    Avoids circular hashing.
-    """
-    print("\n--- Computing Benchmark Contract & Protocol Fingerprints ---")
-
-    # 1. Test manifest hash computed via production canonical helper
-    test_manifest_hash = compute_manifest_sha256(test_cases)
-
-    # 2. Geometry split manifest hash from CSV
-    split_manifest_hash = get_file_content_sha256(split_csv_path)
-
-    # 3. Content hashes of authoritative Gate contract files
-    configs_platform = project_root / "configs" / "platform"
-    configs_maps = project_root / "configs" / "maps"
-    results_audits_obs = project_root / "results" / "audits" / "observation_action"
-
-    obs_schema_path = results_audits_obs / "observation_schema.json"
-    act_schema_path = results_audits_obs / "action_schema.json"
-    mapsuite_path = configs_maps / "mapsuite_v1_candidates.json"
-    episode_spec_path = configs_platform / "episode_spec_v1.json"
-    reward_spec_path = configs_platform / "reward_spec_v1.json"
-    eval_metrics_path = configs_platform / "evaluation_metrics_v1.json"
-    scenario_split_path = configs_platform / "scenario_split_v1.json"
-    seed_plan_path = configs_platform / "seed_plan_v1.json"
-
-    contract_payload = {
-        "metadrive_commit": EXPECTED_COMMIT,
-        "metadrive_version": EXPECTED_VERSION,
-        "platform_specification_gate": "Gate 5",
-        "observation_schema_sha256": get_file_content_sha256(obs_schema_path) if obs_schema_path.exists() else "untracked",
-        "action_schema_sha256": get_file_content_sha256(act_schema_path) if act_schema_path.exists() else "untracked",
-        "mapsuite_manifest_sha256": get_file_content_sha256(mapsuite_path) if mapsuite_path.exists() else "untracked",
-        "episode_spec_sha256": get_file_content_sha256(episode_spec_path) if episode_spec_path.exists() else "untracked",
-        "reward_spec_sha256": get_file_content_sha256(reward_spec_path) if reward_spec_path.exists() else "untracked",
-        "evaluation_metrics_sha256": get_file_content_sha256(eval_metrics_path) if eval_metrics_path.exists() else "untracked",
-        "scenario_split_spec_sha256": get_file_content_sha256(scenario_split_path) if scenario_split_path.exists() else "untracked",
-        "seed_plan_spec_sha256": get_file_content_sha256(seed_plan_path) if seed_plan_path.exists() else "untracked",
-        "geometry_split_manifest_sha256": split_manifest_hash,
-        "test_case_manifest_sha256": test_manifest_hash,
-        "split_salt": "platform-v1-geometry-split-v1",
-        "protocol_order_seed": 424242,
-        "test_environment_seeds": [9101, 9102, 9103, 9104, 9105],
-        "validation_environment_seeds": [5101, 5102],
-        "agent_replicate_seeds": [101, 202, 303],
-        "evaluation_protocol_version": "1.0.0",
-    }
-
-    benchmark_contract_hash = canonical_json_sha256(contract_payload)
-
-    hashes_data = {
-        "benchmark_contract_sha256": benchmark_contract_hash,
-        "test_manifest_sha256": test_manifest_hash,
-        "geometry_split_manifest_sha256": split_manifest_hash,
-        "contract_payload": contract_payload
-    }
-
-    with open(output_json_path, "w", encoding="utf-8") as f:
-        json.dump(hashes_data, f, indent=2)
-    print(f"[SAVED] Protocol hashes saved to: {output_json_path}")
-    print(f"  benchmark_contract_sha256: {benchmark_contract_hash}")
-    print(f"  test_manifest_sha256:      {test_manifest_hash}")
-    return hashes_data
-
-
-def generate_manifest_configs(configs_dir, geometries, test_cases, val_cases, hashes_data):
-    """
-    Generate configs/platform/scenario_split_v1.json, seed_plan_v1.json, and evaluation_protocol_v1.json.
-    """
-    # 1. scenario_split_v1.json
+def write_scenario_split_config(configs_dir, geometry_split_manifest_sha256):
+    """Writes authoritative configs/platform/scenario_split_v1.json."""
     split_spec = ScenarioSplitV1()
     split_dict = split_spec.to_dict()
     split_dict["split_salt"] = "platform-v1-geometry-split-v1"
-    split_dict["geometry_split_manifest_sha256"] = hashes_data["geometry_split_manifest_sha256"]
+    split_dict["geometry_split_manifest_sha256"] = geometry_split_manifest_sha256
 
-    with open(configs_dir / "scenario_split_v1.json", "w", encoding="utf-8") as f:
+    out_path = configs_dir / "scenario_split_v1.json"
+    with open(out_path, "w", encoding="utf-8") as f:
         json.dump(split_dict, f, indent=2)
-    print(f"[SAVED] Scenario split config saved to: {configs_dir / 'scenario_split_v1.json'}")
+    print(f"[SAVED] Scenario split config saved to: {out_path}")
+    return out_path
 
-    # 2. seed_plan_v1.json
+
+def write_seed_plan_config(configs_dir):
+    """Writes authoritative configs/platform/seed_plan_v1.json."""
     seed_plan = SeedPlanV1()
     seed_dict = seed_plan.to_dict()
     seed_dict["seed_taxonomy_rules"] = {
@@ -569,11 +690,94 @@ def generate_manifest_configs(configs_dir, geometries, test_cases, val_cases, ha
         "protocol_order_seed": "Fixed seed (424242) for deterministic test case shuffling across all algorithms."
     }
 
-    with open(configs_dir / "seed_plan_v1.json", "w", encoding="utf-8") as f:
+    out_path = configs_dir / "seed_plan_v1.json"
+    with open(out_path, "w", encoding="utf-8") as f:
         json.dump(seed_dict, f, indent=2)
-    print(f"[SAVED] Seed plan config saved to: {configs_dir / 'seed_plan_v1.json'}")
+    print(f"[SAVED] Seed plan config saved to: {out_path}")
+    return out_path
 
-    # 3. evaluation_protocol_v1.json
+
+def generate_protocol_hashes(
+    split_csv_path,
+    test_csv_path,
+    val_csv_path,
+    scenario_split_path,
+    seed_plan_path,
+    output_json_path,
+    project_root
+):
+    """
+    Computes deterministic benchmark and protocol fingerprints from final authoritative contract contents.
+    Uses canonical JSON and CSV content hashes to ensure complete independence from OS line endings (CRLF vs LF).
+    """
+    print("\n--- Computing Benchmark Contract & Protocol Fingerprints ---")
+
+    configs_platform = project_root / "configs" / "platform"
+    configs_maps = project_root / "configs" / "maps"
+    results_audits_obs = project_root / "results" / "audits" / "observation_action"
+    results_audits_maps = project_root / "results" / "audits" / "mapsuite"
+
+    obs_schema_path = results_audits_obs / "observation_schema.json"
+    act_schema_path = results_audits_obs / "action_schema.json"
+    mapsuite_path = configs_maps / "mapsuite_v1_candidates.json"
+    canonical_candidates_path = results_audits_maps / "canonical_candidates.json"
+    episode_spec_path = configs_platform / "episode_spec_v1.json"
+    reward_spec_path = configs_platform / "reward_spec_v1.json"
+    eval_metrics_path = configs_platform / "evaluation_metrics_v1.json"
+
+    # Hashing final authoritative Gate 1-5 contracts via canonical content hashing
+    contract_payload = {
+        "metadrive_commit": EXPECTED_COMMIT,
+        "metadrive_version": EXPECTED_VERSION,
+        "platform_specification_gate": "Gate 5",
+        "observation_schema_sha256": canonical_json_file_sha256(obs_schema_path),
+        "action_schema_sha256": canonical_json_file_sha256(act_schema_path),
+        "mapsuite_manifest_sha256": canonical_json_file_sha256(mapsuite_path),
+        "canonical_candidates_sha256": canonical_json_file_sha256(canonical_candidates_path),
+        "episode_spec_sha256": canonical_json_file_sha256(episode_spec_path),
+        "reward_spec_sha256": canonical_json_file_sha256(reward_spec_path),
+        "evaluation_metrics_sha256": canonical_json_file_sha256(eval_metrics_path),
+        "scenario_split_spec_sha256": canonical_json_file_sha256(scenario_split_path),
+        "seed_plan_spec_sha256": canonical_json_file_sha256(seed_plan_path),
+        "geometry_split_manifest_sha256": canonical_csv_file_sha256(split_csv_path),
+        "test_case_manifest_sha256": canonical_csv_file_sha256(test_csv_path),
+        "validation_case_manifest_sha256": canonical_csv_file_sha256(val_csv_path),
+        "split_salt": "platform-v1-geometry-split-v1",
+        "protocol_order_seed": 424242,
+        "test_environment_seeds": [9101, 9102, 9103, 9104, 9105],
+        "validation_environment_seeds": [5101, 5102],
+        "agent_replicate_seeds": [101, 202, 303],
+        "evaluation_protocol_version": "1.0.0",
+    }
+
+    benchmark_contract_hash = canonical_json_sha256(contract_payload)
+    test_manifest_hash = canonical_csv_file_sha256(test_csv_path)
+    split_manifest_hash = canonical_csv_file_sha256(split_csv_path)
+    val_manifest_hash = canonical_csv_file_sha256(val_csv_path)
+
+    hashes_data = {
+        "benchmark_contract_sha256": benchmark_contract_hash,
+        "test_manifest_sha256": test_manifest_hash,
+        "geometry_split_manifest_sha256": split_manifest_hash,
+        "validation_case_manifest_sha256": val_manifest_hash,
+        "contract_payload": contract_payload
+    }
+
+    with open(output_json_path, "w", encoding="utf-8") as f:
+        json.dump(hashes_data, f, indent=2)
+    print(f"[SAVED] Protocol hashes saved to: {output_json_path}")
+    print(f"  benchmark_contract_sha256: {benchmark_contract_hash}")
+    print(f"  test_manifest_sha256:      {test_manifest_hash}")
+    print(f"  geometry_split_manifest:   {split_manifest_hash}")
+    return hashes_data
+
+
+def write_evaluation_protocol_config(configs_dir, test_cases, val_cases, hashes_data):
+    """
+    Writes authoritative configs/platform/evaluation_protocol_v1.json.
+    Does not hash itself, avoiding circular hashing.
+    """
+    seed_plan = SeedPlanV1()
     protocol_manifest = {
         "metadata": {
             "protocol_name": "EvaluationProtocolV1",
@@ -607,6 +811,12 @@ def generate_manifest_configs(configs_dir, geometries, test_cases, val_cases, ha
             "validation_cases_count": len(val_cases),
             "validation_geometries_count": 48,
             "validation_environment_seeds": seed_plan.validation_environment_seeds,
+            "cases_per_tier": {
+                "Easy": sum(1 for c in val_cases if c.tier == "Easy"),
+                "Medium": sum(1 for c in val_cases if c.tier == "Medium"),
+                "Hard": sum(1 for c in val_cases if c.tier == "Hard"),
+                "Extreme": sum(1 for c in val_cases if c.tier == "Extreme"),
+            }
         },
         "training_suite_summary": {
             "training_geometries_count": 180,
@@ -614,15 +824,64 @@ def generate_manifest_configs(configs_dir, geometries, test_cases, val_cases, ha
         }
     }
 
-    with open(configs_dir / "evaluation_protocol_v1.json", "w", encoding="utf-8") as f:
+    out_path = configs_dir / "evaluation_protocol_v1.json"
+    with open(out_path, "w", encoding="utf-8") as f:
         json.dump(protocol_manifest, f, indent=2)
-    print(f"[SAVED] Evaluation protocol config saved to: {configs_dir / 'evaluation_protocol_v1.json'}")
+    print(f"[SAVED] Evaluation protocol config saved to: {out_path}")
+    return out_path
 
 
-def generate_summary_markdown(summary_md_path, geometries, test_cases, val_cases, hashes_data):
+def verify_contract_hashes_against_disk(protocol_hashes_path, project_root):
+    """
+    Self-consistency verification:
+    Recomputes all contract hashes directly from files on disk and asserts bit-for-bit
+    equality with protocol_hashes.json. Fails loudly if any discrepancy exists.
+    """
+    print("\n--- Verifying Final Contract Hashes Against Disk ---")
+    with open(protocol_hashes_path, "r", encoding="utf-8") as f:
+        stored = json.load(f)
+    payload = stored["contract_payload"]
+
+    checks = [
+        ("observation_schema", project_root / "results" / "audits" / "observation_action" / "observation_schema.json", "json", "observation_schema_sha256"),
+        ("action_schema", project_root / "results" / "audits" / "observation_action" / "action_schema.json", "json", "action_schema_sha256"),
+        ("mapsuite_manifest", project_root / "configs" / "maps" / "mapsuite_v1_candidates.json", "json", "mapsuite_manifest_sha256"),
+        ("canonical_candidates", project_root / "results" / "audits" / "mapsuite" / "canonical_candidates.json", "json", "canonical_candidates_sha256"),
+        ("episode_spec", project_root / "configs" / "platform" / "episode_spec_v1.json", "json", "episode_spec_sha256"),
+        ("reward_spec", project_root / "configs" / "platform" / "reward_spec_v1.json", "json", "reward_spec_sha256"),
+        ("evaluation_metrics", project_root / "configs" / "platform" / "evaluation_metrics_v1.json", "json", "evaluation_metrics_sha256"),
+        ("scenario_split_spec", project_root / "configs" / "platform" / "scenario_split_v1.json", "json", "scenario_split_spec_sha256"),
+        ("seed_plan_spec", project_root / "configs" / "platform" / "seed_plan_v1.json", "json", "seed_plan_spec_sha256"),
+        ("geometry_split_manifest", project_root / "results" / "audits" / "evaluation_protocol" / "geometry_split_manifest.csv", "csv", "geometry_split_manifest_sha256"),
+        ("test_case_manifest", project_root / "results" / "audits" / "evaluation_protocol" / "test_case_manifest.csv", "csv", "test_case_manifest_sha256"),
+        ("validation_case_manifest", project_root / "results" / "audits" / "evaluation_protocol" / "validation_case_manifest.csv", "csv", "validation_case_manifest_sha256"),
+    ]
+
+    for label, path, file_type, key in checks:
+        if not path.exists():
+            raise FileNotFoundError(f"Required contract file missing on disk: {path}")
+        if file_type == "json":
+            disk_hash = canonical_json_file_sha256(path)
+        else:
+            disk_hash = canonical_csv_file_sha256(path)
+
+        stored_hash = payload[key]
+        if disk_hash != stored_hash:
+            raise AssertionError(f"FATAL: Disk hash mismatch for {label} ({path.name}): disk={disk_hash} != stored={stored_hash}")
+        print(f"  [OK] {label:24s}: {disk_hash[:16]}... matches disk")
+
+    recomputed_benchmark_hash = canonical_json_sha256(payload)
+    if stored["benchmark_contract_sha256"] != recomputed_benchmark_hash:
+        raise AssertionError(f"FATAL: benchmark_contract_sha256 mismatch: {stored['benchmark_contract_sha256']} != {recomputed_benchmark_hash}")
+
+    print("  [OK] benchmark_contract_sha256 is perfectly self-consistent with disk files!")
+
+
+def generate_summary_markdown(summary_md_path, geometries, test_cases, val_cases, hashes_data, horizon_stats):
     """
     Generate results/audits/evaluation_protocol/audit_summary.md cleanly without malformed tab escapes.
     """
+    test_h_diffs, val_h_diffs = horizon_stats
     with open(summary_md_path, "w", encoding="utf-8") as f:
         f.write("# Gate 5 Scenario Splits & Scientific Evaluation Protocol Summary\n\n")
         f.write("## 1. Verified MetaDrive Source\n")
@@ -633,12 +892,14 @@ def generate_summary_markdown(summary_md_path, geometries, test_cases, val_cases
         f.write("## 2. Geometry Split Architecture (180 Train / 48 Validation / 12 Test)\n")
         f.write("- **Universe Verification:** Exactly 240 geometries audited from Gate-2 candidate metrics (12 sequence families x 20 procedural seeds).\n")
         f.write("- **True Geometry Fingerprinting:** All 240 geometries fingerprinted from canonical serialized block sequences. Zero duplicate geometry hashes detected across the 240 universe.\n")
+        f.write("- **Full-Precision Route Lengths:** Regenerated directly from agent navigation and reconstructed PG_MAP_FILE geometries; verified against Gate-2 CSV values within rounding tolerance.\n")
+        f.write(f"- **Horizon Invariance:** Recomputing route-aware horizons with full-precision route length changed {test_h_diffs}/12 test horizons and {val_h_diffs}/48 validation horizons.\n")
         f.write("- **Stratified Split Method:** Stratified per sequence family using deterministic SHA-256 assignment (`platform-v1-geometry-split-v1`).\n")
         f.write("- **Split Counts:**\n")
         f.write("  - **TRAIN:** 180 geometries (45 per tier, 15 per sequence family)\n")
         f.write("  - **VALIDATION:** 48 geometries (12 per tier, 4 per sequence family)\n")
         f.write("  - **TEST:** 12 geometries (3 per tier, 1 per sequence family - all Gate-2 human-reviewed canonicals)\n")
-        f.write("- **Zero Leakage:** Complete disjointness verified; zero sequence+seed pair overlap, zero test geometry hash in train/val.\n\n")
+        f.write("- **Zero Leakage:** Complete disjointness verified; zero sequence+seed pair overlap, zero test geometry hash in train/val, zero canonical test geometries in train/val.\n\n")
 
         f.write("## 3. Seed Taxonomy & Stochasticity Channels\n")
         f.write("- **`geometry_generation_seed` (0..19):** Controls procedural map generation. Frozen in geometry manifests.\n")
@@ -684,30 +945,51 @@ def main():
     # 1. Authoritative MetaDrive source verification
     verify_metadrive_source()
 
-    # 2. Audit 240-geometry universe and generate stratified splits with true geometry fingerprints
+    # 2. Audit 240-geometry universe and generate stratified splits with full-precision route length and true block hashes
     split_csv_path = results_dir / "geometry_split_manifest.csv"
     integrity_json_path = results_dir / "split_integrity.json"
-    geometries, canon_matches = audit_geometry_splits(candidates_metrics_path, canonical_candidates_path, split_csv_path, integrity_json_path)
+    geometries, canon_matches, split_manifest_sha256 = audit_geometry_splits(
+        candidates_metrics_path, canonical_candidates_path, split_csv_path, integrity_json_path
+    )
 
     # 3. Build test and validation case manifests
     test_csv_path = results_dir / "test_case_manifest.csv"
     val_csv_path = results_dir / "validation_case_manifest.csv"
-    test_cases, val_cases = audit_test_and_val_cases(geometries, test_csv_path, val_csv_path)
+    test_cases, val_cases, test_manifest_sha256, val_manifest_sha256, horizon_stats = audit_test_and_val_cases(
+        geometries, test_csv_path, val_csv_path
+    )
 
-    # 4. Simulator-backed seed channel experiment
+    # 4. Construct and write scenario_split_v1.json (using the final geometry_split_manifest_sha256)
+    scenario_split_path = write_scenario_split_config(configs_dir, split_manifest_sha256)
+
+    # 5. Construct and write seed_plan_v1.json
+    seed_plan_path = write_seed_plan_config(configs_dir)
+
+    # 6. Simulator-backed seed channel experiment (Option A + full evidence columns)
     seed_csv_path = results_dir / "seed_channel_reproducibility.csv"
     audit_seed_channels(canonical_candidates_path, seed_csv_path)
 
-    # 5. Compute protocol & benchmark contract hashes
+    # 7. Hash the final authoritative Gate 1-5 contracts via canonical content hashing
     hashes_json_path = results_dir / "protocol_hashes.json"
-    hashes_data = generate_protocol_hashes(test_cases, split_csv_path, hashes_json_path, project_root)
+    hashes_data = generate_protocol_hashes(
+        split_csv_path=split_csv_path,
+        test_csv_path=test_csv_path,
+        val_csv_path=val_csv_path,
+        scenario_split_path=scenario_split_path,
+        seed_plan_path=seed_plan_path,
+        output_json_path=hashes_json_path,
+        project_root=project_root
+    )
 
-    # 6. Generate specification manifests in configs/platform/
-    generate_manifest_configs(configs_dir, geometries, test_cases, val_cases, hashes_data)
+    # 8. Write evaluation_protocol_v1.json containing the final benchmark_contract_sha256
+    write_evaluation_protocol_config(configs_dir, test_cases, val_cases, hashes_data)
 
-    # 7. Generate audit summary markdown
+    # 9. Verify all contract hashes recomputed directly from disk match protocol_hashes.json
+    verify_contract_hashes_against_disk(hashes_json_path, project_root)
+
+    # 10. Generate audit summary markdown
     summary_md_path = results_dir / "audit_summary.md"
-    generate_summary_markdown(summary_md_path, geometries, test_cases, val_cases, hashes_data)
+    generate_summary_markdown(summary_md_path, geometries, test_cases, val_cases, hashes_data, horizon_stats)
 
     print("\n============================================================")
     print("GATE 5 EVALUATION PROTOCOL AUDIT COMPLETED SUCCESSFULLY!")

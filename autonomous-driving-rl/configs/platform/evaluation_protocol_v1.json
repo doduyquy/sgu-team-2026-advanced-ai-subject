@@ -6,8 +6,8 @@
     "gate": "Gate 5 (Research Platform V1)",
     "pinned_metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
     "pinned_metadrive_version": "0.4.3",
-    "benchmark_contract_sha256": "469b0a8a19500bf202d2aa907fcfabad26204a67c7a8ed6efae9afd6ae2d067b",
-    "test_manifest_sha256": "634d89430ee9e1ddadeb82ad02c683a114c940c146a686c2d27e858ac5e3ebc7"
+    "benchmark_contract_sha256": "c273e3e1376eb6b4349824f5be8bc909cf5208c40edbdbe22802c1e2e979648b",
+    "test_manifest_sha256": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77"
   },
   "evaluation_rules": {
     "paired_evaluation": "All algorithms must evaluate the exact same ordered test cases from test_case_manifest.csv.",
@@ -39,7 +39,13 @@
     "validation_environment_seeds": [
       5101,
       5102
-    ]
+    ],
+    "cases_per_tier": {
+      "Easy": 24,
+      "Medium": 24,
+      "Hard": 24,
+      "Extreme": 24
+    }
   },
   "training_suite_summary": {
     "training_geometries_count": 180,

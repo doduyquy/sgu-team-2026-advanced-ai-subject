@@ -7,6 +7,7 @@ Pure, unit-testable module independent of Panda3D / simulator engine state.
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
+import csv
 import hashlib
 import json
 import math
@@ -27,6 +28,24 @@ def canonical_json_sha256(data: Any) -> str:
     """Computes a deterministic SHA-256 fingerprint from a JSON-serializable object."""
     encoded = json.dumps(data, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def canonical_json_file_sha256(file_path: Any) -> str:
+    """Computes deterministic SHA-256 fingerprint for a JSON file, invariant to whitespace and CRLF/LF newlines."""
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return canonical_json_sha256(data)
+
+
+def canonical_csv_file_sha256(file_path: Any) -> str:
+    """
+    Computes deterministic SHA-256 fingerprint for a CSV file, invariant to CRLF/LF newlines.
+    Normalizes each row to a dictionary with sorted keys.
+    """
+    with open(file_path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        rows = [dict(sorted(row.items())) for row in reader]
+    return canonical_json_sha256(rows)
 
 
 def derive_seed(
@@ -131,7 +150,8 @@ def assign_geometry_splits(
     candidates_metrics: List[Dict[str, Any]],
     canonical_candidates_manifest: Dict[str, List[Dict[str, Any]]],
     split_salt: str = "platform-v1-geometry-split-v1",
-    geometry_hashes_lookup: Optional[Dict[Tuple[str, int], str]] = None
+    geometry_hashes_lookup: Optional[Dict[Tuple[str, int], Any]] = None,
+    geometry_data_lookup: Optional[Dict[Tuple[str, int], Dict[str, Any]]] = None
 ) -> List[GeometryRecord]:
     """
     Deterministic stratified split of the 240 candidate geometries:
@@ -139,6 +159,7 @@ def assign_geometry_splits(
     - For each sequence, the remaining 19 seeds are sorted by SHA-256 hash using split_salt.
     - First 15 -> TRAIN (180 total, 45 per tier).
     - Final 4 -> VALIDATION (48 total, 12 per tier).
+    Supports full-precision route lengths and true exact-block geometry hashes via geometry_data_lookup.
     """
     test_canonical_lookup = {}
     for tier, cands in canonical_candidates_manifest.items():
@@ -177,19 +198,41 @@ def assign_geometry_splits(
         train_metrics = remaining_sorted[:15]
         val_metrics = remaining_sorted[15:]
 
+        # Lookup entry for test candidate if provided
+        test_data_entry = None
+        if geometry_data_lookup and (seq, test_seed) in geometry_data_lookup:
+            test_data_entry = geometry_data_lookup[(seq, test_seed)]
+        elif geometry_hashes_lookup and (seq, test_seed) in geometry_hashes_lookup:
+            val = geometry_hashes_lookup[(seq, test_seed)]
+            if isinstance(val, dict):
+                test_data_entry = val
+
         # TEST Record
         test_geom_id = f"geom_{tier.lower()}_{seq}_seed{test_seed}"
         exact_blocks = test_cand_meta.get("exact_block_sequence")
         if exact_blocks:
             test_geom_hash = canonical_json_sha256(exact_blocks)
             test_source = "gate2_stored_exact"
-        else:
-            test_geom_hash = (
-                geometry_hashes_lookup.get((seq, test_seed))
-                if geometry_hashes_lookup
-                else canonical_json_sha256(f"{seq}_{test_seed}")
-            )
+        elif test_data_entry and "geometry_sha256" in test_data_entry:
+            test_geom_hash = test_data_entry["geometry_sha256"]
+            test_source = test_data_entry.get("geometry_hash_source", "pinned_regeneration")
+        elif geometry_hashes_lookup and (seq, test_seed) in geometry_hashes_lookup and isinstance(geometry_hashes_lookup[(seq, test_seed)], str):
+            test_geom_hash = geometry_hashes_lookup[(seq, test_seed)]
             test_source = "pinned_regeneration"
+        else:
+            test_geom_hash = canonical_json_sha256(f"{seq}_{test_seed}")
+            test_source = "fallback_identity"
+
+        test_route_len = (
+            float(test_data_entry["route_length_m"])
+            if test_data_entry and "route_length_m" in test_data_entry
+            else float(test_metric["route_total_length_m"])
+        )
+        test_block_ids = (
+            test_data_entry["block_ids"]
+            if test_data_entry and "block_ids" in test_data_entry
+            else test_metric["block_ids"]
+        )
 
         records.append(GeometryRecord(
             geometry_id=test_geom_id,
@@ -198,8 +241,8 @@ def assign_geometry_splits(
             geometry_generation_seed=test_seed,
             split=SplitRole.TEST,
             candidate_role=test_cand_meta.get("candidate_role", "canonical_test"),
-            block_ids=test_metric["block_ids"],
-            route_length_m=float(test_metric["route_total_length_m"]),
+            block_ids=test_block_ids,
+            route_length_m=test_route_len,
             traffic_density=float(test_metric["traffic_density"]),
             geometry_sha256=test_geom_hash,
             geometry_hash_source=test_source,
@@ -209,11 +252,35 @@ def assign_geometry_splits(
         # TRAIN Records
         for m in train_metrics:
             s = int(m["scenario_seed"])
-            g_hash = (
-                geometry_hashes_lookup.get((seq, s))
-                if geometry_hashes_lookup
-                else canonical_json_sha256(f"{seq}_{s}")
+            data_entry = None
+            if geometry_data_lookup and (seq, s) in geometry_data_lookup:
+                data_entry = geometry_data_lookup[(seq, s)]
+            elif geometry_hashes_lookup and (seq, s) in geometry_hashes_lookup:
+                val = geometry_hashes_lookup[(seq, s)]
+                if isinstance(val, dict):
+                    data_entry = val
+
+            if data_entry and "geometry_sha256" in data_entry:
+                g_hash = data_entry["geometry_sha256"]
+                g_src = data_entry.get("geometry_hash_source", "pinned_regeneration")
+            elif geometry_hashes_lookup and (seq, s) in geometry_hashes_lookup and isinstance(geometry_hashes_lookup[(seq, s)], str):
+                g_hash = geometry_hashes_lookup[(seq, s)]
+                g_src = "pinned_regeneration"
+            else:
+                g_hash = canonical_json_sha256(f"{seq}_{s}")
+                g_src = "fallback_identity"
+
+            route_len = (
+                float(data_entry["route_length_m"])
+                if data_entry and "route_length_m" in data_entry
+                else float(m["route_total_length_m"])
             )
+            b_ids = (
+                data_entry["block_ids"]
+                if data_entry and "block_ids" in data_entry
+                else m["block_ids"]
+            )
+
             records.append(GeometryRecord(
                 geometry_id=f"geom_{tier.lower()}_{seq}_seed{s}",
                 tier=tier,
@@ -221,22 +288,46 @@ def assign_geometry_splits(
                 geometry_generation_seed=s,
                 split=SplitRole.TRAIN,
                 candidate_role="pool_candidate",
-                block_ids=m["block_ids"],
-                route_length_m=float(m["route_total_length_m"]),
+                block_ids=b_ids,
+                route_length_m=route_len,
                 traffic_density=float(m["traffic_density"]),
                 geometry_sha256=g_hash,
-                geometry_hash_source="pinned_regeneration",
+                geometry_hash_source=g_src,
                 exact_block_sequence=None
             ))
 
         # VALIDATION Records
         for m in val_metrics:
             s = int(m["scenario_seed"])
-            g_hash = (
-                geometry_hashes_lookup.get((seq, s))
-                if geometry_hashes_lookup
-                else canonical_json_sha256(f"{seq}_{s}")
+            data_entry = None
+            if geometry_data_lookup and (seq, s) in geometry_data_lookup:
+                data_entry = geometry_data_lookup[(seq, s)]
+            elif geometry_hashes_lookup and (seq, s) in geometry_hashes_lookup:
+                val = geometry_hashes_lookup[(seq, s)]
+                if isinstance(val, dict):
+                    data_entry = val
+
+            if data_entry and "geometry_sha256" in data_entry:
+                g_hash = data_entry["geometry_sha256"]
+                g_src = data_entry.get("geometry_hash_source", "pinned_regeneration")
+            elif geometry_hashes_lookup and (seq, s) in geometry_hashes_lookup and isinstance(geometry_hashes_lookup[(seq, s)], str):
+                g_hash = geometry_hashes_lookup[(seq, s)]
+                g_src = "pinned_regeneration"
+            else:
+                g_hash = canonical_json_sha256(f"{seq}_{s}")
+                g_src = "fallback_identity"
+
+            route_len = (
+                float(data_entry["route_length_m"])
+                if data_entry and "route_length_m" in data_entry
+                else float(m["route_total_length_m"])
             )
+            b_ids = (
+                data_entry["block_ids"]
+                if data_entry and "block_ids" in data_entry
+                else m["block_ids"]
+            )
+
             records.append(GeometryRecord(
                 geometry_id=f"geom_{tier.lower()}_{seq}_seed{s}",
                 tier=tier,
@@ -244,21 +335,25 @@ def assign_geometry_splits(
                 geometry_generation_seed=s,
                 split=SplitRole.VALIDATION,
                 candidate_role="pool_candidate",
-                block_ids=m["block_ids"],
-                route_length_m=float(m["route_total_length_m"]),
+                block_ids=b_ids,
+                route_length_m=route_len,
                 traffic_density=float(m["traffic_density"]),
                 geometry_sha256=g_hash,
-                geometry_hash_source="pinned_regeneration",
+                geometry_hash_source=g_src,
                 exact_block_sequence=None
             ))
 
     return records
 
 
-def validate_split_integrity(records: List[GeometryRecord]) -> Dict[str, Any]:
+def validate_split_integrity(
+    records: List[GeometryRecord],
+    expected_test_identities: Optional[Set[Any]] = None
+) -> Dict[str, Any]:
     """
     Verifies that split assignment invariants strictly hold across counts,
-    balance, sequence+seed identities, and all pairwise geometry hash intersections.
+    balance, sequence+seed identities, canonical test sequestering, and all
+    pairwise geometry hash intersections.
     Fails loudly if any violation occurs.
     """
     if len(records) != 240:
@@ -304,6 +399,30 @@ def validate_split_integrity(records: List[GeometryRecord]) -> Dict[str, Any]:
     if val_pairs.intersection(test_pairs):
         raise ValueError("Leakage detected: sequence+seed pair in both VALIDATION and TEST")
 
+    # Authoritative canonical test identity verification
+    canonical_test_verified = False
+    if expected_test_identities is not None:
+        normalized_expected = set()
+        for item in expected_test_identities:
+            if len(item) == 3:
+                normalized_expected.add((item[1], int(item[2])))
+            else:
+                normalized_expected.add((item[0], int(item[1])))
+
+        missing_canonical = normalized_expected - test_pairs
+        if missing_canonical:
+            raise ValueError(f"Expected canonical test geometries missing from TEST split: {sorted(missing_canonical)}")
+        unexpected_test = test_pairs - normalized_expected
+        if unexpected_test:
+            raise ValueError(f"Unexpected geometries occupying TEST split: {sorted(unexpected_test)}")
+        train_canonical_leak = train_pairs.intersection(normalized_expected)
+        if train_canonical_leak:
+            raise ValueError(f"Canonical test geometries leaked into TRAIN split: {sorted(train_canonical_leak)}")
+        val_canonical_leak = val_pairs.intersection(normalized_expected)
+        if val_canonical_leak:
+            raise ValueError(f"Canonical test geometries leaked into VALIDATION split: {sorted(val_canonical_leak)}")
+        canonical_test_verified = True
+
     # Pairwise split hash intersection checks
     train_hashes = {r.geometry_sha256 for r in train_recs}
     val_hashes = {r.geometry_sha256 for r in val_recs}
@@ -342,6 +461,7 @@ def validate_split_integrity(records: List[GeometryRecord]) -> Dict[str, Any]:
         "test_count": len(test_recs),
         "leakage_detected": False,
         "split_balance_verified": True,
+        "canonical_test_identities_verified": canonical_test_verified,
         "duplicate_geometry_groups_count": len(duplicate_groups),
         "duplicate_geometry_groups": duplicate_groups,
     }
@@ -350,9 +470,13 @@ def validate_split_integrity(records: List[GeometryRecord]) -> Dict[str, Any]:
 def compute_manifest_sha256(cases: List[EvaluationCase]) -> str:
     """
     Computes production canonical SHA-256 fingerprint from an ordered evaluation case list.
+    Matches canonical_csv_file_sha256 by normalizing each case to sorted string-keyed dictionary.
     """
-    cases_dict = [c.to_dict() for c in sorted(cases, key=lambda x: x.protocol_order_index)]
-    return canonical_json_sha256(cases_dict)
+    rows = []
+    for c in sorted(cases, key=lambda x: x.protocol_order_index):
+        d = {k: str(v) for k, v in c.to_dict().items() if k != "split"}
+        rows.append(dict(sorted(d.items())))
+    return canonical_json_sha256(rows)
 
 
 def build_test_cases(
