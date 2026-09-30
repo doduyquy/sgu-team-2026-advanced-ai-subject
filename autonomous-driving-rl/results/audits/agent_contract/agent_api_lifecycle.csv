@@ -1,0 +1,7 @@
+test_case,expected,result,details
+deterministic_fixture_repeatability,act1 == act2,PASSED,"act1=[0.0, 0.4], act2=[0.0, 0.4]"
+stochastic_same_seed_repeatability,s_acts1 == s_acts2,PASSED,Identical action sequence reproduced across independent runs with same agent_seed
+stochastic_different_seed_variation,s_acts1 != s_acts3,PASSED,Distinct action sequence produced under differing agent_seed
+stateful_episodic_reset,count_reset=0 and static_weight preserved,PASSED,"count_before=2, count_after=0, weight=3.14"
+invalid_action_rejection_no_silent_clipping,all 4 rejected with InvalidActionError,PASSED,Rejected 4/4 invalid actions loudly
+core_observation_defensive_immutability,array assignment raises ValueError,PASSED,CoreObservation features are strictly read-only

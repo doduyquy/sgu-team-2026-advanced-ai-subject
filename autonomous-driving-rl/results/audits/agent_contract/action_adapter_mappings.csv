@@ -1,0 +1,42 @@
+adapter_id,action_type,agent_action_input,canonical_steering,canonical_throttle_brake,label_semantics,certification_status
+continuous_box2_v1,continuous,"[0.0, 0.0]",0.0,0.0,center,CERTIFIED
+continuous_box2_v1,continuous,"[0.0, 0.6]",0.0,0.6,straight_accelerate,CERTIFIED
+continuous_box2_v1,continuous,"[0.0, -0.8]",0.0,-0.8,straight_brake,CERTIFIED
+continuous_box2_v1,continuous,"[-0.5, 0.5]",-0.5,0.5,left_accelerate,CERTIFIED
+continuous_box2_v1,continuous,"[0.5, 0.5]",0.5,0.5,right_accelerate,CERTIFIED
+continuous_box2_v1,continuous,"[-1.0, -1.0]",-1.0,-1.0,full_left_full_brake,CERTIFIED
+continuous_box2_v1,continuous,"[1.0, 1.0]",1.0,1.0,full_right_full_throttle,CERTIFIED
+discrete25_native_v1,discrete,0,-1.0,-1.0,FullLeft_FullBrake,CERTIFIED
+discrete25_native_v1,discrete,1,-0.5,-1.0,HalfLeft_FullBrake,CERTIFIED
+discrete25_native_v1,discrete,2,0.0,-1.0,Straight_FullBrake,CERTIFIED
+discrete25_native_v1,discrete,3,0.5,-1.0,HalfRight_FullBrake,CERTIFIED
+discrete25_native_v1,discrete,4,1.0,-1.0,FullRight_FullBrake,CERTIFIED
+discrete25_native_v1,discrete,5,-1.0,-0.5,FullLeft_HalfBrake,CERTIFIED
+discrete25_native_v1,discrete,6,-0.5,-0.5,HalfLeft_HalfBrake,CERTIFIED
+discrete25_native_v1,discrete,7,0.0,-0.5,Straight_HalfBrake,CERTIFIED
+discrete25_native_v1,discrete,8,0.5,-0.5,HalfRight_HalfBrake,CERTIFIED
+discrete25_native_v1,discrete,9,1.0,-0.5,FullRight_HalfBrake,CERTIFIED
+discrete25_native_v1,discrete,10,-1.0,0.0,FullLeft_Coast,CERTIFIED
+discrete25_native_v1,discrete,11,-0.5,0.0,HalfLeft_Coast,CERTIFIED
+discrete25_native_v1,discrete,12,0.0,0.0,Straight_Coast,CERTIFIED
+discrete25_native_v1,discrete,13,0.5,0.0,HalfRight_Coast,CERTIFIED
+discrete25_native_v1,discrete,14,1.0,0.0,FullRight_Coast,CERTIFIED
+discrete25_native_v1,discrete,15,-1.0,0.5,FullLeft_HalfThrottle,CERTIFIED
+discrete25_native_v1,discrete,16,-0.5,0.5,HalfLeft_HalfThrottle,CERTIFIED
+discrete25_native_v1,discrete,17,0.0,0.5,Straight_HalfThrottle,CERTIFIED
+discrete25_native_v1,discrete,18,0.5,0.5,HalfRight_HalfThrottle,CERTIFIED
+discrete25_native_v1,discrete,19,1.0,0.5,FullRight_HalfThrottle,CERTIFIED
+discrete25_native_v1,discrete,20,-1.0,1.0,FullLeft_FullThrottle,CERTIFIED
+discrete25_native_v1,discrete,21,-0.5,1.0,HalfLeft_FullThrottle,CERTIFIED
+discrete25_native_v1,discrete,22,0.0,1.0,Straight_FullThrottle,CERTIFIED
+discrete25_native_v1,discrete,23,0.5,1.0,HalfRight_FullThrottle,CERTIFIED
+discrete25_native_v1,discrete,24,1.0,1.0,FullRight_FullThrottle,CERTIFIED
+discrete9_lowbranch_v1,discrete,0,-0.6,-0.8,Left_Brake,CERTIFIED_OPTIONAL
+discrete9_lowbranch_v1,discrete,1,0.0,-0.8,Straight_Brake,CERTIFIED_OPTIONAL
+discrete9_lowbranch_v1,discrete,2,0.6,-0.8,Right_Brake,CERTIFIED_OPTIONAL
+discrete9_lowbranch_v1,discrete,3,-0.6,0.0,Left_Coast,CERTIFIED_OPTIONAL
+discrete9_lowbranch_v1,discrete,4,0.0,0.0,Straight_Coast,CERTIFIED_OPTIONAL
+discrete9_lowbranch_v1,discrete,5,0.6,0.0,Right_Coast,CERTIFIED_OPTIONAL
+discrete9_lowbranch_v1,discrete,6,-0.6,0.6,Left_Throttle,CERTIFIED_OPTIONAL
+discrete9_lowbranch_v1,discrete,7,0.0,0.6,Straight_Throttle,CERTIFIED_OPTIONAL
+discrete9_lowbranch_v1,discrete,8,0.6,0.6,Right_Throttle,CERTIFIED_OPTIONAL

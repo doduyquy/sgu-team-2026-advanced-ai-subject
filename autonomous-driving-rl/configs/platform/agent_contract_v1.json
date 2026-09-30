@@ -1,0 +1,535 @@
+{
+  "metadata": {
+    "contract_name": "AgentContractV1",
+    "spec_version": "1.0.0",
+    "status": "LOCKED-FOR-PLATFORM-V1",
+    "gate": "Gate 6 (Research Platform V1)",
+    "pinned_metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "pinned_metadrive_version": "0.4.3"
+  },
+  "information_profiles": {
+    "main_profile_id": "STATE_DECISION_V1",
+    "certified_profiles": [
+      "STATE_DECISION_V1",
+      "CORE_ONLY_V1"
+    ],
+    "parity_principle": "Every benchmark-compliant agent receives the exact same AgentInputV1 under a declared profile. No hidden platform privileges based on algorithm family or stage label."
+  },
+  "runtime_vs_serialized_surface": {
+    "runtime_object_surface": "Exposes both high-level structured immutable objects (CoreObservationV1, TrafficActorV1, RouteWaypointV1) and high-performance read-only NumPy array views (actors_array, waypoints_array, validity_mask).",
+    "serialized_surface": "Produces JSON-safe nested dictionaries via to_dict(); redundant array views are omitted from serialization to maintain clean data payloads."
+  },
+  "runtime_dataclass_schemas": {
+    "AgentInputV1": [
+      "profile_id",
+      "core_observation",
+      "traffic_context",
+      "task_context",
+      "step_index"
+    ],
+    "CoreObservationV1": [
+      "features"
+    ],
+    "TrafficActorV1": [
+      "relative_position_x",
+      "relative_position_y",
+      "relative_velocity_x",
+      "relative_velocity_y",
+      "relative_heading",
+      "length",
+      "width"
+    ],
+    "TrafficContextV1": [
+      "capacity",
+      "radius_m",
+      "actors",
+      "actors_array",
+      "validity_mask",
+      "active_count",
+      "overflow_count"
+    ],
+    "RouteWaypointV1": [
+      "lookahead_distance_m",
+      "relative_x",
+      "relative_y",
+      "relative_heading"
+    ],
+    "TaskContextV1": [
+      "lookahead_count",
+      "lookahead_spacing_m",
+      "lookahead_range_m",
+      "current_lane_width",
+      "navigation_goal_direction",
+      "waypoints",
+      "waypoints_array",
+      "validity_mask",
+      "route_end_within_lookahead"
+    ],
+    "AgentPublicEpisodeContext": [
+      "control_frequency_hz",
+      "control_dt_s",
+      "horizon_steps",
+      "input_profile_id",
+      "action_adapter_id",
+      "mode"
+    ],
+    "AgentDescriptor": [
+      "agent_id",
+      "agent_version",
+      "input_profile_id",
+      "action_adapter_id",
+      "inference_stochasticity",
+      "stateful_within_episode",
+      "method_family"
+    ],
+    "AgentDecision": [
+      "action_payload",
+      "diagnostics"
+    ]
+  },
+  "agent_input_schema": {
+    "core_observation": {
+      "dimensions": 259,
+      "dtype": "float32",
+      "normalized_range": [
+        0.0,
+        1.0
+      ],
+      "bounds_tolerance": 0.0001,
+      "subvectors": {
+        "ego_state": [
+          0,
+          9
+        ],
+        "navigation_checkpoints": [
+          9,
+          19
+        ],
+        "lidar_rays": [
+          19,
+          259
+        ]
+      },
+      "derived_views": [
+        "ego_state",
+        "navigation_vector",
+        "lidar_points"
+      ],
+      "immutability": "read-only defensive array copy (writeable=False)"
+    },
+    "traffic_context": {
+      "capacity": 8,
+      "radius_m": 50.0,
+      "actor_features_dim": 7,
+      "actor_features": [
+        "relative_position_x",
+        "relative_position_y",
+        "relative_velocity_x",
+        "relative_velocity_y",
+        "relative_heading",
+        "length",
+        "width"
+      ],
+      "actors_tuple_length": 8,
+      "actors_array_shape": [
+        8,
+        7
+      ],
+      "actors_array_dtype": "float32",
+      "validity_mask_shape": [
+        8
+      ],
+      "validity_mask_dtype": "bool",
+      "active_count_semantics": "number of valid selected actors in [0, capacity]",
+      "overflow_count_semantics": "number of additional in-radius actors omitted because capacity was exceeded",
+      "padding_semantics": "invalid slots zero-valued and validity_mask=False",
+      "coordinate_frame": "ego-centric (forward +x, left +y)",
+      "ordering": "Euclidean distance ascending with deterministic tie-breaking (distance, x_rel, y_rel)"
+    },
+    "task_context": {
+      "lookahead_count": 20,
+      "lookahead_spacing_m": 2.5,
+      "lookahead_range_m": 50.0,
+      "current_lane_width": {
+        "python_type": "float",
+        "units": "meters",
+        "finite": true,
+        "positive": true,
+        "source_semantics": "current reference lane width from navigation.get_current_lane_width()",
+        "mapsuite_v1_observed_standard_m": 3.5
+      },
+      "navigation_goal_direction": {
+        "python_type": "tuple",
+        "length": 2,
+        "finite": true,
+        "normalized_unit_norm": true,
+        "source_semantics": "2D normalized direction unit vector towards active checkpoint"
+      },
+      "route_end_within_lookahead": {
+        "python_type": "bool",
+        "source_semantics": "Boolean flag indicating whether reference route terminates within lookahead window (NOT episode termination)"
+      },
+      "coordinate_frame": "ego-centric relative waypoints (lookahead_distance_m, relative_x, relative_y, relative_heading)",
+      "waypoints_tuple_length": 20,
+      "waypoint_fields": [
+        "lookahead_distance_m",
+        "relative_x",
+        "relative_y",
+        "relative_heading"
+      ],
+      "waypoints_array_shape": [
+        20,
+        3
+      ],
+      "waypoints_array_dtype": "float32",
+      "validity_mask_shape": [
+        20
+      ],
+      "validity_mask_dtype": "bool",
+      "evaluator_progress_metrics_excluded": true
+    }
+  },
+  "forbidden_evaluator_fields": [
+    "arrive_dest",
+    "candidate_role",
+    "case_id",
+    "case_result",
+    "clean_success",
+    "crash_building",
+    "crash_human",
+    "crash_object",
+    "crash_sidewalk",
+    "crash_vehicle",
+    "difficulty_tier",
+    "distance_along_route",
+    "env_seed",
+    "environment_seed",
+    "episode_return",
+    "future_outcome",
+    "geometry_generation_seed",
+    "geometry_sha256",
+    "ground_truth_trajectory",
+    "max_route_completion",
+    "out_of_road",
+    "percent_complete",
+    "primary_terminal_reason",
+    "protocol_order_index",
+    "reward",
+    "reward_breakdown",
+    "route_completion",
+    "split",
+    "terminal_reason",
+    "terminated",
+    "test_manifest_position",
+    "test_score",
+    "tier",
+    "truncated"
+  ],
+  "public_episode_context": {
+    "allowed_fields": [
+      "control_frequency_hz",
+      "control_dt_s",
+      "horizon_steps",
+      "input_profile_id",
+      "action_adapter_id",
+      "mode (INFERENCE | TRAINING)"
+    ],
+    "excluded_fields": [
+      "tier",
+      "split",
+      "case_id",
+      "environment_seed",
+      "geometry_sha256"
+    ]
+  },
+  "agent_descriptor_schema": {
+    "fields": [
+      "agent_id",
+      "agent_version",
+      "input_profile_id",
+      "action_adapter_id",
+      "inference_stochasticity",
+      "stateful_within_episode",
+      "method_family"
+    ],
+    "allowed_inference_stochasticity": [
+      "deterministic",
+      "stochastic"
+    ],
+    "notes": "Harness metadata only; never alters environment information profile."
+  },
+  "agent_policy_lifecycle": {
+    "interface_type": "AgentPolicy (Python Protocol)",
+    "methods": [
+      "descriptor -> AgentDescriptor",
+      "reset(public_context, agent_seed) -> None",
+      "act(agent_input) -> AgentDecision",
+      "close() -> None"
+    ]
+  },
+  "agent_decision_schema": {
+    "action_payload": "Raw action to be consumed by declared action adapter",
+    "diagnostics": "Optional JSON-safe bounded primitive dictionary (logging only, max depth 4, max 50 keys, max 100 sequence items, string keys required, finite floats only)"
+  },
+  "diagnostics_limits": {
+    "max_depth": 4,
+    "max_keys": 50,
+    "max_sequence_items": 100,
+    "string_keys_required": true,
+    "finite_floats_required": true,
+    "allowed_primitive_types": [
+      "str",
+      "int",
+      "float",
+      "bool",
+      "NoneType",
+      "list",
+      "tuple",
+      "dict"
+    ]
+  },
+  "technical_failure_reasons": [
+    "AGENT_EXCEPTION",
+    "INVALID_AGENT_ACTION",
+    "ACTION_ADAPTER_ERROR",
+    "INVALID_AGENT_INPUT_CONSUMPTION"
+  ],
+  "actuator_contract": {
+    "canonical_physical_action": "Continuous Box(-1.0, 1.0, shape=(2,)) [steering, throttle_brake]",
+    "control_frequency_hz": 10,
+    "nominal_decision_dt_s": 0.1,
+    "invalid_action_policy": "Loud rejection via InvalidActionError (Technical Failure); silent clipping strictly forbidden",
+    "certified_adapters": {
+      "continuous_box2_v1": {
+        "type": "Box(2)",
+        "range": [
+          -1.0,
+          1.0
+        ],
+        "identity": true
+      },
+      "discrete25_native_v1": {
+        "type": "Discrete(25)",
+        "steering_grid": [
+          -1.0,
+          -0.5,
+          0.0,
+          0.5,
+          1.0
+        ],
+        "throttle_grid": [
+          -1.0,
+          -0.5,
+          0.0,
+          0.5,
+          1.0
+        ],
+        "mappings": [
+          {
+            "action_index": 0,
+            "steering": -1.0,
+            "throttle_brake": -1.0
+          },
+          {
+            "action_index": 1,
+            "steering": -0.5,
+            "throttle_brake": -1.0
+          },
+          {
+            "action_index": 2,
+            "steering": 0.0,
+            "throttle_brake": -1.0
+          },
+          {
+            "action_index": 3,
+            "steering": 0.5,
+            "throttle_brake": -1.0
+          },
+          {
+            "action_index": 4,
+            "steering": 1.0,
+            "throttle_brake": -1.0
+          },
+          {
+            "action_index": 5,
+            "steering": -1.0,
+            "throttle_brake": -0.5
+          },
+          {
+            "action_index": 6,
+            "steering": -0.5,
+            "throttle_brake": -0.5
+          },
+          {
+            "action_index": 7,
+            "steering": 0.0,
+            "throttle_brake": -0.5
+          },
+          {
+            "action_index": 8,
+            "steering": 0.5,
+            "throttle_brake": -0.5
+          },
+          {
+            "action_index": 9,
+            "steering": 1.0,
+            "throttle_brake": -0.5
+          },
+          {
+            "action_index": 10,
+            "steering": -1.0,
+            "throttle_brake": 0.0
+          },
+          {
+            "action_index": 11,
+            "steering": -0.5,
+            "throttle_brake": 0.0
+          },
+          {
+            "action_index": 12,
+            "steering": 0.0,
+            "throttle_brake": 0.0
+          },
+          {
+            "action_index": 13,
+            "steering": 0.5,
+            "throttle_brake": 0.0
+          },
+          {
+            "action_index": 14,
+            "steering": 1.0,
+            "throttle_brake": 0.0
+          },
+          {
+            "action_index": 15,
+            "steering": -1.0,
+            "throttle_brake": 0.5
+          },
+          {
+            "action_index": 16,
+            "steering": -0.5,
+            "throttle_brake": 0.5
+          },
+          {
+            "action_index": 17,
+            "steering": 0.0,
+            "throttle_brake": 0.5
+          },
+          {
+            "action_index": 18,
+            "steering": 0.5,
+            "throttle_brake": 0.5
+          },
+          {
+            "action_index": 19,
+            "steering": 1.0,
+            "throttle_brake": 0.5
+          },
+          {
+            "action_index": 20,
+            "steering": -1.0,
+            "throttle_brake": 1.0
+          },
+          {
+            "action_index": 21,
+            "steering": -0.5,
+            "throttle_brake": 1.0
+          },
+          {
+            "action_index": 22,
+            "steering": 0.0,
+            "throttle_brake": 1.0
+          },
+          {
+            "action_index": 23,
+            "steering": 0.5,
+            "throttle_brake": 1.0
+          },
+          {
+            "action_index": 24,
+            "steering": 1.0,
+            "throttle_brake": 1.0
+          }
+        ]
+      },
+      "discrete9_lowbranch_v1": {
+        "type": "Discrete(9)",
+        "steering_grid": [
+          -0.6,
+          0.0,
+          0.6
+        ],
+        "throttle_grid": [
+          -0.8,
+          0.0,
+          0.6
+        ],
+        "mappings": [
+          {
+            "action_index": 0,
+            "steering": -0.6,
+            "throttle_brake": -0.8
+          },
+          {
+            "action_index": 1,
+            "steering": 0.0,
+            "throttle_brake": -0.8
+          },
+          {
+            "action_index": 2,
+            "steering": 0.6,
+            "throttle_brake": -0.8
+          },
+          {
+            "action_index": 3,
+            "steering": -0.6,
+            "throttle_brake": 0.0
+          },
+          {
+            "action_index": 4,
+            "steering": 0.0,
+            "throttle_brake": 0.0
+          },
+          {
+            "action_index": 5,
+            "steering": 0.6,
+            "throttle_brake": 0.0
+          },
+          {
+            "action_index": 6,
+            "steering": -0.6,
+            "throttle_brake": 0.6
+          },
+          {
+            "action_index": 7,
+            "steering": 0.0,
+            "throttle_brake": 0.6
+          },
+          {
+            "action_index": 8,
+            "steering": 0.6,
+            "throttle_brake": 0.6
+          }
+        ]
+      }
+    }
+  },
+  "evaluation_rules": {
+    "no_online_learning_during_evaluation": "AgentPolicy.act() receives zero rewards, returns, or evaluation outcomes during INFERENCE mode. Cross-episode online adaptation is strictly prohibited.",
+    "stateful_policy_reset": "reset() must clear episodic recurrent hidden states while preserving static learned parameters.",
+    "information_parity_principle": "Every benchmark-compliant agent receives the exact same AgentInputV1 under a declared profile. No hidden platform privileges based on algorithm family or stage label."
+  },
+  "latency_measurement_boundary": {
+    "start_event": "Immediately before agent.act(agent_input) is invoked",
+    "stop_event": "Immediately after AgentDecision is returned",
+    "excluded_components": [
+      "AgentInput assembly",
+      "ActionAdapter conversion",
+      "environment step (physics)",
+      "rendering",
+      "logging"
+    ],
+    "nominal_realtime_budget_ms": 100.0,
+    "enforcement_policy": "Diagnostic measurement boundary; hard real-time cutoff is not enforced in platform simulation."
+  }
+}
