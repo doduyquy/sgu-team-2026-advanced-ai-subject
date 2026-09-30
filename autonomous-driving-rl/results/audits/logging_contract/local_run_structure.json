@@ -1,0 +1,14 @@
+{
+  "run_id": "run_audit_local_01",
+  "run_dir": "run_audit_local_01",
+  "required_files_verified": {
+    "run_manifest.json": true,
+    "episodes.csv": true,
+    "summary.json": true,
+    "timing.csv": true,
+    "run_integrity.json": true,
+    "wandb_sync.json": true
+  },
+  "all_required_files_present": true,
+  "status": "COMPLETE"
+}

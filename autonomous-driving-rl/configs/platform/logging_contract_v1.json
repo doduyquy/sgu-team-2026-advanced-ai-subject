@@ -1,0 +1,234 @@
+{
+  "metadata": {
+    "contract_name": "LoggingContractV1",
+    "spec_version": "1.0.0",
+    "status": "LOCKED-FOR-PLATFORM-V1",
+    "gate": "Gate 7 (Research Platform V1)"
+  },
+  "local_record_contract": {
+    "root_directory_pattern": "runs/<run_id>",
+    "duplicate_run_protection": "fail loudly if run_id directory exists",
+    "atomic_write_strategy": "write to .tmp file, flush, fsync, atomic replace",
+    "authoritative_source": "LOCAL",
+    "remote_sync_source": "DOWNSTREAM_MIRROR",
+    "required_files": [
+      "run_manifest.json",
+      "episodes.csv",
+      "summary.json",
+      "timing.csv",
+      "run_integrity.json",
+      "wandb_sync.json"
+    ],
+    "optional_files": [
+      "technical_failures.jsonl",
+      "training_metrics.jsonl"
+    ]
+  },
+  "runtime_dataclass_schemas": {
+    "ExperimentRunConfig": [
+      "run_kind",
+      "benchmark_contract_sha256",
+      "agent_contract_sha256",
+      "platform_runtime_contract_sha256",
+      "agent_id",
+      "agent_version",
+      "input_profile_id",
+      "action_adapter_id",
+      "inference_stochasticity",
+      "stateful_within_episode",
+      "agent_seed",
+      "training_run_seed",
+      "protocol_order_seed",
+      "manifest_name",
+      "expected_episode_count",
+      "wandb_mode",
+      "wandb_project",
+      "wandb_entity",
+      "tags",
+      "algorithm_hyperparameters"
+    ],
+    "RunManifestV1": [
+      "run_id",
+      "run_kind",
+      "created_at_utc",
+      "experiment_config_sha256",
+      "config",
+      "git_provenance",
+      "environment_provenance",
+      "platform_contracts"
+    ],
+    "EpisodeTimingRecord": [
+      "episode_index",
+      "act_count",
+      "mean_act_ms",
+      "median_act_ms",
+      "p95_act_ms",
+      "max_act_ms",
+      "total_act_ms",
+      "latency_sync_policy"
+    ],
+    "RunIntegrityRecord": [
+      "run_id",
+      "experiment_config_sha256",
+      "run_manifest_sha256",
+      "episodes_sha256",
+      "summary_sha256",
+      "timing_sha256",
+      "technical_failures_sha256",
+      "finalized_at_utc"
+    ]
+  },
+  "runtime_enum_schemas": {
+    "RunKind": [
+      "TRAINING",
+      "VALIDATION_EVALUATION",
+      "TEST_EVALUATION",
+      "AUDIT"
+    ],
+    "RunStatus": [
+      "INITIALIZING",
+      "RUNNING",
+      "COMPLETE",
+      "FAILED",
+      "INTERRUPTED"
+    ],
+    "WandbMode": [
+      "DISABLED",
+      "OFFLINE",
+      "ONLINE"
+    ],
+    "WandbSyncStatus": [
+      "DISABLED",
+      "OFFLINE",
+      "ONLINE",
+      "SYNCED",
+      "FAILED"
+    ]
+  },
+  "episode_schema": {
+    "file": "episodes.csv",
+    "columns": [
+      "episode_index",
+      "case_id",
+      "split",
+      "tier",
+      "sequence",
+      "geometry_generation_seed",
+      "environment_seed",
+      "agent_seed",
+      "horizon_steps",
+      "primary_terminal_reason",
+      "terminal_reason",
+      "clean_success",
+      "raw_arrival",
+      "final_route_completion",
+      "max_route_completion",
+      "episode_steps",
+      "episode_time_s",
+      "time_to_clean_success_s",
+      "mean_speed_kmh",
+      "max_speed_kmh",
+      "episode_return",
+      "crash_human",
+      "crash_vehicle",
+      "crash_object",
+      "crash_building",
+      "crash_sidewalk",
+      "out_of_road",
+      "timeout",
+      "has_technical_failure",
+      "technical_failure_reason"
+    ],
+    "step_axis": "episode_index",
+    "null_metric_representation": "null in JSON, empty in CSV, None/omitted in W&B (never 0.0)"
+  },
+  "summary_metric_schema": {
+    "primary_benchmark_metrics": [
+      "clean_success_rate",
+      "safety_failure_rate",
+      "mean_final_route_completion",
+      "median_final_route_completion",
+      "mean_time_to_clean_success_s"
+    ],
+    "per_tier_namespaces": "metrics/tier/<tier>/<metric>",
+    "overall_namespace": "metrics/overall/<metric>",
+    "macro_namespace": "metrics/macro/<metric>",
+    "diagnostic_classification": {
+      "episode_return": "diagnostic/episode_return (never primary benchmark ranking score)"
+    },
+    "mega_score_policy": "PROHIBITED"
+  },
+  "timing_schema": {
+    "start_event": "Immediately before agent.act(agent_input) is invoked",
+    "stop_event": "Immediately after AgentDecision is returned",
+    "timer": "high-resolution monotonic timer (perf_counter_ns)",
+    "excluded_overhead": [
+      "AgentInput assembly",
+      "ActionAdapter conversion",
+      "environment step (physics)",
+      "rendering",
+      "logging",
+      "W&B I/O"
+    ],
+    "metrics": [
+      "act_count",
+      "mean_act_ms",
+      "median_act_ms",
+      "p95_act_ms",
+      "max_act_ms",
+      "total_act_ms"
+    ],
+    "latency_sync_policies": [
+      "NONE",
+      "FRAMEWORK_SYNCHRONIZED"
+    ]
+  },
+  "technical_failure_schema": {
+    "file": "technical_failures.jsonl",
+    "format": "JSON Lines",
+    "categories": [
+      "AGENT_EXCEPTION",
+      "INVALID_AGENT_ACTION",
+      "ACTION_ADAPTER_ERROR",
+      "INVALID_AGENT_INPUT_CONSUMPTION",
+      "LOCAL_LOG_WRITE_ERROR",
+      "WANDB_INIT_ERROR",
+      "WANDB_LOG_ERROR",
+      "WANDB_SYNC_ERROR"
+    ]
+  },
+  "wandb_backend_contract": {
+    "modes": [
+      "DISABLED",
+      "OFFLINE",
+      "ONLINE"
+    ],
+    "failure_policy": "NON-FATAL to local scientific experiment if local logging is healthy",
+    "table_name": "evaluation_episodes",
+    "step_axis": "episode_index"
+  },
+  "secret_policy": {
+    "credential_source": "WANDB_API_KEY environment variable",
+    "persistence_rule": "STRICTLY PROHIBITED in files, configs, traces, or commits",
+    "echo_rule": "STRICTLY PROHIBITED in console or markdown artifacts"
+  },
+  "privacy_policy": {
+    "excluded_identifiers": [
+      "username",
+      "home directory",
+      "full local repository paths",
+      "machine hostname",
+      "IP address"
+    ]
+  },
+  "integrity_policy": {
+    "file": "run_integrity.json",
+    "fingerprinted_artifacts": [
+      "run_manifest.json",
+      "episodes.csv",
+      "summary.json",
+      "timing.csv",
+      "technical_failures.jsonl"
+    ]
+  }
+}

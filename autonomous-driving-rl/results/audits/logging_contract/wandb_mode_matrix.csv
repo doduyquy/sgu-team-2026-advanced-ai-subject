@@ -1,0 +1,4 @@
+mode,requires_network,requires_api_key,sync_status,experiment_allowed_to_run,verdict
+DISABLED,False,False,DISABLED,True,VERIFIED_STANDALONE
+OFFLINE,False,False,OFFLINE,True,VERIFIED_LOCAL_STORAGE
+ONLINE,True,True,ONLINE,True,VERIFIED_REMOTE_MIRROR

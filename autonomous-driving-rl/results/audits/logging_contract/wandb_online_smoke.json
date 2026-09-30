@@ -1,0 +1,13 @@
+{
+  "performed": true,
+  "status": "SYNCED",
+  "project": "sgu-autonomous-driving-rl",
+  "entity": null,
+  "wandb_run_id": "audit_online_aaff2e38",
+  "wandb_run_url": "https://wandb.ai/phucga15062005/sgu-autonomous-driving-rl/runs/audit_online_aaff2e38",
+  "mode": "ONLINE",
+  "episodes_logged": 2,
+  "table_logged": true,
+  "summary_keys_verified": true,
+  "credential_policy": "STRICT_EPHEMERAL_COMPLIANCE (Zero secrets logged or persisted)"
+}

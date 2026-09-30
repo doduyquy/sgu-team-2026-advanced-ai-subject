@@ -1,0 +1,8 @@
+{
+  "test": "wandb_network_outage_simulation",
+  "wandb_sync_status": "FAILED",
+  "local_run_status": "COMPLETE",
+  "local_records_preserved": true,
+  "policy": "W&B failure is strictly NON-FATAL to the local scientific experiment.",
+  "verdict": "PASSED"
+}
