@@ -740,16 +740,16 @@ def audit_wandb_service_lifecycle(results_dir):
     4. Child stderr is captured and inspected externally to verify
        ZERO atexit tracebacks or protobuf int/bool conversion exceptions occur.
     5. Zero lingering orphan W&B subprocesses remain after termination.
+    6. Persisted stderr snippet is strictly sanitized against machine-private paths.
     """
     print("\n--- Auditing W&B Service Lifecycle & Process Teardown (Subprocess Verification) ---")
     import wandb
-    import psutil
 
     wandb_version = getattr(wandb, "__version__", "unknown")
     prior_env_mode = os.environ.get("WANDB_MODE")
 
     child_code = (
-        "import tempfile, wandb\n"
+        "import json, os, tempfile, wandb, psutil\n"
         "with tempfile.TemporaryDirectory() as tmp:\n"
         "    r = wandb.init(\n"
         "        project='audit_lifecycle_subprocess',\n"
@@ -761,6 +761,15 @@ def audit_wandb_service_lifecycle(results_dir):
         "    r.log({'smoke': 1})\n"
         "    r.finish(exit_code=0)\n"
         "    wandb.teardown(exit_code=0)\n"
+        "    current_proc = psutil.Process(os.getpid())\n"
+        "    children = [c for c in current_proc.children(recursive=True) if 'wandb' in c.name().lower()]\n"
+        "    result = {\n"
+        "        'run_started': True,\n"
+        "        'run_finished': True,\n"
+        "        'explicit_teardown_succeeded': True,\n"
+        "        'orphan_wandb_subprocesses_count': len(children)\n"
+        "    }\n"
+        "    print('GATE7_LIFECYCLE_RESULT=' + json.dumps(result))\n"
     )
 
     child_env = {k: v for k, v in os.environ.items() if not k.startswith("WANDB_")}
@@ -774,6 +783,17 @@ def audit_wandb_service_lifecycle(results_dir):
         timeout=30
     )
 
+    # Parse machine-readable lifecycle result emitted by child process
+    child_marker_data = {}
+    for line in res.stdout.splitlines():
+        if line.startswith("GATE7_LIFECYCLE_RESULT="):
+            try:
+                child_marker_data = json.loads(line.split("=", 1)[1])
+            except Exception:
+                pass
+
+    orphan_count = child_marker_data.get("orphan_wandb_subprocesses_count", 0)
+
     atexit_err_patterns = [
         "Exception ignored in atexit callback",
         "Expected an int, got a boolean",
@@ -781,19 +801,23 @@ def audit_wandb_service_lifecycle(results_dir):
     ]
     atexit_observed = any(p.lower() in res.stderr.lower() for p in atexit_err_patterns)
 
+    # Strictly sanitize captured stderr before persisting
+    safe_stderr = sanitize_error_message(res.stderr)
+
     lifecycle_report = {
         "wandb_version": wandb_version,
         "mode": "offline",
         "source_of_effective_mode": "INIT_ARGUMENT",
         "prior_wandb_mode_env": prior_env_mode,
         "subprocess_returncode": res.returncode,
-        "run_started": res.returncode == 0,
-        "run_finished": res.returncode == 0,
+        "run_started": bool(child_marker_data.get("run_started", res.returncode == 0)),
+        "run_finished": bool(child_marker_data.get("run_finished", res.returncode == 0)),
         "explicit_teardown_called": True,
-        "explicit_teardown_succeeded": res.returncode == 0 and not atexit_observed,
+        "explicit_teardown_succeeded": bool(child_marker_data.get("explicit_teardown_succeeded", False)) and (res.returncode == 0) and not atexit_observed,
         "atexit_exception_observed": atexit_observed,
-        "captured_stderr_snippet": res.stderr.strip()[:300] if res.stderr else "",
-        "verdict": "PASSED" if (res.returncode == 0 and not atexit_observed) else "FAILED"
+        "orphan_subprocesses_count": orphan_count,
+        "captured_stderr_snippet": safe_stderr.strip()[:300] if safe_stderr else "",
+        "verdict": "PASSED" if (res.returncode == 0 and not atexit_observed and orphan_count == 0) else "FAILED"
     }
 
     with open(results_dir / "wandb_service_lifecycle.json", "w", encoding="utf-8") as f:
@@ -801,8 +825,83 @@ def audit_wandb_service_lifecycle(results_dir):
     print(f"[SAVED] W&B service lifecycle saved to: {results_dir / 'wandb_service_lifecycle.json'}")
     print(f"  Subprocess Return Code:      {res.returncode}")
     print(f"  Atexit Exception Observed:   {atexit_observed}")
+    print(f"  Orphan subprocesses:         {orphan_count}")
     assert lifecycle_report["verdict"] == "PASSED"
     return lifecycle_report
+
+
+def audit_machine_privacy_scan(project_root):
+    """
+    Scans all Gate-7-owned files and generated artifacts to verify that zero
+    machine-private identifiers (home paths, absolute workspace paths, OS usernames)
+    are committed or persisted.
+    Never prints or logs the private identifiers themselves.
+    """
+    print("\n--- Scanning for Machine-Private Identifiers & Local Paths ---")
+    gate7_files = [
+        project_root / "src" / "platform" / "experiment_logging.py",
+        project_root / "src" / "platform" / "wandb_backend.py",
+        project_root / "scripts" / "audit_logging_contract.py",
+        project_root / "tests" / "test_logging_contract.py",
+        project_root / "configs" / "platform" / "logging_contract_v1.json",
+        project_root / "docs" / "environment" / "PLATFORM_V1_LOGGING_WANDB_AUDIT.md",
+        project_root.parent / ".gitignore",
+        project_root.parent / "requirements.txt",
+    ]
+
+    results_dir = project_root / "results" / "audits" / "logging_contract"
+    if results_dir.exists():
+        for f in results_dir.glob("*"):
+            if f.is_file():
+                gate7_files.append(f)
+
+    # Identifiers to verify absent (read into memory only, never printed)
+    private_targets = []
+    try:
+        home_str = str(Path.home()).strip()
+        if len(home_str) > 3:
+            private_targets.append(home_str)
+            private_targets.append(home_str.replace("\\", "/"))
+    except Exception:
+        pass
+
+    try:
+        repo_str = str(project_root.parent).strip()
+        if len(repo_str) > 3:
+            private_targets.append(repo_str)
+            private_targets.append(repo_str.replace("\\", "/"))
+    except Exception:
+        pass
+
+    try:
+        import getpass
+        uname = getpass.getuser().strip()
+        if len(uname) > 2:
+            private_targets.append(f"/Users/{uname}")
+            private_targets.append(f"\\Users\\{uname}")
+            private_targets.append(f"/home/{uname}")
+    except Exception:
+        pass
+
+    private_path_leaks = []
+    for p in gate7_files:
+        if p.exists():
+            with open(p, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            for target in private_targets:
+                if target.lower() in content.lower():
+                    # In code files, inspect lines individually to ignore code that defines sanitization
+                    if p.name in ("test_logging_contract.py", "audit_logging_contract.py", "experiment_logging.py"):
+                        lines = content.splitlines()
+                        for idx, l in enumerate(lines, 1):
+                            if target.lower() in l.lower() and not any(skip in l for skip in ("Path.home", "Path(__file__)", "getpass", "tempfile", "replace", "sub(", "re.compile", "re.escape", "private_targets")):
+                                private_path_leaks.append(f"{p.name}:{idx}")
+                    else:
+                        private_path_leaks.append(p.name)
+
+    assert len(private_path_leaks) == 0, f"Private machine paths detected in files: {private_path_leaks}"
+    print(f"  [OK] Zero machine-private paths found (private_path_leaks_found = 0 across {len(gate7_files)} files).")
+    return len(private_path_leaks)
 
 
 def audit_timing_boundary(results_dir):
@@ -1333,6 +1432,9 @@ def main():
 
     # 12. Final secret scan across all Gate-7 files after all artifacts generated
     audit_secret_scan(project_root, scan_label="Final Post-Artifacts")
+
+    # 13. Final machine-privacy scan verifying zero private paths or local identifiers
+    audit_machine_privacy_scan(project_root)
 
     print("\n============================================================")
     print("GATE 7 LOGGING & OBSERVABILITY CONTRACT AUDIT COMPLETED SUCCESSFULLY!")

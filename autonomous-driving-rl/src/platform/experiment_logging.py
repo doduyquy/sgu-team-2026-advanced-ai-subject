@@ -85,22 +85,43 @@ def get_utc_now_iso() -> str:
 def sanitize_error_message(err: Any) -> str:
     """
     Centralized error sanitizer. Redacts personal machine paths, home directories,
-    project root absolute paths, API keys, and authorization tokens.
+    project root absolute paths, system temp paths, API keys, and authorization tokens.
     """
     if err is None:
         return ""
     msg = str(err)
+
+    # Redact system temp directory first (before home directory prefix)
     try:
-        home_path = str(Path.home())
-        if home_path and len(home_path) > 3:
-            msg = msg.replace(home_path, "~").replace(home_path.replace("\\", "/"), "~")
+        import tempfile
+        tmp_dir = tempfile.gettempdir()
+        if tmp_dir and len(tmp_dir) > 3:
+            p_tmp = re.compile(re.escape(tmp_dir), re.IGNORECASE)
+            msg = p_tmp.sub("<temp_dir>", msg)
+            p_tmp_posix = re.compile(re.escape(tmp_dir.replace("\\", "/")), re.IGNORECASE)
+            msg = p_tmp_posix.sub("<temp_dir>", msg)
     except Exception:
         pass
 
+    # Redact home directory
+    try:
+        home_path = str(Path.home())
+        if home_path and len(home_path) > 3:
+            p_home = re.compile(re.escape(home_path), re.IGNORECASE)
+            msg = p_home.sub("~", msg)
+            p_home_posix = re.compile(re.escape(home_path.replace("\\", "/")), re.IGNORECASE)
+            msg = p_home_posix.sub("~", msg)
+    except Exception:
+        pass
+
+    # Redact project and workspace root paths
     try:
         root_path = str(Path(__file__).resolve().parent.parent.parent)
         if root_path and len(root_path) > 3:
-            msg = msg.replace(root_path, "<project_root>").replace(root_path.replace("\\", "/"), "<project_root>")
+            p_root = re.compile(re.escape(root_path), re.IGNORECASE)
+            msg = p_root.sub("<project_root>", msg)
+            p_root_posix = re.compile(re.escape(root_path.replace("\\", "/")), re.IGNORECASE)
+            msg = p_root_posix.sub("<project_root>", msg)
     except Exception:
         pass
 

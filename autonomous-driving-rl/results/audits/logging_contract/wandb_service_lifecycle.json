@@ -9,6 +9,7 @@
   "explicit_teardown_called": true,
   "explicit_teardown_succeeded": true,
   "atexit_exception_observed": false,
-  "captured_stderr_snippet": "wandb: Tracking run with wandb version 0.30.0\nwandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.\nwandb: Run data is saved locally in C:\\Users\\ADMIN\\AppData\\Local\\Temp\\tmp9e68s9iv\\wandb\\offline-run-20261001_005456-6fbkgxol\nwa",
+  "orphan_subprocesses_count": 0,
+  "captured_stderr_snippet": "wandb: Tracking run with wandb version 0.30.0\nwandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.\nwandb: Run data is saved locally in <temp_dir>\\tmp5lnjphur\\wandb\\offline-run-20261001_011631-56uuqqh2\nwandb: View this run in t",
   "verdict": "PASSED"
 }
