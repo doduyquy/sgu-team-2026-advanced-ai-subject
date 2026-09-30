@@ -931,6 +931,116 @@ class TestSecurityAndInterruption(unittest.TestCase):
         self.assertEqual(st["status"], "INTERRUPTED")
         self.assertEqual(st["failure_category"], "INTERRUPTED")
 
+    def test_technical_failure_sanitization_and_bounded_category(self):
+        logger = LocalExperimentLogger(self.config, runs_root=self.runs_root)
+        rec = create_mock_episode_record(1)
+
+        home = str(Path.home())
+        repo = str(Path(__file__).resolve().parent.parent)
+        mock_key = "wandb" + "_v1_" + "secret123"
+
+        # 1. Valid category with sensitive message text
+        raw_msg = f"Crash at {home}/env.py in {repo}: {'api_' + 'key='}{mock_key} Bearer token_xyz"
+        tech_payload = {
+            "reason": "INVALID_AGENT_ACTION",
+            "message": raw_msg,
+            "step_index": 42
+        }
+
+        row = logger.log_episode(
+            rec,
+            episode_index=1,
+            protocol_order_index=1,
+            case_id="c1",
+            split="AUDIT",
+            environment_seed=9101,
+            geometry_generation_seed=11,
+            horizon_steps=1000,
+            technical_failure=tech_payload
+        )
+
+        # Stable bounded category preserved
+        self.assertEqual(row.technical_failure_reason, "INVALID_AGENT_ACTION")
+
+        # Inspect persisted jsonl
+        with open(logger.failures_jsonl_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        self.assertEqual(len(lines), 1)
+        persisted = json.loads(lines[0])
+        self.assertEqual(persisted["reason"], "INVALID_AGENT_ACTION")
+        self.assertNotIn(home, persisted["message"])
+        self.assertNotIn(repo, persisted["message"])
+        self.assertNotIn(mock_key, persisted["message"])
+        self.assertNotIn("token_xyz", persisted["message"])
+
+        # 2. Unbounded invalid category must raise ValueError
+        invalid_payload = {
+            "reason": "RANDOM_UNBOUNDED_ERROR_CATEGORY",
+            "message": "Some message"
+        }
+        with self.assertRaises(ValueError):
+            logger.log_episode(
+                rec,
+                episode_index=2,
+                protocol_order_index=2,
+                case_id="c2",
+                split="AUDIT",
+                environment_seed=9101,
+                geometry_generation_seed=11,
+                horizon_steps=1000,
+                technical_failure=invalid_payload
+            )
+
+    def test_missing_timing_semantics_and_zero_act_summary(self):
+        rec = create_mock_episode_record(1)
+        row = EpisodeLogRowV1.from_episode(rec, 1, 1, "c1", "TEST", 11, 9101, 1000)
+
+        # Missing timing -> mean_act_ms is None (not 0.0)
+        table_row = row.to_wandb_table_row(timing=None)
+        table_dict = dict(zip(WANDB_TABLE_COLUMNS, table_row))
+        self.assertIsNone(table_dict["mean_act_ms"])
+
+        # Logger with zero timings -> timing_overall uses None for weighted_mean_act_ms and max_act_ms
+        logger = LocalExperimentLogger(self.config, runs_root=self.runs_root)
+        logger.log_episode(rec, episode_index=1, protocol_order_index=1, case_id="c1", split="AUDIT", environment_seed=9101, geometry_generation_seed=11, horizon_steps=1000, timing=None)
+        summary = logger.prepare_summary()
+        self.assertEqual(summary["timing_overall"]["total_act_count"], 0)
+        self.assertIsNone(summary["timing_overall"]["weighted_mean_act_ms"])
+        self.assertIsNone(summary["timing_overall"]["max_act_ms"])
+
+    def test_run_integrity_write_failure_prevents_complete(self):
+        logger = LocalExperimentLogger(self.config, runs_root=self.runs_root)
+        rec = create_mock_episode_record(1)
+        logger.log_episode(rec, episode_index=1, protocol_order_index=1, case_id="c1", split="AUDIT", environment_seed=9101, geometry_generation_seed=11, horizon_steps=1000)
+        summary = logger.prepare_summary()
+
+        # Injected failure: writing run_integrity.json fails
+        original_atomic_write = logger._atomic_write_json
+        def failing_write(path, data):
+            if "run_integrity.json" in str(path):
+                raise IOError("Simulated disk error writing run_integrity.json")
+            return original_atomic_write(path, data)
+
+        with patch.object(logger, "_atomic_write_json", side_effect=failing_write):
+            with self.assertRaises(RuntimeError) as ctx:
+                logger.finalize_run(summary_payload=summary)
+            self.assertIn("integrity finalization", str(ctx.exception))
+
+        # Must never remain COMPLETE if integrity finalization fails
+        self.assertEqual(logger.status, RunStatus.FAILED)
+        self.assertFalse(logger.integrity_json_path.exists())
+
+        with open(logger.run_state_path, "r", encoding="utf-8") as f:
+            st = json.load(f)
+        self.assertEqual(st["status"], "FAILED")
+        self.assertEqual(st["failure_category"], "RUN_INTEGRITY_FINALIZATION_ERROR")
+
+    def test_exact_audited_wandb_version_policy(self):
+        core = build_logging_contract_core()
+        wb_contract = core["wandb_backend_contract"]
+        self.assertEqual(wb_contract["pinned_wandb_version"], "0.30.0")
+        self.assertIn("upgrade_policy", wb_contract)
+
 
 if __name__ == "__main__":
     unittest.main()

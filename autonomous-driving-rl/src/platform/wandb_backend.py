@@ -83,6 +83,9 @@ class FakeTrackingBackend:
         self.episodes_logged: List[Dict[str, Any]] = []
         self.summary_logged: Optional[Dict[str, Any]] = None
         self.table_logged: Optional[List[List[Any]]] = None
+        self.table_rows_sent: int = 0
+        self.table_columns_sent: List[str] = []
+        self.summary_metric_keys_sent: List[str] = []
         self.sync_status: WandbSyncStatus = (
             WandbSyncStatus.DISABLED if mode == WandbMode.DISABLED
             else WandbSyncStatus.OFFLINE if mode == WandbMode.OFFLINE
@@ -142,6 +145,8 @@ class FakeTrackingBackend:
         self.episodes_logged.append(event)
         if self.table_logged is not None:
             self.table_logged.append(table_row)
+        self.table_rows_sent = len(self.episodes_logged)
+        self.table_columns_sent = list(WANDB_TABLE_COLUMNS)
 
     def log_summary(self, summary_payload: Dict[str, Any]) -> None:
         if not self.started:
@@ -149,6 +154,28 @@ class FakeTrackingBackend:
         if self.finished:
             raise RuntimeError("Cannot log summary after tracking backend has finished!")
         self.summary_logged = copy.deepcopy(summary_payload)
+
+        # Track explicit summary metric keys projected to backend
+        keys = []
+        overall = summary_payload.get("overall_metrics", {})
+        for k, v in overall.items():
+            if v is not None:
+                keys.append(f"diagnostic/{k}" if k in ("episode_return", "mean_episode_return") else f"metrics/overall/{k}")
+        tier_metrics = summary_payload.get("tier_metrics", {})
+        for t_name, card in tier_metrics.items():
+            for k, v in card.items():
+                if v is not None:
+                    keys.append(f"diagnostic/tier_{t_name}_{k}" if k in ("episode_return", "mean_episode_return") else f"metrics/tier/{t_name}/{k}")
+        macro = summary_payload.get("macro_metrics")
+        if macro:
+            for k, v in macro.items():
+                if v is not None:
+                    keys.append(f"metrics/macro/{k}")
+        timing_ov = summary_payload.get("timing_overall", {})
+        for k, v in timing_ov.items():
+            if v is not None:
+                keys.append(f"timing/{k}")
+        self.summary_metric_keys_sent = sorted(keys)
 
     def finish(self, status: RunStatus) -> Dict[str, Any]:
         if not self.started:
@@ -215,6 +242,9 @@ class WandbBackend:
         )
         self.table_data: List[List[Any]] = []
         self.table_columns: List[str] = list(WANDB_TABLE_COLUMNS)
+        self.table_rows_sent: int = 0
+        self.table_columns_sent: List[str] = []
+        self.summary_metric_keys_sent: List[str] = []
 
     def _restore_env(self) -> None:
         """Restores previous WANDB_MODE environment state safely."""
@@ -323,6 +353,8 @@ class WandbBackend:
             # Step axis is logical episode index
             self.wandb_run.log(event, step=step_idx)
             self.table_data.append(table_row)
+            self.table_rows_sent = len(self.table_data)
+            self.table_columns_sent = list(self.table_columns)
         except Exception as e:
             self.sync_status = WandbSyncStatus.FAILED
             sanitized_err = sanitize_error_message(e)
@@ -340,36 +372,42 @@ class WandbBackend:
                 table = wandb.Table(columns=self.table_columns, data=self.table_data)
                 self.wandb_run.log({"evaluation_episodes": table})
 
+            keys_sent = []
             # 2. Mirror overall metrics
             overall = summary_payload.get("overall_metrics", {})
             for k, v in overall.items():
                 if v is not None:
-                    if k in ("episode_return", "mean_episode_return"):
-                        self.wandb_run.summary[f"diagnostic/{k}"] = v
-                    else:
-                        self.wandb_run.summary[f"metrics/overall/{k}"] = v
+                    key = f"diagnostic/{k}" if k in ("episode_return", "mean_episode_return") else f"metrics/overall/{k}"
+                    self.wandb_run.summary[key] = v
+                    keys_sent.append(key)
 
             # 3. Mirror per-tier metrics
             tier_metrics = summary_payload.get("tier_metrics", {})
             for t_name, card in tier_metrics.items():
                 for k, v in card.items():
                     if v is not None:
-                        if k in ("episode_return", "mean_episode_return"):
-                            self.wandb_run.summary[f"diagnostic/tier_{t_name}_{k}"] = v
-                        else:
-                            self.wandb_run.summary[f"metrics/tier/{t_name}/{k}"] = v
+                        key = f"diagnostic/tier_{t_name}_{k}" if k in ("episode_return", "mean_episode_return") else f"metrics/tier/{t_name}/{k}"
+                        self.wandb_run.summary[key] = v
+                        keys_sent.append(key)
 
             # 4. Mirror macro metrics
             macro = summary_payload.get("macro_metrics")
             if macro:
                 for k, v in macro.items():
                     if v is not None:
-                        self.wandb_run.summary[f"metrics/macro/{k}"] = v
+                        key = f"metrics/macro/{k}"
+                        self.wandb_run.summary[key] = v
+                        keys_sent.append(key)
 
             # 5. Timing summary
             timing_ov = summary_payload.get("timing_overall", {})
             for k, v in timing_ov.items():
-                self.wandb_run.summary[f"timing/{k}"] = v
+                if v is not None:
+                    key = f"timing/{k}"
+                    self.wandb_run.summary[key] = v
+                    keys_sent.append(key)
+
+            self.summary_metric_keys_sent = sorted(keys_sent)
 
         except Exception as e:
             self.sync_status = WandbSyncStatus.FAILED

@@ -278,6 +278,8 @@
       "ONLINE"
     ],
     "failure_policy": "NON-FATAL to local scientific experiment if local logging is healthy",
+    "pinned_wandb_version": "0.30.0",
+    "upgrade_policy": "Any subsequent W&B SDK upgrade requires explicit Gate-7 lifecycle and teardown re-audit.",
     "table_name": "evaluation_episodes",
     "table_columns": [
       "episode_index",

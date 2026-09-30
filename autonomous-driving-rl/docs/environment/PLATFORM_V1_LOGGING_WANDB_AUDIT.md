@@ -186,16 +186,16 @@ To preserve scientific provenance without mutating previously locked gates:
 - Gate-5 `benchmark_contract_sha256`: `9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77`
 - Gate-6 `agent_contract_sha256`: `53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb`
 - Gate-6 `platform_runtime_contract_sha256`: `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad`
-- Gate-7 `logging_contract_sha256`: `312852c3fa498a3bd152799a02ad52b34c9b7b839fec0c3405ea613c56806f74`
-- Gate-7 `platform_observability_contract_sha256`: `cedf032f9430370c1cc14cb262868a115609176672cd46bda43f0210308ae51d`
+- Gate-7 `logging_contract_sha256`: `0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2`
+- Gate-7 `platform_observability_contract_sha256`: `f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581`
 
 ```json
 {
   "gate5_benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
   "gate6_agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
   "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
-  "logging_contract_sha256": "312852c3fa498a3bd152799a02ad52b34c9b7b839fec0c3405ea613c56806f74",
-  "platform_observability_contract_sha256": "cedf032f9430370c1cc14cb262868a115609176672cd46bda43f0210308ae51d"
+  "logging_contract_sha256": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+  "platform_observability_contract_sha256": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581"
 }
 ```
 
@@ -205,7 +205,11 @@ $$\text{platform\_observability\_contract\_sha256} = \text{SHA256}(\text{canonic
 
 ## 12. Unit Tests & Verification Summary
 
-Implemented in `tests/test_logging_contract.py` (**43 pure unit tests** executing in $<12.0\text{ s}$ without network dependencies or W&B subprocess spawns):
+Implemented in `tests/test_logging_contract.py` (**47 pure unit tests** executing in $<14.0\text{ s}$ without network dependencies or W&B subprocess spawns):
+- **Technical Failure Sanitization:** Verified that sensitive details (user home directories, repository absolute paths, ephemeral API keys, Bearer tokens) are redacted from `technical_failures.jsonl`, and that the `reason` field is strictly validated against `TECHNICAL_FAILURE_CATEGORIES`.
+- **Undefined Timing Semantics:** Verified that missing `EpisodeTimingRecord` produces `mean_act_ms = None` (never `0.0`), and that runs with zero decision cycles produce `weighted_mean_act_ms = None` and `max_act_ms = None`.
+- **Integrity-Dependent Completion:** Verified that injected failures during `run_integrity.json` serialization cause the run state to durably transition to `FAILED` with category `RUN_INTEGRITY_FINALIZATION_ERROR`, never leaving the run as `COMPLETE`.
+- **Subprocess Service Teardown Validation:** Verified via standalone child process that `wandb.teardown(exit_code=0)` completes cleanly without protobuf integer/boolean conversion exceptions or atexit tracebacks.
 - **Benchmark Metadata Strictness:** Verified that missing `episode_index`, `protocol_order_index`, `case_id`, `split`, `geometry_generation_seed`, `environment_seed`, `horizon_steps` or non-positive indices fail loudly on `TEST_EVALUATION` and `VALIDATION_EVALUATION`.
 - **Seed Semantics:** Verified that `agent_seed=0` is strictly preserved and never treated as None.
 - **Backend Boundary Contract:** Verified that `TrackingBackend` accepts `EpisodeLogRowV1` only, and rejects raw `EpisodeRecord` and dicts with `TypeError`.
@@ -219,7 +223,7 @@ Implemented in `tests/test_logging_contract.py` (**43 pure unit tests** executin
 ---
 
 ## 13. Regression & Integrity Validation
-- Pure unit tests: **126 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 37, `test_logging_contract`: 43).
+- Pure unit tests: **130 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 37, `test_logging_contract`: 47).
 - `CourseEnvV1`: Reset observation shape `(35,)` verified.
 - `evaluate_random.py`: Completed 20 evaluation episodes cleanly.
 - Gates 1 through 6 contracts remained completely untouched.

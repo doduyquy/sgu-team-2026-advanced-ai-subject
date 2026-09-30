@@ -91,6 +91,7 @@ from src.platform.experiment_logging import (
     RunManifestV1,
     RunStateV1,
     RunStatus,
+    TECHNICAL_FAILURE_CATEGORIES,
     WANDB_TABLE_COLUMNS,
     WandbMode,
     WandbSyncStatus,
@@ -99,6 +100,7 @@ from src.platform.experiment_logging import (
     capture_git_provenance,
     get_utc_now_iso,
     sanitize_error_message,
+    sanitize_technical_failure_payload,
 )
 from src.platform.wandb_backend import (
     FakeTrackingBackend,
@@ -155,6 +157,7 @@ __all__ = [
     "SplitRole",
     "StatefulCounterFixtureAgent",
     "TaskContextV1",
+    "TECHNICAL_FAILURE_CATEGORIES",
     "TechnicalFailureReason",
     "TerminalReason",
     "TrackingBackend",
@@ -188,5 +191,6 @@ __all__ = [
     "get_action_adapter",
     "get_utc_now_iso",
     "sanitize_error_message",
+    "sanitize_technical_failure_payload",
     "validate_split_integrity",
 ]

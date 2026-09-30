@@ -288,6 +288,52 @@ WANDB_SUMMARY_MAPPING_RULES: Dict[str, str] = {
     "timing": "timing/<metric>",
 }
 
+TECHNICAL_FAILURE_CATEGORIES = (
+    "AGENT_EXCEPTION",
+    "INVALID_AGENT_ACTION",
+    "ACTION_ADAPTER_ERROR",
+    "INVALID_AGENT_INPUT_CONSUMPTION",
+    "LOCAL_LOG_WRITE_ERROR",
+    "WANDB_INIT_ERROR",
+    "WANDB_LOG_ERROR",
+    "WANDB_SYNC_ERROR",
+)
+
+
+def sanitize_technical_failure_payload(payload: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """
+    Validates and sanitizes technical failure payloads before local persistence.
+    Enforces bounded stable failure category ('reason') and redacts free-text messages.
+    """
+    if payload is None:
+        return None
+    if not isinstance(payload, dict):
+        raise TypeError(f"technical_failure must be a dictionary, got {type(payload).__name__}")
+
+    raw_reason = payload.get("reason", "")
+    reason_str = raw_reason.value if hasattr(raw_reason, "value") else str(raw_reason)
+
+    if reason_str not in TECHNICAL_FAILURE_CATEGORIES:
+        raise ValueError(
+            f"Invalid technical failure category '{reason_str}'. "
+            f"Must be one of {list(TECHNICAL_FAILURE_CATEGORIES)}"
+        )
+
+    msg = payload.get("message") or payload.get("details") or ""
+    sanitized_msg = sanitize_error_message(msg)
+
+    sanitized: Dict[str, Any] = {
+        "reason": reason_str,
+        "message": sanitized_msg
+    }
+
+    for k in ("episode_index", "step_index", "timestamp_utc"):
+        if k in payload:
+            sanitized[k] = payload[k]
+
+    return sanitized
+
+
 EPISODE_CSV_COLUMNS = [
     "episode_index", "protocol_order_index", "case_id", "split", "tier",
     "sequence", "geometry_generation_seed", "environment_seed", "horizon_steps", "agent_seed",
@@ -383,6 +429,7 @@ class EpisodeLogRowV1:
 
         timeout = getattr(record, "truncated", False) or getattr(record, "timeout", False)
         prim_reason = record.primary_reason.value if hasattr(record.primary_reason, "value") else str(record.primary_reason)
+        sanitized_tf = sanitize_technical_failure_payload(technical_failure)
 
         return cls(
             episode_index=int(episode_index),
@@ -414,8 +461,8 @@ class EpisodeLogRowV1:
             crash_sidewalk=bool(getattr(record, "raw_crash_sidewalk", False)),
             out_of_road=bool(getattr(record, "raw_out_of_road", False)),
             timeout=bool(timeout),
-            has_technical_failure=technical_failure is not None,
-            technical_failure_reason=technical_failure.get("reason", "") if technical_failure else ""
+            has_technical_failure=sanitized_tf is not None,
+            technical_failure_reason=sanitized_tf["reason"] if sanitized_tf else ""
         )
 
     def to_csv_dict(self) -> Dict[str, Any]:
@@ -461,7 +508,7 @@ class EpisodeLogRowV1:
         return event
 
     def to_wandb_table_row(self, timing: Optional["EpisodeTimingRecord"] = None) -> List[Any]:
-        mean_t = timing.mean_act_ms if timing else 0.0
+        mean_t = timing.mean_act_ms if timing is not None else None
         return [
             self.episode_index,
             self.protocol_order_index,
@@ -963,10 +1010,11 @@ class LocalExperimentLogger:
 
         # 3. Log technical failure if present
         if technical_failure:
-            self.technical_failures.append(technical_failure)
+            sanitized_tf = sanitize_technical_failure_payload(technical_failure)
+            self.technical_failures.append(sanitized_tf)
             try:
                 with open(self.failures_jsonl_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps(technical_failure, sort_keys=True) + "\n")
+                    f.write(json.dumps(sanitized_tf, sort_keys=True) + "\n")
                     f.flush()
             except Exception as e:
                 self.status = RunStatus.FAILED
@@ -998,7 +1046,8 @@ class LocalExperimentLogger:
 
         total_acts = sum(t.act_count for t in self.recorded_timings)
         total_act_time_ms = sum(t.total_act_ms for t in self.recorded_timings)
-        weighted_mean_act_ms = float(total_act_time_ms / total_acts) if total_acts > 0 else 0.0
+        weighted_mean_act_ms = float(total_act_time_ms / total_acts) if total_acts > 0 else None
+        max_act_ms = float(max([t.max_act_ms for t in self.recorded_timings])) if (self.recorded_timings and total_acts > 0) else None
 
         return {
             "run_id": self.run_id,
@@ -1011,7 +1060,7 @@ class LocalExperimentLogger:
             "timing_overall": {
                 "total_act_count": total_acts,
                 "weighted_mean_act_ms": weighted_mean_act_ms,
-                "max_act_ms": float(max([t.max_act_ms for t in self.recorded_timings])) if self.recorded_timings else 0.0,
+                "max_act_ms": max_act_ms,
             },
             "technical_failure_count": len(self.technical_failures),
         }
@@ -1025,10 +1074,10 @@ class LocalExperimentLogger:
         """
         Finalizes the experiment:
         1. Verifies expected episode count if predeclared.
-        2. Uses single prepared summary payload to atomically persist summary.json.
-        3. Persists wandb_sync.json.
-        4. Computes semantic content hashes (including wandb_sync_sha256) and saves run_integrity.json.
-        5. Updates run_state.json to COMPLETE.
+        2. Atomically persists summary.json and wandb_sync.json.
+        3. Computes semantic content hashes (including wandb_sync_sha256) and saves run_integrity.json.
+        4. Updates run_state.json to COMPLETE.
+        A run must NEVER remain COMPLETE if required integrity finalization fails.
         """
         if self.status == RunStatus.FAILED:
             raise RuntimeError(f"Cannot complete run '{self.run_id}': run status is already FAILED!")
@@ -1047,56 +1096,78 @@ class LocalExperimentLogger:
                 self._persist_run_state(failure_category="EPISODE_COUNT_MISMATCH", failure_message=msg)
                 raise ValueError(msg)
 
-        # Authoritative summary: strictly consume passed summary_payload
-        summary = summary_payload
+        try:
+            # Authoritative summary: strictly consume passed summary_payload
+            summary = summary_payload
 
-        # Atomically write summary.json
-        self._atomic_write_json(self.summary_json_path, summary)
+            # Atomically write summary.json
+            self._atomic_write_json(self.summary_json_path, summary)
 
-        # Save wandb_sync.json
-        sync_data = wandb_sync_info or {
-            "mode": self.config.wandb_mode.value,
-            "sync_status": WandbSyncStatus.DISABLED.value if self.config.wandb_mode == WandbMode.DISABLED else WandbSyncStatus.OFFLINE.value,
-            "wandb_run_id": None,
-            "wandb_run_url": None,
-            "configured_project": self.config.wandb_project,
-            "configured_entity": self.config.wandb_entity,
-            "resolved_project": None,
-            "resolved_entity": None
-        }
-        self._atomic_write_json(self.wandb_sync_json_path, sync_data)
+            # Save wandb_sync.json
+            sync_data = wandb_sync_info or {
+                "mode": self.config.wandb_mode.value,
+                "sync_status": WandbSyncStatus.DISABLED.value if self.config.wandb_mode == WandbMode.DISABLED else WandbSyncStatus.OFFLINE.value,
+                "wandb_run_id": None,
+                "wandb_run_url": None,
+                "configured_project": self.config.wandb_project,
+                "configured_entity": self.config.wandb_entity,
+                "resolved_project": None,
+                "resolved_entity": None
+            }
+            self._atomic_write_json(self.wandb_sync_json_path, sync_data)
 
-        # Finalize run state
-        self.status = RunStatus.COMPLETE
-        self._persist_run_state(finished=True)
+            # Stage status as COMPLETE for state hashing
+            self.status = RunStatus.COMPLETE
+            self._persist_run_state(finished=True)
 
-        # Compute semantic integrity fingerprints
-        manifest_hash = canonical_json_file_sha256(self.manifest_path)
-        episodes_hash = canonical_csv_file_sha256(self.episodes_csv_path)
-        summary_hash = canonical_json_file_sha256(self.summary_json_path)
-        timing_hash = canonical_csv_file_sha256(self.timing_csv_path)
-        run_state_hash = canonical_json_file_sha256(self.run_state_path)
-        wandb_sync_hash = canonical_json_file_sha256(self.wandb_sync_json_path)
-        failures_hash = None
-        if self.failures_jsonl_path.exists():
-            with open(self.failures_jsonl_path, "rb") as f:
-                failures_hash = hashlib.sha256(f.read()).hexdigest()
+            # Compute semantic integrity fingerprints
+            manifest_hash = canonical_json_file_sha256(self.manifest_path)
+            episodes_hash = canonical_csv_file_sha256(self.episodes_csv_path)
+            summary_hash = canonical_json_file_sha256(self.summary_json_path)
+            timing_hash = canonical_csv_file_sha256(self.timing_csv_path)
+            run_state_hash = canonical_json_file_sha256(self.run_state_path)
+            wandb_sync_hash = canonical_json_file_sha256(self.wandb_sync_json_path)
+            failures_hash = None
+            if self.failures_jsonl_path.exists():
+                with open(self.failures_jsonl_path, "rb") as f:
+                    failures_hash = hashlib.sha256(f.read()).hexdigest()
 
-        integrity_record = RunIntegrityRecord(
-            run_id=self.run_id,
-            experiment_config_sha256=self.config.compute_config_sha256(),
-            run_manifest_sha256=manifest_hash,
-            episodes_sha256=episodes_hash,
-            summary_sha256=summary_hash,
-            timing_sha256=timing_hash,
-            run_state_sha256=run_state_hash,
-            wandb_sync_sha256=wandb_sync_hash,
-            technical_failures_sha256=failures_hash,
-            finalized_at_utc=get_utc_now_iso()
-        )
+            integrity_record = RunIntegrityRecord(
+                run_id=self.run_id,
+                experiment_config_sha256=self.config.compute_config_sha256(),
+                run_manifest_sha256=manifest_hash,
+                episodes_sha256=episodes_hash,
+                summary_sha256=summary_hash,
+                timing_sha256=timing_hash,
+                run_state_sha256=run_state_hash,
+                wandb_sync_sha256=wandb_sync_hash,
+                technical_failures_sha256=failures_hash,
+                finalized_at_utc=get_utc_now_iso()
+            )
 
-        self._atomic_write_json(self.integrity_json_path, integrity_record.to_dict())
-        return integrity_record
+            # Atomically persist run_integrity.json
+            self._atomic_write_json(self.integrity_json_path, integrity_record.to_dict())
+            return integrity_record
+
+        except Exception as e:
+            # Clean up partial / invalid integrity artifact if present
+            if self.integrity_json_path.exists():
+                try:
+                    self.integrity_json_path.unlink(missing_ok=True)
+                except Exception:
+                    pass
+
+            # A run must NEVER remain COMPLETE if required integrity finalization fails
+            self.status = RunStatus.FAILED
+            sanitized_err = sanitize_error_message(e)
+            self._persist_run_state(
+                finished=True,
+                failure_category="RUN_INTEGRITY_FINALIZATION_ERROR",
+                failure_message=sanitized_err
+            )
+            raise RuntimeError(
+                f"Failed to complete run '{self.run_id}' during integrity finalization: {sanitized_err}"
+            ) from e
 
     def mark_interrupted(self, reason: str = "Process interrupted") -> None:
         """Transitions run status to INTERRUPTED and persists run_state.json durably."""
@@ -1165,6 +1236,8 @@ def build_logging_contract_core(
     default_wandb = {
         "modes": [e.value for e in WandbMode],
         "failure_policy": "NON-FATAL to local scientific experiment if local logging is healthy",
+        "pinned_wandb_version": "0.30.0",
+        "upgrade_policy": "Any subsequent W&B SDK upgrade requires explicit Gate-7 lifecycle and teardown re-audit.",
         "table_name": "evaluation_episodes",
         "table_columns": list(WANDB_TABLE_COLUMNS),
         "step_axis": "episode_index",
