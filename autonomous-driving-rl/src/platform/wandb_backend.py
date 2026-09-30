@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from enum import Enum
 import math
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, Tuple, Union, runtime_checkable
 
 import numpy as np
@@ -434,7 +435,10 @@ class WandbBackend:
             exit_code = 0 if status == RunStatus.COMPLETE else 1
             self.wandb_run.finish(exit_code=exit_code)
             if self.sync_status != WandbSyncStatus.FAILED:
-                self.sync_status = WandbSyncStatus.SYNCED
+                if self.mode == WandbMode.OFFLINE:
+                    self.sync_status = WandbSyncStatus.OFFLINE
+                else:
+                    self.sync_status = WandbSyncStatus.SYNCED
             print(f"[WANDB] Run finalized: {self.run_id} ({self.sync_status.value})")
         except Exception as e:
             self.sync_status = WandbSyncStatus.FAILED

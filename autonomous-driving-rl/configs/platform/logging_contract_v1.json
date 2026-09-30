@@ -5,6 +5,23 @@
     "status": "LOCKED-FOR-PLATFORM-V1",
     "gate": "Gate 7 (Research Platform V1)"
   },
+  "operational_policies": {
+    "experiment_run_granularity": "ONE_RUN_PER_EVALUATION_SUITE",
+    "one_wandb_run_per_experiment_run": true,
+    "run_lifecycle_transitions": [
+      "INITIALIZING -> RUNNING -> COMPLETE",
+      "INITIALIZING / RUNNING -> FAILED",
+      "INITIALIZING / RUNNING -> INTERRUPTED"
+    ],
+    "dirty_worktree_policy": "FAIL_BY_DEFAULT_FOR_BENCHMARK_OVERRIDE_MARKS_NONCANONICAL",
+    "canonical_run_policy": "CANONICAL_REQUIRES_CLEAN_WORKTREE_VERIFIED_PINS_LOCKED_CONTRACTS",
+    "resume_policy": "DISABLED",
+    "duplicate_run_policy": "FAIL_LOUDLY_NO_OVERWRITE_NO_APPEND",
+    "local_failure_policy": "FATAL",
+    "wandb_failure_policy": "NON_FATAL_IF_LOCAL_HEALTHY",
+    "backend_input_rule": "EPISODE_LOG_ROW_V1_ONLY",
+    "interruption_policy": "GRACEFUL_TRANSITION_TO_INTERRUPTED_UNEXPECTED_DEATH_LEAVES_RUNNING"
+  },
   "local_record_contract": {
     "root_directory_pattern": "runs/<run_id>",
     "duplicate_run_protection": "fail loudly if run_id directory exists",
@@ -45,6 +62,7 @@
       "manifest_name",
       "expected_episode_count",
       "allow_dirty_worktree_override",
+      "allow_unverified_env_override",
       "wandb_mode",
       "wandb_project",
       "wandb_entity",
@@ -125,6 +143,7 @@
       "summary_sha256",
       "timing_sha256",
       "run_state_sha256",
+      "wandb_sync_sha256",
       "technical_failures_sha256",
       "finalized_at_utc"
     ]
@@ -258,7 +277,40 @@
     ],
     "failure_policy": "NON-FATAL to local scientific experiment if local logging is healthy",
     "table_name": "evaluation_episodes",
+    "table_columns": [
+      "episode_index",
+      "protocol_order_index",
+      "case_id",
+      "split",
+      "tier",
+      "sequence",
+      "geometry_generation_seed",
+      "environment_seed",
+      "clean_success",
+      "final_route_completion",
+      "max_route_completion",
+      "primary_terminal_reason",
+      "episode_steps",
+      "episode_time_s",
+      "time_to_clean_success_s",
+      "mean_act_ms",
+      "episode_return"
+    ],
     "step_axis": "episode_index",
+    "episode_event_namespaces": [
+      "eval",
+      "flags",
+      "diagnostic",
+      "technical_failure",
+      "timing"
+    ],
+    "summary_namespaces": [
+      "metrics/overall",
+      "metrics/tier",
+      "metrics/macro",
+      "diagnostic",
+      "timing"
+    ],
     "privacy_settings": {
       "save_code": false,
       "disable_git": true,
@@ -271,12 +323,20 @@
     "echo_rule": "STRICTLY PROHIBITED in console or markdown artifacts"
   },
   "privacy_policy": {
-    "excluded_identifiers": [
-      "username",
-      "home directory",
-      "full local repository paths",
-      "machine hostname",
-      "IP address"
+    "forbidden_private_identifiers": [
+      "os_username",
+      "user_home_directory",
+      "machine_hostname",
+      "ip_address",
+      "absolute_local_paths"
+    ],
+    "allowed_remote_tracking_metadata": [
+      "configured_project",
+      "configured_entity",
+      "resolved_project",
+      "resolved_entity",
+      "wandb_run_id",
+      "wandb_run_url"
     ]
   },
   "integrity_policy": {
@@ -287,6 +347,7 @@
       "episodes.csv",
       "summary.json",
       "timing.csv",
+      "wandb_sync.json",
       "technical_failures.jsonl"
     ]
   }

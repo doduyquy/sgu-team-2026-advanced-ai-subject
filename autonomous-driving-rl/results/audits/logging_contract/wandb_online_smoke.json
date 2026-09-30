@@ -1,15 +1,5 @@
 {
-  "performed": true,
-  "status": "SYNCED",
-  "configured_project": "sgu-autonomous-driving-rl",
-  "configured_entity": null,
-  "resolved_project": "sgu-autonomous-driving-rl",
-  "resolved_entity": "phucga15062005",
-  "wandb_run_id": "audit_online_34188eda",
-  "wandb_run_url": "https://wandb.ai/phucga15062005/sgu-autonomous-driving-rl/runs/audit_online_34188eda",
-  "mode": "ONLINE",
-  "episodes_logged": 2,
-  "table_logged": true,
-  "summary_keys_verified": true,
-  "credential_policy": "STRICT_EPHEMERAL_COMPLIANCE (Zero secrets logged or persisted)"
+  "performed": false,
+  "status": "SKIPPED_NO_CREDENTIALS",
+  "notes": "WANDB_API_KEY environment variable not set; online smoke skipped."
 }

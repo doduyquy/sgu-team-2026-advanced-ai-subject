@@ -3,6 +3,8 @@
   "table_rows_local": 4,
   "table_rows_wandb_mirror": 4,
   "table_row_count_parity": true,
+  "cell_by_cell_parity_verified": true,
+  "cell_mismatches_count": 0,
   "overall_metrics_checked_count": 29,
   "all_metrics_parity_verified": true,
   "protocol_order_index_preserved": true,

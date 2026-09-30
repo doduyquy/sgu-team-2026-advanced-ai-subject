@@ -160,17 +160,21 @@ def audit_secret_scan(project_root):
     secrets_found = []
     # Known secret prefix patterns (checked without echoing content)
     patterns = ["wandb_v1_", "WANDB_API_KEY=", "api_key="]
+    env_key = os.environ.get("WANDB_API_KEY")
 
     for p in gate7_files:
         if p.exists():
             with open(p, "r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
             for idx, line in enumerate(lines, 1):
-                if "patterns =" in line or "pat in" in line or "pat.lower()" in line:
+                if "patterns =" in line or "pat in" in line or "pat.lower()" in line or "re.sub" in line:
                     continue
                 for pat in patterns:
                     if pat.lower() in line.lower() and "os.environ" not in line and "credential_source" not in line and "forbidden" not in line:
                         secrets_found.append(f"{p.name}:{idx}")
+                # Also check if the actual in-memory API key was inadvertently written to disk
+                if env_key and len(env_key) > 8 and env_key in line:
+                    secrets_found.append(f"{p.name}:{idx} (ACTUAL_ENV_KEY_LEAKED)")
 
     assert len(secrets_found) == 0, f"Potential secret detected in files: {secrets_found}"
     print(f"  [OK] Zero credentials or API keys found in Gate-7 files ({len(gate7_files)} files scanned).")
@@ -222,29 +226,11 @@ def audit_local_run_structure_and_parity(results_dir, contract_hashes):
         )
         backend.log_episode(log_row, timing=timing)
 
-    # Compute local summary and mirror to backend
-    overall_metrics = compute_aggregate_metrics(logger.recorded_episodes)
-    tier_cards = {t: compute_aggregate_metrics([e for e in logger.recorded_episodes if e.tier == t]) for t in tiers}
-    macro_metrics = compute_macro_metrics(tier_cards)
-
-    local_summary_payload = {
-        "run_id": logger.run_id,
-        "run_kind": config.run_kind.value,
-        "total_episodes": len(logger.recorded_rows),
-        "overall_metrics": overall_metrics.to_dict(),
-        "tier_metrics": {t: c.to_dict() for t, c in tier_cards.items()},
-        "macro_metrics": macro_metrics,
-        "timing_overall": {
-            "total_act_count": sum(t.act_count for t in logger.recorded_timings),
-            "weighted_mean_act_ms": float(sum(t.total_act_ms for t in logger.recorded_timings) / sum(t.act_count for t in logger.recorded_timings)),
-            "max_act_ms": float(max(t.max_act_ms for t in logger.recorded_timings)),
-        },
-        "technical_failure_count": 0,
-    }
-
+    # Compute local summary using logger.prepare_summary() and mirror to backend
+    local_summary_payload = logger.prepare_summary()
     backend.log_summary(local_summary_payload)
     sync_info = backend.finish(RunStatus.COMPLETE)
-    integrity = logger.finalize_run(sync_info)
+    integrity = logger.finalize_run(local_summary_payload, sync_info)
 
     # 1. Structure JSON
     structure_info = {
@@ -309,11 +295,51 @@ def audit_local_run_structure_and_parity(results_dir, contract_hashes):
     table_parity = len(csv_rows) == len(backend.table_logged)
     assert table_parity is True
 
+    # Parity check between episodes.csv and backend.table_logged
+    # backend.table_logged uses W&B table columns matching EpisodeLogRowV1.to_wandb_table_row()
+    table_columns = [
+        "episode_index", "protocol_order_index", "case_id", "split", "tier",
+        "sequence", "geometry_generation_seed", "environment_seed",
+        "clean_success", "final_route_completion", "max_route_completion",
+        "primary_terminal_reason", "episode_steps", "episode_time_s",
+        "time_to_clean_success_s", "mean_act_ms", "episode_return"
+    ]
+    cell_mismatches = []
+    for row_idx, (csv_r, table_r_list) in enumerate(zip(csv_rows, backend.table_logged)):
+        table_r = dict(zip(table_columns, table_r_list))
+        for col_name, tab_val in table_r.items():
+            if col_name == "mean_act_ms":
+                # timing metric is matched against timing record
+                continue
+            csv_val = csv_r[col_name]
+            if tab_val is None:
+                if csv_val != "":
+                    cell_mismatches.append(f"Row {row_idx}, Col {col_name}: CSV='{csv_val}' != Table=None")
+            elif isinstance(tab_val, bool):
+                csv_bool = csv_val.lower() == "true"
+                if csv_bool != tab_val:
+                    cell_mismatches.append(f"Row {row_idx}, Col {col_name}: CSV={csv_val} != Table={tab_val}")
+            elif isinstance(tab_val, (int, float)):
+                try:
+                    c_num = float(csv_val)
+                    if abs(c_num - float(tab_val)) > 1e-5:
+                        cell_mismatches.append(f"Row {row_idx}, Col {col_name}: CSV={csv_val} != Table={tab_val}")
+                except ValueError:
+                    if str(csv_val) != str(tab_val):
+                        cell_mismatches.append(f"Row {row_idx}, Col {col_name}: CSV={csv_val} != Table={tab_val}")
+            else:
+                if str(csv_val) != str(tab_val):
+                    cell_mismatches.append(f"Row {row_idx}, Col {col_name}: CSV={csv_val} != Table={tab_val}")
+
+    assert len(cell_mismatches) == 0, f"Cell parity failures between CSV and Table: {cell_mismatches}"
+
     parity_info = {
         "run_id": logger.run_id,
         "table_rows_local": len(csv_rows),
         "table_rows_wandb_mirror": len(backend.table_logged),
         "table_row_count_parity": table_parity,
+        "cell_by_cell_parity_verified": True,
+        "cell_mismatches_count": len(cell_mismatches),
         "overall_metrics_checked_count": len(metric_parity_assertions),
         "all_metrics_parity_verified": all(m[1] for m in metric_parity_assertions),
         "protocol_order_index_preserved": all(int(csv_rows[i]["protocol_order_index"]) == (i + 1) for i in range(len(csv_rows))),
@@ -343,8 +369,48 @@ def audit_wandb_modes_and_failures(results_dir, contract_hashes):
         "verdict": "VERIFIED_STANDALONE"
     })
 
-    # 2. Mode: OFFLINE
+    # 2. Mode: OFFLINE (Execute real offline run lifecycle)
+    temp_offline = tempfile.TemporaryDirectory()
+    offline_logger = LocalExperimentLogger(
+        ExperimentRunConfig(
+            run_kind=RunKind.AUDIT,
+            benchmark_contract_sha256=GATE5_LOCKED_BENCHMARK_HASH,
+            agent_contract_sha256=GATE6_LOCKED_AGENT_HASH,
+            platform_runtime_contract_sha256=GATE6_LOCKED_RUNTIME_HASH,
+            logging_contract_sha256=contract_hashes["logging_contract_sha256"],
+            platform_observability_contract_sha256=contract_hashes["platform_observability_contract_sha256"],
+            agent_id="test_offline_agent",
+            agent_version="1.0.0",
+            input_profile_id="STATE_DECISION_V1",
+            action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic",
+            stateful_within_episode=False,
+            allow_dirty_worktree_override=True,
+            wandb_mode=WandbMode.OFFLINE
+        ),
+        runs_root=Path(temp_offline.name),
+        custom_run_id="run_offline_lifecycle"
+    )
     b_offline = WandbBackend(mode=WandbMode.OFFLINE)
+    b_offline.start_run(offline_logger.manifest, offline_logger.config)
+    row_off = offline_logger.log_episode(
+        create_mock_episode_record(1),
+        episode_index=1,
+        protocol_order_index=1,
+        case_id="offline_c1",
+        split="TEST",
+        environment_seed=9101,
+        geometry_generation_seed=11,
+        horizon_steps=1000
+    )
+    b_offline.log_episode(row_off)
+    off_summary = offline_logger.prepare_summary()
+    b_offline.log_summary(off_summary)
+    off_sync_meta = b_offline.finish(RunStatus.COMPLETE)
+    offline_logger.finalize_run(off_summary, off_sync_meta)
+    assert b_offline.sync_status == WandbSyncStatus.OFFLINE
+    temp_offline.cleanup()
+
     mode_rows.append({
         "mode": WandbMode.OFFLINE.value,
         "requires_network": False,
@@ -569,8 +635,10 @@ def audit_simulator_trace_invariance(results_dir, project_root, contract_hashes)
         rec_ep = create_mock_episode_record(1)
         row = logger.log_episode(rec_ep, episode_index=1, protocol_order_index=1, case_id="c1", split="VALIDATION", environment_seed=5101, geometry_generation_seed=13, horizon_steps=1000)
         backend.log_episode(row)
-        backend.finish(RunStatus.COMPLETE)
-        logger.finalize_run()
+        summary_payload = logger.prepare_summary()
+        backend.log_summary(summary_payload)
+        sync_meta = backend.finish(RunStatus.COMPLETE)
+        logger.finalize_run(summary_payload, sync_meta)
 
         traces[mode] = {
             "obs_init_hash": obs_init_hash,
@@ -671,21 +739,7 @@ def audit_online_wandb_smoke(results_dir, project_root, contract_hashes):
             backend.log_episode(log_row, timing=timing)
 
         # Compute authoritative local summary
-        overall_metrics = compute_aggregate_metrics(logger.recorded_episodes)
-        local_summary_payload = {
-            "run_id": logger.run_id,
-            "run_kind": config.run_kind.value,
-            "total_episodes": len(logger.recorded_rows),
-            "overall_metrics": overall_metrics.to_dict(),
-            "tier_metrics": {},
-            "macro_metrics": None,
-            "timing_overall": {
-                "total_act_count": sum(t.act_count for t in logger.recorded_timings),
-                "weighted_mean_act_ms": float(sum(t.total_act_ms for t in logger.recorded_timings) / sum(t.act_count for t in logger.recorded_timings)),
-                "max_act_ms": float(max(t.max_act_ms for t in logger.recorded_timings)),
-            },
-            "technical_failure_count": len(logger.technical_failures),
-        }
+        local_summary_payload = logger.prepare_summary()
 
         # Mirror exact local summary to W&B
         backend.log_summary(local_summary_payload)
@@ -694,15 +748,17 @@ def audit_online_wandb_smoke(results_dir, project_root, contract_hashes):
         sync_meta = backend.finish(RunStatus.COMPLETE)
 
         # Finalize local run with sync metadata
-        logger.finalize_run(sync_meta)
+        logger.finalize_run(local_summary_payload, sync_meta)
 
         # Verify actual state without hardcoding
         table_uploaded = (len(backend.table_data) == 2)
         summary_logged_verified = (backend.sync_status == WandbSyncStatus.SYNCED)
+        is_success = (backend.sync_status == WandbSyncStatus.SYNCED)
 
         smoke_report = {
             "performed": True,
-            "status": backend.sync_status.value,
+            "status": "PASSED" if is_success else "DEGRADED_UNAUTHENTICATED",
+            "sync_status": backend.sync_status.value,
             "configured_project": backend.configured_project,
             "configured_entity": backend.configured_entity,
             "resolved_project": backend.resolved_project,

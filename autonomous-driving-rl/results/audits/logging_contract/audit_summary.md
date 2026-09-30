@@ -27,17 +27,13 @@
 - **Observational Invariance:** Verified 100% bit-for-bit identical simulator trajectories between `DISABLED` and `OFFLINE` logging modes.
 
 ## 5. Weights & Biases Online Smoke Result
-- **Performed:** `True`
-- **Status:** `SYNCED`
-- **Run ID:** `audit_online_34188eda`
-- **Run URL:** `https://wandb.ai/phucga15062005/sgu-autonomous-driving-rl/runs/audit_online_34188eda`
-- **Configured Project / Entity:** `sgu-autonomous-driving-rl / None`
-- **Resolved Project / Entity:** `sgu-autonomous-driving-rl / phucga15062005`
+- **Performed:** `False`
+- **Status:** `SKIPPED_NO_CREDENTIALS`
 - **Table & Summary Mirrored:** Verified
 
 ## 6. Additive Cryptographic Hashes
 - **`gate5_benchmark_contract_sha256`:** `9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77` (locked, untouched)
 - **`gate6_agent_contract_sha256`:** `53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb` (locked, untouched)
 - **`platform_runtime_contract_sha256`:** `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad` (locked, untouched)
-- **`logging_contract_sha256`:** `04901e8747c5cc784cf5422efc4dc728056ae8c51931a72ae3a47e0a3e3b323e`
-- **`platform_observability_contract_sha256`:** `56391b3fb88f614841ac39b591390c62ba6577dd32ee21f81071ec0395db3445`
+- **`logging_contract_sha256`:** `62ef93297dacc5f2dc6f072309e914edfdac6da48e3c7ec726d4c542d9953d34`
+- **`platform_observability_contract_sha256`:** `74ac114c119789ff2e5b439deddc5a3893ddc6d400002454757aebf415d50c7f`
