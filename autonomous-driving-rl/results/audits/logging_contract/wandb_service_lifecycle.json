@@ -1,0 +1,15 @@
+{
+  "wandb_version": "0.30.0",
+  "mode": "offline",
+  "source_of_effective_mode": "INIT_ARGUMENT",
+  "prior_wandb_mode_env": null,
+  "subprocess_returncode": 0,
+  "run_started": true,
+  "run_finished": true,
+  "explicit_teardown_called": true,
+  "explicit_teardown_succeeded": true,
+  "atexit_exception_observed": false,
+  "orphan_subprocesses_count": 0,
+  "captured_stderr_snippet": "wandb: Tracking run with wandb version 0.30.0\nwandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.\nwandb: Run data is saved locally in <temp_dir>\\tmp5lnjphur\\wandb\\offline-run-20261001_011631-56uuqqh2\nwandb: View this run in t",
+  "verdict": "PASSED"
+}

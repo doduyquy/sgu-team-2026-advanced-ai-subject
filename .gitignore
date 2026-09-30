@@ -33,3 +33,10 @@ autonomous-driving-rl/checkpoints/
 autonomous-driving-rl/**/*.pt
 autonomous-driving-rl/**/*.pth
 autonomous-driving-rl/**/*.ckpt
+
+# W&B runtime, local cache, and environment secrets
+wandb/
+**/wandb/
+.env
+.env.*
+!.env.example

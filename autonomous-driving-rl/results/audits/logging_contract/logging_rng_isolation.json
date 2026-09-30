@@ -1,0 +1,17 @@
+{
+  "geometry_id": "geom_easy_SCS_seed13",
+  "steps_compared": 20,
+  "positions_match": true,
+  "obs_init_hash_match": true,
+  "rewards_match": true,
+  "initial_position": [
+    5.0071,
+    0.0
+  ],
+  "final_position": [
+    10.6947,
+    0.0083
+  ],
+  "verdict": "PASSED_OBSERVATIONAL_INVARIANCE",
+  "notes": "Active W&B OFFLINE logging produces 100% bit-for-bit identical simulator trajectories and rewards."
+}

@@ -1,0 +1,7 @@
+{
+  "test": "local_disk_write_failure_simulation",
+  "local_run_status": "FAILED",
+  "finalization_allowed": false,
+  "policy": "Local persistence failure is FATAL; experiment cannot be marked COMPLETE.",
+  "verdict": "PASSED"
+}

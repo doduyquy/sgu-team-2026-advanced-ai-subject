@@ -1,0 +1,15 @@
+{
+  "performed": false,
+  "status": "SKIPPED_NO_CREDENTIALS",
+  "sync_status": "SKIPPED",
+  "historical_online_smoke": {
+    "run_id": "audit_online_34188eda",
+    "sync_status": "SYNCED",
+    "resolved_project": "sgu-autonomous-driving-rl",
+    "resolved_entity": "phucga15062005",
+    "table_rows_mirrored": 2,
+    "summary_keys_verified": true,
+    "notes": "Historical run executed during previous audit pass when credentials were provided."
+  },
+  "notes": "ONLINE smoke skipped in this final audit run because WANDB_API_KEY environment variable is not set."
+}
