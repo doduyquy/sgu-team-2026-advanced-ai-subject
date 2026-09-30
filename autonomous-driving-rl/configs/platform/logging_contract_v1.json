@@ -89,6 +89,8 @@
       "expected_episode_count",
       "canonical_run",
       "dirty_override",
+      "unverified_env_override",
+      "environment_verification_status",
       "failure_category",
       "sanitized_failure_message"
     ],
@@ -304,6 +306,31 @@
       "technical_failure",
       "timing"
     ],
+    "static_episode_event_keys": [
+      "eval/episode_index",
+      "eval/protocol_order_index",
+      "eval/clean_success",
+      "eval/raw_arrival",
+      "eval/final_route_completion",
+      "eval/max_route_completion",
+      "eval/episode_steps",
+      "eval/episode_time_s",
+      "diagnostic/episode_return",
+      "eval/mean_speed_kmh",
+      "eval/max_speed_kmh"
+    ],
+    "timing_event_keys": [
+      "timing/agent_act_mean_ms",
+      "timing/agent_act_median_ms",
+      "timing/agent_act_p95_ms",
+      "timing/agent_act_max_ms",
+      "timing/agent_act_total_ms"
+    ],
+    "dynamic_event_key_templates": {
+      "primary_terminal_reason": "failure/<primary_terminal_reason>",
+      "safety_flags": "flags/<flag>",
+      "technical_failure": "technical_failure/<reason>"
+    },
     "summary_namespaces": [
       "metrics/overall",
       "metrics/tier",
@@ -311,6 +338,13 @@
       "diagnostic",
       "timing"
     ],
+    "summary_mapping_rules": {
+      "overall": "metrics/overall/<metric>",
+      "tier": "metrics/tier/<tier>/<metric>",
+      "macro": "metrics/macro/<metric>",
+      "diagnostic": "diagnostic/<metric>",
+      "timing": "timing/<metric>"
+    },
     "privacy_settings": {
       "save_code": false,
       "disable_git": true,

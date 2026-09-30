@@ -2,21 +2,44 @@
   "test": "wandb_failure_matrix_simulation",
   "failure_phases_tested": {
     "WANDB_INIT_ERROR": {
+      "failure_phase": "WANDB_INIT_ERROR",
       "caught_gracefully": true,
-      "sync_status": "FAILED",
+      "local_run_status": "COMPLETE",
+      "wandb_sync_status": "FAILED",
+      "episodes_persisted_locally": 2,
+      "summary_persisted": true,
+      "run_integrity_persisted": true,
+      "wandb_sync_persisted": true,
+      "scientific_integrity_preserved": true,
       "policy": "NON-FATAL"
     },
     "WANDB_LOG_ERROR": {
+      "failure_phase": "WANDB_LOG_ERROR",
       "caught_gracefully": true,
-      "sync_status": "FAILED",
+      "local_run_status": "COMPLETE",
+      "wandb_sync_status": "FAILED",
+      "episodes_persisted_locally": 2,
+      "summary_persisted": true,
+      "run_integrity_persisted": true,
+      "wandb_sync_persisted": true,
+      "scientific_integrity_preserved": true,
       "policy": "NON-FATAL"
     },
     "WANDB_SYNC_ERROR": {
+      "failure_phase": "WANDB_SYNC_ERROR",
       "caught_gracefully": true,
-      "sync_status": "FAILED",
+      "local_run_status": "COMPLETE",
+      "wandb_sync_status": "FAILED",
+      "episodes_persisted_locally": 2,
+      "summary_persisted": true,
+      "run_integrity_persisted": true,
+      "wandb_sync_persisted": true,
+      "scientific_integrity_preserved": true,
       "policy": "NON-FATAL"
     }
   },
-  "policy": "All remote W&B failures are strictly NON-FATAL to local scientific experiment.",
+  "all_local_runs_completed": true,
+  "all_wandb_sync_marked_failed": true,
+  "policy": "All remote W&B failures are strictly NON-FATAL to local scientific experiment; local runs achieve COMPLETE with valid integrity records.",
   "verdict": "PASSED"
 }

@@ -93,21 +93,27 @@ def sanitize_error_message(err: Any) -> str:
     try:
         home_path = str(Path.home())
         if home_path and len(home_path) > 3:
-            msg = msg.replace(home_path, "~")
+            msg = msg.replace(home_path, "~").replace(home_path.replace("\\", "/"), "~")
     except Exception:
         pass
 
     try:
         root_path = str(Path(__file__).resolve().parent.parent.parent)
         if root_path and len(root_path) > 3:
-            msg = msg.replace(root_path, "<project_root>")
+            msg = msg.replace(root_path, "<project_root>").replace(root_path.replace("\\", "/"), "<project_root>")
     except Exception:
         pass
+
+    # Redact actual in-memory WANDB_API_KEY if present in environment
+    env_key = os.environ.get("WANDB_API_KEY")
+    if env_key and len(env_key) > 5:
+        msg = msg.replace(env_key, "[REDACTED_API_KEY]")
 
     # Redact secret patterns
     msg = re.sub(r"wandb_v1_[a-zA-Z0-9_\-]+", "[REDACTED_API_KEY]", msg)
     msg = re.sub(r"(api_key=)[a-zA-Z0-9_\-]+", r"\1[REDACTED]", msg, flags=re.IGNORECASE)
     msg = re.sub(r"(Bearer\s+)[a-zA-Z0-9_\.\-]+", r"\1[REDACTED_TOKEN]", msg, flags=re.IGNORECASE)
+    msg = re.sub(r"(key\s*[:=]\s*)[a-zA-Z0-9_\-]{20,}", r"\1[REDACTED]", msg, flags=re.IGNORECASE)
     return msg
 
 
@@ -190,7 +196,11 @@ def capture_environment_provenance(repo_root: Optional[Path] = None) -> Dict[str
     try:
         env_info["metadrive_version"] = importlib.metadata.version("metadrive-simulator")
     except Exception:
-        env_info["metadrive_version"] = "unknown"
+        try:
+            import metadrive.version
+            env_info["metadrive_version"] = metadrive.version.VERSION
+        except Exception:
+            env_info["metadrive_version"] = "unknown"
 
     commit = "unknown"
     try:
@@ -230,6 +240,53 @@ def capture_environment_provenance(repo_root: Optional[Path] = None) -> Dict[str
 
     return env_info
 
+
+PINNED_METADRIVE_VERSION = "0.4.3"
+PINNED_METADRIVE_COMMIT = "85e5dadc6c7436d324348f6e3d8f8e680c06b4db"
+
+WANDB_TABLE_COLUMNS: List[str] = [
+    "episode_index", "protocol_order_index", "case_id", "split", "tier",
+    "sequence", "geometry_generation_seed", "environment_seed",
+    "clean_success", "final_route_completion", "max_route_completion",
+    "primary_terminal_reason", "episode_steps", "episode_time_s",
+    "time_to_clean_success_s", "mean_act_ms", "episode_return"
+]
+
+WANDB_STATIC_EPISODE_EVENT_KEYS: List[str] = [
+    "eval/episode_index",
+    "eval/protocol_order_index",
+    "eval/clean_success",
+    "eval/raw_arrival",
+    "eval/final_route_completion",
+    "eval/max_route_completion",
+    "eval/episode_steps",
+    "eval/episode_time_s",
+    "diagnostic/episode_return",
+    "eval/mean_speed_kmh",
+    "eval/max_speed_kmh",
+]
+
+WANDB_TIMING_EVENT_KEYS: List[str] = [
+    "timing/agent_act_mean_ms",
+    "timing/agent_act_median_ms",
+    "timing/agent_act_p95_ms",
+    "timing/agent_act_max_ms",
+    "timing/agent_act_total_ms",
+]
+
+WANDB_DYNAMIC_KEY_TEMPLATES: Dict[str, str] = {
+    "primary_terminal_reason": "failure/<primary_terminal_reason>",
+    "safety_flags": "flags/<flag>",
+    "technical_failure": "technical_failure/<reason>",
+}
+
+WANDB_SUMMARY_MAPPING_RULES: Dict[str, str] = {
+    "overall": "metrics/overall/<metric>",
+    "tier": "metrics/tier/<tier>/<metric>",
+    "macro": "metrics/macro/<metric>",
+    "diagnostic": "diagnostic/<metric>",
+    "timing": "timing/<metric>",
+}
 
 EPISODE_CSV_COLUMNS = [
     "episode_index", "protocol_order_index", "case_id", "split", "tier",
@@ -523,6 +580,8 @@ class RunStateV1:
     expected_episode_count: Optional[int]
     canonical_run: bool
     dirty_override: bool
+    unverified_env_override: bool = False
+    environment_verification_status: str = "VERIFIED"
     failure_category: Optional[str] = None
     sanitized_failure_message: Optional[str] = None
 
@@ -605,7 +664,8 @@ class LocalExperimentLogger:
         config: ExperimentRunConfig,
         runs_root: Optional[Path] = None,
         custom_run_id: Optional[str] = None,
-        repo_root: Optional[Path] = None
+        repo_root: Optional[Path] = None,
+        custom_environment_provenance: Optional[Dict[str, Any]] = None
     ):
         self.config = config
         self.repo_root = repo_root or Path(__file__).resolve().parent.parent.parent
@@ -642,12 +702,15 @@ class LocalExperimentLogger:
 
         # Dirty worktree and environment verification
         git_prov = capture_git_provenance(self.repo_root)
-        env_prov = capture_environment_provenance(self.repo_root)
+        env_prov = custom_environment_provenance if custom_environment_provenance is not None else capture_environment_provenance(self.repo_root)
         is_dirty = bool(git_prov.get("git_worktree_dirty"))
         is_benchmark_eval = self.config.run_kind in (RunKind.VALIDATION_EVALUATION, RunKind.TEST_EVALUATION)
 
         self.canonical_run = not is_dirty
         self.dirty_override = False
+        self.unverified_env_override = False
+        self.environment_verification_status = "UNKNOWN"
+        self.environment_verification_reason = ""
 
         if is_dirty and is_benchmark_eval:
             if not self.config.allow_dirty_worktree_override:
@@ -663,19 +726,45 @@ class LocalExperimentLogger:
             self.canonical_run = False
             self.dirty_override = True
 
-        # MetaDrive commit verification for canonical benchmarks
-        if is_benchmark_eval and env_prov.get("metadrive_commit") == "unknown":
+        # MetaDrive exact pin verification
+        actual_version = env_prov.get("metadrive_version", "unknown")
+        actual_commit = env_prov.get("metadrive_commit", "unknown")
+
+        if actual_commit == "unknown":
+            env_status = "UNKNOWN"
+            env_reason = "MetaDrive commit unknown / git repository not detected"
+        elif actual_version != PINNED_METADRIVE_VERSION:
+            env_status = "MISMATCHED"
+            env_reason = f"MetaDrive version mismatch: expected {PINNED_METADRIVE_VERSION}, got {actual_version}"
+        elif actual_commit != PINNED_METADRIVE_COMMIT:
+            env_status = "MISMATCHED"
+            env_reason = f"MetaDrive commit mismatch: expected {PINNED_METADRIVE_COMMIT}, got {actual_commit}"
+        else:
+            env_status = "VERIFIED"
+            env_reason = f"MetaDrive exact pin verified: version {PINNED_METADRIVE_VERSION}, commit {PINNED_METADRIVE_COMMIT}"
+
+        env_prov["metadrive_pinned_version"] = PINNED_METADRIVE_VERSION
+        env_prov["metadrive_pinned_commit"] = PINNED_METADRIVE_COMMIT
+        env_prov["metadrive_verification_status"] = env_status
+        env_prov["metadrive_verification_reason"] = env_reason
+
+        self.environment_verification_status = env_status
+        self.environment_verification_reason = env_reason
+        self.unverified_env_override = False
+
+        if is_benchmark_eval and env_status != "VERIFIED":
             if not self.config.allow_unverified_env_override:
                 self.status = RunStatus.FAILED
                 self._persist_run_state(
                     failure_category="UNVERIFIED_ENVIRONMENT_ERROR",
-                    failure_message="Cannot execute canonical benchmark evaluation with unverified MetaDrive commit."
+                    failure_message=f"Cannot execute canonical benchmark evaluation: {env_reason}."
                 )
                 raise RuntimeError(
-                    "Cannot execute canonical benchmark evaluation with unverified MetaDrive commit! "
+                    f"Cannot execute canonical benchmark evaluation: {env_reason}. "
                     "Set allow_unverified_env_override=True to override."
                 )
             self.canonical_run = False
+            self.unverified_env_override = True
 
         # Construct and persist immutable RunManifestV1
         contracts_prov = {
@@ -720,6 +809,8 @@ class LocalExperimentLogger:
             expected_episode_count=self.config.expected_episode_count,
             canonical_run=self.canonical_run,
             dirty_override=self.dirty_override,
+            unverified_env_override=self.unverified_env_override,
+            environment_verification_status=self.environment_verification_status,
             failure_category=failure_category,
             sanitized_failure_message=sanitize_error_message(failure_message) if failure_message else None
         )
@@ -780,24 +871,24 @@ class LocalExperimentLogger:
 
         if is_benchmark_eval:
             # Enforce NO fabricated fallbacks for benchmark evaluation
-            if episode_index is None:
-                raise ValueError("VALIDATION_EVALUATION and TEST_EVALUATION require explicit episode_index!")
-            if protocol_order_index is None:
-                raise ValueError("VALIDATION_EVALUATION and TEST_EVALUATION require explicit protocol_order_index!")
-            if not case_id:
-                raise ValueError("VALIDATION_EVALUATION and TEST_EVALUATION require explicit case_id!")
+            if episode_index is None or not isinstance(episode_index, (int, np.integer)) or int(episode_index) <= 0:
+                raise ValueError(f"{self.config.run_kind.value} requires explicit positive episode_index, got '{episode_index}'!")
+            if protocol_order_index is None or not isinstance(protocol_order_index, (int, np.integer)) or int(protocol_order_index) <= 0:
+                raise ValueError(f"{self.config.run_kind.value} requires explicit positive protocol_order_index, got '{protocol_order_index}'!")
+            if not case_id or not isinstance(case_id, str) or not case_id.strip():
+                raise ValueError(f"{self.config.run_kind.value} requires explicit non-empty case_id, got '{case_id}'!")
             if split is None:
-                raise ValueError("VALIDATION_EVALUATION and TEST_EVALUATION require explicit split!")
+                raise ValueError(f"{self.config.run_kind.value} requires explicit split!")
             if self.config.run_kind == RunKind.TEST_EVALUATION and split != "TEST":
                 raise ValueError(f"TEST_EVALUATION requires split=='TEST', got '{split}'")
             if self.config.run_kind == RunKind.VALIDATION_EVALUATION and split != "VALIDATION":
                 raise ValueError(f"VALIDATION_EVALUATION requires split=='VALIDATION', got '{split}'")
-            if geometry_generation_seed is None:
-                raise ValueError("VALIDATION_EVALUATION and TEST_EVALUATION require explicit geometry_generation_seed!")
-            if environment_seed is None:
-                raise ValueError("VALIDATION_EVALUATION and TEST_EVALUATION require explicit environment_seed!")
-            if horizon_steps is None or horizon_steps <= 0:
-                raise ValueError(f"VALIDATION_EVALUATION and TEST_EVALUATION require explicit positive horizon_steps, got {horizon_steps}!")
+            if geometry_generation_seed is None or not isinstance(geometry_generation_seed, (int, np.integer)):
+                raise ValueError(f"{self.config.run_kind.value} requires explicit integer geometry_generation_seed, got '{geometry_generation_seed}'!")
+            if environment_seed is None or not isinstance(environment_seed, (int, np.integer)):
+                raise ValueError(f"{self.config.run_kind.value} requires explicit integer environment_seed, got '{environment_seed}'!")
+            if horizon_steps is None or not isinstance(horizon_steps, (int, np.integer)) or int(horizon_steps) <= 0:
+                raise ValueError(f"{self.config.run_kind.value} requires explicit positive horizon_steps, got '{horizon_steps}'!")
 
             next_ep_idx = int(episode_index)
             p_order_idx = int(protocol_order_index)
@@ -807,14 +898,14 @@ class LocalExperimentLogger:
             env_seed = int(environment_seed)
             h_steps = int(horizon_steps)
         else:
-            # Documented default policy for AUDIT and TRAINING
-            next_ep_idx = episode_index if episode_index is not None else len(self.recorded_rows) + 1
-            p_order_idx = protocol_order_index if protocol_order_index is not None else next_ep_idx
-            c_id = case_id if case_id is not None else f"audit_case_{next_ep_idx}"
-            s_split = split if split is not None else "AUDIT"
-            geom_seed = geometry_generation_seed if geometry_generation_seed is not None else getattr(record, "scenario_seed", 0)
-            env_seed = environment_seed if environment_seed is not None else 9101
-            h_steps = horizon_steps if horizon_steps is not None else getattr(record, "horizon_steps", 1000)
+            # Documented default policy for non-benchmark runs (AUDIT and TRAINING convenience defaults ONLY)
+            next_ep_idx = int(episode_index) if episode_index is not None else len(self.recorded_rows) + 1
+            p_order_idx = int(protocol_order_index) if protocol_order_index is not None else next_ep_idx
+            c_id = str(case_id) if case_id is not None else f"audit_case_{next_ep_idx}"
+            s_split = str(split) if split is not None else "AUDIT"
+            geom_seed = int(geometry_generation_seed) if geometry_generation_seed is not None else getattr(record, "scenario_seed", 0)
+            env_seed = int(environment_seed) if environment_seed is not None else 9101
+            h_steps = int(horizon_steps) if horizon_steps is not None else getattr(record, "horizon_steps", 1000)
 
         # Agent seed with explicit None semantics (agent_seed=0 is preserved)
         effective_agent_seed = None
@@ -927,7 +1018,8 @@ class LocalExperimentLogger:
 
     def finalize_run(
         self,
-        summary_payload: Optional[Dict[str, Any]] = None,
+        *,
+        summary_payload: Dict[str, Any],
         wandb_sync_info: Optional[Dict[str, Any]] = None
     ) -> RunIntegrityRecord:
         """
@@ -941,6 +1033,12 @@ class LocalExperimentLogger:
         if self.status == RunStatus.FAILED:
             raise RuntimeError(f"Cannot complete run '{self.run_id}': run status is already FAILED!")
 
+        # Validate summary_payload structure to prevent passing sync_meta or invalid payload
+        if not isinstance(summary_payload, dict) or "overall_metrics" not in summary_payload:
+            raise ValueError(
+                "finalize_run requires a valid summary_payload dictionary containing 'overall_metrics'!"
+            )
+
         # Verify expected episode count
         if self.config.expected_episode_count is not None:
             if len(self.recorded_rows) != self.config.expected_episode_count:
@@ -949,8 +1047,8 @@ class LocalExperimentLogger:
                 self._persist_run_state(failure_category="EPISODE_COUNT_MISMATCH", failure_message=msg)
                 raise ValueError(msg)
 
-        # Authoritative summary: use prepared summary
-        summary = summary_payload or self.prepare_summary()
+        # Authoritative summary: strictly consume passed summary_payload
+        summary = summary_payload
 
         # Atomically write summary.json
         self._atomic_write_json(self.summary_json_path, summary)
@@ -1064,22 +1162,18 @@ def build_logging_contract_core(
     if custom_latency_schema:
         timing_schema.update(custom_latency_schema)
 
-    default_wandb_table_columns = [
-        "episode_index", "protocol_order_index", "case_id", "split", "tier",
-        "sequence", "geometry_generation_seed", "environment_seed",
-        "clean_success", "final_route_completion", "max_route_completion",
-        "primary_terminal_reason", "episode_steps", "episode_time_s",
-        "time_to_clean_success_s", "mean_act_ms", "episode_return"
-    ]
-
     default_wandb = {
         "modes": [e.value for e in WandbMode],
         "failure_policy": "NON-FATAL to local scientific experiment if local logging is healthy",
         "table_name": "evaluation_episodes",
-        "table_columns": default_wandb_table_columns,
+        "table_columns": list(WANDB_TABLE_COLUMNS),
         "step_axis": "episode_index",
         "episode_event_namespaces": ["eval", "flags", "diagnostic", "technical_failure", "timing"],
+        "static_episode_event_keys": list(WANDB_STATIC_EPISODE_EVENT_KEYS),
+        "timing_event_keys": list(WANDB_TIMING_EVENT_KEYS),
+        "dynamic_event_key_templates": dict(WANDB_DYNAMIC_KEY_TEMPLATES),
         "summary_namespaces": ["metrics/overall", "metrics/tier", "metrics/macro", "diagnostic", "timing"],
+        "summary_mapping_rules": dict(WANDB_SUMMARY_MAPPING_RULES),
         "privacy_settings": {
             "save_code": False,
             "disable_git": True,

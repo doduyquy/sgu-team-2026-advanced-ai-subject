@@ -22,11 +22,14 @@ Gate 7 establishes the **observability, provenance, local persistence, and remot
 ### Core Scientific Mandates:
 1. **Local-First Authoritative Truth:** Local raw run records in `runs/<run_id>/` are the sole authoritative scientific source of truth. Weights & Biases acts strictly as a downstream mirror for remote indexing, comparison, and team visualization. An experiment remains 100% scientifically verifiable without network connectivity or W&B access.
 2. **Observational Invariance:** Logging and tracking operations are strictly downstream observers. Logger construction, W&B initialization, or network calls NEVER alter agent decisions, environment dynamics, or seed schedules.
-3. **Strict Ephemeral Secret Policy:** The `WANDB_API_KEY` credential is treated as an ephemeral secret read exclusively from the environment. Credentials, authorization tokens, and API keys are strictly forbidden from being written to code, configuration files, git commits, terminal outputs, or audit reports.
-4. **Clean Failure Segregation:** Explicitly distinguishes task-level driving failures (classified by Gate-3/4 precedence) from technical failures (`AGENT_EXCEPTION`, `INVALID_AGENT_ACTION`, `LOCAL_LOG_WRITE_ERROR`, `WANDB_SYNC_ERROR`). Local write failures are fatal to the run, whereas remote W&B synchronization errors are non-fatal to the underlying scientific experiment.
-5. **Exact Metric & Table Parity:** Gate-4 primary metrics (`clean_success_rate`, `safety_failure_rate`, `mean/median_final_route_completion`, `mean_time_to_clean_success_s`) and Gate-5 per-tier scorecards are mirrored bit-for-bit to W&B without recalculation or distortion.
-6. **Timing Boundary Preservation:** Agent decision latency timer wraps `agent.act()` strictly, completely excluding downstream logger I/O and W&B network overhead.
-7. **Additive Observability Hashing:** Gates 1 through 6 locked contract hashes remain untouched; Gate 7 computes an additive `platform_observability_contract_sha256`.
+3. **Single Canonical Row & Strict Backend Boundary:** `EpisodeLogRowV1` is the sole accepted input to tracking backends (`backend_input_rule = EPISODE_LOG_ROW_V1_ONLY`). Raw `EpisodeRecord` bypass and fallback reconstruction are completely rejected.
+4. **Strict Benchmark Metadata:** For `TEST_EVALUATION` and `VALIDATION_EVALUATION`, all evaluator metadata (`episode_index`, `protocol_order_index`, `case_id`, `split`, `geometry_generation_seed`, `environment_seed`, `horizon_steps`) must be explicitly provided. No fallback fabrication is permitted for benchmark runs.
+5. **MetaDrive Exact Pin Enforcement:** Benchmark evaluations require exact MetaDrive version (`0.4.3`) and commit (`85e5dadc6c7436d324348f6e3d8f8e680c06b4db`); unknown or mismatched environments fail loudly unless explicit override is provided.
+6. **Strict Ephemeral Secret Policy:** The `WANDB_API_KEY` credential is treated as an ephemeral secret read exclusively from the environment. Credentials, authorization tokens, and API keys are strictly forbidden from being written to code, configuration files, git commits, terminal outputs, or audit reports.
+7. **Clean Failure Segregation & Local Run Completeness:** Explicitly distinguishes task-level driving failures from technical failures (`AGENT_EXCEPTION`, `INVALID_AGENT_ACTION`, `LOCAL_LOG_WRITE_ERROR`, `WANDB_SYNC_ERROR`). Local write failures are fatal to the run, whereas remote W&B synchronization errors are non-fatal to the underlying scientific experiment; healthy local runs achieve `COMPLETE` with valid cryptographic run integrity records despite remote tracking failures.
+8. **Exact Metric & Table Parity:** Gate-4 primary metrics (`clean_success_rate`, `safety_failure_rate`, `mean/median_final_route_completion`, `mean_time_to_clean_success_s`) and Gate-5 per-tier scorecards are mirrored to W&B without recalculation. All shared `EpisodeLogRowV1` fields are value-equivalent after typed normalization, with timing projection independently verified against `EpisodeTimingRecord.mean_act_ms`.
+9. **Timing Boundary Preservation:** Agent decision latency timer wraps `agent.act()` strictly, completely excluding downstream logger I/O and W&B network overhead.
+10. **Additive Observability Hashing:** Gates 1 through 6 locked contract hashes remain untouched; Gate 7 computes an additive `platform_observability_contract_sha256`.
 
 ---
 
@@ -162,14 +165,18 @@ A critical requirement for scientific logging is that enabling tracking must not
 
 ## 10. Weights & Biases Online Smoke Test
 
-Executed an online smoke test using the transient `WANDB_API_KEY`:
-- **Run ID:** `audit_online_34188eda`
-- **Run URL:** https://wandb.ai/phucga15062005/sgu-autonomous-driving-rl/runs/audit_online_34188eda
-- **Configured Project / Entity:** `sgu-autonomous-driving-rl` / None
-- **Resolved Project / Entity:** `sgu-autonomous-driving-rl` / `phucga15062005` (user: `irthn1311`)
-- **Status:** `SYNCED`
-- **Artifacts Mirrored:** Configuration parameters, step metrics stream, Gate-4 summary scorecards, and `evaluation_episodes` Table.
-- **Credential Hygiene:** Zero secrets logged or persisted.
+- **Current Final Audit Status:** `SKIPPED_NO_CREDENTIALS` (performed: `False`). The current audit session cleanly bypassed cloud syncing because `WANDB_API_KEY` was absent from process memory.
+- **Historical Authenticated Smoke Run:** `audit_online_34188eda` (`SYNCED`)
+  - **Run URL:** https://wandb.ai/phucga15062005/sgu-autonomous-driving-rl/runs/audit_online_34188eda
+  - **Resolved Destination:** Project `sgu-autonomous-driving-rl`, Entity `phucga15062005`
+  - **Artifacts Mirrored:** Step metrics stream, Gate-4 summary scorecards, and `evaluation_episodes` Table (2 rows).
+  - **Credential Hygiene:** Zero secrets logged or persisted.
+- **W&B Service Lifecycle & Process Teardown (`wandb_service_lifecycle.json`):**
+  - Explicit teardown call: `wandb.teardown(exit_code=0)`
+  - Teardown status: Succeeded cleanly
+  - Orphan subprocesses: 0
+  - Deprecated `reinit=True` replaced with `reinit="finish_previous"`.
+  - Offline mode does not pass `resume="never"`.
 
 ---
 
@@ -179,16 +186,16 @@ To preserve scientific provenance without mutating previously locked gates:
 - Gate-5 `benchmark_contract_sha256`: `9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77`
 - Gate-6 `agent_contract_sha256`: `53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb`
 - Gate-6 `platform_runtime_contract_sha256`: `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad`
-- Gate-7 `logging_contract_sha256`: `62ef93297dacc5f2dc6f072309e914edfdac6da48e3c7ec726d4c542d9953d34`
-- Gate-7 `platform_observability_contract_sha256`: `74ac114c119789ff2e5b439deddc5a3893ddc6d400002454757aebf415d50c7f`
+- Gate-7 `logging_contract_sha256`: `312852c3fa498a3bd152799a02ad52b34c9b7b839fec0c3405ea613c56806f74`
+- Gate-7 `platform_observability_contract_sha256`: `cedf032f9430370c1cc14cb262868a115609176672cd46bda43f0210308ae51d`
 
 ```json
 {
   "gate5_benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
   "gate6_agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
   "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
-  "logging_contract_sha256": "62ef93297dacc5f2dc6f072309e914edfdac6da48e3c7ec726d4c542d9953d34",
-  "platform_observability_contract_sha256": "74ac114c119789ff2e5b439deddc5a3893ddc6d400002454757aebf415d50c7f"
+  "logging_contract_sha256": "312852c3fa498a3bd152799a02ad52b34c9b7b839fec0c3405ea613c56806f74",
+  "platform_observability_contract_sha256": "cedf032f9430370c1cc14cb262868a115609176672cd46bda43f0210308ae51d"
 }
 ```
 
@@ -198,32 +205,21 @@ $$\text{platform\_observability\_contract\_sha256} = \text{SHA256}(\text{canonic
 
 ## 12. Unit Tests & Verification Summary
 
-Implemented in `tests/test_logging_contract.py` (19 pure unit tests executing in $<8.0\text{ s}$ without network dependencies):
-- Verified `RunManifest` construction, formatting, and schema.
-- Verified duplicate run protection (`FileExistsError` on existing run directory).
-- Verified `RunStateV1` durable lifecycle tracking across `run_state.json`.
-- Verified canonical dirty-worktree policy (fails by default, override marks noncanonical).
-- Verified single canonical `EpisodeLogRowV1` construction, validation, and projection.
-- Verified null metric semantics (`null` in JSON, never converted to `0.0`).
-- Verified expected episode count enforcement (mismatch causes `RunStatus.FAILED`).
-- Verified fake W&B backend metric parity and `evaluation_episodes` Table parity.
-- Verified W&B failure matrix simulation (init, log, finish errors are non-fatal to local run).
-- Verified local disk write failure strictly prevents `RunStatus.COMPLETE`.
-- Verified decision latency boundary excludes simulated logger delay.
-- Verified raw floating-point timing precision preservation without rounding.
-- Verified weighted overall decision latency calculation across unequal episode lengths.
-- Verified secret absence across all serialized manifests and configs.
-- Verified machine path privacy (no usernames or home directory paths).
-- Verified `WandbMode.DISABLED` functions standalone without credentials or network.
-- Verified `WandbMode.OFFLINE` sets offline mode without network.
-- Verified technical failures logged to `technical_failures.jsonl`.
-- Verified runtime dataclass and enum introspection against `logging_contract_v1.json`.
-- Verified logging contract hash mutation sensitivity.
+Implemented in `tests/test_logging_contract.py` (**43 pure unit tests** executing in $<12.0\text{ s}$ without network dependencies or W&B subprocess spawns):
+- **Benchmark Metadata Strictness:** Verified that missing `episode_index`, `protocol_order_index`, `case_id`, `split`, `geometry_generation_seed`, `environment_seed`, `horizon_steps` or non-positive indices fail loudly on `TEST_EVALUATION` and `VALIDATION_EVALUATION`.
+- **Seed Semantics:** Verified that `agent_seed=0` is strictly preserved and never treated as None.
+- **Backend Boundary Contract:** Verified that `TrackingBackend` accepts `EpisodeLogRowV1` only, and rejects raw `EpisodeRecord` and dicts with `TypeError`.
+- **MetaDrive Exact Pin Policy:** Verified that exact pin (version `0.4.3`, commit `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`) is required for canonical runs, while mismatched or unknown environments fail unless explicitly overridden (marking `canonical_run=False`).
+- **Keyword-Only Finalization & Authoritative Summary:** Verified `finalize_run(*, summary_payload=..., wandb_sync_info=...)` rejects positional misuse and reuses the exact authoritative summary payload locally and remotely.
+- **W&B Failure Matrix & Local Run Complete:** Verified that W&B init, log, and finish failures leave local runs in `RunStatus.COMPLETE` with valid `run_integrity.json` records.
+- **Table Parity:** Verified typed value-equivalence on all shared fields and independent verification of `mean_act_ms` timing projection.
+- **Hash Sensitivity:** Verified that mutating table columns, static event keys, summary mapping rules, dirty worktree policy, lifecycle transitions, or resume policy changes `logging_contract_sha256`.
+- **Security & Interruption:** Verified path and secret redaction in `sanitize_error_message`, inclusion of `wandb_sync_sha256` in `run_integrity.json`, and durable transition to `INTERRUPTED`.
 
 ---
 
 ## 13. Regression & Integrity Validation
-- Pure unit tests: **102 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 37, `test_logging_contract`: 19).
+- Pure unit tests: **126 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 37, `test_logging_contract`: 43).
 - `CourseEnvV1`: Reset observation shape `(35,)` verified.
 - `evaluate_random.py`: Completed 20 evaluation episodes cleanly.
 - Gates 1 through 6 contracts remained completely untouched.

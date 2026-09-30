@@ -1,8 +1,8 @@
 {
-  "measured_mean_act_ms": 5.00032,
-  "measured_median_act_ms": 5.00025,
-  "measured_p95_act_ms": 5.0006,
-  "measured_max_act_ms": 5.0006,
+  "measured_mean_act_ms": 5.0001500000000005,
+  "measured_median_act_ms": 5.0001,
+  "measured_p95_act_ms": 5.000255,
+  "measured_max_act_ms": 5.0003,
   "simulated_logger_delay_ms": 30.0,
   "logger_overhead_excluded": true,
   "notes": "Latency timer captures agent.act() strictly; excludes downstream logger and W&B network I/O."

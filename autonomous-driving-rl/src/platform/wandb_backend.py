@@ -28,10 +28,11 @@ from src.platform.experiment_logging import (
     RunKind,
     RunManifestV1,
     RunStatus,
+    WANDB_TABLE_COLUMNS,
     WandbMode,
     WandbSyncStatus,
+    sanitize_error_message,
 )
-from src.platform.metrics import AggregateMetrics, EpisodeRecord
 
 
 @runtime_checkable
@@ -42,7 +43,7 @@ class TrackingBackend(Protocol):
 
     def log_episode(
         self,
-        record: Union[EpisodeRecord, EpisodeLogRowV1],
+        record: EpisodeLogRowV1,
         timing: Optional[EpisodeTimingRecord] = None,
         technical_failure: Optional[Dict[str, Any]] = None
     ) -> None:
@@ -65,10 +66,12 @@ class FakeTrackingBackend:
     """
     def __init__(
         self,
+        mode: WandbMode = WandbMode.ONLINE,
         simulate_init_failure: bool = False,
         simulate_log_failure: bool = False,
         simulate_finish_failure: bool = False
     ):
+        self.mode = mode
         self.simulate_init_failure = simulate_init_failure
         self.simulate_log_failure = simulate_log_failure
         self.simulate_finish_failure = simulate_finish_failure
@@ -80,7 +83,11 @@ class FakeTrackingBackend:
         self.episodes_logged: List[Dict[str, Any]] = []
         self.summary_logged: Optional[Dict[str, Any]] = None
         self.table_logged: Optional[List[List[Any]]] = None
-        self.sync_status: WandbSyncStatus = WandbSyncStatus.DISABLED
+        self.sync_status: WandbSyncStatus = (
+            WandbSyncStatus.DISABLED if mode == WandbMode.DISABLED
+            else WandbSyncStatus.OFFLINE if mode == WandbMode.OFFLINE
+            else WandbSyncStatus.ONLINE
+        )
         self.error_log: List[str] = []
         self.configured_project: Optional[str] = None
         self.configured_entity: Optional[str] = None
@@ -90,14 +97,20 @@ class FakeTrackingBackend:
     def start_run(self, manifest: RunManifestV1, config: ExperimentRunConfig) -> None:
         if self.simulate_init_failure:
             self.sync_status = WandbSyncStatus.FAILED
-            self.error_log.append("Simulated W&B init connection timeout")
+            sanitized_err = sanitize_error_message("Simulated W&B init connection timeout")
+            self.error_log.append(sanitized_err)
             raise ConnectionError("Simulated W&B init connection timeout")
 
         self.started = True
         self.run_id = f"fake_wandb_{manifest.run_id}"
         self.config_mirrored = config.to_dict()
         self.table_logged = []
-        self.sync_status = WandbSyncStatus.ONLINE
+        if self.mode == WandbMode.OFFLINE:
+            self.sync_status = WandbSyncStatus.OFFLINE
+        elif self.mode == WandbMode.DISABLED:
+            self.sync_status = WandbSyncStatus.DISABLED
+        else:
+            self.sync_status = WandbSyncStatus.ONLINE
         self.configured_project = config.wandb_project
         self.configured_entity = config.wandb_entity
         self.resolved_project = config.wandb_project
@@ -105,51 +118,26 @@ class FakeTrackingBackend:
 
     def log_episode(
         self,
-        record: Union[EpisodeRecord, EpisodeLogRowV1],
+        record: EpisodeLogRowV1,
         timing: Optional[EpisodeTimingRecord] = None,
         technical_failure: Optional[Dict[str, Any]] = None
     ) -> None:
+        if not isinstance(record, EpisodeLogRowV1):
+            raise TypeError(
+                f"TrackingBackend accepts EpisodeLogRowV1 only, got {type(record).__name__}."
+            )
         if not self.started:
             return
         if self.finished:
             raise RuntimeError("Cannot log episode after tracking backend has finished!")
         if self.simulate_log_failure:
             self.sync_status = WandbSyncStatus.FAILED
-            self.error_log.append("Simulated W&B metric log socket error")
+            sanitized_err = sanitize_error_message("Simulated W&B metric log socket error")
+            self.error_log.append(sanitized_err)
             raise IOError("Simulated W&B metric log socket error")
 
-        if isinstance(record, EpisodeLogRowV1):
-            event = record.to_wandb_event(timing)
-            table_row = record.to_wandb_table_row(timing)
-        else:
-            # Fallback wrapper for raw EpisodeRecord
-            clean_succ = getattr(record, "clean_success", False)
-            raw_arr = getattr(record, "raw_arrival", False)
-            prim_reason = record.primary_reason.value if hasattr(record.primary_reason, "value") else str(record.primary_reason)
-            ep_idx = getattr(record, "episode_index", len(self.episodes_logged) + 1)
-            event = {
-                "eval/episode_index": ep_idx,
-                "eval/protocol_order_index": getattr(record, "protocol_order_index", ep_idx),
-                "eval/clean_success": 1.0 if clean_succ else 0.0,
-                "eval/raw_arrival": 1.0 if raw_arr else 0.0,
-                "eval/final_route_completion": record.final_route_completion,
-                "eval/max_route_completion": record.max_route_completion,
-                "eval/episode_steps": record.episode_steps,
-                "eval/episode_time_s": record.simulation_time_s,
-                "diagnostic/episode_return": record.episode_return,
-                "eval/mean_speed_kmh": record.mean_speed_kmh,
-                "eval/max_speed_kmh": record.max_speed_kmh,
-                f"failure/{prim_reason}": 1.0,
-            }
-            mean_t = timing.mean_act_ms if timing else 0.0
-            table_row = [
-                ep_idx, getattr(record, "protocol_order_index", ep_idx),
-                getattr(record, "case_id", f"case_{ep_idx}"), getattr(record, "split", "N/A"),
-                record.tier, record.sequence, getattr(record, "geometry_generation_seed", record.scenario_seed),
-                getattr(record, "environment_seed", "N/A"), clean_succ, record.final_route_completion,
-                record.max_route_completion, prim_reason, record.episode_steps, record.simulation_time_s,
-                record.time_to_clean_success_s, mean_t, record.episode_return
-            ]
+        event = record.to_wandb_event(timing)
+        table_row = record.to_wandb_table_row(timing)
 
         self.episodes_logged.append(event)
         if self.table_logged is not None:
@@ -165,22 +153,29 @@ class FakeTrackingBackend:
     def finish(self, status: RunStatus) -> Dict[str, Any]:
         if not self.started:
             return {
-                "mode": WandbMode.DISABLED.value,
+                "mode": self.mode.value,
                 "sync_status": WandbSyncStatus.DISABLED.value,
                 "wandb_run_id": None
             }
         if self.simulate_finish_failure:
             self.sync_status = WandbSyncStatus.FAILED
-            self.error_log.append("Simulated W&B finish sync error")
+            sanitized_err = sanitize_error_message("Simulated W&B finish sync error")
+            self.error_log.append(sanitized_err)
             raise RuntimeError("Simulated W&B finish sync error")
 
         self.finished = True
-        self.sync_status = WandbSyncStatus.SYNCED
+        if self.mode == WandbMode.OFFLINE:
+            self.sync_status = WandbSyncStatus.OFFLINE
+        elif self.mode == WandbMode.DISABLED:
+            self.sync_status = WandbSyncStatus.DISABLED
+        else:
+            self.sync_status = WandbSyncStatus.SYNCED
+
         return {
-            "mode": WandbMode.ONLINE.value,
+            "mode": self.mode.value,
             "sync_status": self.sync_status.value,
             "wandb_run_id": self.run_id,
-            "wandb_run_url": f"https://wandb.ai/{self.resolved_entity}/{self.resolved_project}/runs/{self.run_id}",
+            "wandb_run_url": f"https://wandb.ai/{self.resolved_entity}/{self.resolved_project}/runs/{self.run_id}" if self.mode == WandbMode.ONLINE else None,
             "configured_project": self.configured_project,
             "configured_entity": self.configured_entity,
             "resolved_project": self.resolved_project,
@@ -189,12 +184,13 @@ class FakeTrackingBackend:
 
     def fail(self, error_message: str) -> Dict[str, Any]:
         self.sync_status = WandbSyncStatus.FAILED
-        self.error_log.append(error_message)
+        sanitized_msg = sanitize_error_message(error_message)
+        self.error_log.append(sanitized_msg)
         return {
-            "mode": WandbMode.ONLINE.value,
+            "mode": self.mode.value,
             "sync_status": self.sync_status.value,
             "wandb_run_id": self.run_id,
-            "error": error_message
+            "error": sanitized_msg
         }
 
 
@@ -218,13 +214,7 @@ class WandbBackend:
             WandbSyncStatus.DISABLED if mode == WandbMode.DISABLED else WandbSyncStatus.OFFLINE if mode == WandbMode.OFFLINE else WandbSyncStatus.ONLINE
         )
         self.table_data: List[List[Any]] = []
-        self.table_columns: List[str] = [
-            "episode_index", "protocol_order_index", "case_id", "split", "tier",
-            "sequence", "geometry_generation_seed", "environment_seed",
-            "clean_success", "final_route_completion", "max_route_completion",
-            "primary_terminal_reason", "episode_steps", "episode_time_s",
-            "time_to_clean_success_s", "mean_act_ms", "episode_return"
-        ]
+        self.table_columns: List[str] = list(WANDB_TABLE_COLUMNS)
 
     def _restore_env(self) -> None:
         """Restores previous WANDB_MODE environment state safely."""
@@ -243,7 +233,8 @@ class WandbBackend:
             import wandb
         except ImportError as e:
             self.sync_status = WandbSyncStatus.FAILED
-            print(f"[WARNING] wandb package not installed; degrading to DISABLED: {e}")
+            sanitized_e = sanitize_error_message(e)
+            print(f"[WARNING] wandb package not installed; degrading to DISABLED: {sanitized_e}")
             return
 
         # Save and configure environment mode safely
@@ -279,19 +270,24 @@ class WandbBackend:
         privacy_settings = wandb.Settings(disable_git=True, save_code=False)
         mode_str = "offline" if self.mode == WandbMode.OFFLINE else "online"
 
+        init_kwargs: Dict[str, Any] = {
+            "project": config.wandb_project,
+            "entity": config.wandb_entity,
+            "name": run_name,
+            "id": manifest.run_id,
+            "mode": mode_str,
+            "config": sanitized_config,
+            "tags": sorted(list(set(tags))),
+            "settings": privacy_settings,
+            # Explicitly finish any lingering previous run cleanly without deprecated boolean reinit
+            "reinit": "finish_previous"
+        }
+        # resume policy is applicable only to ONLINE mode; omitted for OFFLINE to avoid warning
+        if self.mode == WandbMode.ONLINE:
+            init_kwargs["resume"] = "never"
+
         try:
-            self.wandb_run = wandb.init(
-                project=config.wandb_project,
-                entity=config.wandb_entity,
-                name=run_name,
-                id=manifest.run_id,
-                resume="never",
-                mode=mode_str,
-                config=sanitized_config,
-                tags=sorted(list(set(tags))),
-                settings=privacy_settings,
-                reinit=True
-            )
+            self.wandb_run = wandb.init(**init_kwargs)
             self.run_id = self.wandb_run.id
             self.run_url = getattr(self.wandb_run, "url", None)
             self.resolved_project = getattr(self.wandb_run, "project", config.wandb_project)
@@ -301,63 +297,26 @@ class WandbBackend:
         except Exception as e:
             self.sync_status = WandbSyncStatus.FAILED
             self._restore_env()
-            # Sanitize error message to prevent leaking machine paths
-            sanitized_err = str(e).replace(str(Path.home()), "~")
+            sanitized_err = sanitize_error_message(e)
             print(f"[WARNING] W&B initialization failed (non-fatal to local run): {sanitized_err}")
 
     def log_episode(
         self,
-        record: Union[EpisodeRecord, EpisodeLogRowV1],
+        record: EpisodeLogRowV1,
         timing: Optional[EpisodeTimingRecord] = None,
         technical_failure: Optional[Dict[str, Any]] = None
     ) -> None:
         """Logs episode metric event and records tabular row."""
+        if not isinstance(record, EpisodeLogRowV1):
+            raise TypeError(
+                f"TrackingBackend accepts EpisodeLogRowV1 only, got {type(record).__name__}."
+            )
         if not self.wandb_run or self.sync_status == WandbSyncStatus.FAILED:
             return
 
-        if isinstance(record, EpisodeLogRowV1):
-            event = record.to_wandb_event(timing)
-            table_row = record.to_wandb_table_row(timing)
-            step_idx = record.episode_index
-        else:
-            clean_succ = getattr(record, "clean_success", False)
-            raw_arr = getattr(record, "raw_arrival", False)
-            prim_reason = record.primary_reason.value if hasattr(record.primary_reason, "value") else str(record.primary_reason)
-            step_idx = getattr(record, "episode_index", len(self.table_data) + 1)
-            event = {
-                "eval/episode_index": step_idx,
-                "eval/protocol_order_index": getattr(record, "protocol_order_index", step_idx),
-                "eval/clean_success": 1.0 if clean_succ else 0.0,
-                "eval/raw_arrival": 1.0 if raw_arr else 0.0,
-                "eval/final_route_completion": record.final_route_completion,
-                "eval/max_route_completion": record.max_route_completion,
-                "eval/episode_steps": record.episode_steps,
-                "eval/episode_time_s": record.simulation_time_s,
-                "diagnostic/episode_return": record.episode_return,
-                "eval/mean_speed_kmh": record.mean_speed_kmh,
-                "eval/max_speed_kmh": record.max_speed_kmh,
-                f"failure/{prim_reason}": 1.0,
-            }
-            for flag in ("crash_human", "crash_vehicle", "crash_object", "crash_building", "crash_sidewalk", "out_of_road"):
-                if getattr(record, f"raw_{flag}", False):
-                    event[f"flags/{flag}"] = 1.0
-            if getattr(record, "truncated", False):
-                event["flags/timeout"] = 1.0
-            if timing:
-                event["timing/agent_act_mean_ms"] = timing.mean_act_ms
-                event["timing/agent_act_median_ms"] = timing.median_act_ms
-                event["timing/agent_act_p95_ms"] = timing.p95_act_ms
-                event["timing/agent_act_max_ms"] = timing.max_act_ms
-                event["timing/agent_act_total_ms"] = timing.total_act_ms
-            mean_t = timing.mean_act_ms if timing else 0.0
-            table_row = [
-                step_idx, getattr(record, "protocol_order_index", step_idx),
-                getattr(record, "case_id", f"case_{step_idx}"), getattr(record, "split", "N/A"),
-                record.tier, record.sequence, getattr(record, "geometry_generation_seed", record.scenario_seed),
-                getattr(record, "environment_seed", "N/A"), clean_succ, record.final_route_completion,
-                record.max_route_completion, prim_reason, record.episode_steps, record.simulation_time_s,
-                record.time_to_clean_success_s, mean_t, record.episode_return
-            ]
+        event = record.to_wandb_event(timing)
+        table_row = record.to_wandb_table_row(timing)
+        step_idx = record.episode_index
 
         try:
             import wandb
@@ -366,7 +325,8 @@ class WandbBackend:
             self.table_data.append(table_row)
         except Exception as e:
             self.sync_status = WandbSyncStatus.FAILED
-            print(f"[WARNING] W&B episode logging failed (non-fatal): {e}")
+            sanitized_err = sanitize_error_message(e)
+            print(f"[WARNING] W&B episode logging failed (non-fatal): {sanitized_err}")
 
     def log_summary(self, summary_payload: Dict[str, Any]) -> None:
         """Mirrors local Gate-4 summary aggregates and uploads evaluation_episodes Table."""
@@ -413,7 +373,8 @@ class WandbBackend:
 
         except Exception as e:
             self.sync_status = WandbSyncStatus.FAILED
-            print(f"[WARNING] W&B summary logging failed (non-fatal): {e}")
+            sanitized_err = sanitize_error_message(e)
+            print(f"[WARNING] W&B summary logging failed (non-fatal): {sanitized_err}")
 
     def finish(self, status: RunStatus) -> Dict[str, Any]:
         """Finishes the W&B run cleanly, restores environment, and returns sync metadata."""
@@ -442,7 +403,8 @@ class WandbBackend:
             print(f"[WANDB] Run finalized: {self.run_id} ({self.sync_status.value})")
         except Exception as e:
             self.sync_status = WandbSyncStatus.FAILED
-            print(f"[WARNING] W&B run finish failed (non-fatal): {e}")
+            sanitized_err = sanitize_error_message(e)
+            print(f"[WARNING] W&B run finish failed (non-fatal): {sanitized_err}")
         finally:
             self._restore_env()
 
@@ -466,8 +428,7 @@ class WandbBackend:
             except Exception:
                 pass
         self._restore_env()
-        # Sanitize error message to prevent leaking machine paths
-        sanitized_msg = str(error_message).replace(str(Path.home()), "~")
+        sanitized_msg = sanitize_error_message(error_message)
         return {
             "mode": self.mode.value,
             "sync_status": self.sync_status.value,

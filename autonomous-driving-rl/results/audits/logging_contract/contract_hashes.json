@@ -2,11 +2,11 @@
   "gate5_benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
   "gate6_agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
   "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
-  "logging_contract_sha256": "62ef93297dacc5f2dc6f072309e914edfdac6da48e3c7ec726d4c542d9953d34",
-  "platform_observability_contract_sha256": "74ac114c119789ff2e5b439deddc5a3893ddc6d400002454757aebf415d50c7f",
+  "logging_contract_sha256": "312852c3fa498a3bd152799a02ad52b34c9b7b839fec0c3405ea613c56806f74",
+  "platform_observability_contract_sha256": "cedf032f9430370c1cc14cb262868a115609176672cd46bda43f0210308ae51d",
   "observability_contract_payload": {
     "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
-    "logging_contract_sha256": "62ef93297dacc5f2dc6f072309e914edfdac6da48e3c7ec726d4c542d9953d34",
+    "logging_contract_sha256": "312852c3fa498a3bd152799a02ad52b34c9b7b839fec0c3405ea613c56806f74",
     "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
     "metadrive_version": "0.4.3",
     "platform_specification_gate": "Gate 7"
