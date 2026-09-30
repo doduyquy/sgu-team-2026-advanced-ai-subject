@@ -3,6 +3,7 @@
   "run_dir": "run_audit_local_01",
   "required_files_verified": {
     "run_manifest.json": true,
+    "run_state.json": true,
     "episodes.csv": true,
     "summary.json": true,
     "timing.csv": true,

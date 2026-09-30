@@ -13,6 +13,7 @@
     "remote_sync_source": "DOWNSTREAM_MIRROR",
     "required_files": [
       "run_manifest.json",
+      "run_state.json",
       "episodes.csv",
       "summary.json",
       "timing.csv",
@@ -30,6 +31,8 @@
       "benchmark_contract_sha256",
       "agent_contract_sha256",
       "platform_runtime_contract_sha256",
+      "logging_contract_sha256",
+      "platform_observability_contract_sha256",
       "agent_id",
       "agent_version",
       "input_profile_id",
@@ -41,6 +44,7 @@
       "protocol_order_seed",
       "manifest_name",
       "expected_episode_count",
+      "allow_dirty_worktree_override",
       "wandb_mode",
       "wandb_project",
       "wandb_entity",
@@ -56,6 +60,52 @@
       "git_provenance",
       "environment_provenance",
       "platform_contracts"
+    ],
+    "RunStateV1": [
+      "run_id",
+      "status",
+      "started_at_utc",
+      "updated_at_utc",
+      "finished_at_utc",
+      "recorded_episode_count",
+      "expected_episode_count",
+      "canonical_run",
+      "dirty_override",
+      "failure_category",
+      "sanitized_failure_message"
+    ],
+    "EpisodeLogRowV1": [
+      "episode_index",
+      "protocol_order_index",
+      "case_id",
+      "split",
+      "tier",
+      "sequence",
+      "geometry_generation_seed",
+      "environment_seed",
+      "horizon_steps",
+      "agent_seed",
+      "primary_terminal_reason",
+      "terminal_reason",
+      "clean_success",
+      "raw_arrival",
+      "final_route_completion",
+      "max_route_completion",
+      "episode_steps",
+      "episode_time_s",
+      "time_to_clean_success_s",
+      "mean_speed_kmh",
+      "max_speed_kmh",
+      "episode_return",
+      "crash_human",
+      "crash_vehicle",
+      "crash_object",
+      "crash_building",
+      "crash_sidewalk",
+      "out_of_road",
+      "timeout",
+      "has_technical_failure",
+      "technical_failure_reason"
     ],
     "EpisodeTimingRecord": [
       "episode_index",
@@ -74,6 +124,7 @@
       "episodes_sha256",
       "summary_sha256",
       "timing_sha256",
+      "run_state_sha256",
       "technical_failures_sha256",
       "finalized_at_utc"
     ]
@@ -109,14 +160,15 @@
     "file": "episodes.csv",
     "columns": [
       "episode_index",
+      "protocol_order_index",
       "case_id",
       "split",
       "tier",
       "sequence",
       "geometry_generation_seed",
       "environment_seed",
-      "agent_seed",
       "horizon_steps",
+      "agent_seed",
       "primary_terminal_reason",
       "terminal_reason",
       "clean_success",
@@ -178,6 +230,7 @@
       "max_act_ms",
       "total_act_ms"
     ],
+    "weighted_aggregation": "sum(total_act_ms) / sum(act_count)",
     "latency_sync_policies": [
       "NONE",
       "FRAMEWORK_SYNCHRONIZED"
@@ -205,7 +258,12 @@
     ],
     "failure_policy": "NON-FATAL to local scientific experiment if local logging is healthy",
     "table_name": "evaluation_episodes",
-    "step_axis": "episode_index"
+    "step_axis": "episode_index",
+    "privacy_settings": {
+      "save_code": false,
+      "disable_git": true,
+      "notes": "Code and git provenance captured exclusively through local immutable RunManifestV1."
+    }
   },
   "secret_policy": {
     "credential_source": "WANDB_API_KEY environment variable",
@@ -225,6 +283,7 @@
     "file": "run_integrity.json",
     "fingerprinted_artifacts": [
       "run_manifest.json",
+      "run_state.json",
       "episodes.csv",
       "summary.json",
       "timing.csv",

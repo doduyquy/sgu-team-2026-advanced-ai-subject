@@ -1,8 +1,22 @@
 {
-  "test": "wandb_network_outage_simulation",
-  "wandb_sync_status": "FAILED",
-  "local_run_status": "COMPLETE",
-  "local_records_preserved": true,
-  "policy": "W&B failure is strictly NON-FATAL to the local scientific experiment.",
+  "test": "wandb_failure_matrix_simulation",
+  "failure_phases_tested": {
+    "WANDB_INIT_ERROR": {
+      "caught_gracefully": true,
+      "sync_status": "FAILED",
+      "policy": "NON-FATAL"
+    },
+    "WANDB_LOG_ERROR": {
+      "caught_gracefully": true,
+      "sync_status": "FAILED",
+      "policy": "NON-FATAL"
+    },
+    "WANDB_SYNC_ERROR": {
+      "caught_gracefully": true,
+      "sync_status": "FAILED",
+      "policy": "NON-FATAL"
+    }
+  },
+  "policy": "All remote W&B failures are strictly NON-FATAL to local scientific experiment.",
   "verdict": "PASSED"
 }

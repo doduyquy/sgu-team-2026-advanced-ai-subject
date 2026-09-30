@@ -163,9 +163,10 @@ A critical requirement for scientific logging is that enabling tracking must not
 ## 10. Weights & Biases Online Smoke Test
 
 Executed an online smoke test using the transient `WANDB_API_KEY`:
-- **Run ID:** `audit_online_aaff2e38`
-- **Run URL:** https://wandb.ai/phucga15062005/sgu-autonomous-driving-rl/runs/audit_online_aaff2e38
-- **Project / Entity:** `sgu-autonomous-driving-rl` / `phucga15062005` (user: `irthn1311`)
+- **Run ID:** `audit_online_34188eda`
+- **Run URL:** https://wandb.ai/phucga15062005/sgu-autonomous-driving-rl/runs/audit_online_34188eda
+- **Configured Project / Entity:** `sgu-autonomous-driving-rl` / None
+- **Resolved Project / Entity:** `sgu-autonomous-driving-rl` / `phucga15062005` (user: `irthn1311`)
 - **Status:** `SYNCED`
 - **Artifacts Mirrored:** Configuration parameters, step metrics stream, Gate-4 summary scorecards, and `evaluation_episodes` Table.
 - **Credential Hygiene:** Zero secrets logged or persisted.
@@ -178,16 +179,16 @@ To preserve scientific provenance without mutating previously locked gates:
 - Gate-5 `benchmark_contract_sha256`: `9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77`
 - Gate-6 `agent_contract_sha256`: `53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb`
 - Gate-6 `platform_runtime_contract_sha256`: `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad`
-- Gate-7 `logging_contract_sha256`: `02d480cbb78e876b4c91a4eb16d831106de4199e369c9b53b50f91b142636f9f`
-- Gate-7 `platform_observability_contract_sha256`: `335d96590dd9bbcaf2eb1077d497ebb155acf3abae9bf299bb47087a8dbb81d8`
+- Gate-7 `logging_contract_sha256`: `04901e8747c5cc784cf5422efc4dc728056ae8c51931a72ae3a47e0a3e3b323e`
+- Gate-7 `platform_observability_contract_sha256`: `56391b3fb88f614841ac39b591390c62ba6577dd32ee21f81071ec0395db3445`
 
 ```json
 {
   "gate5_benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
   "gate6_agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
   "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
-  "logging_contract_sha256": "02d480cbb78e876b4c91a4eb16d831106de4199e369c9b53b50f91b142636f9f",
-  "platform_observability_contract_sha256": "335d96590dd9bbcaf2eb1077d497ebb155acf3abae9bf299bb47087a8dbb81d8"
+  "logging_contract_sha256": "04901e8747c5cc784cf5422efc4dc728056ae8c51931a72ae3a47e0a3e3b323e",
+  "platform_observability_contract_sha256": "56391b3fb88f614841ac39b591390c62ba6577dd32ee21f81071ec0395db3445"
 }
 ```
 
@@ -197,16 +198,20 @@ $$\text{platform\_observability\_contract\_sha256} = \text{SHA256}(\text{canonic
 
 ## 12. Unit Tests & Verification Summary
 
-Implemented in `tests/test_logging_contract.py` (16 pure unit tests executing in $<4.0\text{ s}$ without network dependencies):
+Implemented in `tests/test_logging_contract.py` (19 pure unit tests executing in $<8.0\text{ s}$ without network dependencies):
 - Verified `RunManifest` construction, formatting, and schema.
 - Verified duplicate run protection (`FileExistsError` on existing run directory).
-- Verified episode logging, streaming CSV writes, and Gate-4 aggregate calculation.
+- Verified `RunStateV1` durable lifecycle tracking across `run_state.json`.
+- Verified canonical dirty-worktree policy (fails by default, override marks noncanonical).
+- Verified single canonical `EpisodeLogRowV1` construction, validation, and projection.
 - Verified null metric semantics (`null` in JSON, never converted to `0.0`).
 - Verified expected episode count enforcement (mismatch causes `RunStatus.FAILED`).
 - Verified fake W&B backend metric parity and `evaluation_episodes` Table parity.
-- Verified W&B network failure is non-fatal to local run.
+- Verified W&B failure matrix simulation (init, log, finish errors are non-fatal to local run).
 - Verified local disk write failure strictly prevents `RunStatus.COMPLETE`.
 - Verified decision latency boundary excludes simulated logger delay.
+- Verified raw floating-point timing precision preservation without rounding.
+- Verified weighted overall decision latency calculation across unequal episode lengths.
 - Verified secret absence across all serialized manifests and configs.
 - Verified machine path privacy (no usernames or home directory paths).
 - Verified `WandbMode.DISABLED` functions standalone without credentials or network.
@@ -218,7 +223,7 @@ Implemented in `tests/test_logging_contract.py` (16 pure unit tests executing in
 ---
 
 ## 13. Regression & Integrity Validation
-- Pure unit tests: **99 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 37, `test_logging_contract`: 16).
+- Pure unit tests: **102 total tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 37, `test_logging_contract`: 19).
 - `CourseEnvV1`: Reset observation shape `(35,)` verified.
 - `evaluate_random.py`: Completed 20 evaluation episodes cleanly.
 - Gates 1 through 6 contracts remained completely untouched.

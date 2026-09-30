@@ -2,22 +2,16 @@
   "geometry_id": "geom_easy_SCS_seed13",
   "steps_compared": 20,
   "positions_match": true,
-  "initial_position_disabled": [
+  "obs_init_hash_match": true,
+  "rewards_match": true,
+  "initial_position": [
     5.0071,
     0.0
   ],
-  "initial_position_offline": [
-    5.0071,
-    0.0
-  ],
-  "final_position_disabled": [
+  "final_position": [
     10.6947,
     0.0083
   ],
-  "final_position_offline": [
-    10.6947,
-    0.0083
-  ],
-  "verdict": "PASSED_OBSERVATIONAL_ONLY",
-  "notes": "Enabling W&B tracking backend produces 100% bit-for-bit identical simulator trajectory."
+  "verdict": "PASSED_OBSERVATIONAL_INVARIANCE",
+  "notes": "Active W&B OFFLINE logging produces 100% bit-for-bit identical simulator trajectories and rewards."
 }

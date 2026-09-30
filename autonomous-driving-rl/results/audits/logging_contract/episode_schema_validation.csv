@@ -1,13 +1,14 @@
 column_name,sample_value,row_count
 episode_index,1,4
-case_id,case_Easy_1,4
+protocol_order_index,1,4
+case_id,test/Easy/SCS/1/9101,4
 split,TEST,4
 tier,Easy,4
 sequence,SCS,4
 geometry_generation_seed,11,4
 environment_seed,9101,4
-agent_seed,42,4
 horizon_steps,1000,4
+agent_seed,42,4
 primary_terminal_reason,SUCCESS,4
 terminal_reason,SUCCESS,4
 clean_success,True,4

@@ -9,7 +9,9 @@
 ## 2. Local-First Scientific Record Architecture
 - **Authoritative Source of Truth:** Local raw run directory (`runs/<run_id>/`).
 - **Downstream Mirror:** Weights & Biases serves strictly as remote index, visualization, and comparison.
-- **Required Local Files:** `run_manifest.json`, `episodes.csv`, `summary.json`, `timing.csv`, `run_integrity.json`, `wandb_sync.json`.
+- **Single Canonical Log Row:** `EpisodeLogRowV1` constructed once per episode and projected identically to `episodes.csv`, W&B metric events, and W&B `evaluation_episodes` Table.
+- **Durable Lifecycle Tracking:** `run_state.json` records run state (`RUNNING`, `COMPLETE`, `FAILED`) durably across process exit.
+- **Required Local Files:** `run_manifest.json`, `run_state.json`, `episodes.csv`, `summary.json`, `timing.csv`, `run_integrity.json`, `wandb_sync.json`.
 - **Duplicate Protection:** Fails loudly if `runs/<run_id>` already exists; overwriting or appending to completed scientific runs is strictly forbidden.
 - **Atomic Writes:** JSON records use `.tmp` flush, fsync, and atomic rename.
 
@@ -27,14 +29,15 @@
 ## 5. Weights & Biases Online Smoke Result
 - **Performed:** `True`
 - **Status:** `SYNCED`
-- **Run ID:** `audit_online_aaff2e38`
-- **Run URL:** `https://wandb.ai/phucga15062005/sgu-autonomous-driving-rl/runs/audit_online_aaff2e38`
-- **Project / Entity:** `sgu-autonomous-driving-rl / None`
+- **Run ID:** `audit_online_34188eda`
+- **Run URL:** `https://wandb.ai/phucga15062005/sgu-autonomous-driving-rl/runs/audit_online_34188eda`
+- **Configured Project / Entity:** `sgu-autonomous-driving-rl / None`
+- **Resolved Project / Entity:** `sgu-autonomous-driving-rl / phucga15062005`
 - **Table & Summary Mirrored:** Verified
 
 ## 6. Additive Cryptographic Hashes
 - **`gate5_benchmark_contract_sha256`:** `9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77` (locked, untouched)
 - **`gate6_agent_contract_sha256`:** `53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb` (locked, untouched)
 - **`platform_runtime_contract_sha256`:** `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad` (locked, untouched)
-- **`logging_contract_sha256`:** `02d480cbb78e876b4c91a4eb16d831106de4199e369c9b53b50f91b142636f9f`
-- **`platform_observability_contract_sha256`:** `335d96590dd9bbcaf2eb1077d497ebb155acf3abae9bf299bb47087a8dbb81d8`
+- **`logging_contract_sha256`:** `04901e8747c5cc784cf5422efc4dc728056ae8c51931a72ae3a47e0a3e3b323e`
+- **`platform_observability_contract_sha256`:** `56391b3fb88f614841ac39b591390c62ba6577dd32ee21f81071ec0395db3445`
