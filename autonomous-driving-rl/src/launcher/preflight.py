@@ -11,6 +11,7 @@ This module implements deterministic pre-execution scientific safety checks:
 """
 
 from dataclasses import asdict, dataclass
+import math
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -251,7 +252,7 @@ def run_preflight(
                 if int(c.geometry_generation_seed) != int(m["geometry_generation_seed"]): val_field_diffs.append(f"row {idx} geom_seed mismatch")
                 if str(c.geometry_sha256) != str(m["geometry_sha256"]): val_field_diffs.append(f"row {idx} geom_hash mismatch")
                 if int(c.environment_seed) != int(m["environment_seed"]): val_field_diffs.append(f"row {idx} env_seed mismatch")
-                if abs(float(c.traffic_density) - float(m["traffic_density"])) > 1e-5: val_field_diffs.append(f"row {idx} traffic_density mismatch")
+                if not math.isfinite(float(c.traffic_density)) or float(c.traffic_density) != float(m["traffic_density"]): val_field_diffs.append(f"row {idx} traffic_density mismatch ({c.traffic_density} != {m['traffic_density']})")
                 if int(c.horizon_steps) != int(m["horizon_steps"]): val_field_diffs.append(f"row {idx} horizon_steps mismatch")
                 if len(val_field_diffs) > 5:
                     val_field_diffs.append("... additional field mismatches omitted")
@@ -288,7 +289,7 @@ def run_preflight(
                 if int(c.geometry_generation_seed) != int(m["geometry_generation_seed"]): test_field_diffs.append(f"row {idx} geom_seed mismatch")
                 if str(c.geometry_sha256) != str(m["geometry_sha256"]): test_field_diffs.append(f"row {idx} geom_hash mismatch")
                 if int(c.environment_seed) != int(m["environment_seed"]): test_field_diffs.append(f"row {idx} env_seed mismatch")
-                if abs(float(c.traffic_density) - float(m["traffic_density"])) > 1e-5: test_field_diffs.append(f"row {idx} traffic_density mismatch")
+                if not math.isfinite(float(c.traffic_density)) or float(c.traffic_density) != float(m["traffic_density"]): test_field_diffs.append(f"row {idx} traffic_density mismatch ({c.traffic_density} != {m['traffic_density']})")
                 if int(c.horizon_steps) != int(m["horizon_steps"]): test_field_diffs.append(f"row {idx} horizon_steps mismatch")
                 if len(test_field_diffs) > 5:
                     test_field_diffs.append("... additional field mismatches omitted")

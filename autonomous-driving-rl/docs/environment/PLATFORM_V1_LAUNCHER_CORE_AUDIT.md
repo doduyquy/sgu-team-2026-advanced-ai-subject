@@ -1,7 +1,7 @@
 # Platform V1 Research Launcher Core & Plan Resolver Audit
 
 > **Status:** AUDIT & SCIENTIFIC SPECIFICATION (GATE 7.5A)  
-> **Freeze Status:** LOCKED-FOR-PLATFORM-V1 (Launcher Core Verified)  
+> **Freeze Status:** AUDIT-CANDIDATE (Pending Independent Review)  
 > **Target Scope:** Standardized experiment orchestration, plan resolution, preflight safety, and simulation pipeline across Stages 0 through 7  
 > **Date:** October 2026  
 
@@ -95,22 +95,24 @@ Gate 7.5A provides verification fixtures from Gate 6:
 
 ## 5. Preflight Safety Battery
 
-Before any simulator environment or logger directory is instantiated, `run_preflight()` evaluates a pure battery of 13 checks:
-1. **MetaDrive Exact Pin:** Asserts installed version is `0.4.3` and commit is `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`.
-2. **Git Cleanliness:** Requires clean working tree for `VALIDATION` and `TEST` benchmarks (blocks uncommitted benchmark runs).
-3. **Agent Mode Eligibility:** Verifies agent `sandbox_eligible` / `audit_eligible` flags.
-4. **Benchmark Agent Eligibility:** Asserts `benchmark_eligible == True` for `VALIDATION` and `TEST` (rejects fixtures).
-5. **Input Profile Support:** Asserts profile is certified (`STATE_DECISION_V1`).
-6. **Action Adapter Support:** Asserts adapter is certified (`continuous_box2_v1`, `discrete25_native_v1`, `discrete9_lowbranch_v1`).
-7. **Sandbox Case Count & Holdout:** Asserts exactly 1 case in `TRAIN` split.
-8. **Validation Suite Integrity:** Asserts exactly 96 cases in `VALIDATION` split matching manifest.
-9. **Test Suite Integrity:** Asserts exactly 60 paired cases in `TEST` split matching manifest.
-10. **Protocol Order Monotonicity:** Asserts sequential 1-indexed ordering.
-11. **Stochastic Seed Policy:** Requires `agent_seed` $\in \{101, 202, 303\}$ for stochastic benchmark agents; requires `agent_seed is None` for deterministic benchmark agents.
-12. **Benchmark Render Policy:** Asserts `render_mode == "OFF"` for benchmark suites.
-13. **W&B Credential Presence:** Asserts `WANDB_API_KEY` exists in memory if `WandbMode.ONLINE` is requested.
+Before any simulator environment or logger directory is instantiated, `run_preflight()` evaluates a pure battery of checks organized across 7 scientific categories (`CONTRACT`, `ENVIRONMENT`, `AGENT`, `CASE_PLAN`, `SEED`, `OBSERVABILITY`, `SECURITY`):
+1. **Contract Hash Chain Verification (`CONTRACT`):** Asserts plan hashes match locked values across Gates 5, 6, 7, and candidate Gate 7.5A.
+2. **Gate-5 Source Manifest Hashes (`CONTRACT`):** Asserts source CSV manifest files match locked Gate-5 cryptographic fingerprints.
+3. **Plan Hash Integrity Recomputation (`CONTRACT`):** Recomputes `resolved_plan_sha256` from actual plan semantics, blocking post-resolution plan tampering or stale hashes.
+4. **Plan Structural Consistency (`CONTRACT`):** Verifies mode-to-RunKind mapping, canonical status, protocol scope string, and 10 Hz physical control configuration (`physics_world_step_size=0.02`, `decision_repeat=5`, `dt=0.1s`).
+5. **Deep Manifest Parity (`CASE_PLAN`):** Verifies actual resolved cases row-by-row and field-by-field across all 11 fields against locked Gate-5 manifests without tolerance-based float leniency.
+6. **Sandbox Single Case Count & Holdout (`CASE_PLAN`):** Asserts exactly 1 case in `TRAIN` split; blocks `VALIDATION` and `TEST` geometries loudly.
+7. **Protocol Order Monotonicity (`CASE_PLAN`):** Asserts sequential 1-indexed ordering.
+8. **MetaDrive Exact Pin (`ENVIRONMENT`):** Asserts installed version is `0.4.3` and commit is `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`.
+9. **Git Cleanliness (`SECURITY`):** Requires clean working tree for `VALIDATION` and `TEST` benchmarks (blocks uncommitted benchmark runs).
+10. **Agent Mode Eligibility (`AGENT`):** Verifies agent `sandbox_eligible` / `audit_eligible` flags.
+11. **Benchmark Agent Eligibility (`AGENT`):** Asserts `benchmark_eligible == True` for `VALIDATION` and `TEST` (rejects fixtures).
+12. **Input Profile & Action Adapter Support (`AGENT`):** Asserts profile is certified (`STATE_DECISION_V1`) and adapter is certified.
+13. **Stochastic Seed Policy (`SEED`):** Requires `agent_seed` $\in \{101, 202, 303\}$ for stochastic benchmark agents; requires `agent_seed is None` for deterministic benchmark agents.
+14. **Benchmark Render Policy (`OBSERVABILITY`):** Asserts `render_mode == "OFF"` for benchmark suites.
+15. **W&B Credential Presence (`OBSERVABILITY`):** Asserts `WANDB_API_KEY` exists in memory if `WandbMode.ONLINE` is requested.
 
-*Execution Rule:* `can_execute == True` if and only if zero `FAIL` checks exist.
+*Execution Rule:* `can_execute == True` if and only if zero `FAIL` checks exist. Execution engine `ExperimentExecutor.execute()` unconditionally evaluates preflight before instantiating any simulator, logger, or W&B resources.
 
 ---
 
@@ -170,8 +172,8 @@ Gate 7.5A introduces additive hashes without altering previously locked platform
 | **`platform_runtime_contract_sha256`** | `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad` | **LOCKED (Untouched)** |
 | **`logging_contract_sha256`** | `0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2` | **LOCKED (Untouched)** |
 | **`platform_observability_contract_sha256`** | `f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581` | **LOCKED (Untouched)** |
-| **`launcher_contract_sha256`** | `7f9bb7b24e6c4e4f7b2728a35d631c7aacc7df1e36e41fa375e56f1877a0abb1` | **AUDIT-CANDIDATE (Gate 7.5A)** |
-| **`platform_execution_contract_sha256`** | `c579fd6c9881c068c86d149ed7579b30b62914e54cfc554ba730e09a6fb56642` | **AUDIT-CANDIDATE (Gate 7.5A)** |
+| **`launcher_contract_sha256`** | `b9000bc5dd8820943eff2fa32a9574afe3258363b8854d718bc4183f0cb17ed3` | **AUDIT-CANDIDATE (Gate 7.5A)** |
+| **`platform_execution_contract_sha256`** | `c350f5cb980c1e9a2c32e543306f5ed4e02dc5d1266bb32e222137e189f008e5` | **AUDIT-CANDIDATE (Gate 7.5A)** |
 
 $$\text{platform\_execution\_contract\_sha256} = \text{SHA256}(\text{canonical\_json}(\{\text{"platform\_observability\_contract\_sha256"}, \text{"launcher\_contract\_sha256"}, \dots\}))$$
 
@@ -188,7 +190,7 @@ All verification artifacts are generated in `results/audits/launcher_core/`:
 - `preflight_matrix.csv`: Empirical evaluation of 13 preflight decision scenarios.
 - `plan_hash_determinism.json`: Proof of deterministic plan hashing and mutation sensitivity.
 - `cli_core_parity.json`: Verified semantic equivalence between CLI JSON output and direct resolver output.
-- `reward_passthrough_parity.json`: Verified signed progress delta passthrough without clamping.
+- `reward_passthrough_parity.json`: Verified signed progress delta passthrough without clamping (exercising production helper).
 - `execution_config_lock.json`: Verified 10 Hz physical control, 0.02 step size, decision repeat 5, Trigger mode.
 - `sandbox_execution_smoke.json`: Successful real MetaDrive simulation execution of Sandbox episode:
   - Run state: `COMPLETE`
@@ -209,8 +211,8 @@ The following capabilities are deliberately excluded from Gate 7.5A and will be 
 ---
 
 ## 12. Regression & Verification Summary
-- **Launcher Core Unit Tests:** 37 tests pass (`tests/test_launcher_core.py`, 4.5s).
-- **Full Platform Regression Suite:** **167 total unit tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 37, `test_logging_contract`: 47, `test_launcher_core`: 37).
+- **Launcher Core Unit Tests:** 65 tests pass (`tests/test_launcher_core.py`, 7.2s).
+- **Full Platform Regression Suite:** **195 total unit tests pass across repo** (`test_episode_lifecycle`: 10, `test_reward_metrics`: 16, `test_evaluation_protocol`: 20, `test_agent_contract`: 37, `test_logging_contract`: 47, `test_launcher_core`: 65).
 - **Legacy Compatibility:** `CourseEnvV1` observation shape `(35,)` verified; `evaluate_random.py` completes 20 episodes cleanly.
 - **Contract Integrity:** Gates 5, 6, and 7 hashes remain 100% untouched.
 - **Privacy & Secret Hygiene:** Automated scans across all files confirmed zero credentials and zero machine-private paths committed.

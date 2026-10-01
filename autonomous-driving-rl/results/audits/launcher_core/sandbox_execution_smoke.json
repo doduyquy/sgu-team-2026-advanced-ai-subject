@@ -41,7 +41,7 @@
     "launcher_mode": "SANDBOX",
     "platform_execution_contract_sha256": "c350f5cb980c1e9a2c32e543306f5ed4e02dc5d1266bb32e222137e189f008e5",
     "protocol_scope": "SANDBOX_SINGLE_CASE",
-    "resolved_plan_sha256": "540d56317c1b79211ac4c745e72b572fe2f71004eae02d676595185b44e68c47"
+    "resolved_plan_sha256": "889153d8db3a562485735048cdbd81a56fb4a71ce8a9cffd98bbfaf5e295ab6d"
   },
   "verdict": "PASSED"
 }

@@ -1,4 +1,5 @@
 {
+  "production_helper": "src.launcher.executor.compute_step_route_progress_and_reward",
   "synthetic_rc_trace": [
     0.0,
     0.1,
@@ -15,6 +16,7 @@
     -0.020000000000000004,
     0.12000000000000001
   ],
+  "all_deltas_match": true,
   "signed_progress_preserved": true,
   "clamping_absent": true,
   "steps": [

@@ -59,6 +59,7 @@ from src.launcher.executor import (
     ExecutionReportV1,
     ExperimentExecutor,
     build_metadrive_case_config,
+    compute_step_route_progress_and_reward,
     resolve_manifest_name_for_mode,
 )
 from src.launcher.models import (
@@ -369,7 +370,7 @@ def check_case_manifest_parity(cases: List[ResolvedCaseV1], manifest_rows: List[
             field_mismatches += 1; row_has_mismatch = True
         if int(c.environment_seed) != int(m["environment_seed"]):
             field_mismatches += 1; row_has_mismatch = True
-        if abs(float(c.traffic_density) - float(m["traffic_density"])) > 1e-5:
+        if not math.isfinite(float(c.traffic_density)) or float(c.traffic_density) != float(m["traffic_density"]):
             field_mismatches += 1; row_has_mismatch = True
         if int(c.horizon_steps) != int(m["horizon_steps"]):
             field_mismatches += 1; row_has_mismatch = True
@@ -436,10 +437,12 @@ def audit_case_plan_parity(root: Path, results_dir: Path):
 def audit_reward_passthrough_parity(results_dir: Path):
     """
     Verifies that the Launcher preserves Gate-4 signed progress deltas without clamping.
+    Directly exercises the authoritative production helper compute_step_route_progress_and_reward()
+    used by ExperimentExecutor.
     Uses synthetic route completion trace [0.00, 0.10, 0.08, 0.20].
-    Asserts deltas [+0.10, -0.02, +0.12] and feeds into RewardSpecV1.
+    Derives all verification fields dynamically from observed execution without hardcoded PASS booleans.
     """
-    print("\n--- Auditing Reward Passthrough & Signed Progress Parity ---")
+    print("\n--- Auditing Reward Passthrough & Signed Progress Parity (Production Helper) ---")
     rc_trace = [0.00, 0.10, 0.08, 0.20]
     expected_deltas = [+0.10, -0.02, +0.12]
 
@@ -448,43 +451,50 @@ def audit_reward_passthrough_parity(results_dir: Path):
     last_rc = rc_trace[0]
 
     for curr_rc in rc_trace[1:]:
-        delta_route = curr_rc - last_rc
-        breakdown = reward_spec.compute_step_reward(
-            delta_route_completion=delta_route,
+        prev_rc = last_rc
+        delta_route, last_rc, breakdown = compute_step_route_progress_and_reward(
+            reward_spec=reward_spec,
+            current_route_completion=curr_rc,
+            last_route_completion=last_rc,
             horizon_steps=1000
         )
         step_records.append({
-            "previous_route_completion": last_rc,
+            "previous_route_completion": prev_rc,
             "current_route_completion": curr_rc,
             "delta_route": delta_route,
             "progress_reward": breakdown.progress_reward,
             "total_step_reward": breakdown.total_reward
         })
-        last_rc = curr_rc
 
     actual_deltas = [r["delta_route"] for r in step_records]
-    assert len(actual_deltas) == len(expected_deltas)
-    for a, e in zip(actual_deltas, expected_deltas):
-        assert abs(a - e) < 1e-6, f"Delta mismatch: {a} != {e}"
+    all_deltas_match = (len(actual_deltas) == len(expected_deltas)) and all(
+        abs(a - e) < 1e-6 for a, e in zip(actual_deltas, expected_deltas)
+    )
 
-    # Specifically assert negative progress produced negative progress reward
-    assert abs(step_records[1]["delta_route"] - (-0.02)) < 1e-6
-    assert step_records[1]["progress_reward"] < 0.0
+    # Derive verification booleans dynamically from observed values
+    step2_delta = float(step_records[1]["delta_route"])
+    step2_reward = float(step_records[1]["progress_reward"])
+    signed_progress_preserved = bool(step2_delta < -0.019 and step2_reward < 0.0)
+    clamping_absent = bool(step2_delta < 0.0)
+    verdict = "PASSED" if (all_deltas_match and signed_progress_preserved and clamping_absent) else "FAILED"
 
     report = {
+        "production_helper": "src.launcher.executor.compute_step_route_progress_and_reward",
         "synthetic_rc_trace": rc_trace,
         "expected_deltas": expected_deltas,
         "actual_deltas": actual_deltas,
-        "signed_progress_preserved": True,
-        "clamping_absent": True,
+        "all_deltas_match": all_deltas_match,
+        "signed_progress_preserved": signed_progress_preserved,
+        "clamping_absent": clamping_absent,
         "steps": step_records,
-        "verdict": "PASSED"
+        "verdict": verdict
     }
 
     out_file = results_dir / "reward_passthrough_parity.json"
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
     print(f"[SAVED] Reward passthrough parity saved to: {out_file}")
+    assert verdict == "PASSED"
 
 
 def audit_execution_config_lock(root: Path, results_dir: Path):

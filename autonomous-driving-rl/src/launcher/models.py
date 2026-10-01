@@ -89,7 +89,13 @@ def validate_custom_run_id(run_id: Optional[str], runs_root: Optional[Path] = No
     if not isinstance(run_id, str):
         raise TypeError(f"custom_run_id must be a string, got {type(run_id).__name__}")
 
-    stripped = run_id.strip()
+    if run_id != run_id.strip():
+        raise ValueError(
+            f"custom_run_id '{run_id}' contains leading or trailing whitespace. "
+            "Silent normalization is prohibited; run_id must be an exact stripped identifier."
+        )
+
+    stripped = run_id
     if not stripped:
         raise ValueError("custom_run_id cannot be empty or whitespace-only")
 
@@ -257,7 +263,8 @@ def compute_resolved_plan_sha256(plan_dict: Dict[str, Any]) -> str:
         "action_adapter_id": reg.get("action_adapter_id"),
         "inference_stochasticity": reg.get("inference_stochasticity"),
         "stateful_within_episode": reg.get("stateful_within_episode"),
-        "benchmark_eligible": reg.get("benchmark_eligible")
+        "benchmark_eligible": reg.get("benchmark_eligible"),
+        "method_family": reg.get("method_family"),
     }
 
     hashable_core = {

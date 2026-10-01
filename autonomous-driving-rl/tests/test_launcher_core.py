@@ -13,6 +13,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+import numpy as np
+
 from src.launcher.cases import (
     LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256,
     LOCKED_TEST_CASE_MANIFEST_SHA256,
@@ -469,20 +471,33 @@ class TestExecutorGuaranteesAndScientificContracts(unittest.TestCase):
         self.project_root = Path(__file__).resolve().parent.parent
 
     def test_signed_negative_progress_reward_without_clamping(self):
-        # Progress backwards: RC from 0.50 to 0.45
-        last_rc = 0.50
-        curr_rc = 0.45
-        delta_route = curr_rc - last_rc
-        self.assertAlmostEqual(delta_route, -0.05)
-
+        from src.launcher.executor import compute_step_route_progress_and_reward
         reward_spec = RewardSpecV1()
-        breakdown = reward_spec.compute_step_reward(
-            delta_route_completion=delta_route,
+
+        # Progress backwards: RC from 0.50 to 0.45
+        delta_route, new_rc, breakdown = compute_step_route_progress_and_reward(
+            reward_spec=reward_spec,
+            current_route_completion=0.45,
+            last_route_completion=0.50,
             horizon_steps=1000
         )
-        # Gate 4 progress component must be negative
+        self.assertAlmostEqual(delta_route, -0.05)
+        self.assertEqual(new_rc, 0.45)
+        # Gate 4 progress component must be strictly negative
         self.assertLess(breakdown.progress_reward, 0.0)
         self.assertAlmostEqual(breakdown.progress_reward, reward_spec.progress_weight * -0.05)
+
+        # Mutation regression test: if a helper clamped delta to 0.0, breakdown.progress_reward would be 0.0
+        def clamped_delta_helper(curr, last):
+            d = max(0.0, curr - last)
+            return d, curr, reward_spec.compute_step_reward(delta_route_completion=d, horizon_steps=1000)
+
+        clamped_d, _, clamped_bd = clamped_delta_helper(0.45, 0.50)
+        self.assertEqual(clamped_d, 0.0)
+        self.assertEqual(clamped_bd.progress_reward, 0.0)
+        # Proves that production compute_step_route_progress_and_reward behaves differently from clamped helper
+        self.assertNotEqual(delta_route, clamped_d)
+        self.assertNotEqual(breakdown.progress_reward, clamped_bd.progress_reward)
 
     def test_executor_blocks_invalid_plan_without_caller_preflight(self):
         # Plan for TEST with fixture agent (benchmark_eligible=False)
@@ -540,7 +555,8 @@ class TestExecutorGuaranteesAndScientificContracts(unittest.TestCase):
             @property
             def descriptor(self):
                 from src.platform import AgentDescriptor
-                return AgentDescriptor(agent_id="different_agent_id")
+                return AgentDescriptor(agent_id="different_agent_id", method_family="fixture")
+            def close(self): pass
 
         req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
         plan = resolve_experiment_plan(req, self.registry, self.project_root)
@@ -550,6 +566,69 @@ class TestExecutorGuaranteesAndScientificContracts(unittest.TestCase):
         with self.assertRaises(RuntimeError) as ctx:
             executor.execute()
         self.assertIn("agent_id mismatch", str(ctx.exception))
+
+    def test_runtime_method_family_mismatch_rejected(self):
+        class WrongFamilyAgent:
+            @property
+            def descriptor(self):
+                from src.platform import AgentDescriptor
+                return AgentDescriptor(
+                    agent_id="fixture_constant_continuous",
+                    agent_version="1.0.0",
+                    input_profile_id="STATE_DECISION_V1",
+                    action_adapter_id="continuous_box2_v1",
+                    inference_stochasticity="deterministic",
+                    stateful_within_episode=False,
+                    method_family="WRONG_FAMILY"
+                )
+            def reset(self, ctx, agent_seed=None): pass
+            def act(self, inp): pass
+            def close(self): pass
+
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        executor = ExperimentExecutor(plan=plan, agent_factory=lambda: WrongFamilyAgent(), project_root=self.project_root)
+
+        with self.assertRaises(RuntimeError) as ctx:
+            executor.execute()
+        self.assertIn("method_family mismatch", str(ctx.exception))
+
+    def test_agent_lifecycle_one_instance_per_run(self):
+        calls = {"factory": 0, "reset": 0, "close": 0}
+        class TrackingAgent:
+            @property
+            def descriptor(self):
+                from src.platform import AgentDescriptor
+                return AgentDescriptor(agent_id="fixture_constant_continuous", action_adapter_id="continuous_box2_v1", method_family="fixture")
+            def reset(self, ctx, agent_seed=None):
+                calls["reset"] += 1
+            def act(self, inp):
+                from src.platform import AgentDecision
+                return AgentDecision(action_payload=[0.0, 0.0])
+            def close(self):
+                calls["close"] += 1
+
+        def tracking_factory():
+            calls["factory"] += 1
+            return TrackingAgent()
+
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        temp_d = tempfile.TemporaryDirectory()
+        try:
+            executor = ExperimentExecutor(plan=plan, agent_factory=tracking_factory, runs_root=Path(temp_d.name), project_root=self.project_root)
+            with patch("src.launcher.executor.build_agent_input") as mock_input, \
+                 patch("src.launcher.executor.MetaDriveEnv") as mock_env_cls:
+                mock_env = mock_env_cls.return_value
+                mock_env.reset.return_value = (np.zeros(259, dtype=np.float32), {})
+                mock_env.step.return_value = (np.zeros(259, dtype=np.float32), 0.0, True, False, {"route_completion": 1.0, "arrive_dest": True})
+                executor.execute()
+
+            self.assertEqual(calls["factory"], 1)
+            self.assertEqual(calls["reset"], 1)
+            self.assertEqual(calls["close"], 1)
+        finally:
+            temp_d.cleanup()
 
     def test_explicit_metadrive_control_config(self):
         case = ResolvedCaseV1(
@@ -669,7 +748,7 @@ class TestPlanDeepIntegrityAndTampering(unittest.TestCase):
         self.assertEqual(check.status, "FAIL")
 
     def test_tampered_test_cases_traffic_density_fails_preflight(self):
-        bm_agent = AgentRegistrationV1(agent_id="bm_test_agent", benchmark_eligible=True, inference_stochasticity="deterministic")
+        bm_agent = AgentRegistrationV1(agent_id="bm_test_agent", benchmark_eligible=True, inference_stochasticity="deterministic", method_family="fixture")
         reg = AgentRegistryV1()
         reg.register(bm_agent, lambda: None)
 
@@ -686,6 +765,34 @@ class TestPlanDeepIntegrityAndTampering(unittest.TestCase):
         self.assertFalse(rep.can_execute)
         check = next(c for c in rep.checks if c.check_id == "test_manifest_deep_parity")
         self.assertEqual(check.status, "FAIL")
+
+    def test_tiny_traffic_density_mutation_fails_preflight(self):
+        bm_agent = AgentRegistrationV1(agent_id="bm_val_agent", benchmark_eligible=True, inference_stochasticity="deterministic", method_family="fixture")
+        reg = AgentRegistryV1()
+        reg.register(bm_agent, lambda: None)
+
+        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="bm_val_agent")
+        plan = resolve_experiment_plan(req, reg, self.project_root)
+
+        # Mutate traffic_density by a tiny +1e-6
+        c0 = plan.resolved_cases[0]
+        tampered_c0 = dataclasses.replace(c0, traffic_density=float(c0.traffic_density) + 1e-6)
+        new_cases = (tampered_c0,) + plan.resolved_cases[1:]
+
+        # Recompute plan hash so failure demonstrably comes from deep manifest parity, NOT stale hash!
+        temp_dict = plan.to_dict()
+        temp_dict["resolved_cases"] = [c.to_dict() for c in new_cases]
+        recomputed_hash = compute_resolved_plan_sha256(temp_dict)
+
+        bad_plan = dataclasses.replace(plan, resolved_cases=new_cases, resolved_plan_sha256=recomputed_hash)
+        rep = run_preflight(bad_plan, self.project_root, custom_git_provenance={"git_worktree_dirty": False}, custom_environment_provenance={"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT})
+        self.assertFalse(rep.can_execute)
+        # Demonstrably passes hash integrity but fails deep manifest parity specifically
+        check_hash = next(c for c in rep.checks if c.check_id == "plan_hash_integrity")
+        self.assertEqual(check_hash.status, "PASS")
+        check_parity = next(c for c in rep.checks if c.check_id == "validation_manifest_deep_parity")
+        self.assertEqual(check_parity.status, "FAIL")
+        self.assertIn("traffic_density mismatch", check_parity.message)
 
 
 class TestCustomRunIdSanitization(unittest.TestCase):
@@ -733,6 +840,15 @@ class TestCustomRunIdSanitization(unittest.TestCase):
             validate_custom_run_id("run id with spaces", self.runs_root)
         with self.assertRaises(ValueError):
             validate_custom_run_id("run*id$special", self.runs_root)
+
+    def test_leading_and_trailing_whitespace_run_ids_rejected(self):
+        from src.launcher.models import validate_custom_run_id
+        with self.assertRaises(ValueError):
+            validate_custom_run_id(" run_01", self.runs_root)
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("run_01 ", self.runs_root)
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("\trun_01", self.runs_root)
 
 
 class TestBenchmarkFilterRejection(unittest.TestCase):
@@ -802,7 +918,7 @@ class TestFailureLifecycleSemantics(unittest.TestCase):
             @property
             def descriptor(self):
                 from src.platform import AgentDescriptor
-                return AgentDescriptor(agent_id="fixture_constant_continuous", action_adapter_id="continuous_box2_v1")
+                return AgentDescriptor(agent_id="fixture_constant_continuous", action_adapter_id="continuous_box2_v1", method_family="fixture")
             def reset(self, ctx, agent_seed=None): pass
             def act(self, inp): raise RuntimeError("Simulated agent neural network crash")
             def close(self): pass
@@ -844,6 +960,101 @@ class TestFailureLifecycleSemantics(unittest.TestCase):
             st = json.load(f)
         self.assertEqual(st["status"], "FAILED")
         self.assertEqual(st["failure_category"], "LOCAL_LOG_WRITE_ERROR")
+
+    def test_keyboard_interrupt_transitions_to_interrupted(self):
+        class InterruptingAgent:
+            @property
+            def descriptor(self):
+                from src.platform import AgentDescriptor
+                return AgentDescriptor(agent_id="fixture_constant_continuous", action_adapter_id="continuous_box2_v1", method_family="fixture")
+            def reset(self, ctx, agent_seed=None): pass
+            def act(self, inp): raise KeyboardInterrupt()
+            def close(self): pass
+
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy", runs_root=self.runs_root)
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        executor = ExperimentExecutor(plan=plan, agent_factory=lambda: InterruptingAgent(), runs_root=self.runs_root, project_root=self.project_root)
+
+        report = executor.execute()
+        self.assertEqual(report.status, "INTERRUPTED")
+
+        run_dirs = list(self.runs_root.iterdir())
+        with open(run_dirs[0] / "run_state.json") as f:
+            st = json.load(f)
+        self.assertEqual(st["status"], "INTERRUPTED")
+        self.assertEqual(st["failure_category"], "INTERRUPTED")
+
+    def test_action_adapter_failure_transitions_to_failed(self):
+        class OutOfBoundsActionAgent:
+            @property
+            def descriptor(self):
+                from src.platform import AgentDescriptor
+                return AgentDescriptor(agent_id="fixture_constant_continuous", action_adapter_id="continuous_box2_v1", method_family="fixture")
+            def reset(self, ctx, agent_seed=None): pass
+            def act(self, inp):
+                from src.platform import AgentDecision
+                return AgentDecision(action_payload=[10.0, 0.0])  # Out of bounds!
+            def close(self): pass
+
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy", runs_root=self.runs_root)
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        executor = ExperimentExecutor(plan=plan, agent_factory=lambda: OutOfBoundsActionAgent(), runs_root=self.runs_root, project_root=self.project_root)
+
+        with self.assertRaises(RuntimeError) as ctx:
+            executor.execute()
+        self.assertIn("violates canonical bounds", str(ctx.exception))
+
+        run_dirs = list(self.runs_root.iterdir())
+        with open(run_dirs[0] / "run_state.json") as f:
+            st = json.load(f)
+        self.assertEqual(st["status"], "FAILED")
+        self.assertEqual(st["failure_category"], "TECHNICAL_EXECUTION_ERROR")
+        self.assertNotEqual(st["status"], "COMPLETE")
+        self.assertNotEqual(st["status"], "INTERRUPTED")
+
+    def test_actual_logger_write_failure_remains_failed_and_not_overwritten(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy", runs_root=self.runs_root)
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        # Injected failure: make episodes.csv append write raise IOError
+        original_open = open
+        def failing_open(path, mode="r", *args, **kwargs):
+            if "episodes.csv" in str(path) and "a" in mode:
+                raise IOError("Simulated disk I/O write failure in episodes.csv")
+            return original_open(path, mode, *args, **kwargs)
+
+        executor = ExperimentExecutor(
+            plan=plan,
+            agent_factory=self.registry.get_factory("fixture_constant_continuous"),
+            runs_root=self.runs_root,
+            project_root=self.project_root
+        )
+
+        with patch("builtins.open", side_effect=failing_open):
+            with self.assertRaises(RuntimeError):
+                executor.execute()
+
+        run_dirs = list(self.runs_root.iterdir())
+        self.assertEqual(len(run_dirs), 1)
+        with open(run_dirs[0] / "run_state.json") as f:
+            st = json.load(f)
+        # Must be FAILED with category LOCAL_LOG_WRITE_ERROR, NEVER overwritten as INTERRUPTED!
+        self.assertEqual(st["status"], "FAILED")
+        self.assertEqual(st["failure_category"], "LOCAL_LOG_WRITE_ERROR")
+        self.assertNotEqual(st["status"], "COMPLETE")
+        self.assertNotEqual(st["status"], "INTERRUPTED")
+
+
+class TestCaseInspectionTampering(unittest.TestCase):
+    def test_cli_case_inspection_tampered_manifest_rejected(self):
+        from src.launcher.cli import handle_cases, create_parser
+        parser = create_parser()
+        args = parser.parse_args(["cases", "--split", "VALIDATION"])
+
+        with patch("src.launcher.cli.load_manifest_csv", side_effect=ValueError("FATAL: Gate-5 manifest tampering detected in 'validation_case_manifest.csv'")):
+            with self.assertRaises(ValueError) as ctx:
+                handle_cases(args)
+            self.assertIn("manifest tampering detected", str(ctx.exception))
 
 
 if __name__ == "__main__":

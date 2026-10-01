@@ -269,6 +269,8 @@ class ExperimentExecutor:
                 raise ValueError(f"Agent descriptor inference_stochasticity mismatch: descriptor='{desc.inference_stochasticity}' != registration='{reg.inference_stochasticity}'")
             if desc.stateful_within_episode != reg.stateful_within_episode:
                 raise ValueError(f"Agent descriptor stateful_within_episode mismatch: descriptor='{desc.stateful_within_episode}' != registration='{reg.stateful_within_episode}'")
+            if desc.method_family != reg.method_family:
+                raise ValueError(f"Agent descriptor method_family mismatch: descriptor='{desc.method_family}' != registration='{reg.method_family}'")
 
             for case_idx, case in enumerate(self.plan.resolved_cases, 1):
                 self._emit(LauncherEventV1.create(
