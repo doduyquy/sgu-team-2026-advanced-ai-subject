@@ -1,12 +1,33 @@
 {
-  "forged_agent_id": "fixture_seeded_random",
-  "forged_attribute": "benchmark_eligible=True",
-  "preflight_blocked_execution": true,
-  "forgery_detected_by_preflight": true,
-  "executor_rejected_custom_registry": true,
-  "fail_check_ids": [
-    "agent_registry_binding",
-    "git_cleanliness"
-  ],
-  "verdict": "PASSED"
+  "scenario_A_fixture_mutation": {
+    "scenario_id": "C1_existing_fixture_mutation",
+    "attack_description": "Adversary copies fixture_seeded_random, sets benchmark_eligible=True in custom registry, requests TEST",
+    "public_resolution_blocked": true,
+    "resolution_error": "External registry is forbidden for canonical benchmark resolution (TEST). Authority must come strictly from committed build_canonical_agent_registry().",
+    "defense_in_depth_preflight_blocked": true,
+    "targeted_preflight_check_ids": [
+      "agent_registry_binding"
+    ],
+    "unrelated_preflight_check_ids": [],
+    "executor_external_registry_rejected": true,
+    "verdict": "PASSED"
+  },
+  "scenario_B_new_agent_insertion": {
+    "scenario_id": "C2_new_custom_agent_insertion",
+    "attack_description": "Adversary creates new custom_fake_benchmark_agent with benchmark_eligible=True, requests TEST",
+    "public_resolution_blocked": true,
+    "resolution_error": "External registry is forbidden for canonical benchmark resolution (TEST). Authority must come strictly from committed build_canonical_agent_registry().",
+    "defense_in_depth_preflight_blocked": true,
+    "targeted_preflight_check_ids": [
+      "canonical_registry_agent_membership",
+      "agent_registry_binding"
+    ],
+    "unrelated_preflight_check_ids": [
+      "agent_descriptor_projection_parity",
+      "deterministic_seed_policy"
+    ],
+    "executor_external_registry_rejected": true,
+    "verdict": "PASSED"
+  },
+  "overall_verdict": "PASSED"
 }

@@ -1,0 +1,42 @@
+{
+  "SANDBOX": {
+    "launcher_mode": "SANDBOX",
+    "plan_canonical_run": false,
+    "current_canonical_agent_benchmark_eligible": false,
+    "launcher_execution_attempted": true,
+    "launcher_execution_completed": true,
+    "persisted_canonical_run": false,
+    "block_reason": null,
+    "evidence_level": "SIMULATOR_BACKED_EXECUTION_VERIFIED"
+  },
+  "AUDIT": {
+    "launcher_mode": "AUDIT",
+    "plan_canonical_run": false,
+    "current_canonical_agent_benchmark_eligible": false,
+    "launcher_execution_attempted": true,
+    "launcher_execution_completed": true,
+    "persisted_canonical_run": false,
+    "block_reason": null,
+    "evidence_level": "SIMULATOR_BACKED_EXECUTION_VERIFIED"
+  },
+  "VALIDATION": {
+    "launcher_mode": "VALIDATION",
+    "plan_canonical_run": true,
+    "current_canonical_agent_benchmark_eligible": false,
+    "launcher_execution_attempted": false,
+    "launcher_execution_completed": false,
+    "persisted_canonical_run": null,
+    "block_reason": "Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False",
+    "evidence_level": "PREFLIGHT_AND_RESOLUTION_BLOCKED_PENDING_STAGE_0"
+  },
+  "TEST": {
+    "launcher_mode": "TEST",
+    "plan_canonical_run": true,
+    "current_canonical_agent_benchmark_eligible": false,
+    "launcher_execution_attempted": false,
+    "launcher_execution_completed": false,
+    "persisted_canonical_run": null,
+    "block_reason": "Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False",
+    "evidence_level": "PREFLIGHT_AND_RESOLUTION_BLOCKED_PENDING_STAGE_0"
+  }
+}

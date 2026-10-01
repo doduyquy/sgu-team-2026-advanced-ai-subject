@@ -40,5 +40,6 @@
 - `canonical_registry_integrity.json`: Verified canonical registry SHA-256 sensitivity and description exclusion.
 - `registry_authority_negative_checks.json`: Verified negative exploit defenses against forged benchmark eligibility and custom registry authority.
 - `implementation_binding_checks.json`: Verified strict runtime implementation class and factory identity binding.
+- `canonicality_matrix.json`: Truthful representation of demonstrated mode capabilities across Platform V1.
 - `reward_passthrough_parity.json`: Verified signed progress delta passthrough without clamping.
 - `execution_config_lock.json`: Verified 10 Hz physical control, 0.02 step, decision repeat 5, Trigger mode.

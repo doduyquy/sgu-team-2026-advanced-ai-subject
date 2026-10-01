@@ -1,8 +1,21 @@
 {
-  "imposter_class": "ImposterAgent",
-  "expected_class_ref": "src.platform.agent:DeterministicConstantFixtureAgent",
-  "implementation_impersonation_caught": true,
-  "factory_substitution_caught": true,
-  "factory_override_rejected": true,
+  "factory_substitution_test": {
+    "layer_isolated_test": true,
+    "caught": true,
+    "error_message": "Experiment execution failed in run 'run_6b5a2a4577e8': Agent factory identity mismatch! Expected 'src.launcher.registry:_factory_fixture_constant_continuous', got '__main__:audit_implementation_binding_checks.<locals>.<lambda>'. Unauthorized factory substitution detected!"
+  },
+  "runtime_implementation_impersonation": {
+    "layer_isolated_test": true,
+    "canonical_factory_identity_preserved": true,
+    "descriptor_spoofed": true,
+    "runtime_class_mismatch_caught": true,
+    "imposter_class": "ImposterAgent",
+    "expected_class_ref": "src.platform.agent:DeterministicConstantFixtureAgent",
+    "error_message": "Experiment execution failed in run 'run_4d7c71d8b89d': Agent runtime implementation mismatch! Expected class 'src.platform.agent:DeterministicConstantFixtureAgent', got '__main__:audit_implementation_binding_checks.<locals>.ImposterAgent'. Implementation impersonation detected!"
+  },
+  "factory_constructor_override": {
+    "caught": true,
+    "error_message": "Explicit agent_factory override is strictly forbidden on canonical benchmark runs! Agent must be instantiated via authoritative AgentRegistryV1."
+  },
   "verdict": "PASSED"
 }

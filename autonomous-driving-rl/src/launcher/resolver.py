@@ -59,17 +59,7 @@ def resolve_experiment_plan(
     canonical_reg = build_canonical_agent_registry()
     canonical_reg_sha = compute_canonical_registry_sha256(canonical_reg)
 
-    # 1. Authority resolution: benchmark modes bind to canonical registry fingerprint
-    if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST):
-        effective_registry = registry if registry is not None else canonical_reg
-    else:
-        effective_registry = registry if registry is not None else canonical_reg
-
-    # Verify agent existence in effective registry
-    agent_reg = effective_registry.get(request.agent_id)
-    factory_ref = effective_registry.get_factory_ref(request.agent_id)
-
-    # 2. Determine lower-level RunKind and canonical status
+    # 1. Determine lower-level RunKind and canonical status
     run_kind = mode_to_run_kind(request.mode)
     canonical_run = (request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST))
 
@@ -103,6 +93,33 @@ def resolve_experiment_plan(
                 f"Benchmark mode {request.mode.value} requires render_mode='OFF' (headless execution mandatory). "
                 f"Got render_mode='{render_mode}'."
             )
+
+    # 2. Authority resolution: benchmark modes (VALIDATION/TEST) MUST NOT accept an external registry
+    if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST):
+        if registry is not None:
+            raise ValueError(
+                f"External registry is forbidden for canonical benchmark resolution ({request.mode.value}). "
+                "Authority must come strictly from committed build_canonical_agent_registry()."
+            )
+        effective_registry = canonical_reg
+    else:
+        effective_registry = registry if registry is not None else canonical_reg
+
+    # Verify agent existence in effective registry
+    if not effective_registry.has_agent(request.agent_id):
+        if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST):
+            raise KeyError(
+                f"Agent '{request.agent_id}' does not exist in canonical platform registry for {request.mode.value} mode. "
+                f"Available canonical agents: {[a.agent_id for a in canonical_reg.list_all()]}"
+            )
+        else:
+            raise KeyError(
+                f"Agent '{request.agent_id}' is not registered in effective registry. "
+                f"Available agents: {[a.agent_id for a in effective_registry.list_all()]}"
+            )
+
+    agent_reg = effective_registry.get(request.agent_id)
+    factory_ref = effective_registry.get_factory_ref(request.agent_id)
 
     # 3. Resolve cases and protocol scope according to mode
     warnings: List[str] = []

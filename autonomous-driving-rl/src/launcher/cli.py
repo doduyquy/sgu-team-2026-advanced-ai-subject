@@ -170,15 +170,15 @@ def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
 
 def handle_plan(args: argparse.Namespace) -> int:
     request = build_launch_request_from_args(args)
-    registry = build_default_agent_registry()
+    registry = None if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST) else build_default_agent_registry()
 
     try:
-        plan = resolve_experiment_plan(request, registry)
+        plan = resolve_experiment_plan(request, registry=registry)
     except Exception as e:
         print(f"[ERROR] Failed to resolve experiment plan: {e}", file=sys.stderr)
         return 1
 
-    preflight = run_preflight(plan)
+    preflight = run_preflight(plan, registry=registry)
 
     if args.json:
         out = {
@@ -203,10 +203,10 @@ def handle_plan(args: argparse.Namespace) -> int:
 
 def handle_run(args: argparse.Namespace) -> int:
     request = build_launch_request_from_args(args)
-    registry = build_default_agent_registry()
+    registry = None if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST) else build_default_agent_registry()
 
     try:
-        plan = resolve_experiment_plan(request, registry)
+        plan = resolve_experiment_plan(request, registry=registry)
     except Exception as e:
         print(f"[ERROR] Failed to resolve experiment plan: {e}", file=sys.stderr)
         return 1

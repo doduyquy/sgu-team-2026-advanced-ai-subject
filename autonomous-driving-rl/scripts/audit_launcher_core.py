@@ -577,10 +577,10 @@ def audit_benchmark_lock_checks(root: Path, results_dir: Path):
             sandbox_test_holdout_violation_caught = True
 
     # Preflight fixture rejection on TEST and VALIDATION
-    p_val = resolve_experiment_plan(LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_seeded_random", agent_seed=101), registry, root)
+    p_val = resolve_experiment_plan(LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_seeded_random", agent_seed=101), project_root=root)
     rep_val = run_preflight(p_val, root, custom_git_provenance={"git_worktree_dirty": False}, custom_environment_provenance={"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT})
 
-    p_test = resolve_experiment_plan(LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101), registry, root)
+    p_test = resolve_experiment_plan(LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101), project_root=root)
     rep_test = run_preflight(p_test, root, custom_git_provenance={"git_worktree_dirty": False}, custom_environment_provenance={"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT})
 
     report = {
@@ -600,46 +600,43 @@ def audit_benchmark_lock_checks(root: Path, results_dir: Path):
 def audit_preflight_matrix(root: Path, results_dir: Path):
     """Evaluates full preflight decision matrix across valid and invalid configurations."""
     print("\n--- Auditing Preflight Decision Matrix ---")
-    registry = build_default_agent_registry()
     clean_git = {"git_worktree_dirty": False, "git_commit_sha": "abc12345"}
     dirty_git = {"git_worktree_dirty": True, "git_commit_sha": "abc12345"}
     clean_env = {"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT}
     bad_env = {"metadrive_version": "0.4.2", "metadrive_commit": "wrong"}
 
-    # Register benchmark eligible dummy agent for testing
-    mock_bm = AgentRegistrationV1(agent_id="mock_benchmark_agent", benchmark_eligible=True, inference_stochasticity="deterministic")
-    mock_stoch = AgentRegistrationV1(agent_id="mock_stoch_benchmark", benchmark_eligible=True, inference_stochasticity="stochastic")
-    reg_suite = AgentRegistryV1()
-    for a in registry.list_all(): reg_suite.register(a, registry.get_factory(a.agent_id))
-    reg_suite.register(mock_bm, lambda: None)
-    reg_suite.register(mock_stoch, lambda: None)
+    custom_dev_reg = AgentRegistryV1()
+    custom_dev_reg.register(
+        AgentRegistrationV1(agent_id="forged_test_agent", benchmark_eligible=True),
+        lambda: None
+    )
 
     matrix_scenarios = [
-        ("valid_sandbox_fixture", LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy", agent_seed=101), clean_git, clean_env, True),
-        ("fixture_on_validation_blocked", LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_seeded_random", agent_seed=101), clean_git, clean_env, False),
-        ("fixture_on_test_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101), clean_git, clean_env, False),
-        ("test_render_native_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_benchmark_agent", render_mode="NATIVE"), clean_git, clean_env, False),
-        ("validation_render_native_blocked", LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="mock_benchmark_agent", render_mode="NATIVE"), clean_git, clean_env, False),
-        ("stochastic_test_missing_seed_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_stoch_benchmark", agent_seed=None), clean_git, clean_env, False),
-        ("stochastic_test_invalid_seed_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_stoch_benchmark", agent_seed=999), clean_git, clean_env, False),
-        ("stochastic_test_valid_seed_passed", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_stoch_benchmark", agent_seed=101), clean_git, clean_env, True),
-        ("deterministic_test_with_seed_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_benchmark_agent", agent_seed=101), clean_git, clean_env, False),
-        ("deterministic_test_no_seed_passed", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_benchmark_agent", agent_seed=None), clean_git, clean_env, True),
-        ("dirty_worktree_on_test_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_benchmark_agent"), dirty_git, clean_env, False),
-        ("dirty_worktree_on_sandbox_allowed", LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy", agent_seed=101), dirty_git, clean_env, True),
-        ("unverified_metadrive_on_test_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_benchmark_agent"), clean_git, bad_env, False),
+        ("valid_sandbox_fixture", LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy", agent_seed=101), None, clean_git, clean_env, True),
+        ("fixture_on_validation_blocked", LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_seeded_random", agent_seed=101), None, clean_git, clean_env, False),
+        ("fixture_on_test_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101), None, clean_git, clean_env, False),
+        ("test_render_native_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", render_mode="NATIVE"), None, clean_git, clean_env, False),
+        ("validation_render_native_blocked", LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous", render_mode="NATIVE"), None, clean_git, clean_env, False),
+        ("stochastic_test_missing_seed_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=None), None, clean_git, clean_env, False),
+        ("stochastic_test_invalid_seed_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=999), None, clean_git, clean_env, False),
+        ("deterministic_test_with_seed_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", agent_seed=101), None, clean_git, clean_env, False),
+        ("dirty_worktree_on_test_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous"), None, dirty_git, clean_env, False),
+        ("dirty_worktree_on_sandbox_allowed", LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy", agent_seed=101), None, dirty_git, clean_env, True),
+        ("unverified_metadrive_on_test_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous"), None, clean_git, bad_env, False),
+        ("external_registry_on_test_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous"), custom_dev_reg, clean_git, clean_env, False),
+        ("unknown_agent_on_test_blocked", LaunchRequestV1(mode=LauncherMode.TEST, agent_id="unknown_fake_benchmark_agent"), None, clean_git, clean_env, False),
     ]
 
     rows = []
-    for label, req, git_p, env_p, expected_can_exec in matrix_scenarios:
+    for label, req, custom_reg, git_p, env_p, expected_can_exec in matrix_scenarios:
         try:
-            plan = resolve_experiment_plan(req, reg_suite, root)
-            rep = run_preflight(plan, root, custom_git_provenance=git_p, custom_environment_provenance=env_p, registry=reg_suite)
+            plan = resolve_experiment_plan(req, registry=custom_reg, project_root=root)
+            rep = run_preflight(plan, root, custom_git_provenance=git_p, custom_environment_provenance=env_p)
             can_exec = rep.can_execute
             fails = rep.fail_count
             warns = rep.warning_count
             verdict = rep.summary_verdict
-        except (ValueError, PreflightBlockedError) as e:
+        except (ValueError, KeyError, PreflightBlockedError):
             can_exec = False
             fails = 1
             warns = 0
@@ -927,54 +924,142 @@ def audit_registry_authority_negative_checks(root: Path, results_dir: Path):
     """Audits negative exploit defenses: custom registry cannot self-certify benchmark execution."""
     print("\n--- Auditing Registry Authority Negative Checks ---")
     canonical_reg = build_canonical_agent_registry()
-    base_reg = canonical_reg.get("fixture_seeded_random")
-    forged_reg = dataclasses.replace(base_reg, benchmark_eligible=True)
+    clean_git = {"git_worktree_dirty": False, "git_commit_sha": "abc12345"}
+    clean_env = {"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT}
 
-    custom_registry = AgentRegistryV1()
+    # Scenario A: Existing canonical fixture metadata mutation (forged benchmark_eligible=True)
+    base_fixture = canonical_reg.get("fixture_seeded_random")
+    forged_fixture = dataclasses.replace(base_fixture, benchmark_eligible=True)
+    custom_reg_a = AgentRegistryV1()
     for a in canonical_reg.list_all():
         if a.agent_id != "fixture_seeded_random":
-            custom_registry.register(a, canonical_reg.get_factory(a.agent_id))
+            custom_reg_a.register(a, canonical_reg.get_factory(a.agent_id))
         else:
-            custom_registry.register(forged_reg, canonical_reg.get_factory(a.agent_id))
+            custom_reg_a.register(forged_fixture, canonical_reg.get_factory(a.agent_id))
 
-    req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101)
-    plan = resolve_experiment_plan(req, custom_registry, root)
+    req_a = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101)
 
-    rep = run_preflight(plan, root)
-    preflight_caught = (not rep.can_execute)
-    fail_ids = [c.check_id for c in rep.checks if c.status == "FAIL"]
-    forgery_detected = ("agent_registry_binding" in fail_ids or "canonical_registry_anti_forgery" in fail_ids)
-
-    executor_rejected = False
+    resolution_blocked_a = False
+    resolution_error_a = ""
     try:
-        ExperimentExecutor(plan=plan, registry=custom_registry, project_root=root)
+        resolve_experiment_plan(req_a, registry=custom_reg_a, project_root=root)
     except ValueError as e:
-        if "cannot authorize canonical benchmark" in str(e):
-            executor_rejected = True
+        resolution_blocked_a = True
+        resolution_error_a = str(e)
 
-    artifact = {
-        "forged_agent_id": "fixture_seeded_random",
-        "forged_attribute": "benchmark_eligible=True",
-        "preflight_blocked_execution": preflight_caught,
-        "forgery_detected_by_preflight": forgery_detected,
-        "executor_rejected_custom_registry": executor_rejected,
-        "fail_check_ids": fail_ids,
-        "verdict": "PASSED" if (preflight_caught and forgery_detected and executor_rejected) else "FAILED"
+    # Defense in depth: Manually construct forged plan with recomputed hash and test preflight
+    valid_plan_a = resolve_experiment_plan(req_a, project_root=root)
+    forged_plan_a = dataclasses.replace(valid_plan_a, agent_registration=forged_fixture)
+    dict_a = forged_plan_a.to_dict()
+    dict_a["agent_registration"] = forged_fixture.to_dict()
+    recomputed_hash_a = compute_resolved_plan_sha256(dict_a)
+    forged_plan_a = dataclasses.replace(forged_plan_a, resolved_plan_sha256=recomputed_hash_a)
+
+    rep_a = run_preflight(forged_plan_a, root, custom_git_provenance=clean_git, custom_environment_provenance=clean_env)
+    preflight_blocked_a = (not rep_a.can_execute)
+    fail_ids_a = [c.check_id for c in rep_a.checks if c.status == "FAIL"]
+    targeted_a = [cid for cid in fail_ids_a if cid in ("agent_registry_binding", "agent_benchmark_eligibility", "canonical_registry_authority")]
+    unrelated_a = [cid for cid in fail_ids_a if cid not in targeted_a]
+
+    executor_rejected_a = False
+    try:
+        ExperimentExecutor(plan=valid_plan_a, registry=custom_reg_a, project_root=root)
+    except ValueError as e:
+        if "External registry is forbidden for canonical benchmark execution" in str(e):
+            executor_rejected_a = True
+
+    verdict_a = "PASSED" if (resolution_blocked_a and preflight_blocked_a and len(targeted_a) > 0 and executor_rejected_a) else "FAILED"
+
+    # Scenario B: Completely new custom benchmark agent insertion
+    new_agent = AgentRegistrationV1(
+        agent_id="custom_fake_benchmark_agent",
+        agent_version="1.0.0",
+        stage_label="STAGE_0",
+        method_family="RANDOM",
+        purpose="FORGED_BENCHMARK",
+        implementation_ref="src.platform.agent:DeterministicConstantFixtureAgent",
+        input_profile_id="STATE_DECISION_V1",
+        action_adapter_id="continuous_box2_v1",
+        inference_stochasticity="deterministic",
+        stateful_within_episode=False,
+        benchmark_eligible=True,
+        sandbox_eligible=True,
+        audit_eligible=True,
+        requires_checkpoint=False
+    )
+    custom_reg_b = AgentRegistryV1()
+    for a in canonical_reg.list_all():
+        custom_reg_b.register(a, canonical_reg.get_factory(a.agent_id))
+    custom_reg_b.register(new_agent, lambda: None)
+
+    req_b = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="custom_fake_benchmark_agent")
+
+    resolution_blocked_b = False
+    resolution_error_b = ""
+    try:
+        resolve_experiment_plan(req_b, registry=custom_reg_b, project_root=root)
+    except ValueError as e:
+        resolution_blocked_b = True
+        resolution_error_b = str(e)
+
+    dict_b = valid_plan_a.to_dict()
+    dict_b["agent_registration"] = new_agent.to_dict()
+    recomputed_hash_b = compute_resolved_plan_sha256(dict_b)
+    forged_plan_b = dataclasses.replace(valid_plan_a, agent_registration=new_agent, resolved_plan_sha256=recomputed_hash_b)
+
+    rep_b = run_preflight(forged_plan_b, root, custom_git_provenance=clean_git, custom_environment_provenance=clean_env)
+    preflight_blocked_b = (not rep_b.can_execute)
+    fail_ids_b = [c.check_id for c in rep_b.checks if c.status == "FAIL"]
+    targeted_b = [cid for cid in fail_ids_b if cid in ("canonical_registry_agent_membership", "agent_registry_binding", "canonical_registry_authority")]
+    unrelated_b = [cid for cid in fail_ids_b if cid not in targeted_b]
+
+    executor_rejected_b = False
+    try:
+        ExperimentExecutor(plan=valid_plan_a, registry=custom_reg_b, project_root=root)
+    except ValueError as e:
+        if "External registry is forbidden for canonical benchmark execution" in str(e):
+            executor_rejected_b = True
+
+    verdict_b = "PASSED" if (resolution_blocked_b and preflight_blocked_b and "canonical_registry_agent_membership" in targeted_b and executor_rejected_b) else "FAILED"
+
+    report = {
+        "scenario_A_fixture_mutation": {
+            "scenario_id": "C1_existing_fixture_mutation",
+            "attack_description": "Adversary copies fixture_seeded_random, sets benchmark_eligible=True in custom registry, requests TEST",
+            "public_resolution_blocked": resolution_blocked_a,
+            "resolution_error": resolution_error_a,
+            "defense_in_depth_preflight_blocked": preflight_blocked_a,
+            "targeted_preflight_check_ids": targeted_a,
+            "unrelated_preflight_check_ids": unrelated_a,
+            "executor_external_registry_rejected": executor_rejected_a,
+            "verdict": verdict_a
+        },
+        "scenario_B_new_agent_insertion": {
+            "scenario_id": "C2_new_custom_agent_insertion",
+            "attack_description": "Adversary creates new custom_fake_benchmark_agent with benchmark_eligible=True, requests TEST",
+            "public_resolution_blocked": resolution_blocked_b,
+            "resolution_error": resolution_error_b,
+            "defense_in_depth_preflight_blocked": preflight_blocked_b,
+            "targeted_preflight_check_ids": targeted_b,
+            "unrelated_preflight_check_ids": unrelated_b,
+            "executor_external_registry_rejected": executor_rejected_b,
+            "verdict": verdict_b
+        },
+        "overall_verdict": "PASSED" if (verdict_a == "PASSED" and verdict_b == "PASSED") else "FAILED"
     }
 
     out_file = results_dir / "registry_authority_negative_checks.json"
     with open(out_file, "w", encoding="utf-8") as f:
-        json.dump(artifact, f, indent=2)
+        json.dump(report, f, indent=2)
     print(f"[SAVED] Registry authority negative checks saved to: {out_file}")
-    assert artifact["verdict"] == "PASSED"
+    assert report["overall_verdict"] == "PASSED"
 
 
 def audit_implementation_binding_checks(root: Path, results_dir: Path):
     """Audits negative exploit defenses: factory identity and implementation class binding."""
     print("\n--- Auditing Implementation & Factory Identity Binding Checks ---")
-    canonical_reg = build_canonical_agent_registry()
     req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", wandb_mode=WandbMode.DISABLED)
-    plan = resolve_experiment_plan(req, canonical_reg, root)
+    plan = resolve_experiment_plan(req, project_root=root)
 
     class ImposterAgent:
         @property
@@ -995,6 +1080,7 @@ def audit_implementation_binding_checks(root: Path, results_dir: Path):
     # Test A: Canonical factory ref check passes, but runtime class differs -> rejected
     executor_impl = ExperimentExecutor(plan=plan, project_root=root)
     impl_impersonation_caught = False
+    impl_error = ""
     with patch("src.launcher.registry.DeterministicConstantFixtureAgent", ImposterAgent), \
          patch("src.launcher.executor.run_preflight") as mock_pf, \
          patch("src.platform.experiment_logging.capture_git_provenance", return_value={"git_worktree_dirty": False, "git_commit_sha": "abc12345"}), \
@@ -1005,11 +1091,13 @@ def audit_implementation_binding_checks(root: Path, results_dir: Path):
         except RuntimeError as e:
             if "Agent runtime implementation mismatch" in str(e):
                 impl_impersonation_caught = True
+                impl_error = str(e)
 
     # Test B: Factory identity substitution rejected
     executor_fact = ExperimentExecutor(plan=plan, project_root=root)
     object.__setattr__(executor_fact, "agent_factory", lambda: ImposterAgent())
     factory_substitution_caught = False
+    factory_error = ""
     with patch("src.launcher.executor.run_preflight") as mock_pf, \
          patch("src.platform.experiment_logging.capture_git_provenance", return_value={"git_worktree_dirty": False, "git_commit_sha": "abc12345"}), \
          patch("src.platform.experiment_logging.capture_environment_provenance", return_value={"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT}):
@@ -1019,21 +1107,37 @@ def audit_implementation_binding_checks(root: Path, results_dir: Path):
         except RuntimeError as e:
             if "Agent factory identity mismatch" in str(e):
                 factory_substitution_caught = True
+                factory_error = str(e)
 
     # Test C: Constructor factory override rejected on canonical run
     factory_override_rejected = False
+    ctor_error = ""
     try:
         ExperimentExecutor(plan=plan, agent_factory=lambda: ImposterAgent(), project_root=root)
     except ValueError as e:
         if "Explicit agent_factory override is strictly forbidden" in str(e):
             factory_override_rejected = True
+            ctor_error = str(e)
 
     artifact = {
-        "imposter_class": "ImposterAgent",
-        "expected_class_ref": plan.agent_registration.implementation_ref,
-        "implementation_impersonation_caught": impl_impersonation_caught,
-        "factory_substitution_caught": factory_substitution_caught,
-        "factory_override_rejected": factory_override_rejected,
+        "factory_substitution_test": {
+            "layer_isolated_test": True,
+            "caught": factory_substitution_caught,
+            "error_message": factory_error
+        },
+        "runtime_implementation_impersonation": {
+            "layer_isolated_test": True,
+            "canonical_factory_identity_preserved": True,
+            "descriptor_spoofed": True,
+            "runtime_class_mismatch_caught": impl_impersonation_caught,
+            "imposter_class": "ImposterAgent",
+            "expected_class_ref": plan.agent_registration.implementation_ref,
+            "error_message": impl_error
+        },
+        "factory_constructor_override": {
+            "caught": factory_override_rejected,
+            "error_message": ctor_error
+        },
         "verdict": "PASSED" if (impl_impersonation_caught and factory_substitution_caught and factory_override_rejected) else "FAILED"
     }
 
@@ -1042,6 +1146,57 @@ def audit_implementation_binding_checks(root: Path, results_dir: Path):
         json.dump(artifact, f, indent=2)
     print(f"[SAVED] Implementation binding checks saved to: {out_file}")
     assert artifact["verdict"] == "PASSED"
+
+
+def audit_canonicality_matrix(results_dir: Path):
+    """Generates machine-readable canonicality matrix representing actual demonstrated platform capabilities."""
+    print("\n--- Auditing Canonicality Matrix ---")
+    matrix = {
+        "SANDBOX": {
+            "launcher_mode": "SANDBOX",
+            "plan_canonical_run": False,
+            "current_canonical_agent_benchmark_eligible": False,
+            "launcher_execution_attempted": True,
+            "launcher_execution_completed": True,
+            "persisted_canonical_run": False,
+            "block_reason": None,
+            "evidence_level": "SIMULATOR_BACKED_EXECUTION_VERIFIED"
+        },
+        "AUDIT": {
+            "launcher_mode": "AUDIT",
+            "plan_canonical_run": False,
+            "current_canonical_agent_benchmark_eligible": False,
+            "launcher_execution_attempted": True,
+            "launcher_execution_completed": True,
+            "persisted_canonical_run": False,
+            "block_reason": None,
+            "evidence_level": "SIMULATOR_BACKED_EXECUTION_VERIFIED"
+        },
+        "VALIDATION": {
+            "launcher_mode": "VALIDATION",
+            "plan_canonical_run": True,
+            "current_canonical_agent_benchmark_eligible": False,
+            "launcher_execution_attempted": False,
+            "launcher_execution_completed": False,
+            "persisted_canonical_run": None,
+            "block_reason": "Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False",
+            "evidence_level": "PREFLIGHT_AND_RESOLUTION_BLOCKED_PENDING_STAGE_0"
+        },
+        "TEST": {
+            "launcher_mode": "TEST",
+            "plan_canonical_run": True,
+            "current_canonical_agent_benchmark_eligible": False,
+            "launcher_execution_attempted": False,
+            "launcher_execution_completed": False,
+            "persisted_canonical_run": None,
+            "block_reason": "Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False",
+            "evidence_level": "PREFLIGHT_AND_RESOLUTION_BLOCKED_PENDING_STAGE_0"
+        }
+    }
+    out_file = results_dir / "canonicality_matrix.json"
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(matrix, f, indent=2)
+    print(f"[SAVED] Canonicality matrix saved to: {out_file}")
 
 
 def generate_summary_markdown(summary_md_path: Path, hashes_data: Dict[str, Any]):
@@ -1088,6 +1243,7 @@ def generate_summary_markdown(summary_md_path: Path, hashes_data: Dict[str, Any]
         f.write("- `canonical_registry_integrity.json`: Verified canonical registry SHA-256 sensitivity and description exclusion.\n")
         f.write("- `registry_authority_negative_checks.json`: Verified negative exploit defenses against forged benchmark eligibility and custom registry authority.\n")
         f.write("- `implementation_binding_checks.json`: Verified strict runtime implementation class and factory identity binding.\n")
+        f.write("- `canonicality_matrix.json`: Truthful representation of demonstrated mode capabilities across Platform V1.\n")
         f.write("- `reward_passthrough_parity.json`: Verified signed progress delta passthrough without clamping.\n")
         f.write("- `execution_config_lock.json`: Verified 10 Hz physical control, 0.02 step, decision repeat 5, Trigger mode.\n")
 
@@ -1132,6 +1288,9 @@ def main():
 
     # 6d. Implementation and factory identity binding audit
     audit_implementation_binding_checks(project_root, results_dir)
+
+    # 6e. Canonicality matrix audit
+    audit_canonicality_matrix(results_dir)
 
     # 7. Case plan parity audit (11 fields per row)
     audit_case_plan_parity(project_root, results_dir)

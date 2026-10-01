@@ -110,7 +110,7 @@ def run_preflight(
 
     checks: List[PreflightCheckV1] = []
 
-    # 0. Canonical Registry Authority & Anti-Forgery Check (Fix A & C)
+    # 0. Canonical Registry Authority & Membership Defense (Property P3)
     if plan.canonical_run:
         # Benchmark authority strictly requires committed canonical registry
         if plan.canonical_agent_registry_sha256 != canonical_reg_sha:
@@ -128,29 +128,32 @@ def run_preflight(
                 category="AGENT"
             ))
 
+        # External registry argument is strictly forbidden for canonical benchmark preflight
         if registry is not None:
-            authoritative_registry = registry
-            # Strict Anti-Forgery: Custom registries cannot forge metadata of committed platform agents
-            if canonical_registry.has_agent(plan.agent_registration.agent_id):
-                canonical_entry = canonical_registry.get(plan.agent_registration.agent_id)
-                tampered = [
-                    f for f in (
-                        "agent_id", "agent_version", "stage_label", "method_family", "purpose",
-                        "implementation_ref", "input_profile_id", "action_adapter_id",
-                        "inference_stochasticity", "stateful_within_episode", "benchmark_eligible",
-                        "sandbox_eligible", "audit_eligible", "requires_checkpoint"
-                    )
-                    if getattr(plan.agent_registration, f) != getattr(canonical_entry, f)
-                ]
-                if tampered:
-                    checks.append(PreflightCheckV1(
-                        check_id="canonical_registry_anti_forgery",
-                        status="FAIL",
-                        message=f"Canonical agent metadata forgery detected in fields: {', '.join(tampered)}! Custom registries cannot alter committed benchmark agent metadata.",
-                        category="AGENT"
-                    ))
+            checks.append(PreflightCheckV1(
+                check_id="canonical_external_registry_forbidden",
+                status="FAIL",
+                message="External registry argument is forbidden for canonical benchmark preflight. Authority must come strictly from committed build_canonical_agent_registry().",
+                category="AGENT"
+            ))
+
+        authoritative_registry = canonical_registry
+
+        # Canonical membership check
+        if not canonical_registry.has_agent(plan.agent_registration.agent_id):
+            checks.append(PreflightCheckV1(
+                check_id="canonical_registry_agent_membership",
+                status="FAIL",
+                message=f"Agent '{plan.agent_registration.agent_id}' does not belong to committed canonical platform registry.",
+                category="AGENT"
+            ))
         else:
-            authoritative_registry = canonical_registry
+            checks.append(PreflightCheckV1(
+                check_id="canonical_registry_agent_membership",
+                status="PASS",
+                message=f"Agent '{plan.agent_registration.agent_id}' is a verified member of committed canonical platform registry.",
+                category="AGENT"
+            ))
     else:
         authoritative_registry = registry if registry is not None else canonical_registry
         checks.append(PreflightCheckV1(

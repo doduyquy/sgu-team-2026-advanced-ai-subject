@@ -57,7 +57,11 @@ from src.launcher.models import (
     mode_to_run_kind,
 )
 from src.launcher.preflight import PreflightCheckV1, PreflightReportV1, run_preflight
-from src.launcher.registry import AgentRegistryV1, build_default_agent_registry
+from src.launcher.registry import (
+    AgentRegistryV1,
+    build_canonical_agent_registry,
+    build_default_agent_registry,
+)
 from src.launcher.resolver import (
     DEFAULT_LAUNCHER_CONTRACT_HASH,
     DEFAULT_PLATFORM_EXECUTION_HASH,
@@ -315,7 +319,15 @@ class TestPreflightMatrix(unittest.TestCase):
 
     def test_fixture_on_test_fails(self):
         req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101)
-        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
+        rep = run_preflight(plan, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "agent_benchmark_eligibility")
+        self.assertEqual(check.status, "FAIL")
+
+    def test_fixture_on_validation_fails(self):
+        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
         rep = run_preflight(plan, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
         self.assertFalse(rep.can_execute)
         check = next(c for c in rep.checks if c.check_id == "agent_benchmark_eligibility")
@@ -323,22 +335,14 @@ class TestPreflightMatrix(unittest.TestCase):
 
     def test_benchmark_render_native_fails(self):
         # 1. Core resolver must reject NATIVE render mode for benchmark suites
-        mock_reg = AgentRegistrationV1(
-            agent_id="mock_benchmark_agent",
-            benchmark_eligible=True,
-            inference_stochasticity="deterministic"
-        )
-        reg_suite = AgentRegistryV1()
-        reg_suite.register(mock_reg, lambda: None)
-
-        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_benchmark_agent", render_mode="NATIVE")
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", render_mode="NATIVE")
         with self.assertRaises(ValueError) as ctx:
-            resolve_experiment_plan(req, reg_suite, self.project_root)
+            resolve_experiment_plan(req, project_root=self.project_root)
         self.assertIn("requires render_mode='OFF'", str(ctx.exception))
 
         # 2. Preflight check also rejects NATIVE render mode if present on plan
-        valid_req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_benchmark_agent", render_mode="OFF")
-        valid_plan = resolve_experiment_plan(valid_req, reg_suite, self.project_root)
+        valid_req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", render_mode="OFF")
+        valid_plan = resolve_experiment_plan(valid_req, project_root=self.project_root)
         bad_plan = dataclasses.replace(valid_plan, render_mode="NATIVE")
         rep = run_preflight(bad_plan, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
         self.assertFalse(rep.can_execute)
@@ -346,56 +350,46 @@ class TestPreflightMatrix(unittest.TestCase):
         self.assertEqual(check.status, "FAIL")
 
     def test_stochastic_benchmark_seed_validation(self):
-        stoch_reg = AgentRegistrationV1(
-            agent_id="mock_stoch_benchmark",
-            benchmark_eligible=True,
-            inference_stochasticity="stochastic"
-        )
-        reg_suite = AgentRegistryV1()
-        reg_suite.register(stoch_reg, lambda: None)
-
         # Missing seed -> FAIL
-        req_missing = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_stoch_benchmark", agent_seed=None)
-        p_missing = resolve_experiment_plan(req_missing, reg_suite, self.project_root)
+        req_missing = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=None)
+        p_missing = resolve_experiment_plan(req_missing, project_root=self.project_root)
         rep_missing = run_preflight(p_missing, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
         self.assertFalse(rep_missing.can_execute)
+        check_missing = next(c for c in rep_missing.checks if c.check_id == "stochastic_seed_policy")
+        self.assertEqual(check_missing.status, "FAIL")
 
         # Invalid seed (999) -> FAIL
-        req_invalid = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_stoch_benchmark", agent_seed=999)
-        p_invalid = resolve_experiment_plan(req_invalid, reg_suite, self.project_root)
+        req_invalid = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=999)
+        p_invalid = resolve_experiment_plan(req_invalid, project_root=self.project_root)
         rep_invalid = run_preflight(p_invalid, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
         self.assertFalse(rep_invalid.can_execute)
+        check_invalid = next(c for c in rep_invalid.checks if c.check_id == "stochastic_seed_policy")
+        self.assertEqual(check_invalid.status, "FAIL")
 
-        # Valid declared replicate seed (101) -> PASS
-        req_valid = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_stoch_benchmark", agent_seed=101)
-        p_valid = resolve_experiment_plan(req_valid, reg_suite, self.project_root)
+        # Valid declared replicate seed (101) -> PASS on stochastic_seed_policy
+        req_valid = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101)
+        p_valid = resolve_experiment_plan(req_valid, project_root=self.project_root)
         rep_valid = run_preflight(p_valid, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
         check_seed = next(c for c in rep_valid.checks if c.check_id == "stochastic_seed_policy")
         self.assertEqual(check_seed.status, "PASS")
 
     def test_deterministic_benchmark_seed_must_be_none(self):
-        det_reg = AgentRegistrationV1(
-            agent_id="mock_det_benchmark",
-            benchmark_eligible=True,
-            inference_stochasticity="deterministic"
-        )
-        reg_suite = AgentRegistryV1()
-        reg_suite.register(det_reg, lambda: None)
-
-        req_with_seed = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_det_benchmark", agent_seed=101)
-        p = resolve_experiment_plan(req_with_seed, reg_suite, self.project_root)
+        req_with_seed = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", agent_seed=101)
+        p = resolve_experiment_plan(req_with_seed, project_root=self.project_root)
         rep = run_preflight(p, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
         self.assertFalse(rep.can_execute)
         check = next(c for c in rep.checks if c.check_id == "deterministic_seed_policy")
         self.assertEqual(check.status, "FAIL")
 
-    def test_dirty_worktree_on_benchmark_fails(self):
-        det_reg = AgentRegistrationV1(agent_id="mock_det_benchmark", benchmark_eligible=True, inference_stochasticity="deterministic")
-        reg_suite = AgentRegistryV1()
-        reg_suite.register(det_reg, lambda: None)
+        req_no_seed = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", agent_seed=None)
+        p_no_seed = resolve_experiment_plan(req_no_seed, project_root=self.project_root)
+        rep_no_seed = run_preflight(p_no_seed, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
+        check_ok = next(c for c in rep_no_seed.checks if c.check_id == "deterministic_seed_policy")
+        self.assertEqual(check_ok.status, "PASS")
 
-        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_det_benchmark")
-        p = resolve_experiment_plan(req, reg_suite, self.project_root)
+    def test_dirty_worktree_on_benchmark_fails(self):
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        p = resolve_experiment_plan(req, project_root=self.project_root)
         rep = run_preflight(p, self.project_root, custom_git_provenance=self.dirty_git, custom_environment_provenance=self.verified_env)
         self.assertFalse(rep.can_execute)
         check = next(c for c in rep.checks if c.check_id == "git_cleanliness")
@@ -502,7 +496,7 @@ class TestExecutorGuaranteesAndScientificContracts(unittest.TestCase):
     def test_executor_blocks_invalid_plan_without_caller_preflight(self):
         # Plan for TEST with fixture agent (benchmark_eligible=False)
         req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101)
-        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
 
         executor = ExperimentExecutor(plan=plan, project_root=self.project_root)
 
@@ -651,12 +645,12 @@ class TestExecutorGuaranteesAndScientificContracts(unittest.TestCase):
     def test_wandb_mode_auto_vs_explicit_disabled(self):
         # AUTO (None) defaults to OFFLINE for TEST
         req_auto = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", wandb_mode=None)
-        p_auto = resolve_experiment_plan(req_auto, self.registry, self.project_root)
+        p_auto = resolve_experiment_plan(req_auto, project_root=self.project_root)
         self.assertEqual(p_auto.wandb_mode, WandbMode.OFFLINE)
 
         # Explicit DISABLED remains DISABLED in TEST
         req_dis = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", wandb_mode=WandbMode.DISABLED)
-        p_dis = resolve_experiment_plan(req_dis, self.registry, self.project_root)
+        p_dis = resolve_experiment_plan(req_dis, project_root=self.project_root)
         self.assertEqual(p_dis.wandb_mode, WandbMode.DISABLED)
 
         # AUTO defaults to DISABLED for SANDBOX
@@ -727,13 +721,8 @@ class TestPlanDeepIntegrityAndTampering(unittest.TestCase):
         self.assertEqual(check.status, "FAIL")
 
     def test_tampered_validation_cases_row_diff_fails_preflight(self):
-        # Create a mock benchmark eligible agent for validation plan
-        bm_agent = AgentRegistrationV1(agent_id="bm_val_agent", benchmark_eligible=True, inference_stochasticity="deterministic")
-        reg = AgentRegistryV1()
-        reg.register(bm_agent, lambda: None)
-
-        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="bm_val_agent")
-        plan = resolve_experiment_plan(req, reg, self.project_root)
+        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
 
         # Tamper environment_seed in case 0
         c0 = plan.resolved_cases[0]
@@ -747,12 +736,8 @@ class TestPlanDeepIntegrityAndTampering(unittest.TestCase):
         self.assertEqual(check.status, "FAIL")
 
     def test_tampered_test_cases_traffic_density_fails_preflight(self):
-        bm_agent = AgentRegistrationV1(agent_id="bm_test_agent", benchmark_eligible=True, inference_stochasticity="deterministic", method_family="fixture")
-        reg = AgentRegistryV1()
-        reg.register(bm_agent, lambda: None)
-
-        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="bm_test_agent")
-        plan = resolve_experiment_plan(req, reg, self.project_root)
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
 
         # Tamper traffic_density in case 5
         c5 = plan.resolved_cases[5]
@@ -766,12 +751,8 @@ class TestPlanDeepIntegrityAndTampering(unittest.TestCase):
         self.assertEqual(check.status, "FAIL")
 
     def test_tiny_traffic_density_mutation_fails_preflight(self):
-        bm_agent = AgentRegistrationV1(agent_id="bm_val_agent", benchmark_eligible=True, inference_stochasticity="deterministic", method_family="fixture")
-        reg = AgentRegistryV1()
-        reg.register(bm_agent, lambda: None)
-
-        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="bm_val_agent")
-        plan = resolve_experiment_plan(req, reg, self.project_root)
+        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
 
         # Mutate traffic_density by a tiny +1e-6
         c0 = plan.resolved_cases[0]
@@ -859,27 +840,27 @@ class TestBenchmarkFilterRejection(unittest.TestCase):
     def test_validation_rejects_tier_selector(self):
         req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_seeded_random", tier="Medium")
         with self.assertRaises(ValueError) as ctx:
-            resolve_experiment_plan(req, self.registry, self.project_root)
+            resolve_experiment_plan(req, project_root=self.project_root)
         self.assertIn("Illegal case selector", str(ctx.exception))
         self.assertIn("VALIDATION", str(ctx.exception))
 
     def test_validation_rejects_sequence_selector(self):
         req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_seeded_random", sequence="SCS")
         with self.assertRaises(ValueError) as ctx:
-            resolve_experiment_plan(req, self.registry, self.project_root)
+            resolve_experiment_plan(req, project_root=self.project_root)
         self.assertIn("Illegal case selector", str(ctx.exception))
 
     def test_test_rejects_geom_seed_selector(self):
         req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", geometry_generation_seed=0)
         with self.assertRaises(ValueError) as ctx:
-            resolve_experiment_plan(req, self.registry, self.project_root)
+            resolve_experiment_plan(req, project_root=self.project_root)
         self.assertIn("Illegal case selector", str(ctx.exception))
         self.assertIn("TEST", str(ctx.exception))
 
     def test_test_rejects_env_seed_selector(self):
         req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", environment_seed=9101)
         with self.assertRaises(ValueError) as ctx:
-            resolve_experiment_plan(req, self.registry, self.project_root)
+            resolve_experiment_plan(req, project_root=self.project_root)
         self.assertIn("Illegal case selector", str(ctx.exception))
 
 
@@ -893,10 +874,9 @@ class TestRenderModeCoreValidation(unittest.TestCase):
     def test_benchmark_native_render_rejected_by_resolver(self):
         # Even if lowercase native is supplied to LaunchRequest
         req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", render_mode="NATIVE")
-        registry = build_default_agent_registry()
         project_root = Path(__file__).resolve().parent.parent
         with self.assertRaises(ValueError) as ctx:
-            resolve_experiment_plan(req, registry, project_root)
+            resolve_experiment_plan(req, project_root=project_root)
         self.assertIn("requires render_mode='OFF'", str(ctx.exception))
 
 
@@ -1074,8 +1054,11 @@ class TestCaseInspectionTampering(unittest.TestCase):
 class TestLauncherCoreBlockerRegressions(unittest.TestCase):
     """Verifies all Gate 7.5A audit blocker resolutions and scientific invariants."""
     def setUp(self):
-        self.registry = build_default_agent_registry()
+        self.registry = build_canonical_agent_registry()
         self.project_root = Path(__file__).resolve().parent.parent
+        self.clean_git = {"git_worktree_dirty": False, "git_commit_sha": "abc12345"}
+        self.dirty_git = {"git_worktree_dirty": True, "git_commit_sha": "abc12345"}
+        self.verified_env = {"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT}
 
     def test_preflight_authoritative_registry_unregistered_agent_rejected(self):
         req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
@@ -1129,10 +1112,10 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
 
     def test_executor_blocks_unauthorized_custom_factory_on_canonical_run(self):
         req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
-        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
 
         with self.assertRaises(ValueError) as ctx:
-            ExperimentExecutor(plan=plan, agent_factory=lambda: None, registry=self.registry, project_root=self.project_root)
+            ExperimentExecutor(plan=plan, agent_factory=lambda: None, project_root=self.project_root)
         self.assertIn("Explicit agent_factory override is strictly forbidden", str(ctx.exception))
 
     def test_clean_sandbox_audit_runs_persist_noncanonical_in_run_state(self):
@@ -1175,38 +1158,144 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_custom_run_id("run_with_newline\n", Path(temp_d))
 
-    def test_forged_custom_benchmark_registry_rejected(self):
-        # 1. Adversary copies real fixture_seeded_random and forges benchmark_eligible=True
+    def test_canonical_resolution_external_registry_rejected(self):
+        # R1: Canonical resolution + external custom registry -> rejected
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        custom_reg = AgentRegistryV1()
+        with self.assertRaises(ValueError) as ctx:
+            resolve_experiment_plan(req, registry=custom_reg, project_root=self.project_root)
+        self.assertIn("External registry is forbidden for canonical benchmark resolution", str(ctx.exception))
+
+    def test_canonical_resolution_external_registry_identical_contents_rejected(self):
+        # R2: Canonical resolution + external registry with identical canonical contents -> rejected
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        identical_reg = build_canonical_agent_registry()
+        with self.assertRaises(ValueError) as ctx:
+            resolve_experiment_plan(req, registry=identical_reg, project_root=self.project_root)
+        self.assertIn("External registry is forbidden for canonical benchmark resolution", str(ctx.exception))
+
+    def test_canonical_resolution_mutated_existing_fixture_rejected(self):
+        # R3 & C1: Mutated existing fixture registry rejected at resolution
         base_reg = self.registry.get("fixture_seeded_random")
         forged_reg = dataclasses.replace(base_reg, benchmark_eligible=True)
-
-        custom_registry = AgentRegistryV1()
+        custom_reg = AgentRegistryV1()
         for a in self.registry.list_all():
             if a.agent_id != "fixture_seeded_random":
-                custom_registry.register(a, self.registry.get_factory(a.agent_id))
+                custom_reg.register(a, self.registry.get_factory(a.agent_id))
             else:
-                custom_registry.register(forged_reg, self.registry.get_factory(a.agent_id))
+                custom_reg.register(forged_reg, self.registry.get_factory(a.agent_id))
 
         req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101)
-        plan = resolve_experiment_plan(req, custom_registry, self.project_root)
+        with self.assertRaises(ValueError) as ctx:
+            resolve_experiment_plan(req, registry=custom_reg, project_root=self.project_root)
+        self.assertIn("External registry is forbidden for canonical benchmark resolution", str(ctx.exception))
 
-        # 2. Preflight under public platform authority must detect forgery
-        rep = run_preflight(plan, self.project_root)
+    def test_canonical_resolution_new_custom_agent_rejected(self):
+        # R4 & C2: Completely new custom benchmark agent rejected at resolution
+        custom_reg = AgentRegistryV1()
+        custom_reg.register(
+            AgentRegistrationV1(agent_id="custom_fake_benchmark_agent", benchmark_eligible=True),
+            lambda: None
+        )
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="custom_fake_benchmark_agent")
+        with self.assertRaises(ValueError) as ctx:
+            resolve_experiment_plan(req, registry=custom_reg, project_root=self.project_root)
+        self.assertIn("External registry is forbidden for canonical benchmark resolution", str(ctx.exception))
+
+    def test_canonical_resolution_unknown_agent_rejected_by_canonical_membership(self):
+        # R5: Unknown agent ID without external registry rejected by canonical membership
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="unknown_fake_benchmark_agent")
+        with self.assertRaises(KeyError) as ctx:
+            resolve_experiment_plan(req, project_root=self.project_root)
+        self.assertIn("does not exist in canonical platform registry", str(ctx.exception))
+
+    def test_noncanonical_sandbox_and_audit_custom_registry_allowed(self):
+        # R6 & R7: Noncanonical SANDBOX and AUDIT allow custom development registry
+        dev_reg = AgentRegistryV1()
+        dev_reg.register(
+            AgentRegistrationV1(agent_id="custom_dev_agent", sandbox_eligible=True, audit_eligible=True),
+            lambda: None
+        )
+        p_sb = resolve_experiment_plan(
+            LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="custom_dev_agent", tier="Easy"),
+            registry=dev_reg,
+            project_root=self.project_root
+        )
+        self.assertEqual(p_sb.agent_registration.agent_id, "custom_dev_agent")
+
+        p_aud = resolve_experiment_plan(
+            LaunchRequestV1(mode=LauncherMode.AUDIT, agent_id="custom_dev_agent"),
+            registry=dev_reg,
+            project_root=self.project_root
+        )
+        self.assertEqual(p_aud.agent_registration.agent_id, "custom_dev_agent")
+
+    def test_canonical_manually_forged_unknown_agent_plan_fails_preflight(self):
+        # R8 & C3: Manually forged canonical plan with unknown agent and valid recomputed hash fails preflight
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        valid_plan = resolve_experiment_plan(req, project_root=self.project_root)
+
+        forged_reg = dataclasses.replace(
+            valid_plan.agent_registration,
+            agent_id="custom_fake_benchmark_agent",
+            benchmark_eligible=True
+        )
+        temp_dict = valid_plan.to_dict()
+        temp_dict["agent_registration"] = forged_reg.to_dict()
+        recomputed_hash = compute_resolved_plan_sha256(temp_dict)
+
+        forged_plan = dataclasses.replace(valid_plan, agent_registration=forged_reg, resolved_plan_sha256=recomputed_hash)
+
+        rep = run_preflight(
+            forged_plan,
+            self.project_root,
+            custom_git_provenance=self.clean_git,
+            custom_environment_provenance=self.verified_env
+        )
         self.assertFalse(rep.can_execute)
         fail_ids = [c.check_id for c in rep.checks if c.status == "FAIL"]
-        self.assertIn("agent_registry_binding", fail_ids)
+        self.assertIn("canonical_registry_agent_membership", fail_ids)
 
-        # 3. Passing custom registry to canonical ExperimentExecutor must raise ValueError
+    def test_canonical_preflight_external_registry_rejected(self):
+        # R9 & C4: Canonical preflight with external registry argument produces blocking check
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
+
+        rep = run_preflight(
+            plan,
+            self.project_root,
+            custom_git_provenance=self.clean_git,
+            custom_environment_provenance=self.verified_env,
+            registry=AgentRegistryV1()
+        )
+        self.assertFalse(rep.can_execute)
+        fail_ids = [c.check_id for c in rep.checks if c.status == "FAIL"]
+        self.assertIn("canonical_external_registry_forbidden", fail_ids)
+
+    def test_canonical_executor_external_registry_rejected(self):
+        # R10 & C5: Canonical ExperimentExecutor with external registry rejected with ValueError
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
+
         with self.assertRaises(ValueError) as ctx:
-            ExperimentExecutor(plan=plan, registry=custom_registry, project_root=self.project_root)
-        self.assertIn("cannot authorize canonical benchmark", str(ctx.exception))
+            ExperimentExecutor(plan=plan, registry=AgentRegistryV1(), project_root=self.project_root)
+        self.assertIn("External registry is forbidden for canonical benchmark execution", str(ctx.exception))
+
+    def test_canonical_executor_external_factory_rejected(self):
+        # R11: Canonical ExperimentExecutor with external agent_factory rejected with ValueError
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
+
+        with self.assertRaises(ValueError) as ctx:
+            ExperimentExecutor(plan=plan, agent_factory=lambda: None, project_root=self.project_root)
+        self.assertIn("Explicit agent_factory override is strictly forbidden", str(ctx.exception))
 
     def test_factory_identity_substitution_rejected(self):
+        # R12: Unauthorized post-construction factory substitution rejected with factory identity mismatch
         req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", wandb_mode=WandbMode.DISABLED)
-        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
 
         executor = ExperimentExecutor(plan=plan, project_root=self.project_root)
-        # Unauthorized factory substitution bypassing constructor
         object.__setattr__(executor, "agent_factory", lambda: None)
 
         with patch("src.launcher.executor.run_preflight") as mock_pf, \
@@ -1218,11 +1307,11 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
             self.assertIn("Agent factory identity mismatch", str(ctx.exception))
 
     def test_same_descriptor_different_runtime_implementation_rejected(self):
+        # R13: Same canonical factory identity + different runtime class + identical AgentDescriptor rejected
         class ImposterAgent:
             @property
             def descriptor(self):
                 from src.platform import AgentDescriptor
-                # Returns 100% identical AgentDescriptor as DeterministicConstantFixtureAgent
                 return AgentDescriptor(
                     agent_id="fixture_constant_continuous",
                     agent_version="1.0.0",
@@ -1237,12 +1326,10 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
             def close(self): pass
 
         req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", wandb_mode=WandbMode.DISABLED)
-        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
 
-        # Uses the canonical factory identity (src.launcher.registry:_factory_fixture_constant_continuous)
         executor = ExperimentExecutor(plan=plan, project_root=self.project_root)
 
-        # Patch the class produced by the canonical factory so factory identity matches, but runtime class differs
         with patch("src.launcher.registry.DeterministicConstantFixtureAgent", ImposterAgent), \
              patch("src.launcher.executor.run_preflight") as mock_pf, \
              patch("src.platform.experiment_logging.capture_git_provenance", return_value={"git_worktree_dirty": False, "git_commit_sha": "abc12345"}), \
@@ -1253,12 +1340,13 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
             self.assertIn("Agent runtime implementation mismatch", str(ctx.exception))
 
     def test_canonical_registry_fingerprint_deterministic_and_sensitive(self):
+        # R14-R17: Canonical registry SHA determinism, 14-field sensitivity, factory_ref sensitivity, description neutrality
         from src.launcher.registry import compute_canonical_registry_sha256
         h1 = compute_canonical_registry_sha256(self.registry)
         h2 = compute_canonical_registry_sha256(self.registry)
         self.assertEqual(h1, h2)
 
-        # Mutate benchmark_eligible on an entry
+        # Mutate benchmark_eligible on an entry (R15)
         custom_reg = AgentRegistryV1()
         for a in self.registry.list_all():
             if a.agent_id == "fixture_constant_continuous":
@@ -1269,24 +1357,35 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
         h_mut_eligible = compute_canonical_registry_sha256(custom_reg)
         self.assertNotEqual(h1, h_mut_eligible)
 
-        # Mutate implementation_ref on an entry
-        custom_reg2 = AgentRegistryV1()
+        # Mutate factory_ref on an entry (R16)
+        custom_reg_f = AgentRegistryV1()
+        def _other_factory(): return None
         for a in self.registry.list_all():
             if a.agent_id == "fixture_constant_continuous":
-                mut_a = dataclasses.replace(a, implementation_ref="src.other.module:OtherAgent")
-                custom_reg2.register(mut_a, self.registry.get_factory(a.agent_id))
+                custom_reg_f.register(a, _other_factory)
             else:
-                custom_reg2.register(a, self.registry.get_factory(a.agent_id))
-        h_mut_impl = compute_canonical_registry_sha256(custom_reg2)
-        self.assertNotEqual(h1, h_mut_impl)
+                custom_reg_f.register(a, self.registry.get_factory(a.agent_id))
+        h_mut_f = compute_canonical_registry_sha256(custom_reg_f)
+        self.assertNotEqual(h1, h_mut_f)
+
+        # Mutate description only on an entry (R17)
+        custom_reg_desc = AgentRegistryV1()
+        for a in self.registry.list_all():
+            if a.agent_id == "fixture_constant_continuous":
+                mut_a = dataclasses.replace(a, description="Cosmetic description only")
+                custom_reg_desc.register(mut_a, self.registry.get_factory(a.agent_id))
+            else:
+                custom_reg_desc.register(a, self.registry.get_factory(a.agent_id))
+        h_desc = compute_canonical_registry_sha256(custom_reg_desc)
+        self.assertEqual(h1, h_desc)
 
     def test_plan_hash_14_scientific_fields_sensitivity_and_description_exclusion(self):
+        # R18 & R21: Plan hash sensitivity across all 14 scientific fields and description neutrality
         from src.launcher.models import SCIENTIFIC_REGISTRATION_FIELDS
         req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
         plan = resolve_experiment_plan(req, self.registry, self.project_root)
         h0 = plan.resolved_plan_sha256
 
-        # Verify each of the 14 scientific fields alters the plan hash
         mutations = {
             "agent_id": "mutated_id",
             "agent_version": "2.0.0",
@@ -1316,12 +1415,28 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
         h_desc = compute_resolved_plan_sha256(desc_plan.to_dict())
         self.assertEqual(h0, h_desc, "Cosmetic description altered resolved plan hash!")
 
-    def test_canonicality_matrix_all_four_modes(self):
-        # 1. Clean Sandbox -> noncanonical
-        req_sb = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
-        plan_sb = resolve_experiment_plan(req_sb, self.registry, self.project_root)
+    def test_plan_hash_canonical_registry_sha_and_factory_ref_sensitivity(self):
+        # R19 & R20: Plan hash sensitivity to canonical_agent_registry_sha256 and factory_ref
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        h0 = plan.resolved_plan_sha256
+
+        # Mutate canonical_agent_registry_sha256
+        p_dict1 = plan.to_dict()
+        p_dict1["canonical_agent_registry_sha256"] = "mutated_registry_hash_abc123"
+        self.assertNotEqual(h0, compute_resolved_plan_sha256(p_dict1))
+
+        # Mutate factory_ref
+        p_dict2 = plan.to_dict()
+        p_dict2["factory_ref"] = "src.other.module:other_factory"
+        self.assertNotEqual(h0, compute_resolved_plan_sha256(p_dict2))
+
+    def test_sandbox_execution_persists_noncanonical(self):
+        # R22: Sandbox successful execution persists canonical false
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
         with tempfile.TemporaryDirectory() as td:
-            ex = ExperimentExecutor(plan=plan_sb, registry=self.registry, runs_root=Path(td), project_root=self.project_root)
+            ex = ExperimentExecutor(plan=plan, registry=self.registry, runs_root=Path(td), project_root=self.project_root)
             with patch("src.launcher.executor.build_agent_input"), patch("src.launcher.executor.MetaDriveEnv") as mock_env_cls:
                 m = mock_env_cls.return_value
                 m.reset.return_value = (np.zeros(259, dtype=np.float32), {})
@@ -1332,11 +1447,12 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
                 st = json.load(f)
             self.assertFalse(st["canonical_run"])
 
-        # 2. Clean Audit -> noncanonical
-        req_aud = LaunchRequestV1(mode=LauncherMode.AUDIT, agent_id="fixture_constant_continuous")
-        plan_aud = resolve_experiment_plan(req_aud, self.registry, self.project_root)
+    def test_audit_execution_persists_noncanonical(self):
+        # R23: Audit successful execution persists canonical false
+        req = LaunchRequestV1(mode=LauncherMode.AUDIT, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
         with tempfile.TemporaryDirectory() as td:
-            ex = ExperimentExecutor(plan=plan_aud, registry=self.registry, runs_root=Path(td), project_root=self.project_root)
+            ex = ExperimentExecutor(plan=plan, registry=self.registry, runs_root=Path(td), project_root=self.project_root)
             with patch("src.launcher.executor.build_agent_input"), patch("src.launcher.executor.MetaDriveEnv") as mock_env_cls:
                 m = mock_env_cls.return_value
                 m.reset.return_value = (np.zeros(259, dtype=np.float32), {})
@@ -1347,19 +1463,43 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
                 st = json.load(f)
             self.assertFalse(st["canonical_run"])
 
-        # 3. Benchmark dirty worktree blocked at preflight before logger
-        req_val = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
-        plan_val = resolve_experiment_plan(req_val, self.registry, self.project_root)
-        rep_dirty = run_preflight(plan_val, self.project_root, custom_git_provenance={"git_worktree_dirty": True})
-        self.assertFalse(rep_dirty.can_execute)
-        chk_git = next(c for c in rep_dirty.checks if c.check_id == "git_cleanliness")
-        self.assertEqual(chk_git.status, "FAIL")
+    def test_validation_plan_is_canonical_but_fixture_is_benchmark_blocked(self):
+        # R24 & R26: Validation plan semantics is canonical true, but fixture is benchmark blocked
+        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
+        self.assertTrue(plan.canonical_run)
+        rep = run_preflight(plan, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
+        self.assertFalse(rep.can_execute)
+        chk = next(c for c in rep.checks if c.check_id == "agent_benchmark_eligibility")
+        self.assertEqual(chk.status, "FAIL")
 
-        # 4. Benchmark unverified metadrive blocked at preflight before logger
-        rep_unver = run_preflight(plan_val, self.project_root, custom_environment_provenance={"metadrive_version": "0.1.0", "metadrive_commit": "wrong"})
-        self.assertFalse(rep_unver.can_execute)
-        chk_env = next(c for c in rep_unver.checks if c.check_id == "metadrive_exact_pin")
-        self.assertEqual(chk_env.status, "FAIL")
+    def test_test_plan_is_canonical_but_fixture_is_benchmark_blocked(self):
+        # R25 & R27: Test plan semantics is canonical true, but fixture is benchmark blocked
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
+        self.assertTrue(plan.canonical_run)
+        rep = run_preflight(plan, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
+        self.assertFalse(rep.can_execute)
+        chk = next(c for c in rep.checks if c.check_id == "agent_benchmark_eligibility")
+        self.assertEqual(chk.status, "FAIL")
+
+    def test_canonical_dirty_git_is_blocked(self):
+        # R28: Dirty canonical benchmark preflight fails git cleanliness
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
+        rep = run_preflight(plan, self.project_root, custom_git_provenance=self.dirty_git, custom_environment_provenance=self.verified_env)
+        self.assertFalse(rep.can_execute)
+        chk = next(c for c in rep.checks if c.check_id == "git_cleanliness")
+        self.assertEqual(chk.status, "FAIL")
+
+    def test_canonical_unverified_metadrive_is_blocked(self):
+        # R29: Unverified canonical benchmark preflight fails exact MetaDrive pin
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
+        rep = run_preflight(plan, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance={"metadrive_version": "0.1.0", "metadrive_commit": "wrong"})
+        self.assertFalse(rep.can_execute)
+        chk = next(c for c in rep.checks if c.check_id == "metadrive_exact_pin")
+        self.assertEqual(chk.status, "FAIL")
 
 
 if __name__ == "__main__":

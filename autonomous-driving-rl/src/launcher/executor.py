@@ -168,19 +168,12 @@ class ExperimentExecutor:
         self.custom_run_id = validate_custom_run_id(custom_run_id, self.runs_root)
         self.event_callback = event_callback
 
-        from src.launcher.registry import (
-            build_canonical_agent_registry,
-            compute_canonical_registry_sha256,
-        )
+        from src.launcher.registry import build_canonical_agent_registry
         canonical_reg = build_canonical_agent_registry()
-        canonical_sha = compute_canonical_registry_sha256(canonical_reg)
 
         if plan.canonical_run:
-            if registry is not None and compute_canonical_registry_sha256(registry) != canonical_sha:
-                raise ValueError(
-                    "External custom AgentRegistryV1 cannot authorize canonical benchmark runs! "
-                    "Authority must come strictly from committed build_canonical_agent_registry()."
-                )
+            if registry is not None:
+                raise ValueError("External registry is forbidden for canonical benchmark execution")
             if agent_factory is not None:
                 raise ValueError(
                     "Explicit agent_factory override is strictly forbidden on canonical benchmark runs! "
