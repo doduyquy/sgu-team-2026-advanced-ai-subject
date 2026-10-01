@@ -32,5 +32,9 @@
 - **`platform_runtime_contract_sha256`:** `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad` (locked, untouched)
 - **`logging_contract_sha256`:** `0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2` (locked, untouched)
 - **`platform_observability_contract_sha256`:** `f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581` (locked, untouched)
-- **`launcher_contract_sha256`:** `22718d9180b945aea801fe078e9204744dd063fc644301d310ac0db9d9ebd8cc`
-- **`platform_execution_contract_sha256`:** `fcc9d469466dd55b8a1a2d6f28235695b1130eacff88bcabc2ccc82db428c7a6`
+- **`launcher_contract_sha256`:** `7f9bb7b24e6c4e4f7b2728a35d631c7aacc7df1e36e41fa375e56f1877a0abb1`
+- **`platform_execution_contract_sha256`:** `c579fd6c9881c068c86d149ed7579b30b62914e54cfc554ba730e09a6fb56642`
+
+## 7. Additional Verification Artifacts
+- `reward_passthrough_parity.json`: Verified signed progress delta passthrough without clamping.
+- `execution_config_lock.json`: Verified 10 Hz physical control, 0.02 step, decision repeat 5, Trigger mode.

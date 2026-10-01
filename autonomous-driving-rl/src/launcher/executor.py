@@ -33,9 +33,12 @@ from src.launcher.events import (
     LauncherEventV1,
 )
 from src.launcher.models import (
+    LauncherMode,
+    PreflightBlockedError,
     ResolvedCaseV1,
     ResolvedExperimentPlanV1,
 )
+from src.launcher.preflight import run_preflight
 from src.platform import (
     AgentPolicy,
     AgentPublicEpisodeContext,
@@ -56,6 +59,52 @@ from src.platform import (
     get_action_adapter,
     sanitize_error_message,
 )
+
+
+def resolve_manifest_name_for_mode(mode: LauncherMode) -> str:
+    """Maps LauncherMode to expected Gate-7 manifest_name provenance string."""
+    if mode in (LauncherMode.SANDBOX, LauncherMode.AUDIT):
+        return "geometry_split_manifest.csv"
+    elif mode == LauncherMode.VALIDATION:
+        return "validation_case_manifest.csv"
+    elif mode == LauncherMode.TEST:
+        return "test_case_manifest.csv"
+    else:
+        raise ValueError(f"Unknown launcher mode: {mode}")
+
+
+def build_metadrive_case_config(
+    case: ResolvedCaseV1,
+    blocks: List[Any],
+    render_mode: str = "OFF"
+) -> Dict[str, Any]:
+    """
+    Constructs the exact, pure, unit-testable MetaDrive environment configuration.
+    Explicitly locks physics step, decision repeat, 10 Hz control frequency,
+    trigger traffic mode, and horizon.
+    """
+    physics_world_step_size = 0.02
+    decision_repeat = 5
+    decision_dt = physics_world_step_size * decision_repeat  # 0.1s
+    control_frequency_hz = 1.0 / decision_dt                 # 10.0 Hz
+
+    assert abs(decision_dt - 0.1) < 1e-6, f"Invalid decision dt: {decision_dt}"
+    assert abs(control_frequency_hz - 10.0) < 1e-6, f"Invalid control frequency: {control_frequency_hz}"
+
+    from metadrive.manager.traffic_manager import TrafficMode
+
+    return {
+        "use_render": (render_mode.upper() == "NATIVE"),
+        "num_scenarios": 1,
+        "start_seed": int(case.environment_seed),
+        "map_config": {"type": MapGenerateMethod.PG_MAP_FILE, "config": blocks},
+        "traffic_density": float(case.traffic_density),
+        "traffic_mode": TrafficMode.Trigger,
+        "horizon": int(case.horizon_steps),
+        "physics_world_step_size": physics_world_step_size,
+        "decision_repeat": decision_repeat,
+        "truncate_as_terminate": False
+    }
 
 
 @dataclass(frozen=True)
@@ -106,8 +155,18 @@ class ExperimentExecutor:
     def execute(self) -> ExecutionReportV1:
         """
         Executes all resolved cases in the plan sequentially under Gate-5 protocol ordering.
+        Enforces preflight validation prior to any simulator, logger, or W&B side effects.
         Emits lifecycle events and produces durable Gate-7 scientific records.
         """
+        # 0. Enforce preflight validation prior to ANY simulator / logger / W&B side effects
+        preflight = run_preflight(self.plan, self.project_root)
+        if not preflight.can_execute:
+            fail_msgs = [f"[{c.category}] {c.message}" for c in preflight.checks if c.status == "FAIL"]
+            raise PreflightBlockedError(
+                f"Preflight validation failed with {preflight.fail_count} blocking error(s). "
+                f"Execution is blocked to protect scientific integrity: {'; '.join(fail_msgs)}"
+            )
+
         # 1. Embed launcher provenance into algorithm_hyperparameters (Section 18)
         launcher_prov = {
             "launcher_mode": self.plan.launcher_mode.value,
@@ -133,6 +192,7 @@ class ExperimentExecutor:
             stateful_within_episode=self.plan.agent_registration.stateful_within_episode,
             agent_seed=self.plan.agent_seed,
             expected_episode_count=len(self.plan.resolved_cases),
+            manifest_name=resolve_manifest_name_for_mode(self.plan.launcher_mode),
             allow_dirty_worktree_override=(not self.plan.canonical_run),
             wandb_mode=self.plan.wandb_mode,
             algorithm_hyperparameters={"launcher": launcher_prov}
@@ -161,8 +221,31 @@ class ExperimentExecutor:
         total_cases = len(self.plan.resolved_cases)
         action_adapter = get_action_adapter(self.plan.agent_registration.action_adapter_id)
         reward_spec = RewardSpecV1()
+        agent = None
 
         try:
+            # 4. Instantiate agent policy ONCE per ExperimentRun (Section 9)
+            agent = self.agent_factory()
+            if not hasattr(agent, "descriptor"):
+                raise TypeError(f"Agent instance of type '{type(agent).__name__}' lacks required 'descriptor' property.")
+
+            desc = agent.descriptor
+            reg = self.plan.agent_registration
+
+            # Validate runtime descriptor against registration (Section 8)
+            if desc.agent_id != reg.agent_id:
+                raise ValueError(f"Agent descriptor agent_id mismatch: descriptor='{desc.agent_id}' != registration='{reg.agent_id}'")
+            if desc.agent_version != reg.agent_version:
+                raise ValueError(f"Agent descriptor agent_version mismatch: descriptor='{desc.agent_version}' != registration='{reg.agent_version}'")
+            if desc.input_profile_id != reg.input_profile_id:
+                raise ValueError(f"Agent descriptor input_profile_id mismatch: descriptor='{desc.input_profile_id}' != registration='{reg.input_profile_id}'")
+            if desc.action_adapter_id != reg.action_adapter_id:
+                raise ValueError(f"Agent descriptor action_adapter_id mismatch: descriptor='{desc.action_adapter_id}' != registration='{reg.action_adapter_id}'")
+            if desc.inference_stochasticity != reg.inference_stochasticity:
+                raise ValueError(f"Agent descriptor inference_stochasticity mismatch: descriptor='{desc.inference_stochasticity}' != registration='{reg.inference_stochasticity}'")
+            if desc.stateful_within_episode != reg.stateful_within_episode:
+                raise ValueError(f"Agent descriptor stateful_within_episode mismatch: descriptor='{desc.stateful_within_episode}' != registration='{reg.stateful_within_episode}'")
+
             for case_idx, case in enumerate(self.plan.resolved_cases, 1):
                 self._emit(LauncherEventV1.create(
                     event_type=LauncherEventType.EPISODE_STARTED,
@@ -172,129 +255,122 @@ class ExperimentExecutor:
                     message=f"Starting case {case.case_id} (order={case.protocol_order_index})"
                 ))
 
-                # A. Reconstruct exact locked road blocks
-                blocks, _, _ = load_locked_geometry_block_sequence(case.to_dict(), self.project_root)
+                env = None
+                try:
+                    # A. Reconstruct exact locked road blocks
+                    blocks, _, _ = load_locked_geometry_block_sequence(case.to_dict(), self.project_root)
 
-                # B. Configure MetaDrive simulator headless / native
-                env_config = dict(
-                    use_render=(self.plan.render_mode == "NATIVE"),
-                    num_scenarios=1,
-                    start_seed=case.environment_seed,
-                    map_config={"type": MapGenerateMethod.PG_MAP_FILE, "config": blocks},
-                    traffic_density=case.traffic_density,
-                    traffic_mode="trigger",
-                    horizon=case.horizon_steps
-                )
+                    # B. Configure MetaDrive simulator with explicit 10 Hz control config
+                    env_config = build_metadrive_case_config(case, blocks, render_mode=self.plan.render_mode)
+                    env = MetaDriveEnv(env_config)
+                    raw_obs, info = env.reset(seed=case.environment_seed)
 
-                env = MetaDriveEnv(env_config)
-                raw_obs, info = env.reset(seed=case.environment_seed)
-
-                # C. Instantiate and reset agent with public context (Information Parity)
-                agent = self.agent_factory()
-                public_context = AgentPublicEpisodeContext(
-                    control_frequency_hz=int(self.plan.control_frequency_hz),
-                    control_dt_s=float(self.plan.control_dt_s),
-                    horizon_steps=int(case.horizon_steps),
-                    input_profile_id=self.plan.agent_registration.input_profile_id,
-                    action_adapter_id=self.plan.agent_registration.action_adapter_id,
-                    mode="INFERENCE"
-                )
-                agent.reset(public_context, agent_seed=self.plan.agent_seed)
-
-                # D. Step loop (10 Hz decision cycle)
-                latencies_ms: List[float] = []
-                speeds_kmh: List[float] = []
-                cumulative_reward = 0.0
-                step_idx = 0
-                last_route_completion = 0.0
-                max_route_completion = 0.0
-                terminated = False
-                truncated = False
-                outcome: Optional[EpisodeOutcome] = None
-                env_flags: Dict[str, Any] = {}
-
-                while not (terminated or truncated) and step_idx < case.horizon_steps:
-                    # 1. Assemble clean AgentInputV1 (no evaluator metadata)
-                    tm = env.engine.traffic_manager
-                    traffic_v = list(getattr(tm, "traffic_vehicles", [])) if hasattr(tm, "traffic_vehicles") else []
-                    agent_input = build_agent_input(
-                        raw_obs=raw_obs,
-                        ego_vehicle=env.agent,
-                        traffic_vehicles=traffic_v,
-                        navigation=env.agent.navigation,
-                        road_network=env.current_map.road_network,
-                        step_index=step_idx,
-                        profile_id=InputProfileId(self.plan.agent_registration.input_profile_id)
+                    # C. Reset agent with public context (Information Parity)
+                    public_context = AgentPublicEpisodeContext(
+                        control_frequency_hz=int(self.plan.control_frequency_hz),
+                        control_dt_s=float(self.plan.control_dt_s),
+                        horizon_steps=int(case.horizon_steps),
+                        input_profile_id=self.plan.agent_registration.input_profile_id,
+                        action_adapter_id=self.plan.agent_registration.action_adapter_id,
+                        mode="INFERENCE"
                     )
+                    agent.reset(public_context, agent_seed=self.plan.agent_seed)
 
-                    # 2. High-resolution decision latency timer wrapping agent.act() strictly
-                    t0 = time.perf_counter_ns()
-                    decision = agent.act(agent_input)
-                    t1 = time.perf_counter_ns()
-                    latencies_ms.append((t1 - t0) / 1e6)
+                    # D. Step loop (10 Hz decision cycle)
+                    latencies_ms: List[float] = []
+                    speeds_kmh: List[float] = []
+                    cumulative_reward = 0.0
+                    step_idx = 0
+                    last_route_completion = 0.0
+                    max_route_completion = 0.0
+                    terminated = False
+                    truncated = False
+                    outcome: Optional[EpisodeOutcome] = None
+                    env_flags: Dict[str, Any] = {}
 
-                    # 3. Action adaptation to physical actuator Box(2)
-                    canonical_act = action_adapter.to_canonical(decision.action_payload)
-
-                    # 4. Environment physics step
-                    raw_obs, r_env, term_step, trunc_step, step_info = env.step(canonical_act.to_numpy())
-                    step_idx += 1
-
-                    # 5. Route completion tracking
-                    curr_route = float(step_info.get("route_completion", 0.0))
-                    if curr_route > max_route_completion:
-                        max_route_completion = curr_route
-                    delta_route = max(0.0, curr_route - last_route_completion)
-                    last_route_completion = curr_route
-
-                    # Update raw safety and task flags from step_info
-                    for k in ("arrive_dest", "out_of_road", "crash_vehicle", "crash_object", "crash_building", "crash_human", "crash_sidewalk", "max_step"):
-                        if bool(step_info.get(k, False)):
-                            env_flags[k] = True
-
-                    # 6. Gate-3 Safety-First Termination Classification
-                    outcome = classify_episode_outcome(
-                        raw_flags=env_flags,
-                        terminated=term_step,
-                        truncated=trunc_step or (step_idx >= case.horizon_steps)
-                    )
-                    terminated = outcome.terminated
-                    truncated = outcome.truncated
-
-                    # 7. Gate-4 Step Reward Computation
-                    speed_kmh = float(env.agent.speed_kmh) if hasattr(env, "agent") and hasattr(env.agent, "speed_kmh") else 0.0
-                    speeds_kmh.append(speed_kmh)
-
-                    breakdown = reward_spec.compute_step_reward(
-                        delta_route_completion=delta_route,
-                        horizon_steps=case.horizon_steps,
-                        outcome=outcome if (terminated or truncated) else None
-                    )
-                    cumulative_reward += breakdown.total_reward
-
-                    # Emit progress event periodically (every 10 steps, preserving 10 Hz control)
-                    if step_idx % 10 == 0:
-                        self._emit(LauncherEventV1.create(
-                            event_type=LauncherEventType.EPISODE_PROGRESS,
-                            run_id=logger.run_id,
-                            episode_index=case_idx,
-                            total_episodes=total_cases,
+                    while not (terminated or truncated) and step_idx < case.horizon_steps:
+                        # 1. Assemble clean AgentInputV1 (no evaluator metadata)
+                        tm = env.engine.traffic_manager
+                        traffic_v = list(getattr(tm, "traffic_vehicles", [])) if hasattr(tm, "traffic_vehicles") else []
+                        agent_input = build_agent_input(
+                            raw_obs=raw_obs,
+                            ego_vehicle=env.agent,
+                            traffic_vehicles=traffic_v,
+                            navigation=env.agent.navigation,
+                            road_network=env.current_map.road_network,
                             step_index=step_idx,
-                            route_completion=curr_route,
-                            speed_kmh=speed_kmh,
-                            status="RUNNING"
-                        ))
+                            profile_id=InputProfileId(self.plan.agent_registration.input_profile_id)
+                        )
 
-                # E. Finalize episode outcome
-                if outcome is None:
-                    outcome = classify_episode_outcome(
-                        raw_flags=env_flags,
-                        terminated=True,
-                        truncated=(step_idx >= case.horizon_steps)
-                    )
+                        # 2. High-resolution decision latency timer wrapping agent.act() strictly
+                        t0 = time.perf_counter_ns()
+                        decision = agent.act(agent_input)
+                        t1 = time.perf_counter_ns()
+                        latencies_ms.append((t1 - t0) / 1e6)
 
-                env.close()
-                agent.close()
+                        # 3. Action adaptation to physical actuator Box(2)
+                        canonical_act = action_adapter.to_canonical(decision.action_payload)
+
+                        # 4. Environment physics step
+                        raw_obs, r_env, term_step, trunc_step, step_info = env.step(canonical_act.to_numpy())
+                        step_idx += 1
+
+                        # 5. Route completion tracking (SIGNED progress delta, NO clamp)
+                        curr_route = float(step_info.get("route_completion", 0.0))
+                        if curr_route > max_route_completion:
+                            max_route_completion = curr_route
+                        delta_route = curr_route - last_route_completion
+                        last_route_completion = curr_route
+
+                        # Update raw safety and task flags from step_info
+                        for k in ("arrive_dest", "out_of_road", "crash_vehicle", "crash_object", "crash_building", "crash_human", "crash_sidewalk", "max_step"):
+                            if bool(step_info.get(k, False)):
+                                env_flags[k] = True
+
+                        # 6. Gate-3 Safety-First Termination Classification
+                        outcome = classify_episode_outcome(
+                            raw_flags=env_flags,
+                            terminated=term_step,
+                            truncated=trunc_step or (step_idx >= case.horizon_steps)
+                        )
+                        terminated = outcome.terminated
+                        truncated = outcome.truncated
+
+                        # 7. Gate-4 Step Reward Computation
+                        speed_kmh = float(env.agent.speed_kmh) if hasattr(env, "agent") and hasattr(env.agent, "speed_kmh") else 0.0
+                        speeds_kmh.append(speed_kmh)
+
+                        breakdown = reward_spec.compute_step_reward(
+                            delta_route_completion=delta_route,
+                            horizon_steps=case.horizon_steps,
+                            outcome=outcome if (terminated or truncated) else None
+                        )
+                        cumulative_reward += breakdown.total_reward
+
+                        # Emit progress event periodically (every 10 steps, preserving 10 Hz control)
+                        if step_idx % 10 == 0:
+                            self._emit(LauncherEventV1.create(
+                                event_type=LauncherEventType.EPISODE_PROGRESS,
+                                run_id=logger.run_id,
+                                episode_index=case_idx,
+                                total_episodes=total_cases,
+                                step_index=step_idx,
+                                route_completion=curr_route,
+                                speed_kmh=speed_kmh,
+                                status="RUNNING"
+                            ))
+
+                    # E. Finalize episode outcome
+                    if outcome is None:
+                        outcome = classify_episode_outcome(
+                            raw_flags=env_flags,
+                            terminated=True,
+                            truncated=(step_idx >= case.horizon_steps)
+                        )
+
+                finally:
+                    if env is not None:
+                        env.close()
 
                 # F. Construct Gate-4 EpisodeRecord
                 sim_time_s = step_idx * float(self.plan.control_dt_s)
@@ -361,7 +437,7 @@ class ExperimentExecutor:
                     message=f"Case {case.case_id} finished ({outcome.primary_reason.value}, route={last_route_completion:.1%})"
                 ))
 
-            # 4. Finalize run cleanly
+            # 5. Finalize run cleanly
             summary_payload = logger.prepare_summary()
             backend.log_summary(summary_payload)
             sync_meta = backend.finish(RunStatus.COMPLETE)
@@ -421,3 +497,9 @@ class ExperimentExecutor:
                 message=f"Execution failed: {sanitized_e}"
             ))
             raise RuntimeError(f"Experiment execution failed in run '{logger.run_id}': {sanitized_e}") from e
+        finally:
+            if agent is not None and hasattr(agent, "close"):
+                try:
+                    agent.close()
+                except Exception:
+                    pass

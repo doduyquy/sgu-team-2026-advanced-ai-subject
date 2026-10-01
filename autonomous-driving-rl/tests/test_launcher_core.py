@@ -14,6 +14,10 @@ import unittest
 from unittest.mock import patch
 
 from src.launcher.cases import (
+    LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256,
+    LOCKED_TEST_CASE_MANIFEST_SHA256,
+    LOCKED_VALIDATION_CASE_MANIFEST_SHA256,
+    load_locked_geometry_block_sequence,
     load_manifest_csv,
     resolve_audit_cases,
     resolve_sandbox_case,
@@ -34,10 +38,16 @@ from src.launcher.contracts import (
     compute_platform_execution_contract_sha256,
 )
 from src.launcher.events import LauncherEventType, LauncherEventV1
+from src.launcher.executor import (
+    ExperimentExecutor,
+    build_metadrive_case_config,
+    resolve_manifest_name_for_mode,
+)
 from src.launcher.models import (
     AgentRegistrationV1,
     LaunchRequestV1,
     LauncherMode,
+    PreflightBlockedError,
     ResolvedCaseV1,
     ResolvedExperimentPlanV1,
     compute_resolved_plan_sha256,
@@ -58,6 +68,7 @@ from src.launcher.resolver import (
 from src.platform import (
     PINNED_METADRIVE_COMMIT,
     PINNED_METADRIVE_VERSION,
+    RewardSpecV1,
     RunKind,
     WandbMode,
     canonical_json_sha256,
@@ -442,6 +453,131 @@ class TestLauncherContractAndHashes(unittest.TestCase):
         h_launch = DEFAULT_LAUNCHER_CONTRACT_HASH
         h_exec = compute_platform_execution_contract_sha256(h_launch)
         self.assertEqual(h_exec, DEFAULT_PLATFORM_EXECUTION_HASH)
+
+
+class TestExecutorGuaranteesAndScientificContracts(unittest.TestCase):
+    """Verifies scientific execution contracts, signed rewards, and preflight enforcement."""
+    def setUp(self):
+        self.registry = build_default_agent_registry()
+        self.project_root = Path(__file__).resolve().parent.parent
+
+    def test_signed_negative_progress_reward_without_clamping(self):
+        # Progress backwards: RC from 0.50 to 0.45
+        last_rc = 0.50
+        curr_rc = 0.45
+        delta_route = curr_rc - last_rc
+        self.assertAlmostEqual(delta_route, -0.05)
+
+        reward_spec = RewardSpecV1()
+        breakdown = reward_spec.compute_step_reward(
+            delta_route_completion=delta_route,
+            horizon_steps=1000
+        )
+        # Gate 4 progress component must be negative
+        self.assertLess(breakdown.progress_reward, 0.0)
+        self.assertAlmostEqual(breakdown.progress_reward, reward_spec.progress_weight * -0.05)
+
+    def test_executor_blocks_invalid_plan_without_caller_preflight(self):
+        # Plan for TEST with fixture agent (benchmark_eligible=False)
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101)
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        factory = self.registry.get_factory("fixture_seeded_random")
+        executor = ExperimentExecutor(plan=plan, agent_factory=factory, project_root=self.project_root)
+
+        # Calling execute directly without preflight MUST raise PreflightBlockedError
+        with self.assertRaises(PreflightBlockedError) as ctx:
+            executor.execute()
+        self.assertIn("benchmark_eligible=False", str(ctx.exception))
+
+    def test_preflight_blocks_contract_hash_chain_mismatch(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        # Mutate launcher_contract_sha256 in plan
+        bad_plan = dataclasses.replace(plan, launcher_contract_sha256="corrupted_hash_12345")
+        rep = run_preflight(bad_plan, self.project_root)
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "contract_hash_chain")
+        self.assertEqual(check.status, "FAIL")
+
+    def test_ambiguous_sandbox_seed_rejected(self):
+        # In Gate-5 universe, seed 0 exists in multiple sequences (SCS, SCXCS, etc.)
+        # Requesting seed 0 without sequence must be rejected as ambiguous
+        req_ambiguous = LaunchRequestV1(
+            mode=LauncherMode.SANDBOX,
+            agent_id="fixture_seeded_random",
+            geometry_generation_seed=0
+        )
+        with self.assertRaises(ValueError) as ctx:
+            resolve_sandbox_case(req_ambiguous, self.project_root)
+        self.assertIn("Ambiguous geometry request", str(ctx.exception))
+
+    def test_tier_selector_respected_with_explicit_seed(self):
+        # Seed 2 with tier Medium must resolve to Medium, never Easy
+        req_med = LaunchRequestV1(
+            mode=LauncherMode.SANDBOX,
+            agent_id="fixture_seeded_random",
+            tier="Medium",
+            geometry_generation_seed=2,
+            sequence="SCTCS"
+        )
+        case = resolve_sandbox_case(req_med, self.project_root)
+        self.assertEqual(case.tier, "Medium")
+        self.assertEqual(case.sequence, "SCTCS")
+        self.assertEqual(case.geometry_generation_seed, 2)
+
+    def test_runtime_agent_descriptor_mismatch_rejected(self):
+        # Mock factory that returns agent with mismatched agent_id
+        class MismatchedAgent:
+            @property
+            def descriptor(self):
+                from src.platform import AgentDescriptor
+                return AgentDescriptor(agent_id="different_agent_id")
+
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        executor = ExperimentExecutor(plan=plan, agent_factory=lambda: MismatchedAgent(), project_root=self.project_root)
+
+        # Execution must fail before any environment is created
+        with self.assertRaises(RuntimeError) as ctx:
+            executor.execute()
+        self.assertIn("agent_id mismatch", str(ctx.exception))
+
+    def test_explicit_metadrive_control_config(self):
+        case = ResolvedCaseV1(
+            case_id="test_case", case_index=1, protocol_order_index=1, split="TRAIN",
+            tier="Easy", sequence="SCS", geometry_generation_seed=0, geometry_sha256="hash",
+            environment_seed=101, traffic_density=0.1, horizon_steps=1000
+        )
+        cfg = build_metadrive_case_config(case, blocks=[], render_mode="OFF")
+        self.assertEqual(cfg["physics_world_step_size"], 0.02)
+        self.assertEqual(cfg["decision_repeat"], 5)
+        self.assertFalse(cfg["truncate_as_terminate"])
+        self.assertEqual(cfg["horizon"], 1000)
+        self.assertEqual(cfg["start_seed"], 101)
+
+    def test_manifest_name_mapping(self):
+        self.assertEqual(resolve_manifest_name_for_mode(LauncherMode.SANDBOX), "geometry_split_manifest.csv")
+        self.assertEqual(resolve_manifest_name_for_mode(LauncherMode.AUDIT), "geometry_split_manifest.csv")
+        self.assertEqual(resolve_manifest_name_for_mode(LauncherMode.VALIDATION), "validation_case_manifest.csv")
+        self.assertEqual(resolve_manifest_name_for_mode(LauncherMode.TEST), "test_case_manifest.csv")
+
+    def test_wandb_mode_auto_vs_explicit_disabled(self):
+        # AUTO (None) defaults to OFFLINE for TEST
+        req_auto = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", wandb_mode=None)
+        p_auto = resolve_experiment_plan(req_auto, self.registry, self.project_root)
+        self.assertEqual(p_auto.wandb_mode, WandbMode.OFFLINE)
+
+        # Explicit DISABLED remains DISABLED in TEST
+        req_dis = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", wandb_mode=WandbMode.DISABLED)
+        p_dis = resolve_experiment_plan(req_dis, self.registry, self.project_root)
+        self.assertEqual(p_dis.wandb_mode, WandbMode.DISABLED)
+
+        # AUTO defaults to DISABLED for SANDBOX
+        req_sb = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", wandb_mode=None)
+        p_sb = resolve_experiment_plan(req_sb, self.registry, self.project_root)
+        self.assertEqual(p_sb.wandb_mode, WandbMode.DISABLED)
 
 
 if __name__ == "__main__":

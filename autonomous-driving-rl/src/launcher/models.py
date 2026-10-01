@@ -22,6 +22,11 @@ from src.platform import (
 )
 
 
+class PreflightBlockedError(RuntimeError):
+    """Raised when an experiment execution is attempted against a plan that fails preflight validation."""
+    pass
+
+
 class LauncherMode(str, Enum):
     """Orchestration execution modes provided by the Research Launcher."""
     SANDBOX = "SANDBOX"
@@ -84,14 +89,14 @@ class LaunchRequestV1:
     environment_seed: Optional[int] = None
     agent_seed: Optional[int] = None
     render_mode: str = "OFF"           # "OFF" or "NATIVE"
-    wandb_mode: WandbMode = WandbMode.DISABLED
+    wandb_mode: Optional[WandbMode] = None  # None indicates AUTO / mode-specific default
     runs_root: Optional[Path] = None
     custom_run_id: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)
         d["mode"] = self.mode.value
-        d["wandb_mode"] = self.wandb_mode.value
+        d["wandb_mode"] = self.wandb_mode.value if self.wandb_mode is not None else None
         if self.runs_root is not None:
             d["runs_root"] = str(self.runs_root)
         return d

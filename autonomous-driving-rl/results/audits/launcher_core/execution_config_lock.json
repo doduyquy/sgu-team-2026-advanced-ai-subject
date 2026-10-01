@@ -1,0 +1,15 @@
+{
+  "case_id": "val/Extreme/SCXOCrTYCS/geom-19/env-5102",
+  "physics_world_step_size": 0.02,
+  "decision_repeat": 5,
+  "control_dt_s": 0.1,
+  "control_frequency_hz": 10.0,
+  "truncate_as_terminate": false,
+  "traffic_mode": "trigger",
+  "horizon_steps": 2967,
+  "start_seed": 5102,
+  "traffic_density": 0.25,
+  "map_config_type": "MapGenerateMethod.PG_MAP_FILE",
+  "render_mode_off_verified": true,
+  "verdict": "LOCKED"
+}

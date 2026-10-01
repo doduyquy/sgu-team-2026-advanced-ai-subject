@@ -2,15 +2,21 @@
   "validation_suite_parity": {
     "expected_count": 96,
     "resolved_count": 96,
-    "manifest_mismatches": 0,
-    "order_monotonic": true,
+    "fields_checked_per_row": 11,
+    "field_mismatches_count": 0,
+    "row_mismatches_count": 0,
+    "source_manifest_sha256_verified": true,
+    "order_verified": true,
     "verdict": "PERFECT_PARITY"
   },
   "test_benchmark_parity": {
     "expected_count": 60,
     "resolved_count": 60,
-    "manifest_mismatches": 0,
-    "order_monotonic": true,
+    "fields_checked_per_row": 11,
+    "field_mismatches_count": 0,
+    "row_mismatches_count": 0,
+    "source_manifest_sha256_verified": true,
+    "order_verified": true,
     "verdict": "PERFECT_PARITY"
   }
 }

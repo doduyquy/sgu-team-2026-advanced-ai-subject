@@ -170,8 +170,8 @@ Gate 7.5A introduces additive hashes without altering previously locked platform
 | **`platform_runtime_contract_sha256`** | `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad` | **LOCKED (Untouched)** |
 | **`logging_contract_sha256`** | `0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2` | **LOCKED (Untouched)** |
 | **`platform_observability_contract_sha256`** | `f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581` | **LOCKED (Untouched)** |
-| **`launcher_contract_sha256`** | `22718d9180b945aea801fe078e9204744dd063fc644301d310ac0db9d9ebd8cc` | **LOCKED (Gate 7.5A)** |
-| **`platform_execution_contract_sha256`** | `fcc9d469466dd55b8a1a2d6f28235695b1130eacff88bcabc2ccc82db428c7a6` | **LOCKED (Gate 7.5A)** |
+| **`launcher_contract_sha256`** | `7f9bb7b24e6c4e4f7b2728a35d631c7aacc7df1e36e41fa375e56f1877a0abb1` | **AUDIT-CANDIDATE (Gate 7.5A)** |
+| **`platform_execution_contract_sha256`** | `c579fd6c9881c068c86d149ed7579b30b62914e54cfc554ba730e09a6fb56642` | **AUDIT-CANDIDATE (Gate 7.5A)** |
 
 $$\text{platform\_execution\_contract\_sha256} = \text{SHA256}(\text{canonical\_json}(\{\text{"platform\_observability\_contract\_sha256"}, \text{"launcher\_contract\_sha256"}, \dots\}))$$
 
@@ -183,11 +183,13 @@ All verification artifacts are generated in `results/audits/launcher_core/`:
 - `contract_hashes.json`: Locked platform hashes across Gates 5 through 7.5A.
 - `mode_resolution_matrix.csv`: Verified mapping of LauncherMode to RunKind and default policies.
 - `agent_registry_snapshot.json`: Machine-readable snapshot of all registered agent descriptors.
-- `case_plan_parity.json`: Verified 100% manifest parity for Validation (96) and Test (60) suites.
+- `case_plan_parity.json`: Verified 100% manifest parity across all 11 fields for Validation (96) and Test (60) suites.
 - `benchmark_lock_checks.json`: Verified Sandbox holdout rejection and benchmark fixture rejection.
 - `preflight_matrix.csv`: Empirical evaluation of 13 preflight decision scenarios.
 - `plan_hash_determinism.json`: Proof of deterministic plan hashing and mutation sensitivity.
 - `cli_core_parity.json`: Verified semantic equivalence between CLI JSON output and direct resolver output.
+- `reward_passthrough_parity.json`: Verified signed progress delta passthrough without clamping.
+- `execution_config_lock.json`: Verified 10 Hz physical control, 0.02 step size, decision repeat 5, Trigger mode.
 - `sandbox_execution_smoke.json`: Successful real MetaDrive simulation execution of Sandbox episode:
   - Run state: `COMPLETE`
   - All 7 Gate-7 local files present and verified.
@@ -207,8 +209,8 @@ The following capabilities are deliberately excluded from Gate 7.5A and will be 
 ---
 
 ## 12. Regression & Verification Summary
-- **Launcher Core Unit Tests:** 28 tests pass (`tests/test_launcher_core.py`, 2.6s).
-- **Full Platform Regression Suite:** **158 total unit tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 37, `test_logging_contract`: 47, `test_launcher_core`: 28).
+- **Launcher Core Unit Tests:** 37 tests pass (`tests/test_launcher_core.py`, 4.5s).
+- **Full Platform Regression Suite:** **167 total unit tests pass across repo** (`test_episode_lifecycle`: 12, `test_reward_metrics`: 14, `test_evaluation_protocol`: 20, `test_agent_contract`: 37, `test_logging_contract`: 47, `test_launcher_core`: 37).
 - **Legacy Compatibility:** `CourseEnvV1` observation shape `(35,)` verified; `evaluate_random.py` completes 20 episodes cleanly.
 - **Contract Integrity:** Gates 5, 6, and 7 hashes remain 100% untouched.
 - **Privacy & Secret Hygiene:** Automated scans across all files confirmed zero credentials and zero machine-private paths committed.

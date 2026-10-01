@@ -2,7 +2,7 @@
   "metadata": {
     "contract_name": "LauncherContractV1",
     "spec_version": "1.0.0",
-    "status": "LOCKED-FOR-PLATFORM-V1",
+    "status": "AUDIT-CANDIDATE",
     "gate": "Gate 7.5A (Research Platform V1)"
   },
   "launcher_modes": [
@@ -20,6 +20,7 @@
   "sandbox_resolution_policy": {
     "split_restriction": "TRAIN_ONLY",
     "holdout_violation_policy": "FAIL_LOUDLY_NO_SILENT_FALLBACK",
+    "ambiguity_policy": "EXPLICIT_SEED_APPLIES_ALL_SELECTORS_MULTIPLE_MATCHES_FAIL",
     "default_geometry_selection": "DETERMINISTIC_SORTED_FIRST_ELIGIBLE",
     "default_environment_seed": 0,
     "default_stochastic_agent_seed": 101,
@@ -79,10 +80,41 @@
       "OBSERVABILITY",
       "SECURITY"
     ],
+    "contract_chain_verification": "PREFLIGHT_VERIFIES_ENTIRE_HASH_CHAIN_ACROSS_GATES_5_6_7_7.5A",
+    "manifest_hash_verification": "PREFLIGHT_VERIFIES_LOCKED_GATE5_MANIFEST_HASHES",
     "benchmark_dirty_git_policy": "FAIL_PREFLIGHT",
     "benchmark_unverified_env_policy": "FAIL_PREFLIGHT",
     "fixture_on_benchmark_policy": "FAIL_PREFLIGHT",
     "online_without_key_policy": "FAIL_PREFLIGHT"
+  },
+  "control_policy": {
+    "physics_world_step_size": 0.02,
+    "decision_repeat": 5,
+    "decision_dt_s": 0.1,
+    "control_frequency_hz": 10.0,
+    "traffic_mode": "trigger",
+    "truncate_as_terminate": false,
+    "reward_passthrough": "SIGNED_DELTA_ROUTE_COMPLETION_PRESERVED_WITHOUT_CLAMPING"
+  },
+  "agent_lifecycle_policy": {
+    "instance_lifecycle": "ONE_AGENT_INSTANCE_PER_EXPERIMENT_RUN_RESET_PER_EPISODE",
+    "descriptor_verification": "RUNTIME_DESCRIPTOR_MUST_MATCH_REGISTRATION_EXACTLY",
+    "cleanup": "TRY_FINALLY_GUARANTEES_ENV_AND_AGENT_CLOSE"
+  },
+  "wandb_auto_resolution_policy": {
+    "unspecified_defaults": {
+      "SANDBOX": "DISABLED",
+      "AUDIT": "DISABLED",
+      "VALIDATION": "OFFLINE",
+      "TEST": "OFFLINE"
+    },
+    "explicit_override_rule": "EXPLICIT_DISABLED_REMAINS_DISABLED_ACROSS_ALL_MODES"
+  },
+  "manifest_name_mapping": {
+    "SANDBOX": "geometry_split_manifest.csv",
+    "AUDIT": "geometry_split_manifest.csv",
+    "VALIDATION": "validation_case_manifest.csv",
+    "TEST": "test_case_manifest.csv"
   },
   "legacy_exclusion_policy": {
     "excluded_legacy_components": [

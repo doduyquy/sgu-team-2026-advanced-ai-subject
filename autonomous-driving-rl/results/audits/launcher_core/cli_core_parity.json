@@ -1,6 +1,6 @@
 {
-  "cli_plan_sha256": "adc8f92e6223e8e18f57df943c61a1ec3ffa2da2106f2cd05ec4cd138514dc04",
-  "direct_plan_sha256": "adc8f92e6223e8e18f57df943c61a1ec3ffa2da2106f2cd05ec4cd138514dc04",
+  "cli_plan_sha256": "53c172f0367135faa32824b8321171108d77178bff6ab48026dc336461c56444",
+  "direct_plan_sha256": "53c172f0367135faa32824b8321171108d77178bff6ab48026dc336461c56444",
   "parity_verified": true,
   "verdict": "PERFECT_PARITY"
 }

@@ -15,16 +15,35 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.launcher.cases import get_default_project_root
+from src.launcher.cases import (
+    LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256,
+    LOCKED_TEST_CASE_MANIFEST_SHA256,
+    LOCKED_VALIDATION_CASE_MANIFEST_SHA256,
+    get_default_project_root,
+)
+from src.launcher.contracts import (
+    GATE7_LOCKED_OBSERVABILITY_HASH,
+    build_launcher_contract_core,
+    compute_launcher_contract_sha256,
+    compute_platform_execution_contract_sha256,
+)
 from src.launcher.models import (
     LauncherMode,
+    PreflightBlockedError,
     ResolvedExperimentPlanV1,
+)
+from src.launcher.resolver import (
+    GATE5_LOCKED_BENCHMARK_HASH,
+    GATE6_LOCKED_AGENT_HASH,
+    GATE6_LOCKED_RUNTIME_HASH,
+    GATE7_LOCKED_LOGGING_HASH,
 )
 from src.platform import (
     CERTIFIED_ACTION_ADAPTERS,
     PINNED_METADRIVE_COMMIT,
     PINNED_METADRIVE_VERSION,
     WandbMode,
+    canonical_csv_file_sha256,
     capture_environment_provenance,
     capture_git_provenance,
 )
@@ -78,6 +97,84 @@ def run_preflight(
     env_prov = custom_environment_provenance or capture_environment_provenance(root)
 
     checks: List[PreflightCheckV1] = []
+
+    # 0. Contract hash chain verification (Section 3)
+    core_contract = build_launcher_contract_core()
+    expected_launcher_hash = compute_launcher_contract_sha256(core_contract)
+    expected_execution_hash = compute_platform_execution_contract_sha256(expected_launcher_hash)
+
+    contract_failures = []
+    if plan.benchmark_contract_sha256 != GATE5_LOCKED_BENCHMARK_HASH:
+        contract_failures.append(f"Gate 5 benchmark hash mismatch: plan={plan.benchmark_contract_sha256} != expected={GATE5_LOCKED_BENCHMARK_HASH}")
+    if plan.agent_contract_sha256 != GATE6_LOCKED_AGENT_HASH:
+        contract_failures.append(f"Gate 6 agent hash mismatch: plan={plan.agent_contract_sha256} != expected={GATE6_LOCKED_AGENT_HASH}")
+    if plan.platform_runtime_contract_sha256 != GATE6_LOCKED_RUNTIME_HASH:
+        contract_failures.append(f"Gate 6 runtime hash mismatch: plan={plan.platform_runtime_contract_sha256} != expected={GATE6_LOCKED_RUNTIME_HASH}")
+    if plan.logging_contract_sha256 != GATE7_LOCKED_LOGGING_HASH:
+        contract_failures.append(f"Gate 7 logging hash mismatch: plan={plan.logging_contract_sha256} != expected={GATE7_LOCKED_LOGGING_HASH}")
+    if plan.platform_observability_contract_sha256 != GATE7_LOCKED_OBSERVABILITY_HASH:
+        contract_failures.append(f"Gate 7 observability hash mismatch: plan={plan.platform_observability_contract_sha256} != expected={GATE7_LOCKED_OBSERVABILITY_HASH}")
+    if plan.launcher_contract_sha256 != expected_launcher_hash:
+        contract_failures.append(f"Gate 7.5A launcher contract hash mismatch: plan={plan.launcher_contract_sha256} != expected={expected_launcher_hash}")
+    if plan.platform_execution_contract_sha256 != expected_execution_hash:
+        contract_failures.append(f"Gate 7.5A execution contract hash mismatch: plan={plan.platform_execution_contract_sha256} != expected={expected_execution_hash}")
+
+    if contract_failures:
+        checks.append(PreflightCheckV1(
+            check_id="contract_hash_chain",
+            status="FAIL",
+            message=f"Contract hash chain broken: {'; '.join(contract_failures)}",
+            category="CONTRACT"
+        ))
+    else:
+        checks.append(PreflightCheckV1(
+            check_id="contract_hash_chain",
+            status="PASS",
+            message="Full contract hash chain verified across Gates 5, 6, 7, and 7.5A.",
+            category="CONTRACT"
+        ))
+
+    # 0b. Gate-5 manifest source hash verification (Section 4)
+    manifest_failures = []
+    geom_split_p = root / "results" / "audits" / "evaluation_protocol" / "geometry_split_manifest.csv"
+    val_manifest_p = root / "results" / "audits" / "evaluation_protocol" / "validation_case_manifest.csv"
+    test_manifest_p = root / "results" / "audits" / "evaluation_protocol" / "test_case_manifest.csv"
+
+    if geom_split_p.exists():
+        h = canonical_csv_file_sha256(geom_split_p)
+        if h != LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256:
+            manifest_failures.append(f"geometry_split_manifest.csv hash mismatch ({h[:8]} != {LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256[:8]})")
+    else:
+        manifest_failures.append("geometry_split_manifest.csv missing")
+
+    if val_manifest_p.exists():
+        h = canonical_csv_file_sha256(val_manifest_p)
+        if h != LOCKED_VALIDATION_CASE_MANIFEST_SHA256:
+            manifest_failures.append(f"validation_case_manifest.csv hash mismatch ({h[:8]} != {LOCKED_VALIDATION_CASE_MANIFEST_SHA256[:8]})")
+    else:
+        manifest_failures.append("validation_case_manifest.csv missing")
+
+    if test_manifest_p.exists():
+        h = canonical_csv_file_sha256(test_manifest_p)
+        if h != LOCKED_TEST_CASE_MANIFEST_SHA256:
+            manifest_failures.append(f"test_case_manifest.csv hash mismatch ({h[:8]} != {LOCKED_TEST_CASE_MANIFEST_SHA256[:8]})")
+    else:
+        manifest_failures.append("test_case_manifest.csv missing")
+
+    if manifest_failures:
+        checks.append(PreflightCheckV1(
+            check_id="gate5_manifest_hashes",
+            status="FAIL",
+            message=f"Gate-5 source manifest verification failed: {'; '.join(manifest_failures)}",
+            category="CONTRACT"
+        ))
+    else:
+        checks.append(PreflightCheckV1(
+            check_id="gate5_manifest_hashes",
+            status="PASS",
+            message="Gate-5 source CSV manifests verified against locked cryptographic hashes.",
+            category="CONTRACT"
+        ))
 
     # 1. MetaDrive exact pin verification
     actual_version = env_prov.get("metadrive_version", "unknown")

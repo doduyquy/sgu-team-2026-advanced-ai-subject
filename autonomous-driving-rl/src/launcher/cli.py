@@ -70,8 +70,9 @@ def _add_plan_arguments(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--env-seed", type=int, default=None, dest="env_seed", help="Environment seed")
     subparser.add_argument("--agent-seed", type=int, default=None, dest="agent_seed", help="Agent stochasticity seed (101, 202, 303 for benchmark)")
     subparser.add_argument("--render", choices=["OFF", "NATIVE", "off", "native"], default="OFF", help="Rendering mode")
-    subparser.add_argument("--wandb", choices=["DISABLED", "OFFLINE", "ONLINE"], default="DISABLED", help="W&B tracking mode")
+    subparser.add_argument("--wandb", choices=["AUTO", "DISABLED", "OFFLINE", "ONLINE", "auto", "disabled", "offline", "online"], default="AUTO", help="W&B tracking mode (AUTO defaults to OFFLINE for benchmarks, DISABLED for sandbox)")
     subparser.add_argument("--runs-root", default=None, help="Custom runs storage directory override")
+    subparser.add_argument("--run-id", "--custom-run-id", default=None, dest="custom_run_id", help="Custom run_id identifier")
     subparser.add_argument("--json", action="store_true", help="Output structured JSON")
 
 
@@ -142,10 +143,12 @@ def handle_cases(args: argparse.Namespace) -> int:
 def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
     """Builds LaunchRequestV1 from parsed CLI arguments."""
     mode = LauncherMode(args.mode.upper())
-    wandb_mode = WandbMode(args.wandb.upper())
+    wandb_arg = args.wandb.upper()
+    wandb_mode = None if wandb_arg == "AUTO" else WandbMode(wandb_arg)
     render_mode = args.render.upper()
     tier = args.tier.capitalize() if args.tier else None
     runs_root = Path(args.runs_root) if args.runs_root else None
+    custom_run_id = getattr(args, "custom_run_id", None)
 
     return LaunchRequestV1(
         mode=mode,
@@ -157,7 +160,8 @@ def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
         agent_seed=args.agent_seed,
         render_mode=render_mode,
         wandb_mode=wandb_mode,
-        runs_root=runs_root
+        runs_root=runs_root,
+        custom_run_id=custom_run_id
     )
 
 
@@ -216,7 +220,8 @@ def handle_run(args: argparse.Namespace) -> int:
     executor = ExperimentExecutor(
         plan=plan,
         agent_factory=agent_factory,
-        runs_root=request.runs_root
+        runs_root=request.runs_root,
+        custom_run_id=request.custom_run_id
     )
 
     try:

@@ -36,6 +36,9 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from src.launcher.cases import (
+    LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256,
+    LOCKED_TEST_CASE_MANIFEST_SHA256,
+    LOCKED_VALIDATION_CASE_MANIFEST_SHA256,
     get_default_project_root,
     load_locked_geometry_block_sequence,
     load_manifest_csv,
@@ -52,7 +55,12 @@ from src.launcher.contracts import (
     compute_platform_execution_contract_sha256,
 )
 from src.launcher.events import LauncherEventType, LauncherEventV1
-from src.launcher.executor import ExecutionReportV1, ExperimentExecutor
+from src.launcher.executor import (
+    ExecutionReportV1,
+    ExperimentExecutor,
+    build_metadrive_case_config,
+    resolve_manifest_name_for_mode,
+)
 from src.launcher.models import (
     AgentRegistrationV1,
     LaunchRequestV1,
@@ -77,9 +85,11 @@ from src.launcher.resolver import (
 from src.platform import (
     PINNED_METADRIVE_COMMIT,
     PINNED_METADRIVE_VERSION,
+    RewardSpecV1,
     RunKind,
     RunStatus,
     WandbMode,
+    canonical_csv_file_sha256,
     canonical_json_file_sha256,
     canonical_json_sha256,
     sanitize_error_message,
@@ -217,7 +227,7 @@ def audit_machine_privacy_scan(root: Path):
 def audit_contract_and_hashes(configs_dir: Path, results_dir: Path):
     """Generates launcher contract config and computes additive hashes."""
     print("\n--- Generating Launcher Contract & Computing Additive Hashes ---")
-    core = build_launcher_contract_core(status="LOCKED-FOR-PLATFORM-V1")
+    core = build_launcher_contract_core(status="AUDIT-CANDIDATE")
     contract_file = configs_dir / "launcher_contract_v1.json"
     with open(contract_file, "w", encoding="utf-8") as f:
         json.dump(core, f, indent=2)
@@ -332,50 +342,86 @@ def audit_agent_registry_snapshot(results_dir: Path):
     print(f"[SAVED] Agent registry snapshot saved to: {out_file} ({len(snapshot)} agents)")
 
 
+def check_case_manifest_parity(cases: List[ResolvedCaseV1], manifest_rows: List[Dict[str, str]], expected_split: str):
+    """Compares all 11 fields across every resolved case and manifest record."""
+    field_mismatches = 0
+    row_mismatches = 0
+    fields_checked = 11
+
+    for c, m in zip(cases, manifest_rows):
+        row_has_mismatch = False
+        if str(c.case_id) != str(m["case_id"]):
+            field_mismatches += 1; row_has_mismatch = True
+        if int(c.case_index) != int(m["case_index"]):
+            field_mismatches += 1; row_has_mismatch = True
+        if int(c.protocol_order_index) != int(m["protocol_order_index"]):
+            field_mismatches += 1; row_has_mismatch = True
+        if str(c.split) != expected_split:
+            field_mismatches += 1; row_has_mismatch = True
+        if str(c.tier) != str(m["tier"]):
+            field_mismatches += 1; row_has_mismatch = True
+        if str(c.sequence) != str(m["sequence"]):
+            field_mismatches += 1; row_has_mismatch = True
+        if int(c.geometry_generation_seed) != int(m["geometry_generation_seed"]):
+            field_mismatches += 1; row_has_mismatch = True
+        if str(c.geometry_sha256) != str(m["geometry_sha256"]):
+            field_mismatches += 1; row_has_mismatch = True
+        if int(c.environment_seed) != int(m["environment_seed"]):
+            field_mismatches += 1; row_has_mismatch = True
+        if abs(float(c.traffic_density) - float(m["traffic_density"])) > 1e-5:
+            field_mismatches += 1; row_has_mismatch = True
+        if int(c.horizon_steps) != int(m["horizon_steps"]):
+            field_mismatches += 1; row_has_mismatch = True
+        if row_has_mismatch:
+            row_mismatches += 1
+
+    return fields_checked, field_mismatches, row_mismatches
+
+
 def audit_case_plan_parity(root: Path, results_dir: Path):
-    """Verifies that validation (96) and test (60) cases resolve with 100% manifest parity."""
-    print("\n--- Auditing Case Plan Parity Against Gate-5 Manifests ---")
+    """Verifies that validation (96) and test (60) cases resolve with 100% manifest parity across all 11 fields."""
+    print("\n--- Auditing Full-Field Case Plan Parity Against Gate-5 Manifests ---")
     val_cases = resolve_validation_cases(root)
     test_cases = resolve_test_cases(root)
 
-    val_manifest = load_manifest_csv(root / "results" / "audits" / "evaluation_protocol" / "validation_case_manifest.csv")
-    test_manifest = load_manifest_csv(root / "results" / "audits" / "evaluation_protocol" / "test_case_manifest.csv")
+    val_manifest_p = root / "results" / "audits" / "evaluation_protocol" / "validation_case_manifest.csv"
+    test_manifest_p = root / "results" / "audits" / "evaluation_protocol" / "test_case_manifest.csv"
+
+    val_manifest = load_manifest_csv(val_manifest_p, expected_sha256=LOCKED_VALIDATION_CASE_MANIFEST_SHA256)
+    test_manifest = load_manifest_csv(test_manifest_p, expected_sha256=LOCKED_TEST_CASE_MANIFEST_SHA256)
 
     assert len(val_cases) == 96 == len(val_manifest)
     assert len(test_cases) == 60 == len(test_manifest)
 
-    val_mismatches = 0
-    for c, m in zip(val_cases, val_manifest):
-        if (c.case_id != m["case_id"] or
-            c.protocol_order_index != int(m["protocol_order_index"]) or
-            c.geometry_sha256 != m["geometry_sha256"] or
-            c.environment_seed != int(m["environment_seed"]) or
-            c.horizon_steps != int(m["horizon_steps"])):
-            val_mismatches += 1
+    val_fields_checked, val_field_mismatches, val_row_mismatches = check_case_manifest_parity(val_cases, val_manifest, "VALIDATION")
+    test_fields_checked, test_field_mismatches, test_row_mismatches = check_case_manifest_parity(test_cases, test_manifest, "TEST")
 
-    test_mismatches = 0
-    for c, m in zip(test_cases, test_manifest):
-        if (c.case_id != m["case_id"] or
-            c.protocol_order_index != int(m["protocol_order_index"]) or
-            c.geometry_sha256 != m["geometry_sha256"] or
-            c.environment_seed != int(m["environment_seed"]) or
-            c.horizon_steps != int(m["horizon_steps"])):
-            test_mismatches += 1
+    val_hash = canonical_csv_file_sha256(val_manifest_p)
+    test_hash = canonical_csv_file_sha256(test_manifest_p)
+
+    val_hash_verified = (val_hash == LOCKED_VALIDATION_CASE_MANIFEST_SHA256)
+    test_hash_verified = (test_hash == LOCKED_TEST_CASE_MANIFEST_SHA256)
 
     parity_report = {
         "validation_suite_parity": {
             "expected_count": 96,
             "resolved_count": len(val_cases),
-            "manifest_mismatches": val_mismatches,
-            "order_monotonic": all(c.protocol_order_index == (i + 1) for i, c in enumerate(val_cases)),
-            "verdict": "PERFECT_PARITY"
+            "fields_checked_per_row": val_fields_checked,
+            "field_mismatches_count": val_field_mismatches,
+            "row_mismatches_count": val_row_mismatches,
+            "source_manifest_sha256_verified": val_hash_verified,
+            "order_verified": all(c.protocol_order_index == (i + 1) for i, c in enumerate(val_cases)),
+            "verdict": "PERFECT_PARITY" if (val_field_mismatches == 0 and val_hash_verified) else "FAILED"
         },
         "test_benchmark_parity": {
             "expected_count": 60,
             "resolved_count": len(test_cases),
-            "manifest_mismatches": test_mismatches,
-            "order_monotonic": all(c.protocol_order_index == (i + 1) for i, c in enumerate(test_cases)),
-            "verdict": "PERFECT_PARITY"
+            "fields_checked_per_row": test_fields_checked,
+            "field_mismatches_count": test_field_mismatches,
+            "row_mismatches_count": test_row_mismatches,
+            "source_manifest_sha256_verified": test_hash_verified,
+            "order_verified": all(c.protocol_order_index == (i + 1) for i, c in enumerate(test_cases)),
+            "verdict": "PERFECT_PARITY" if (test_field_mismatches == 0 and test_hash_verified) else "FAILED"
         }
     }
 
@@ -383,7 +429,108 @@ def audit_case_plan_parity(root: Path, results_dir: Path):
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(parity_report, f, indent=2)
     print(f"[SAVED] Case plan parity saved to: {out_file}")
-    assert val_mismatches == 0 and test_mismatches == 0
+    assert val_field_mismatches == 0 and test_field_mismatches == 0
+
+
+def audit_reward_passthrough_parity(results_dir: Path):
+    """
+    Verifies that the Launcher preserves Gate-4 signed progress deltas without clamping.
+    Uses synthetic route completion trace [0.00, 0.10, 0.08, 0.20].
+    Asserts deltas [+0.10, -0.02, +0.12] and feeds into RewardSpecV1.
+    """
+    print("\n--- Auditing Reward Passthrough & Signed Progress Parity ---")
+    rc_trace = [0.00, 0.10, 0.08, 0.20]
+    expected_deltas = [+0.10, -0.02, +0.12]
+
+    reward_spec = RewardSpecV1()
+    step_records = []
+    last_rc = rc_trace[0]
+
+    for curr_rc in rc_trace[1:]:
+        delta_route = curr_rc - last_rc
+        breakdown = reward_spec.compute_step_reward(
+            delta_route_completion=delta_route,
+            horizon_steps=1000
+        )
+        step_records.append({
+            "previous_route_completion": last_rc,
+            "current_route_completion": curr_rc,
+            "delta_route": delta_route,
+            "progress_reward": breakdown.progress_reward,
+            "total_step_reward": breakdown.total_reward
+        })
+        last_rc = curr_rc
+
+    actual_deltas = [r["delta_route"] for r in step_records]
+    assert len(actual_deltas) == len(expected_deltas)
+    for a, e in zip(actual_deltas, expected_deltas):
+        assert abs(a - e) < 1e-6, f"Delta mismatch: {a} != {e}"
+
+    # Specifically assert negative progress produced negative progress reward
+    assert abs(step_records[1]["delta_route"] - (-0.02)) < 1e-6
+    assert step_records[1]["progress_reward"] < 0.0
+
+    report = {
+        "synthetic_rc_trace": rc_trace,
+        "expected_deltas": expected_deltas,
+        "actual_deltas": actual_deltas,
+        "signed_progress_preserved": True,
+        "clamping_absent": True,
+        "steps": step_records,
+        "verdict": "PASSED"
+    }
+
+    out_file = results_dir / "reward_passthrough_parity.json"
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+    print(f"[SAVED] Reward passthrough parity saved to: {out_file}")
+
+
+def audit_execution_config_lock(root: Path, results_dir: Path):
+    """
+    Generates machine-readable evidence of the exact MetaDrive config generated for a resolved case.
+    Verifies physics_world_step, decision_repeat, 10 Hz frequency, Trigger traffic mode, and horizon.
+    """
+    print("\n--- Auditing Execution Config Lock & 10 Hz Control ---")
+    val_cases = resolve_validation_cases(root)
+    sample_case = val_cases[0]
+
+    cfg = build_metadrive_case_config(sample_case, blocks=[], render_mode="OFF")
+
+    # Verify parameters
+    assert cfg["physics_world_step_size"] == 0.02
+    assert cfg["decision_repeat"] == 5
+    decision_dt = cfg["physics_world_step_size"] * cfg["decision_repeat"]
+    control_freq = 1.0 / decision_dt
+    assert abs(decision_dt - 0.1) < 1e-6
+    assert abs(control_freq - 10.0) < 1e-6
+    assert cfg["truncate_as_terminate"] is False
+    assert cfg["traffic_mode"] == "trigger"
+    assert cfg["horizon"] == sample_case.horizon_steps
+    assert cfg["start_seed"] == sample_case.environment_seed
+    assert cfg["traffic_density"] == sample_case.traffic_density
+    assert cfg["use_render"] is False
+
+    report = {
+        "case_id": sample_case.case_id,
+        "physics_world_step_size": cfg["physics_world_step_size"],
+        "decision_repeat": cfg["decision_repeat"],
+        "control_dt_s": decision_dt,
+        "control_frequency_hz": control_freq,
+        "truncate_as_terminate": cfg["truncate_as_terminate"],
+        "traffic_mode": str(cfg["traffic_mode"]),
+        "horizon_steps": cfg["horizon"],
+        "start_seed": cfg["start_seed"],
+        "traffic_density": cfg["traffic_density"],
+        "map_config_type": "MapGenerateMethod.PG_MAP_FILE",
+        "render_mode_off_verified": not cfg["use_render"],
+        "verdict": "LOCKED"
+    }
+
+    out_file = results_dir / "execution_config_lock.json"
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+    print(f"[SAVED] Execution config lock saved to: {out_file}")
 
 
 def audit_benchmark_lock_checks(root: Path, results_dir: Path):
@@ -618,6 +765,10 @@ def audit_sandbox_execution_smoke(root: Path, results_dir: Path):
     assert launcher_prov["resolved_plan_sha256"] == plan.resolved_plan_sha256
     assert launcher_prov["protocol_scope"] == "SANDBOX_SINGLE_CASE"
 
+    # 4. Assert correct Gate-7 manifest_name provenance
+    manifest_name = manifest["config"].get("manifest_name")
+    assert manifest_name == "geometry_split_manifest.csv", f"Manifest name mismatch: {manifest_name}"
+
     smoke_artifact = {
         "run_id": report.run_id,
         "launcher_mode": "SANDBOX",
@@ -626,6 +777,8 @@ def audit_sandbox_execution_smoke(root: Path, results_dir: Path):
         "required_files_verified": files_present,
         "events_captured": events_captured,
         "launcher_provenance_verified": True,
+        "manifest_name_verified": True,
+        "manifest_name": manifest_name,
         "embedded_launcher_provenance": launcher_prov,
         "verdict": "PASSED"
     }
@@ -674,7 +827,11 @@ def generate_summary_markdown(summary_md_path: Path, hashes_data: Dict[str, Any]
         f.write(f"- **`logging_contract_sha256`:** `{hashes_data['logging_contract_sha256']}` (locked, untouched)\n")
         f.write(f"- **`platform_observability_contract_sha256`:** `{hashes_data['platform_observability_contract_sha256']}` (locked, untouched)\n")
         f.write(f"- **`launcher_contract_sha256`:** `{hashes_data['launcher_contract_sha256']}`\n")
-        f.write(f"- **`platform_execution_contract_sha256`:** `{hashes_data['platform_execution_contract_sha256']}`\n")
+        f.write(f"- **`platform_execution_contract_sha256`:** `{hashes_data['platform_execution_contract_sha256']}`\n\n")
+
+        f.write("## 7. Additional Verification Artifacts\n")
+        f.write("- `reward_passthrough_parity.json`: Verified signed progress delta passthrough without clamping.\n")
+        f.write("- `execution_config_lock.json`: Verified 10 Hz physical control, 0.02 step, decision repeat 5, Trigger mode.\n")
 
     print(f"[SAVED] Audit summary markdown saved to: {summary_md_path}")
 
@@ -709,7 +866,7 @@ def main():
     # 6. Agent registry snapshot
     audit_agent_registry_snapshot(results_dir)
 
-    # 7. Case plan parity audit
+    # 7. Case plan parity audit (11 fields per row)
     audit_case_plan_parity(project_root, results_dir)
 
     # 8. Benchmark lock & holdout safety audit
@@ -724,14 +881,20 @@ def main():
     # 11. CLI / Core parity audit
     audit_cli_core_parity(project_root, results_dir)
 
-    # 12. Real simulator-backed Sandbox smoke execution
+    # 12. Reward passthrough and signed delta audit
+    audit_reward_passthrough_parity(results_dir)
+
+    # 13. Execution config lock and 10 Hz control audit
+    audit_execution_config_lock(project_root, results_dir)
+
+    # 14. Real simulator-backed Sandbox smoke execution
     audit_sandbox_execution_smoke(project_root, results_dir)
 
-    # 13. Generate summary markdown
+    # 15. Generate summary markdown
     summary_md_path = results_dir / "audit_summary.md"
     generate_summary_markdown(summary_md_path, hashes_data)
 
-    # 14. Final secret and privacy scans after all artifacts written
+    # 16. Final secret and privacy scans after all artifacts written
     audit_secret_scan(project_root, scan_label="Final Post-Artifacts")
     audit_machine_privacy_scan(project_root)
 

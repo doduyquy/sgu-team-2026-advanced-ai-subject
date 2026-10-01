@@ -34,8 +34,8 @@ GATE6_LOCKED_AGENT_HASH = "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9
 GATE6_LOCKED_RUNTIME_HASH = "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad"
 GATE7_LOCKED_LOGGING_HASH = "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2"
 GATE7_LOCKED_OBSERVABILITY_HASH = "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581"
-DEFAULT_LAUNCHER_CONTRACT_HASH = "22718d9180b945aea801fe078e9204744dd063fc644301d310ac0db9d9ebd8cc"
-DEFAULT_PLATFORM_EXECUTION_HASH = "fcc9d469466dd55b8a1a2d6f28235695b1130eacff88bcabc2ccc82db428c7a6"
+DEFAULT_LAUNCHER_CONTRACT_HASH = "7f9bb7b24e6c4e4f7b2728a35d631c7aacc7df1e36e41fa375e56f1877a0abb1"
+DEFAULT_PLATFORM_EXECUTION_HASH = "c579fd6c9881c068c86d149ed7579b30b62914e54cfc554ba730e09a6fb56642"
 
 
 def resolve_experiment_plan(
@@ -94,11 +94,18 @@ def resolve_experiment_plan(
         if render_mode != "OFF":
             warnings.append(f"Render mode '{render_mode}' requested for benchmark {request.mode.value}; benchmark must execute headless (OFF).")
 
-    wandb_mode = request.wandb_mode
-    if request.wandb_mode == WandbMode.DISABLED:
-        # Default W&B modes per Launcher specification:
+    # Resolve W&B mode:
+    # If request.wandb_mode is None (AUTO / unspecified):
+    #   SANDBOX / AUDIT -> DISABLED
+    #   VALIDATION / TEST -> OFFLINE
+    # If user explicitly specifies a WandbMode, respect it strictly!
+    if request.wandb_mode is None:
         if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST):
-            wandb_mode = WandbMode.OFFLINE  # Default benchmark runs to OFFLINE
+            wandb_mode = WandbMode.OFFLINE
+        else:
+            wandb_mode = WandbMode.DISABLED
+    else:
+        wandb_mode = request.wandb_mode
 
     # 6. Contract hashes
     launcher_hash = custom_launcher_contract_sha256 or DEFAULT_LAUNCHER_CONTRACT_HASH

@@ -22,9 +22,14 @@ from metadrive.envs.metadrive_env import MetaDriveEnv
 
 from src.launcher.models import LaunchRequestV1, ResolvedCaseV1
 from src.platform import (
+    canonical_csv_file_sha256,
     canonical_json_sha256,
     compute_route_aware_horizon,
 )
+
+LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256 = "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481"
+LOCKED_VALIDATION_CASE_MANIFEST_SHA256 = "10afc2afcfd1c3e8e6f201448bdeb79ee5b07b3c0ec92e8e6e1adb7c10f42ac1"
+LOCKED_TEST_CASE_MANIFEST_SHA256 = "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77"
 
 
 def make_jsonable(obj: Any) -> Any:
@@ -42,10 +47,20 @@ def make_jsonable(obj: Any) -> Any:
     return obj
 
 
-def load_manifest_csv(file_path: Path) -> List[Dict[str, str]]:
-    """Loads CSV manifest into list of dictionary records."""
+def load_manifest_csv(file_path: Path, expected_sha256: Optional[str] = None) -> List[Dict[str, str]]:
+    """
+    Loads CSV manifest into list of dictionary records.
+    Cryptographically verifies file against Gate-5 locked SHA-256 hash if expected_sha256 is supplied.
+    """
     if not file_path.exists():
         raise FileNotFoundError(f"Required Gate-5 manifest file not found: {file_path}")
+    if expected_sha256:
+        actual_hash = canonical_csv_file_sha256(file_path)
+        if actual_hash != expected_sha256:
+            raise ValueError(
+                f"FATAL: Gate-5 manifest tampering detected in '{file_path.name}'! "
+                f"Actual={actual_hash} != Expected={expected_sha256}"
+            )
     with open(file_path, "r", encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
@@ -62,32 +77,47 @@ def load_locked_geometry_block_sequence(
     """
     Regenerates and verifies exact locked road geometry block sequence from Gate-5 record.
     Asserts bit-for-bit geometry_sha256 equality with Gate-5 manifest before returning blocks.
-    Fails loudly if any geometry drift is detected.
+    Guarantees simulator environment cleanup via try/finally even if reset, extraction, or hashing fails.
     """
     seq = record["sequence"]
     geom_seed = int(record["geometry_generation_seed"])
     expected_hash = record["geometry_sha256"]
 
-    # Regenerate geometry under clean, zero-traffic headless environment
-    env_gen = MetaDriveEnv(dict(
-        use_render=False,
-        num_scenarios=1,
-        start_seed=geom_seed,
-        map=seq,
-        traffic_density=0.0
-    ))
-    env_gen.reset(seed=geom_seed)
-    raw_blocks = env_gen.current_map.get_meta_data()["block_sequence"]
-    clean_blocks = make_jsonable(raw_blocks)
-    env_gen.close()
+    env_gen = None
+    try:
+        env_gen = MetaDriveEnv(dict(
+            use_render=False,
+            num_scenarios=1,
+            start_seed=geom_seed,
+            map=seq,
+            traffic_density=0.0
+        ))
+        env_gen.reset(seed=geom_seed)
+        raw_blocks = env_gen.current_map.get_meta_data()["block_sequence"]
+        clean_blocks = make_jsonable(raw_blocks)
 
-    regen_hash = canonical_json_sha256(clean_blocks)
-    if regen_hash != expected_hash:
-        raise ValueError(
-            f"FATAL GEOMETRY DRIFT: Geometry hash mismatch for sequence '{seq}' seed {geom_seed}! "
-            f"Regenerated={regen_hash} != Manifest={expected_hash}"
-        )
-    return clean_blocks, regen_hash, True
+        regen_hash = canonical_json_sha256(clean_blocks)
+        if regen_hash != expected_hash:
+            raise ValueError(
+                f"FATAL GEOMETRY DRIFT: Geometry hash mismatch for sequence '{seq}' seed {geom_seed}! "
+                f"Regenerated={regen_hash} != Manifest={expected_hash}"
+            )
+        return clean_blocks, regen_hash, True
+    finally:
+        if env_gen is not None:
+            env_gen.close()
+
+
+def _get_geometry_split_lookup(root: Path) -> Dict[Any, str]:
+    """Builds split lookup dictionary from authoritative geometry_split_manifest.csv."""
+    manifest_p = root / "results" / "audits" / "evaluation_protocol" / "geometry_split_manifest.csv"
+    recs = load_manifest_csv(manifest_p, expected_sha256=LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256)
+    lookup: Dict[Any, str] = {}
+    for r in recs:
+        split_val = r["split"].upper()
+        lookup[r["geometry_sha256"]] = split_val
+        lookup[(r["tier"], r["sequence"], int(r["geometry_generation_seed"]))] = split_val
+    return lookup
 
 
 def resolve_sandbox_case(
@@ -97,29 +127,37 @@ def resolve_sandbox_case(
     """
     Resolves exactly ONE episode for Sandbox mode.
     Strictly restricted to TRAIN split geometries. Rejects TEST and VALIDATION geometries loudly.
+    Ambiguous geometry requests matching multiple geometries fail loudly rather than choosing arbitrarily.
     """
     root = project_root or get_default_project_root()
     geom_manifest_path = root / "results" / "audits" / "evaluation_protocol" / "geometry_split_manifest.csv"
-    geom_records = load_manifest_csv(geom_manifest_path)
+    geom_records = load_manifest_csv(geom_manifest_path, expected_sha256=LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256)
 
-    # 1. If explicit geometry_generation_seed is provided, find exact record and verify TRAIN split
+    # 1. If explicit geometry_generation_seed is provided, apply all supplied selectors strictly
     if request.geometry_generation_seed is not None:
         target_seed = int(request.geometry_generation_seed)
-        target_seq = request.sequence
-        matched = []
-        for r in geom_records:
-            if int(r["geometry_generation_seed"]) == target_seed:
-                if target_seq is None or r["sequence"] == target_seq:
-                    matched.append(r)
+        matched = [r for r in geom_records if int(r["geometry_generation_seed"]) == target_seed]
 
-        if not matched:
+        if request.tier is not None:
+            matched = [r for r in matched if r["tier"].lower() == request.tier.lower()]
+
+        if request.sequence is not None:
+            matched = [r for r in matched if r["sequence"] == request.sequence]
+
+        if len(matched) == 0:
             raise ValueError(
-                f"No geometry found in Gate-5 universe matching seed {target_seed}"
-                f"{f' and sequence {target_seq}' if target_seq else ''}"
+                f"No geometry found in Gate-5 universe matching seed {target_seed} "
+                f"with supplied filters (tier='{request.tier}', sequence='{request.sequence}')."
+            )
+
+        if len(matched) > 1:
+            matching_ids = [m["geometry_id"] for m in matched]
+            raise ValueError(
+                f"Ambiguous geometry request: seed {target_seed} matches {len(matched)} geometries ({matching_ids}). "
+                f"Please supply 'sequence' (and optionally 'tier') to specify an exact geometry."
             )
 
         selected = matched[0]
-        # Strict holdout check: reject VALIDATION and TEST geometries immediately
         actual_split = selected["split"].upper()
         if actual_split in ("VALIDATION", "TEST"):
             raise ValueError(
@@ -151,7 +189,6 @@ def resolve_sandbox_case(
         )
         selected = train_records[0]
 
-    # Resolve case properties
     tier = selected["tier"]
     sequence = selected["sequence"]
     geom_seed = int(selected["geometry_generation_seed"])
@@ -181,22 +218,36 @@ def resolve_sandbox_case(
 def resolve_validation_cases(project_root: Optional[Path] = None) -> List[ResolvedCaseV1]:
     """
     Resolves the complete, immutable Gate-5 validation suite (exactly 96 cases).
-    Sources directly from validation_case_manifest.csv with zero deviation.
+    Verifies manifest hash and validates that every source row corresponds to VALIDATION split.
     """
     root = project_root or get_default_project_root()
     manifest_path = root / "results" / "audits" / "evaluation_protocol" / "validation_case_manifest.csv"
-    records = load_manifest_csv(manifest_path)
+    records = load_manifest_csv(manifest_path, expected_sha256=LOCKED_VALIDATION_CASE_MANIFEST_SHA256)
 
     if len(records) != 96:
         raise ValueError(f"Expected exactly 96 validation cases, got {len(records)} in {manifest_path}")
 
+    split_lookup = _get_geometry_split_lookup(root)
     cases = []
     for r in records:
+        # Validate that manifest record belongs strictly to VALIDATION split
+        row_split = r.get("split")
+        if row_split:
+            if row_split.upper() != "VALIDATION":
+                raise ValueError(f"Validation manifest row split mismatch: expected 'VALIDATION', got '{row_split}' in {r.get('case_id')}")
+            val_split = row_split.upper()
+        else:
+            val_split = split_lookup.get(r["geometry_sha256"])
+            if not val_split:
+                val_split = split_lookup.get((r["tier"], r["sequence"], int(r["geometry_generation_seed"])))
+            if val_split != "VALIDATION":
+                raise ValueError(f"FATAL: Validation case '{r.get('case_id')}' geometry belongs to split '{val_split}', not 'VALIDATION'!")
+
         cases.append(ResolvedCaseV1(
             case_id=r["case_id"],
             case_index=int(r["case_index"]),
             protocol_order_index=int(r["protocol_order_index"]),
-            split="VALIDATION",
+            split=val_split,
             tier=r["tier"],
             sequence=r["sequence"],
             geometry_generation_seed=int(r["geometry_generation_seed"]),
@@ -211,22 +262,36 @@ def resolve_validation_cases(project_root: Optional[Path] = None) -> List[Resolv
 def resolve_test_cases(project_root: Optional[Path] = None) -> List[ResolvedCaseV1]:
     """
     Resolves the complete, immutable Gate-5 test suite (exactly 60 cases).
-    Sources directly from test_case_manifest.csv with zero deviation.
+    Verifies manifest hash and validates that every source row corresponds to TEST split.
     """
     root = project_root or get_default_project_root()
     manifest_path = root / "results" / "audits" / "evaluation_protocol" / "test_case_manifest.csv"
-    records = load_manifest_csv(manifest_path)
+    records = load_manifest_csv(manifest_path, expected_sha256=LOCKED_TEST_CASE_MANIFEST_SHA256)
 
     if len(records) != 60:
         raise ValueError(f"Expected exactly 60 test cases, got {len(records)} in {manifest_path}")
 
+    split_lookup = _get_geometry_split_lookup(root)
     cases = []
     for r in records:
+        # Validate that manifest record belongs strictly to TEST split
+        row_split = r.get("split")
+        if row_split:
+            if row_split.upper() != "TEST":
+                raise ValueError(f"Test manifest row split mismatch: expected 'TEST', got '{row_split}' in {r.get('case_id')}")
+            test_split = row_split.upper()
+        else:
+            test_split = split_lookup.get(r["geometry_sha256"])
+            if not test_split:
+                test_split = split_lookup.get((r["tier"], r["sequence"], int(r["geometry_generation_seed"])))
+            if test_split != "TEST":
+                raise ValueError(f"FATAL: Test case '{r.get('case_id')}' geometry belongs to split '{test_split}', not 'TEST'!")
+
         cases.append(ResolvedCaseV1(
             case_id=r["case_id"],
             case_index=int(r["case_index"]),
             protocol_order_index=int(r["protocol_order_index"]),
-            split="TEST",
+            split=test_split,
             tier=r["tier"],
             sequence=r["sequence"],
             geometry_generation_seed=int(r["geometry_generation_seed"]),
@@ -248,9 +313,8 @@ def resolve_audit_cases(
     """
     root = project_root or get_default_project_root()
     geom_manifest_path = root / "results" / "audits" / "evaluation_protocol" / "geometry_split_manifest.csv"
-    geom_records = load_manifest_csv(geom_manifest_path)
+    geom_records = load_manifest_csv(geom_manifest_path, expected_sha256=LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256)
 
-    # Filter to non-TEST geometries
     eligible = [r for r in geom_records if r["split"].upper() in ("TRAIN", "VALIDATION")]
     if request.tier:
         eligible = [r for r in eligible if r["tier"].lower() == request.tier.lower()]

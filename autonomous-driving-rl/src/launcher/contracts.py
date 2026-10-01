@@ -28,7 +28,7 @@ GATE7_LOCKED_OBSERVABILITY_HASH = "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf
 
 
 def build_launcher_contract_core(
-    status: str = "LOCKED-FOR-PLATFORM-V1",
+    status: str = "AUDIT-CANDIDATE",
     custom_modes: Optional[Dict[str, Any]] = None,
     custom_sandbox_policy: Optional[Dict[str, Any]] = None,
     custom_validation_policy: Optional[Dict[str, Any]] = None,
@@ -37,6 +37,7 @@ def build_launcher_contract_core(
     custom_seed_policy: Optional[Dict[str, Any]] = None,
     custom_preflight_policy: Optional[Dict[str, Any]] = None,
     custom_legacy_policy: Optional[Dict[str, Any]] = None,
+    custom_control_policy: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Builds the authoritative machine-readable LauncherContractV1 core dictionary.
@@ -59,6 +60,7 @@ def build_launcher_contract_core(
     default_sandbox_policy = {
         "split_restriction": "TRAIN_ONLY",
         "holdout_violation_policy": "FAIL_LOUDLY_NO_SILENT_FALLBACK",
+        "ambiguity_policy": "EXPLICIT_SEED_APPLIES_ALL_SELECTORS_MULTIPLE_MATCHES_FAIL",
         "default_geometry_selection": "DETERMINISTIC_SORTED_FIRST_ELIGIBLE",
         "default_environment_seed": 0,
         "default_stochastic_agent_seed": 101,
@@ -111,6 +113,8 @@ def build_launcher_contract_core(
     default_preflight_policy = {
         "rule": "ZERO_FAIL_CHECKS_TO_EXECUTE",
         "check_categories": ["CONTRACT", "ENVIRONMENT", "AGENT", "CASE_PLAN", "SEED", "OBSERVABILITY", "SECURITY"],
+        "contract_chain_verification": "PREFLIGHT_VERIFIES_ENTIRE_HASH_CHAIN_ACROSS_GATES_5_6_7_7.5A",
+        "manifest_hash_verification": "PREFLIGHT_VERIFIES_LOCKED_GATE5_MANIFEST_HASHES",
         "benchmark_dirty_git_policy": "FAIL_PREFLIGHT",
         "benchmark_unverified_env_policy": "FAIL_PREFLIGHT",
         "fixture_on_benchmark_policy": "FAIL_PREFLIGHT",
@@ -118,6 +122,18 @@ def build_launcher_contract_core(
     }
     if custom_preflight_policy:
         default_preflight_policy.update(custom_preflight_policy)
+
+    default_control_policy = {
+        "physics_world_step_size": 0.02,
+        "decision_repeat": 5,
+        "decision_dt_s": 0.1,
+        "control_frequency_hz": 10.0,
+        "traffic_mode": "trigger",
+        "truncate_as_terminate": False,
+        "reward_passthrough": "SIGNED_DELTA_ROUTE_COMPLETION_PRESERVED_WITHOUT_CLAMPING"
+    }
+    if custom_control_policy:
+        default_control_policy.update(custom_control_policy)
 
     default_legacy_policy = {
         "excluded_legacy_components": [
@@ -150,6 +166,27 @@ def build_launcher_contract_core(
         "render_policy": default_render_policy,
         "seed_policy": default_seed_policy,
         "preflight_policy": default_preflight_policy,
+        "control_policy": default_control_policy,
+        "agent_lifecycle_policy": {
+            "instance_lifecycle": "ONE_AGENT_INSTANCE_PER_EXPERIMENT_RUN_RESET_PER_EPISODE",
+            "descriptor_verification": "RUNTIME_DESCRIPTOR_MUST_MATCH_REGISTRATION_EXACTLY",
+            "cleanup": "TRY_FINALLY_GUARANTEES_ENV_AND_AGENT_CLOSE"
+        },
+        "wandb_auto_resolution_policy": {
+            "unspecified_defaults": {
+                "SANDBOX": "DISABLED",
+                "AUDIT": "DISABLED",
+                "VALIDATION": "OFFLINE",
+                "TEST": "OFFLINE"
+            },
+            "explicit_override_rule": "EXPLICIT_DISABLED_REMAINS_DISABLED_ACROSS_ALL_MODES"
+        },
+        "manifest_name_mapping": {
+            "SANDBOX": "geometry_split_manifest.csv",
+            "AUDIT": "geometry_split_manifest.csv",
+            "VALIDATION": "validation_case_manifest.csv",
+            "TEST": "test_case_manifest.csv"
+        },
         "legacy_exclusion_policy": default_legacy_policy,
         "provenance_embedding_policy": {
             "target": "ExperimentRunConfig.algorithm_hyperparameters['launcher']",

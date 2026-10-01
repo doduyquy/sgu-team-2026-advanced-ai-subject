@@ -34,12 +34,14 @@
     "RUN_FINISHED"
   ],
   "launcher_provenance_verified": true,
+  "manifest_name_verified": true,
+  "manifest_name": "geometry_split_manifest.csv",
   "embedded_launcher_provenance": {
-    "launcher_contract_sha256": "22718d9180b945aea801fe078e9204744dd063fc644301d310ac0db9d9ebd8cc",
+    "launcher_contract_sha256": "7f9bb7b24e6c4e4f7b2728a35d631c7aacc7df1e36e41fa375e56f1877a0abb1",
     "launcher_mode": "SANDBOX",
-    "platform_execution_contract_sha256": "fcc9d469466dd55b8a1a2d6f28235695b1130eacff88bcabc2ccc82db428c7a6",
+    "platform_execution_contract_sha256": "c579fd6c9881c068c86d149ed7579b30b62914e54cfc554ba730e09a6fb56642",
     "protocol_scope": "SANDBOX_SINGLE_CASE",
-    "resolved_plan_sha256": "7f9c3c74511ae813b3eebd4b81febd78c42d8f7e88a7bde06b70a5ed259470bb"
+    "resolved_plan_sha256": "2d2559cc63b9bbe8fc32aadecaffe5db2d92afcf49453f39d678fc6eb311496a"
   },
   "verdict": "PASSED"
 }
