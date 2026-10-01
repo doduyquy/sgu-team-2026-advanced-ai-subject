@@ -320,7 +320,7 @@ class TestPreflightMatrix(unittest.TestCase):
         self.assertEqual(check.status, "FAIL")
 
     def test_benchmark_render_native_fails(self):
-        # Register a mock benchmark eligible agent for preflight testing
+        # 1. Core resolver must reject NATIVE render mode for benchmark suites
         mock_reg = AgentRegistrationV1(
             agent_id="mock_benchmark_agent",
             benchmark_eligible=True,
@@ -330,8 +330,15 @@ class TestPreflightMatrix(unittest.TestCase):
         reg_suite.register(mock_reg, lambda: None)
 
         req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_benchmark_agent", render_mode="NATIVE")
-        plan = resolve_experiment_plan(req, reg_suite, self.project_root)
-        rep = run_preflight(plan, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
+        with self.assertRaises(ValueError) as ctx:
+            resolve_experiment_plan(req, reg_suite, self.project_root)
+        self.assertIn("requires render_mode='OFF'", str(ctx.exception))
+
+        # 2. Preflight check also rejects NATIVE render mode if present on plan
+        valid_req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="mock_benchmark_agent", render_mode="OFF")
+        valid_plan = resolve_experiment_plan(valid_req, reg_suite, self.project_root)
+        bad_plan = dataclasses.replace(valid_plan, render_mode="NATIVE")
+        rep = run_preflight(bad_plan, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
         self.assertFalse(rep.can_execute)
         check = next(c for c in rep.checks if c.check_id == "benchmark_render_policy")
         self.assertEqual(check.status, "FAIL")
@@ -578,6 +585,265 @@ class TestExecutorGuaranteesAndScientificContracts(unittest.TestCase):
         req_sb = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", wandb_mode=None)
         p_sb = resolve_experiment_plan(req_sb, self.registry, self.project_root)
         self.assertEqual(p_sb.wandb_mode, WandbMode.DISABLED)
+
+
+class TestPlanDeepIntegrityAndTampering(unittest.TestCase):
+    """Blocker 1: Preflight recomputation and deep row-by-row manifest verification."""
+    def setUp(self):
+        self.registry = build_default_agent_registry()
+        self.project_root = Path(__file__).resolve().parent.parent
+
+    def test_valid_untampered_plan_passes_deep_preflight(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        rep = run_preflight(plan, self.project_root)
+        check_hash = next(c for c in rep.checks if c.check_id == "plan_hash_integrity")
+        self.assertEqual(check_hash.status, "PASS")
+        check_struct = next(c for c in rep.checks if c.check_id == "plan_structural_consistency")
+        self.assertEqual(check_struct.status, "PASS")
+
+    def test_stale_or_tampered_plan_hash_fails_preflight(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        tampered_plan = dataclasses.replace(plan, resolved_plan_sha256="corrupted_hash_value")
+        rep = run_preflight(tampered_plan, self.project_root)
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "plan_hash_integrity")
+        self.assertEqual(check.status, "FAIL")
+
+    def test_tampered_run_kind_fails_preflight(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        # Tamper run_kind to TEST_EVALUATION
+        bad_plan = dataclasses.replace(plan, run_kind=RunKind.TEST_EVALUATION)
+        rep = run_preflight(bad_plan, self.project_root)
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "plan_structural_consistency")
+        self.assertEqual(check.status, "FAIL")
+
+    def test_tampered_canonical_run_fails_preflight(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        bad_plan = dataclasses.replace(plan, canonical_run=True)
+        rep = run_preflight(bad_plan, self.project_root)
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "plan_structural_consistency")
+        self.assertEqual(check.status, "FAIL")
+
+    def test_tampered_protocol_scope_fails_preflight(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        bad_plan = dataclasses.replace(plan, protocol_scope="CORRUPTED_SCOPE")
+        rep = run_preflight(bad_plan, self.project_root)
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "plan_structural_consistency")
+        self.assertEqual(check.status, "FAIL")
+
+    def test_tampered_control_frequency_fails_preflight(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        bad_plan = dataclasses.replace(plan, control_frequency_hz=20.0)
+        rep = run_preflight(bad_plan, self.project_root)
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "plan_structural_consistency")
+        self.assertEqual(check.status, "FAIL")
+
+    def test_tampered_validation_cases_row_diff_fails_preflight(self):
+        # Create a mock benchmark eligible agent for validation plan
+        bm_agent = AgentRegistrationV1(agent_id="bm_val_agent", benchmark_eligible=True, inference_stochasticity="deterministic")
+        reg = AgentRegistryV1()
+        reg.register(bm_agent, lambda: None)
+
+        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="bm_val_agent")
+        plan = resolve_experiment_plan(req, reg, self.project_root)
+
+        # Tamper environment_seed in case 0
+        c0 = plan.resolved_cases[0]
+        tampered_c0 = dataclasses.replace(c0, environment_seed=9999)
+        new_cases = (tampered_c0,) + plan.resolved_cases[1:]
+        bad_plan = dataclasses.replace(plan, resolved_cases=new_cases)
+
+        rep = run_preflight(bad_plan, self.project_root, custom_git_provenance={"git_worktree_dirty": False}, custom_environment_provenance={"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT})
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "validation_manifest_deep_parity")
+        self.assertEqual(check.status, "FAIL")
+
+    def test_tampered_test_cases_traffic_density_fails_preflight(self):
+        bm_agent = AgentRegistrationV1(agent_id="bm_test_agent", benchmark_eligible=True, inference_stochasticity="deterministic")
+        reg = AgentRegistryV1()
+        reg.register(bm_agent, lambda: None)
+
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="bm_test_agent")
+        plan = resolve_experiment_plan(req, reg, self.project_root)
+
+        # Tamper traffic_density in case 5
+        c5 = plan.resolved_cases[5]
+        tampered_c5 = dataclasses.replace(c5, traffic_density=0.99)
+        new_cases = plan.resolved_cases[:5] + (tampered_c5,) + plan.resolved_cases[6:]
+        bad_plan = dataclasses.replace(plan, resolved_cases=new_cases)
+
+        rep = run_preflight(bad_plan, self.project_root, custom_git_provenance={"git_worktree_dirty": False}, custom_environment_provenance={"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT})
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "test_manifest_deep_parity")
+        self.assertEqual(check.status, "FAIL")
+
+
+class TestCustomRunIdSanitization(unittest.TestCase):
+    """Blocker 3: custom_run_id validation and containment check."""
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.runs_root = Path(self.temp_dir.name)
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_valid_custom_run_ids_accepted(self):
+        from src.launcher.models import validate_custom_run_id
+        self.assertEqual(validate_custom_run_id("run_valid_01", self.runs_root), "run_valid_01")
+        self.assertEqual(validate_custom_run_id("run-abc-123.test", self.runs_root), "run-abc-123.test")
+        self.assertIsNone(validate_custom_run_id(None, self.runs_root))
+
+    def test_directory_traversal_run_ids_rejected(self):
+        from src.launcher.models import validate_custom_run_id
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("../escape_dir", self.runs_root)
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("..\\escape_dir", self.runs_root)
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("..", self.runs_root)
+        with self.assertRaises(ValueError):
+            validate_custom_run_id(".", self.runs_root)
+
+    def test_path_separators_and_absolute_paths_rejected(self):
+        from src.launcher.models import validate_custom_run_id
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("/absolute/path", self.runs_root)
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("C:\\Windows", self.runs_root)
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("nested/dir/id", self.runs_root)
+
+    def test_empty_or_invalid_grammar_rejected(self):
+        from src.launcher.models import validate_custom_run_id
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("", self.runs_root)
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("   ", self.runs_root)
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("run id with spaces", self.runs_root)
+        with self.assertRaises(ValueError):
+            validate_custom_run_id("run*id$special", self.runs_root)
+
+
+class TestBenchmarkFilterRejection(unittest.TestCase):
+    """Blocker 4: Rejection of illegal benchmark filtering intent."""
+    def setUp(self):
+        self.registry = build_default_agent_registry()
+        self.project_root = Path(__file__).resolve().parent.parent
+
+    def test_validation_rejects_tier_selector(self):
+        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_seeded_random", tier="Medium")
+        with self.assertRaises(ValueError) as ctx:
+            resolve_experiment_plan(req, self.registry, self.project_root)
+        self.assertIn("Illegal case selector", str(ctx.exception))
+        self.assertIn("VALIDATION", str(ctx.exception))
+
+    def test_validation_rejects_sequence_selector(self):
+        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_seeded_random", sequence="SCS")
+        with self.assertRaises(ValueError) as ctx:
+            resolve_experiment_plan(req, self.registry, self.project_root)
+        self.assertIn("Illegal case selector", str(ctx.exception))
+
+    def test_test_rejects_geom_seed_selector(self):
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", geometry_generation_seed=0)
+        with self.assertRaises(ValueError) as ctx:
+            resolve_experiment_plan(req, self.registry, self.project_root)
+        self.assertIn("Illegal case selector", str(ctx.exception))
+        self.assertIn("TEST", str(ctx.exception))
+
+    def test_test_rejects_env_seed_selector(self):
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", environment_seed=9101)
+        with self.assertRaises(ValueError) as ctx:
+            resolve_experiment_plan(req, self.registry, self.project_root)
+        self.assertIn("Illegal case selector", str(ctx.exception))
+
+
+class TestRenderModeCoreValidation(unittest.TestCase):
+    """Blocker 5: Core-level render mode validation."""
+    def test_invalid_render_mode_string_rejected(self):
+        with self.assertRaises(ValueError) as ctx:
+            LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", render_mode="GUI_WINDOW")
+        self.assertIn("Invalid render_mode", str(ctx.exception))
+
+    def test_benchmark_native_render_rejected_by_resolver(self):
+        # Even if lowercase native is supplied to LaunchRequest
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", render_mode="NATIVE")
+        registry = build_default_agent_registry()
+        project_root = Path(__file__).resolve().parent.parent
+        with self.assertRaises(ValueError) as ctx:
+            resolve_experiment_plan(req, registry, project_root)
+        self.assertIn("requires render_mode='OFF'", str(ctx.exception))
+
+
+class TestFailureLifecycleSemantics(unittest.TestCase):
+    """Blocker 2: Technical failures must be FAILED, never INTERRUPTED."""
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.runs_root = Path(self.temp_dir.name)
+        self.project_root = Path(__file__).resolve().parent.parent
+        self.registry = build_default_agent_registry()
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_technical_exception_in_act_transitions_to_failed(self):
+        # Create an agent whose act() raises an exception
+        class CrashingAgent:
+            @property
+            def descriptor(self):
+                from src.platform import AgentDescriptor
+                return AgentDescriptor(agent_id="fixture_constant_continuous", action_adapter_id="continuous_box2_v1")
+            def reset(self, ctx, agent_seed=None): pass
+            def act(self, inp): raise RuntimeError("Simulated agent neural network crash")
+            def close(self): pass
+
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy", runs_root=self.runs_root)
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        executor = ExperimentExecutor(plan=plan, agent_factory=lambda: CrashingAgent(), runs_root=self.runs_root, project_root=self.project_root)
+
+        with self.assertRaises(RuntimeError) as ctx:
+            executor.execute()
+        self.assertIn("Simulated agent neural network crash", str(ctx.exception))
+
+        # Check durable run_state.json: MUST be FAILED, never INTERRUPTED
+        run_dirs = list(self.runs_root.iterdir())
+        self.assertEqual(len(run_dirs), 1)
+        with open(run_dirs[0] / "run_state.json") as f:
+            st = json.load(f)
+        self.assertEqual(st["status"], "FAILED")
+        self.assertEqual(st["failure_category"], "TECHNICAL_EXECUTION_ERROR")
+
+    def test_pre_existing_failed_logger_not_overwritten_by_interrupted(self):
+        from src.platform import LocalExperimentLogger, ExperimentRunConfig, RunKind
+        config = ExperimentRunConfig(
+            run_kind=RunKind.AUDIT, benchmark_contract_sha256="d", agent_contract_sha256="d",
+            platform_runtime_contract_sha256="d", logging_contract_sha256="d", platform_observability_contract_sha256="d",
+            agent_id="a", agent_version="1", input_profile_id="STATE_DECISION_V1", action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic", stateful_within_episode=False, allow_dirty_worktree_override=True
+        )
+        logger = LocalExperimentLogger(config, runs_root=self.runs_root)
+        # Explicitly fail the logger (e.g. from local log write error)
+        logger.mark_failed("LOCAL_LOG_WRITE_ERROR", "Disk full")
+        self.assertEqual(logger.status.value, "FAILED")
+
+        # Now attempt mark_interrupted() on the already-failed logger
+        logger.mark_interrupted("User hit Ctrl+C")
+        # Invariant: Status must remain FAILED, never overwritten as INTERRUPTED
+        self.assertEqual(logger.status.value, "FAILED")
+        with open(logger.run_state_path) as f:
+            st = json.load(f)
+        self.assertEqual(st["status"], "FAILED")
+        self.assertEqual(st["failure_category"], "LOCAL_LOG_WRITE_ERROR")
 
 
 if __name__ == "__main__":

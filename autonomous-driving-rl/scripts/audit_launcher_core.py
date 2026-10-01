@@ -65,6 +65,7 @@ from src.launcher.models import (
     AgentRegistrationV1,
     LaunchRequestV1,
     LauncherMode,
+    PreflightBlockedError,
     ResolvedCaseV1,
     ResolvedExperimentPlanV1,
     compute_resolved_plan_sha256,
@@ -609,18 +610,29 @@ def audit_preflight_matrix(root: Path, results_dir: Path):
 
     rows = []
     for label, req, git_p, env_p, expected_can_exec in matrix_scenarios:
-        plan = resolve_experiment_plan(req, reg_suite, root)
-        rep = run_preflight(plan, root, custom_git_provenance=git_p, custom_environment_provenance=env_p)
-        matched = (rep.can_execute == expected_can_exec)
+        try:
+            plan = resolve_experiment_plan(req, reg_suite, root)
+            rep = run_preflight(plan, root, custom_git_provenance=git_p, custom_environment_provenance=env_p)
+            can_exec = rep.can_execute
+            fails = rep.fail_count
+            warns = rep.warning_count
+            verdict = rep.summary_verdict
+        except (ValueError, PreflightBlockedError) as e:
+            can_exec = False
+            fails = 1
+            warns = 0
+            verdict = "BLOCKED"
+
+        matched = (can_exec == expected_can_exec)
         rows.append({
             "scenario": label,
             "launcher_mode": req.mode.value,
             "agent_id": req.agent_id,
             "expected_can_execute": expected_can_exec,
-            "actual_can_execute": rep.can_execute,
-            "fail_count": rep.fail_count,
-            "warning_count": rep.warning_count,
-            "summary_verdict": rep.summary_verdict,
+            "actual_can_execute": can_exec,
+            "fail_count": fails,
+            "warning_count": warns,
+            "summary_verdict": verdict,
             "preflight_parity": matched
         })
         assert matched, f"Preflight scenario mismatch for {label}!"

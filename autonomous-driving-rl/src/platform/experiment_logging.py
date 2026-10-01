@@ -1192,11 +1192,23 @@ class LocalExperimentLogger:
 
     def mark_interrupted(self, reason: str = "Process interrupted") -> None:
         """Transitions run status to INTERRUPTED and persists run_state.json durably."""
+        if self.status == RunStatus.FAILED:
+            return  # Invariant: Never overwrite an existing FAILED status
         self.status = RunStatus.INTERRUPTED
         sanitized_msg = sanitize_error_message(reason)
         self._persist_run_state(
             finished=True,
             failure_category="INTERRUPTED",
+            failure_message=sanitized_msg
+        )
+
+    def mark_failed(self, failure_category: str = "TECHNICAL_FAILURE", failure_message: str = "") -> None:
+        """Transitions run status to FAILED and persists run_state.json durably."""
+        self.status = RunStatus.FAILED
+        sanitized_msg = sanitize_error_message(failure_message)
+        self._persist_run_state(
+            finished=True,
+            failure_category=failure_category,
             failure_message=sanitized_msg
         )
 

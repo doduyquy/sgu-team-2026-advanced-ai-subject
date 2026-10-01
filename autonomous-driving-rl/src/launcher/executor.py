@@ -17,7 +17,7 @@ import math
 import os
 from pathlib import Path
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from metadrive.component.map.pg_map import MapGenerateMethod
 from metadrive.envs.metadrive_env import MetaDriveEnv
@@ -37,6 +37,7 @@ from src.launcher.models import (
     PreflightBlockedError,
     ResolvedCaseV1,
     ResolvedExperimentPlanV1,
+    validate_custom_run_id,
 )
 from src.launcher.preflight import run_preflight
 from src.platform import (
@@ -48,6 +49,7 @@ from src.platform import (
     ExperimentRunConfig,
     InputProfileId,
     LocalExperimentLogger,
+    RewardBreakdown,
     RewardSpecV1,
     RunKind,
     RunStatus,
@@ -59,6 +61,28 @@ from src.platform import (
     get_action_adapter,
     sanitize_error_message,
 )
+
+
+def compute_step_route_progress_and_reward(
+    reward_spec: RewardSpecV1,
+    current_route_completion: float,
+    last_route_completion: float,
+    horizon_steps: int,
+    outcome: Optional[EpisodeOutcome] = None
+) -> Tuple[float, float, RewardBreakdown]:
+    """
+    Authoritative production helper used by ExperimentExecutor for step progress and reward calculation.
+    Preserves signed delta (route_t - route_{t-1}) without clamping.
+    Returns (delta_route, new_last_route_completion, reward_breakdown).
+    """
+    delta_route = float(current_route_completion - last_route_completion)
+    new_last_route = float(current_route_completion)
+    breakdown = reward_spec.compute_step_reward(
+        delta_route_completion=delta_route,
+        horizon_steps=horizon_steps,
+        outcome=outcome
+    )
+    return delta_route, new_last_route, breakdown
 
 
 def resolve_manifest_name_for_mode(mode: LauncherMode) -> str:
@@ -141,7 +165,7 @@ class ExperimentExecutor:
         self.agent_factory = agent_factory
         self.project_root = project_root or get_default_project_root()
         self.runs_root = runs_root or (self.project_root / "runs")
-        self.custom_run_id = custom_run_id
+        self.custom_run_id = validate_custom_run_id(custom_run_id, self.runs_root)
         self.event_callback = event_callback
 
     def _emit(self, event: LauncherEventV1) -> None:
@@ -315,19 +339,12 @@ class ExperimentExecutor:
                         raw_obs, r_env, term_step, trunc_step, step_info = env.step(canonical_act.to_numpy())
                         step_idx += 1
 
-                        # 5. Route completion tracking (SIGNED progress delta, NO clamp)
-                        curr_route = float(step_info.get("route_completion", 0.0))
-                        if curr_route > max_route_completion:
-                            max_route_completion = curr_route
-                        delta_route = curr_route - last_route_completion
-                        last_route_completion = curr_route
-
                         # Update raw safety and task flags from step_info
                         for k in ("arrive_dest", "out_of_road", "crash_vehicle", "crash_object", "crash_building", "crash_human", "crash_sidewalk", "max_step"):
                             if bool(step_info.get(k, False)):
                                 env_flags[k] = True
 
-                        # 6. Gate-3 Safety-First Termination Classification
+                        # 5. Gate-3 Safety-First Termination Classification
                         outcome = classify_episode_outcome(
                             raw_flags=env_flags,
                             terminated=term_step,
@@ -336,12 +353,18 @@ class ExperimentExecutor:
                         terminated = outcome.terminated
                         truncated = outcome.truncated
 
-                        # 7. Gate-4 Step Reward Computation
+                        # 6. Gate-4 Step Reward Computation (Signed Delta, No Clamping)
                         speed_kmh = float(env.agent.speed_kmh) if hasattr(env, "agent") and hasattr(env.agent, "speed_kmh") else 0.0
                         speeds_kmh.append(speed_kmh)
 
-                        breakdown = reward_spec.compute_step_reward(
-                            delta_route_completion=delta_route,
+                        curr_route = float(step_info.get("route_completion", 0.0))
+                        if curr_route > max_route_completion:
+                            max_route_completion = curr_route
+
+                        delta_route, last_route_completion, breakdown = compute_step_route_progress_and_reward(
+                            reward_spec=reward_spec,
+                            current_route_completion=curr_route,
+                            last_route_completion=last_route_completion,
                             horizon_steps=case.horizon_steps,
                             outcome=outcome if (terminated or truncated) else None
                         )
@@ -467,7 +490,8 @@ class ExperimentExecutor:
 
         except KeyboardInterrupt:
             # Graceful cancellation handling (Section 38)
-            logger.mark_interrupted("Execution interrupted by user (KeyboardInterrupt / SIGINT)")
+            if logger.status != RunStatus.FAILED:
+                logger.mark_interrupted("Execution interrupted by user (KeyboardInterrupt / SIGINT)")
             sync_meta = backend.fail("Execution interrupted by user")
             self._emit(LauncherEventV1.create(
                 event_type=LauncherEventType.RUN_INTERRUPTED,
@@ -488,7 +512,11 @@ class ExperimentExecutor:
 
         except Exception as e:
             sanitized_e = sanitize_error_message(e)
-            logger.mark_interrupted(f"Technical exception: {sanitized_e}")
+            if logger.status != RunStatus.FAILED:
+                logger.mark_failed(
+                    failure_category="TECHNICAL_EXECUTION_ERROR",
+                    failure_message=sanitized_e
+                )
             sync_meta = backend.fail(sanitized_e)
             self._emit(LauncherEventV1.create(
                 event_type=LauncherEventType.RUN_FAILED,

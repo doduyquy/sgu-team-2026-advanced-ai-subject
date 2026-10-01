@@ -37,11 +37,11 @@
   "manifest_name_verified": true,
   "manifest_name": "geometry_split_manifest.csv",
   "embedded_launcher_provenance": {
-    "launcher_contract_sha256": "7f9bb7b24e6c4e4f7b2728a35d631c7aacc7df1e36e41fa375e56f1877a0abb1",
+    "launcher_contract_sha256": "b9000bc5dd8820943eff2fa32a9574afe3258363b8854d718bc4183f0cb17ed3",
     "launcher_mode": "SANDBOX",
-    "platform_execution_contract_sha256": "c579fd6c9881c068c86d149ed7579b30b62914e54cfc554ba730e09a6fb56642",
+    "platform_execution_contract_sha256": "c350f5cb980c1e9a2c32e543306f5ed4e02dc5d1266bb32e222137e189f008e5",
     "protocol_scope": "SANDBOX_SINGLE_CASE",
-    "resolved_plan_sha256": "2d2559cc63b9bbe8fc32aadecaffe5db2d92afcf49453f39d678fc6eb311496a"
+    "resolved_plan_sha256": "540d56317c1b79211ac4c745e72b572fe2f71004eae02d676595185b44e68c47"
   },
   "verdict": "PASSED"
 }

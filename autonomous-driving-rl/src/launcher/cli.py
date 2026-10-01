@@ -14,6 +14,9 @@ from pathlib import Path
 from typing import List, Optional
 
 from src.launcher.cases import (
+    LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256,
+    LOCKED_TEST_CASE_MANIFEST_SHA256,
+    LOCKED_VALIDATION_CASE_MANIFEST_SHA256,
     get_default_project_root,
     load_manifest_csv,
 )
@@ -108,13 +111,13 @@ def handle_cases(args: argparse.Namespace) -> int:
 
     if split == "TRAIN":
         p = root / "results" / "audits" / "evaluation_protocol" / "geometry_split_manifest.csv"
-        records = [r for r in load_manifest_csv(p) if r["split"].upper() == "TRAIN"]
+        records = [r for r in load_manifest_csv(p, expected_sha256=LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256) if r["split"].upper() == "TRAIN"]
     elif split == "VALIDATION":
         p = root / "results" / "audits" / "evaluation_protocol" / "validation_case_manifest.csv"
-        records = load_manifest_csv(p)
+        records = load_manifest_csv(p, expected_sha256=LOCKED_VALIDATION_CASE_MANIFEST_SHA256)
     else:
         p = root / "results" / "audits" / "evaluation_protocol" / "test_case_manifest.csv"
-        records = load_manifest_csv(p)
+        records = load_manifest_csv(p, expected_sha256=LOCKED_TEST_CASE_MANIFEST_SHA256)
 
     if args.tier:
         records = [r for r in records if r["tier"].lower() == args.tier.lower()]

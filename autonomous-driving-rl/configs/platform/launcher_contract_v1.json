@@ -82,6 +82,9 @@
     ],
     "contract_chain_verification": "PREFLIGHT_VERIFIES_ENTIRE_HASH_CHAIN_ACROSS_GATES_5_6_7_7.5A",
     "manifest_hash_verification": "PREFLIGHT_VERIFIES_LOCKED_GATE5_MANIFEST_HASHES",
+    "plan_integrity_recomputation": "PREFLIGHT_RECOMPUTES_RESOLVED_PLAN_SHA256_AND_REJECTS_TAMPERING",
+    "deep_manifest_parity_rule": "PREFLIGHT_VERIFIES_ALL_11_FIELDS_ROW_BY_ROW_AGAINST_SOURCE_MANIFEST",
+    "custom_run_id_sanitization": "STRICT_CONTAINMENT_GRAMMAR_NO_TRAVERSAL",
     "benchmark_dirty_git_policy": "FAIL_PREFLIGHT",
     "benchmark_unverified_env_policy": "FAIL_PREFLIGHT",
     "fixture_on_benchmark_policy": "FAIL_PREFLIGHT",
@@ -95,6 +98,12 @@
     "traffic_mode": "trigger",
     "truncate_as_terminate": false,
     "reward_passthrough": "SIGNED_DELTA_ROUTE_COMPLETION_PRESERVED_WITHOUT_CLAMPING"
+  },
+  "custom_run_id_policy": {
+    "grammar": "^[a-zA-Z0-9_\\-\\.]+$",
+    "max_length": 64,
+    "containment": "STRICTLY_WITHIN_RUNS_ROOT_NO_NESTED_DIRS",
+    "plan_hash_inclusion": false
   },
   "agent_lifecycle_policy": {
     "instance_lifecycle": "ONE_AGENT_INSTANCE_PER_EXPERIMENT_RUN_RESET_PER_EPISODE",

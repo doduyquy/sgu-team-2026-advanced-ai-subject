@@ -34,8 +34,8 @@ GATE6_LOCKED_AGENT_HASH = "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9
 GATE6_LOCKED_RUNTIME_HASH = "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad"
 GATE7_LOCKED_LOGGING_HASH = "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2"
 GATE7_LOCKED_OBSERVABILITY_HASH = "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581"
-DEFAULT_LAUNCHER_CONTRACT_HASH = "7f9bb7b24e6c4e4f7b2728a35d631c7aacc7df1e36e41fa375e56f1877a0abb1"
-DEFAULT_PLATFORM_EXECUTION_HASH = "c579fd6c9881c068c86d149ed7579b30b62914e54cfc554ba730e09a6fb56642"
+DEFAULT_LAUNCHER_CONTRACT_HASH = "b9000bc5dd8820943eff2fa32a9574afe3258363b8854d718bc4183f0cb17ed3"
+DEFAULT_PLATFORM_EXECUTION_HASH = "c350f5cb980c1e9a2c32e543306f5ed4e02dc5d1266bb32e222137e189f008e5"
 
 
 def resolve_experiment_plan(
@@ -57,6 +57,37 @@ def resolve_experiment_plan(
     # 2. Determine lower-level RunKind and canonical status
     run_kind = mode_to_run_kind(request.mode)
     canonical_run = (request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST))
+
+    # Reject illegal benchmark filtering intent (Section 4)
+    if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST):
+        illegal_selectors = []
+        if request.tier is not None:
+            illegal_selectors.append(f"tier='{request.tier}'")
+        if request.sequence is not None:
+            illegal_selectors.append(f"sequence='{request.sequence}'")
+        if request.geometry_generation_seed is not None:
+            illegal_selectors.append(f"geometry_generation_seed={request.geometry_generation_seed}")
+        if request.environment_seed is not None:
+            illegal_selectors.append(f"environment_seed={request.environment_seed}")
+
+        if illegal_selectors:
+            suite_name = "frozen full 96-case suite" if request.mode == LauncherMode.VALIDATION else "frozen full 60-case paired suite"
+            raise ValueError(
+                f"Illegal case selector(s) {illegal_selectors} supplied to {request.mode.value} mode. "
+                f"{request.mode.value} is the {suite_name}; custom filtering, subsetting, and benchmark smoke runs "
+                "are strictly prohibited to prevent benchmark gaming and selective reporting."
+            )
+
+    # Validate render mode in core (Section 5)
+    render_mode = request.render_mode.upper() if isinstance(request.render_mode, str) else ""
+    if render_mode not in ("OFF", "NATIVE"):
+        raise ValueError(f"Invalid render_mode '{request.render_mode}'. Must be one of ['NATIVE', 'OFF'].")
+    if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST):
+        if render_mode != "OFF":
+            raise ValueError(
+                f"Benchmark mode {request.mode.value} requires render_mode='OFF' (headless execution mandatory). "
+                f"Got render_mode='{render_mode}'."
+            )
 
     # 3. Resolve cases and protocol scope according to mode
     warnings: List[str] = []
@@ -88,13 +119,7 @@ def resolve_experiment_plan(
         if request.mode in (LauncherMode.SANDBOX, LauncherMode.AUDIT) and resolved_agent_seed is not None:
             warnings.append(f"Deterministic agent '{agent_reg.agent_id}' provided with agent_seed={resolved_agent_seed}; seed is ignored by deterministic policy.")
 
-    # 5. Resolve render mode and W&B mode defaults
-    render_mode = request.render_mode.upper()
-    if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST):
-        if render_mode != "OFF":
-            warnings.append(f"Render mode '{render_mode}' requested for benchmark {request.mode.value}; benchmark must execute headless (OFF).")
-
-    # Resolve W&B mode:
+    # 5. Resolve W&B mode:
     # If request.wandb_mode is None (AUTO / unspecified):
     #   SANDBOX / AUDIT -> DISABLED
     #   VALIDATION / TEST -> OFFLINE

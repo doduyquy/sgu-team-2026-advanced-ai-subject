@@ -115,6 +115,9 @@ def build_launcher_contract_core(
         "check_categories": ["CONTRACT", "ENVIRONMENT", "AGENT", "CASE_PLAN", "SEED", "OBSERVABILITY", "SECURITY"],
         "contract_chain_verification": "PREFLIGHT_VERIFIES_ENTIRE_HASH_CHAIN_ACROSS_GATES_5_6_7_7.5A",
         "manifest_hash_verification": "PREFLIGHT_VERIFIES_LOCKED_GATE5_MANIFEST_HASHES",
+        "plan_integrity_recomputation": "PREFLIGHT_RECOMPUTES_RESOLVED_PLAN_SHA256_AND_REJECTS_TAMPERING",
+        "deep_manifest_parity_rule": "PREFLIGHT_VERIFIES_ALL_11_FIELDS_ROW_BY_ROW_AGAINST_SOURCE_MANIFEST",
+        "custom_run_id_sanitization": "STRICT_CONTAINMENT_GRAMMAR_NO_TRAVERSAL",
         "benchmark_dirty_git_policy": "FAIL_PREFLIGHT",
         "benchmark_unverified_env_policy": "FAIL_PREFLIGHT",
         "fixture_on_benchmark_policy": "FAIL_PREFLIGHT",
@@ -122,6 +125,13 @@ def build_launcher_contract_core(
     }
     if custom_preflight_policy:
         default_preflight_policy.update(custom_preflight_policy)
+
+    default_run_id_policy = {
+        "grammar": "^[a-zA-Z0-9_\\-\\.]+$",
+        "max_length": 64,
+        "containment": "STRICTLY_WITHIN_RUNS_ROOT_NO_NESTED_DIRS",
+        "plan_hash_inclusion": False
+    }
 
     default_control_policy = {
         "physics_world_step_size": 0.02,
@@ -167,6 +177,7 @@ def build_launcher_contract_core(
         "seed_policy": default_seed_policy,
         "preflight_policy": default_preflight_policy,
         "control_policy": default_control_policy,
+        "custom_run_id_policy": default_run_id_policy,
         "agent_lifecycle_policy": {
             "instance_lifecycle": "ONE_AGENT_INSTANCE_PER_EXPERIMENT_RUN_RESET_PER_EPISODE",
             "descriptor_verification": "RUNTIME_DESCRIPTOR_MUST_MATCH_REGISTRATION_EXACTLY",

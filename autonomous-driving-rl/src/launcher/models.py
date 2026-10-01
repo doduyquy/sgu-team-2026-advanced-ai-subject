@@ -13,7 +13,7 @@ This module defines the declarative layer of the launcher:
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.platform import (
     RunKind,
@@ -75,6 +75,58 @@ class AgentRegistrationV1:
         return asdict(self)
 
 
+VALID_RENDER_MODES = ("OFF", "NATIVE")
+
+
+def validate_custom_run_id(run_id: Optional[str], runs_root: Optional[Path] = None) -> Optional[str]:
+    """
+    Validates and sanitizes custom_run_id to ensure it is a safe identifier, not a filesystem path.
+    Prevents directory traversal, absolute paths, and escaping runs_root.
+    """
+    if run_id is None:
+        return None
+
+    if not isinstance(run_id, str):
+        raise TypeError(f"custom_run_id must be a string, got {type(run_id).__name__}")
+
+    stripped = run_id.strip()
+    if not stripped:
+        raise ValueError("custom_run_id cannot be empty or whitespace-only")
+
+    # Reject path separators and directory traversal sequences
+    if "/" in stripped or "\\" in stripped:
+        raise ValueError(f"custom_run_id '{stripped}' cannot contain path separators ('/' or '\\')")
+
+    if stripped in (".", ".."):
+        raise ValueError(f"custom_run_id '{stripped}' cannot be '.' or '..'")
+
+    # Length limit
+    if len(stripped) > 64:
+        raise ValueError(f"custom_run_id '{stripped}' exceeds maximum allowed length of 64 characters (got {len(stripped)})")
+
+    # Strict grammar: alphanumeric plus '_', '-', and '.'
+    import re
+    if not re.match(r"^[a-zA-Z0-9_\-\.]+$", stripped):
+        raise ValueError(
+            f"custom_run_id '{stripped}' contains invalid characters. "
+            "Must contain only alphanumeric characters, underscores, hyphens, or periods."
+        )
+
+    # Resolved path containment check
+    if runs_root is not None:
+        resolved_root = runs_root.resolve()
+        target = (runs_root / stripped).resolve()
+        try:
+            target.relative_to(resolved_root)
+        except ValueError:
+            raise ValueError(f"Directory traversal detected: custom_run_id '{stripped}' escapes runs_root '{runs_root}'")
+
+        if target.parent != resolved_root:
+            raise ValueError(f"Nested paths not allowed: custom_run_id '{stripped}' creates subdirectories within runs_root")
+
+    return stripped
+
+
 @dataclass(frozen=True)
 class LaunchRequestV1:
     """
@@ -93,9 +145,17 @@ class LaunchRequestV1:
     runs_root: Optional[Path] = None
     custom_run_id: Optional[str] = None
 
+    def __post_init__(self):
+        norm_render = self.render_mode.upper() if isinstance(self.render_mode, str) else ""
+        if norm_render not in VALID_RENDER_MODES:
+            raise ValueError(f"Invalid render_mode '{self.render_mode}'. Must be one of {list(VALID_RENDER_MODES)}")
+        if self.custom_run_id is not None:
+            validate_custom_run_id(self.custom_run_id, self.runs_root)
+
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)
         d["mode"] = self.mode.value
+        d["render_mode"] = self.render_mode.upper()
         d["wandb_mode"] = self.wandb_mode.value if self.wandb_mode is not None else None
         if self.runs_root is not None:
             d["runs_root"] = str(self.runs_root)
@@ -129,6 +189,7 @@ class ResolvedExperimentPlanV1:
     """
     Immutable, authoritative execution specification ("WHAT THE PLATFORM WILL EXECUTE").
     Provides full reproducibility and enables zero-side-effect plan preview.
+    The resolved_cases collection is deeply immutable (tuple).
     """
     launcher_mode: LauncherMode
     run_kind: RunKind
@@ -136,7 +197,7 @@ class ResolvedExperimentPlanV1:
     protocol_scope: str                # e.g. "SANDBOX_SINGLE_EPISODE", "VALIDATION_SUITE_96", "TEST_SUITE_60"
     agent_registration: AgentRegistrationV1
     agent_descriptor: Dict[str, Any]
-    resolved_cases: List[ResolvedCaseV1]
+    resolved_cases: Tuple[ResolvedCaseV1, ...]
     render_mode: str
     wandb_mode: WandbMode
     agent_seed: Optional[int]
@@ -152,6 +213,10 @@ class ResolvedExperimentPlanV1:
     resolved_plan_sha256: str = ""
     warnings: List[str] = field(default_factory=list)
 
+    def __post_init__(self):
+        if not isinstance(self.resolved_cases, tuple):
+            object.__setattr__(self, "resolved_cases", tuple(self.resolved_cases))
+
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)
         d["launcher_mode"] = self.launcher_mode.value
@@ -166,11 +231,13 @@ def compute_resolved_plan_sha256(plan_dict: Dict[str, Any]) -> str:
     """
     Computes deterministic SHA-256 fingerprint over scientifically relevant plan semantics.
     Excludes human warnings, timestamps, paths, and cosmetic layout.
+    Covers all 11 fields of ResolvedCaseV1.
     """
     hashable_cases = []
     for c in plan_dict.get("resolved_cases", []):
         hashable_cases.append({
             "case_id": c["case_id"],
+            "case_index": int(c["case_index"]),
             "protocol_order_index": c["protocol_order_index"],
             "split": c["split"],
             "tier": c["tier"],

@@ -20,6 +20,7 @@ from src.launcher.cases import (
     LOCKED_TEST_CASE_MANIFEST_SHA256,
     LOCKED_VALIDATION_CASE_MANIFEST_SHA256,
     get_default_project_root,
+    load_manifest_csv,
 )
 from src.launcher.contracts import (
     GATE7_LOCKED_OBSERVABILITY_HASH,
@@ -31,6 +32,8 @@ from src.launcher.models import (
     LauncherMode,
     PreflightBlockedError,
     ResolvedExperimentPlanV1,
+    compute_resolved_plan_sha256,
+    mode_to_run_kind,
 )
 from src.launcher.resolver import (
     GATE5_LOCKED_BENCHMARK_HASH,
@@ -175,6 +178,136 @@ def run_preflight(
             message="Gate-5 source CSV manifests verified against locked cryptographic hashes.",
             category="CONTRACT"
         ))
+
+    # 0c. Plan hash integrity re-evaluation (Section 1)
+    recomputed_plan_hash = compute_resolved_plan_sha256(plan.to_dict())
+    if plan.resolved_plan_sha256 != recomputed_plan_hash:
+        checks.append(PreflightCheckV1(
+            check_id="plan_hash_integrity",
+            status="FAIL",
+            message=f"Resolved plan hash mismatch! Stored={plan.resolved_plan_sha256} != Recomputed={recomputed_plan_hash}. Plan was tampered with or corrupted after resolution.",
+            category="CONTRACT"
+        ))
+    else:
+        checks.append(PreflightCheckV1(
+            check_id="plan_hash_integrity",
+            status="PASS",
+            message="Resolved plan hash strictly verified against actual current plan semantics.",
+            category="CONTRACT"
+        ))
+
+    # 0d. Structural mode and protocol scope consistency (Section 1)
+    expected_run_kind = mode_to_run_kind(plan.launcher_mode)
+    expected_canonical = (plan.launcher_mode in (LauncherMode.VALIDATION, LauncherMode.TEST))
+    scope_map = {
+        LauncherMode.SANDBOX: "SANDBOX_SINGLE_CASE",
+        LauncherMode.VALIDATION: "VALIDATION_SUITE_96",
+        LauncherMode.TEST: "TEST_SUITE_60",
+        LauncherMode.AUDIT: "AUDIT_SUITE"
+    }
+    expected_scope = scope_map.get(plan.launcher_mode, "")
+
+    structural_errors = []
+    if plan.run_kind != expected_run_kind:
+        structural_errors.append(f"run_kind mismatch: {plan.run_kind.value} != expected {expected_run_kind.value}")
+    if plan.canonical_run != expected_canonical:
+        structural_errors.append(f"canonical_run mismatch: {plan.canonical_run} != expected {expected_canonical}")
+    if plan.protocol_scope != expected_scope:
+        structural_errors.append(f"protocol_scope mismatch: '{plan.protocol_scope}' != expected '{expected_scope}'")
+    if abs(plan.control_frequency_hz - 10.0) > 1e-6:
+        structural_errors.append(f"control_frequency_hz mismatch: {plan.control_frequency_hz} != 10.0")
+    if abs(plan.control_dt_s - 0.1) > 1e-6:
+        structural_errors.append(f"control_dt_s mismatch: {plan.control_dt_s} != 0.1")
+
+    if structural_errors:
+        checks.append(PreflightCheckV1(
+            check_id="plan_structural_consistency",
+            status="FAIL",
+            message=f"Plan structural consistency violations: {'; '.join(structural_errors)}",
+            category="CONTRACT"
+        ))
+    else:
+        checks.append(PreflightCheckV1(
+            check_id="plan_structural_consistency",
+            status="PASS",
+            message="Plan structural semantics, canonical status, and 10 Hz control verified.",
+            category="CONTRACT"
+        ))
+
+    # 0e. Deep row-by-row, field-by-field manifest parity for benchmark modes (Section 1)
+    if plan.launcher_mode == LauncherMode.VALIDATION:
+        val_records = load_manifest_csv(val_manifest_p, expected_sha256=LOCKED_VALIDATION_CASE_MANIFEST_SHA256)
+        val_field_diffs = []
+        if len(plan.resolved_cases) != len(val_records):
+            val_field_diffs.append(f"case count mismatch: {len(plan.resolved_cases)} != {len(val_records)}")
+        else:
+            for idx, (c, m) in enumerate(zip(plan.resolved_cases, val_records)):
+                if str(c.case_id) != str(m["case_id"]): val_field_diffs.append(f"row {idx} case_id mismatch")
+                if int(c.case_index) != int(m["case_index"]): val_field_diffs.append(f"row {idx} case_index mismatch")
+                if int(c.protocol_order_index) != int(m["protocol_order_index"]): val_field_diffs.append(f"row {idx} protocol_order_index mismatch")
+                if str(c.split) != "VALIDATION": val_field_diffs.append(f"row {idx} split mismatch")
+                if str(c.tier) != str(m["tier"]): val_field_diffs.append(f"row {idx} tier mismatch")
+                if str(c.sequence) != str(m["sequence"]): val_field_diffs.append(f"row {idx} sequence mismatch")
+                if int(c.geometry_generation_seed) != int(m["geometry_generation_seed"]): val_field_diffs.append(f"row {idx} geom_seed mismatch")
+                if str(c.geometry_sha256) != str(m["geometry_sha256"]): val_field_diffs.append(f"row {idx} geom_hash mismatch")
+                if int(c.environment_seed) != int(m["environment_seed"]): val_field_diffs.append(f"row {idx} env_seed mismatch")
+                if abs(float(c.traffic_density) - float(m["traffic_density"])) > 1e-5: val_field_diffs.append(f"row {idx} traffic_density mismatch")
+                if int(c.horizon_steps) != int(m["horizon_steps"]): val_field_diffs.append(f"row {idx} horizon_steps mismatch")
+                if len(val_field_diffs) > 5:
+                    val_field_diffs.append("... additional field mismatches omitted")
+                    break
+
+        if val_field_diffs:
+            checks.append(PreflightCheckV1(
+                check_id="validation_manifest_deep_parity",
+                status="FAIL",
+                message=f"Validation plan cases diverge from Gate-5 manifest: {'; '.join(val_field_diffs)}",
+                category="CASE_PLAN"
+            ))
+        else:
+            checks.append(PreflightCheckV1(
+                check_id="validation_manifest_deep_parity",
+                status="PASS",
+                message="Validation plan matches locked Gate-5 manifest row-by-row and field-by-field across all 11 fields.",
+                category="CASE_PLAN"
+            ))
+
+    elif plan.launcher_mode == LauncherMode.TEST:
+        test_records = load_manifest_csv(test_manifest_p, expected_sha256=LOCKED_TEST_CASE_MANIFEST_SHA256)
+        test_field_diffs = []
+        if len(plan.resolved_cases) != len(test_records):
+            test_field_diffs.append(f"case count mismatch: {len(plan.resolved_cases)} != {len(test_records)}")
+        else:
+            for idx, (c, m) in enumerate(zip(plan.resolved_cases, test_records)):
+                if str(c.case_id) != str(m["case_id"]): test_field_diffs.append(f"row {idx} case_id mismatch")
+                if int(c.case_index) != int(m["case_index"]): test_field_diffs.append(f"row {idx} case_index mismatch")
+                if int(c.protocol_order_index) != int(m["protocol_order_index"]): test_field_diffs.append(f"row {idx} protocol_order_index mismatch")
+                if str(c.split) != "TEST": test_field_diffs.append(f"row {idx} split mismatch")
+                if str(c.tier) != str(m["tier"]): test_field_diffs.append(f"row {idx} tier mismatch")
+                if str(c.sequence) != str(m["sequence"]): test_field_diffs.append(f"row {idx} sequence mismatch")
+                if int(c.geometry_generation_seed) != int(m["geometry_generation_seed"]): test_field_diffs.append(f"row {idx} geom_seed mismatch")
+                if str(c.geometry_sha256) != str(m["geometry_sha256"]): test_field_diffs.append(f"row {idx} geom_hash mismatch")
+                if int(c.environment_seed) != int(m["environment_seed"]): test_field_diffs.append(f"row {idx} env_seed mismatch")
+                if abs(float(c.traffic_density) - float(m["traffic_density"])) > 1e-5: test_field_diffs.append(f"row {idx} traffic_density mismatch")
+                if int(c.horizon_steps) != int(m["horizon_steps"]): test_field_diffs.append(f"row {idx} horizon_steps mismatch")
+                if len(test_field_diffs) > 5:
+                    test_field_diffs.append("... additional field mismatches omitted")
+                    break
+
+        if test_field_diffs:
+            checks.append(PreflightCheckV1(
+                check_id="test_manifest_deep_parity",
+                status="FAIL",
+                message=f"Test plan cases diverge from Gate-5 manifest: {'; '.join(test_field_diffs)}",
+                category="CASE_PLAN"
+            ))
+        else:
+            checks.append(PreflightCheckV1(
+                check_id="test_manifest_deep_parity",
+                status="PASS",
+                message="Test plan matches locked Gate-5 manifest row-by-row and field-by-field across all 11 fields.",
+                category="CASE_PLAN"
+            ))
 
     # 1. MetaDrive exact pin verification
     actual_version = env_prov.get("metadrive_version", "unknown")
