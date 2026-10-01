@@ -622,7 +622,7 @@ def audit_preflight_matrix(root: Path, results_dir: Path):
     for label, req, git_p, env_p, expected_can_exec in matrix_scenarios:
         try:
             plan = resolve_experiment_plan(req, reg_suite, root)
-            rep = run_preflight(plan, root, custom_git_provenance=git_p, custom_environment_provenance=env_p)
+            rep = run_preflight(plan, root, custom_git_provenance=git_p, custom_environment_provenance=env_p, registry=reg_suite)
             can_exec = rep.can_execute
             fails = rep.fail_count
             warns = rep.warning_count
@@ -833,7 +833,7 @@ def generate_summary_markdown(summary_md_path: Path, hashes_data: Dict[str, Any]
         f.write("- **Benchmark Protection:** Fixtures are strictly blocked from executing on TEST or VALIDATION suites.\n\n")
 
         f.write("## 4. Preflight Validation Battery\n")
-        f.write("- Pure preflight engine evaluates 13 distinct scientific check categories.\n")
+        f.write("- Pure preflight engine evaluates 7 distinct scientific check categories across 13 decision matrix scenarios.\n")
         f.write("- Blocks dirty worktrees, unverified environments, missing/invalid stochastic seeds, and native rendering on benchmark runs.\n")
         f.write("- Execution is allowed if and only if zero blocking failures occur.\n\n")
 

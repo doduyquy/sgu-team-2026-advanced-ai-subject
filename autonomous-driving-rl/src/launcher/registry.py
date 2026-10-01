@@ -72,6 +72,22 @@ class AgentRegistryV1:
         return [reg.to_dict() for reg in self.list_all()]
 
 
+def _factory_fixture_constant_continuous() -> DeterministicConstantFixtureAgent:
+    return DeterministicConstantFixtureAgent()
+
+
+def _factory_fixture_seeded_random() -> SeededRandomFixtureAgent:
+    return SeededRandomFixtureAgent()
+
+
+def _factory_fixture_stateful_counter() -> StatefulCounterFixtureAgent:
+    return StatefulCounterFixtureAgent()
+
+
+def _factory_fixture_discrete() -> DiscreteFixtureAgent:
+    return DiscreteFixtureAgent()
+
+
 def build_default_agent_registry() -> AgentRegistryV1:
     """
     Initializes and populates AgentRegistryV1 with Gate-6 audit/development fixture agents.
@@ -97,9 +113,9 @@ def build_default_agent_registry() -> AgentRegistryV1:
             sandbox_eligible=True,
             audit_eligible=True,
             requires_checkpoint=False,
-            description="Audit fixture emitting constant steering=0.0 and throttle=0.3."
+            description="Audit fixture emitting constant steering=0.0 and throttle=0.4."
         ),
-        factory=lambda: DeterministicConstantFixtureAgent()
+        factory=_factory_fixture_constant_continuous
     )
 
     # 2. Seeded Random Continuous Fixture Agent
@@ -121,7 +137,7 @@ def build_default_agent_registry() -> AgentRegistryV1:
             requires_checkpoint=False,
             description="Audit fixture emitting uniform stochastic continuous actions seeded strictly via agent_seed."
         ),
-        factory=lambda: SeededRandomFixtureAgent()
+        factory=_factory_fixture_seeded_random
     )
 
     # 3. Stateful Counter Continuous Fixture Agent
@@ -143,7 +159,7 @@ def build_default_agent_registry() -> AgentRegistryV1:
             requires_checkpoint=False,
             description="Audit fixture maintaining internal step counter to verify episodic state reset."
         ),
-        factory=lambda: StatefulCounterFixtureAgent()
+        factory=_factory_fixture_stateful_counter
     )
 
     # 4. Discrete Fixture Agent
@@ -165,7 +181,7 @@ def build_default_agent_registry() -> AgentRegistryV1:
             requires_checkpoint=False,
             description="Audit fixture emitting constant discrete action index 12 (stay still / idle)."
         ),
-        factory=lambda: DiscreteFixtureAgent()
+        factory=_factory_fixture_discrete
     )
 
     return registry

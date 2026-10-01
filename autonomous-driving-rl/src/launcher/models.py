@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.platform import (
+    AgentDescriptor,
     RunKind,
     WandbMode,
     canonical_json_sha256,
@@ -54,11 +55,19 @@ class AgentRegistrationV1:
     """
     Standardized, serializable metadata describing an agent registered in AgentRegistryV1.
     Keeps semantic capabilities segregated from runtime factory instantiation.
+
+    Scientific Provenance Policy:
+    - Execution identity fields participating in plan fingerprint:
+      agent_id, agent_version, stage_label, method_family, purpose, implementation_ref,
+      input_profile_id, action_adapter_id, inference_stochasticity, stateful_within_episode,
+      benchmark_eligible, sandbox_eligible, audit_eligible, requires_checkpoint.
+    - Descriptive metadata excluded from cryptographic plan fingerprint:
+      description.
     """
     agent_id: str
     agent_version: str = "1.0.0"
     stage_label: Optional[str] = None  # None for test fixtures, "STAGE_0", "STAGE_1", etc.
-    method_family: str = "FIXTURE"    # "FIXTURE", "RANDOM", "HEURISTIC", "PLANNER", "RL", etc.
+    method_family: str = "fixture"     # "fixture", "RANDOM", "HEURISTIC", "PLANNER", "RL", etc.
     purpose: str = "AUDIT_FIXTURE"     # "AUDIT_FIXTURE", "RESEARCH_BASELINE", "CANDIDATE"
     implementation_ref: str = ""       # e.g. class name or callable reference
     input_profile_id: str = "STATE_DECISION_V1"
@@ -202,7 +211,7 @@ class ResolvedExperimentPlanV1:
     canonical_run: bool
     protocol_scope: str                # e.g. "SANDBOX_SINGLE_EPISODE", "VALIDATION_SUITE_96", "TEST_SUITE_60"
     agent_registration: AgentRegistrationV1
-    agent_descriptor: Dict[str, Any]
+    agent_descriptor: AgentDescriptor
     resolved_cases: Tuple[ResolvedCaseV1, ...]
     render_mode: str
     wandb_mode: WandbMode
@@ -229,6 +238,7 @@ class ResolvedExperimentPlanV1:
         d["run_kind"] = self.run_kind.value
         d["wandb_mode"] = self.wandb_mode.value
         d["agent_registration"] = self.agent_registration.to_dict()
+        d["agent_descriptor"] = asdict(self.agent_descriptor)
         d["resolved_cases"] = [c.to_dict() for c in self.resolved_cases]
         return d
 
@@ -237,7 +247,7 @@ def compute_resolved_plan_sha256(plan_dict: Dict[str, Any]) -> str:
     """
     Computes deterministic SHA-256 fingerprint over scientifically relevant plan semantics.
     Excludes human warnings, timestamps, paths, and cosmetic layout.
-    Covers all 11 fields of ResolvedCaseV1.
+    Covers all 11 fields of ResolvedCaseV1 and all scientific fields of AgentRegistrationV1 / AgentDescriptor.
     """
     hashable_cases = []
     for c in plan_dict.get("resolved_cases", []):
@@ -259,12 +269,29 @@ def compute_resolved_plan_sha256(plan_dict: Dict[str, Any]) -> str:
     hashable_agent = {
         "agent_id": reg.get("agent_id"),
         "agent_version": reg.get("agent_version"),
+        "stage_label": reg.get("stage_label"),
+        "method_family": reg.get("method_family"),
+        "purpose": reg.get("purpose"),
+        "implementation_ref": reg.get("implementation_ref"),
         "input_profile_id": reg.get("input_profile_id"),
         "action_adapter_id": reg.get("action_adapter_id"),
         "inference_stochasticity": reg.get("inference_stochasticity"),
         "stateful_within_episode": reg.get("stateful_within_episode"),
         "benchmark_eligible": reg.get("benchmark_eligible"),
-        "method_family": reg.get("method_family"),
+        "sandbox_eligible": reg.get("sandbox_eligible"),
+        "audit_eligible": reg.get("audit_eligible"),
+        "requires_checkpoint": reg.get("requires_checkpoint"),
+    }
+
+    desc = plan_dict.get("agent_descriptor", {})
+    hashable_desc = {
+        "agent_id": desc.get("agent_id"),
+        "agent_version": desc.get("agent_version"),
+        "input_profile_id": desc.get("input_profile_id"),
+        "action_adapter_id": desc.get("action_adapter_id"),
+        "inference_stochasticity": desc.get("inference_stochasticity"),
+        "stateful_within_episode": desc.get("stateful_within_episode"),
+        "method_family": desc.get("method_family"),
     }
 
     hashable_core = {
@@ -273,6 +300,7 @@ def compute_resolved_plan_sha256(plan_dict: Dict[str, Any]) -> str:
         "canonical_run": plan_dict.get("canonical_run"),
         "protocol_scope": plan_dict.get("protocol_scope"),
         "agent": hashable_agent,
+        "agent_descriptor": hashable_desc,
         "resolved_cases": hashable_cases,
         "render_mode": plan_dict.get("render_mode"),
         "wandb_mode": plan_dict.get("wandb_mode"),

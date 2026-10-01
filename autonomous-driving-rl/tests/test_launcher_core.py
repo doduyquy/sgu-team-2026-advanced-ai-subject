@@ -1051,10 +1051,130 @@ class TestCaseInspectionTampering(unittest.TestCase):
         parser = create_parser()
         args = parser.parse_args(["cases", "--split", "VALIDATION"])
 
-        with patch("src.launcher.cli.load_manifest_csv", side_effect=ValueError("FATAL: Gate-5 manifest tampering detected in 'validation_case_manifest.csv'")):
+        real_project_root = Path(__file__).resolve().parent.parent
+        with tempfile.TemporaryDirectory() as temp_d:
+            temp_root = Path(temp_d)
+            manifest_dir = temp_root / "results" / "audits" / "evaluation_protocol"
+            manifest_dir.mkdir(parents=True, exist_ok=True)
+
+            src_manifest = real_project_root / "results" / "audits" / "evaluation_protocol" / "validation_case_manifest.csv"
+            dest_manifest = manifest_dir / "validation_case_manifest.csv"
+
+            # Read real manifest content and tamper with it
+            content = src_manifest.read_text(encoding="utf-8")
+            tampered_content = content.replace("pool_candidate", "tampered_candidate", 1)
+            self.assertNotEqual(content, tampered_content)
+            dest_manifest.write_text(tampered_content, encoding="utf-8")
+
+            args.project_root = temp_root
             with self.assertRaises(ValueError) as ctx:
                 handle_cases(args)
-            self.assertIn("manifest tampering detected", str(ctx.exception))
+            self.assertIn("Gate-5 manifest tampering detected", str(ctx.exception))
+
+
+class TestLauncherCoreBlockerRegressions(unittest.TestCase):
+    """Verifies all Gate 7.5A audit blocker resolutions and scientific invariants."""
+    def setUp(self):
+        self.registry = build_default_agent_registry()
+        self.project_root = Path(__file__).resolve().parent.parent
+
+    def test_preflight_authoritative_registry_unregistered_agent_rejected(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        bad_reg = dataclasses.replace(plan.agent_registration, agent_id="unregistered_fake_agent")
+        bad_plan = dataclasses.replace(plan, agent_registration=bad_reg)
+
+        rep = run_preflight(bad_plan, self.project_root, registry=self.registry)
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "agent_registry_binding")
+        self.assertEqual(check.status, "FAIL")
+        self.assertIn("not present in authoritative AgentRegistryV1", check.message)
+
+    def test_preflight_authoritative_registry_tampered_metadata_rejected(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        # Tamper with benchmark_eligible flag on plan
+        tampered_reg = dataclasses.replace(plan.agent_registration, benchmark_eligible=True)
+        bad_plan = dataclasses.replace(plan, agent_registration=tampered_reg)
+
+        rep = run_preflight(bad_plan, self.project_root, registry=self.registry)
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "agent_registry_binding")
+        self.assertEqual(check.status, "FAIL")
+        self.assertIn("metadata tampering detected", check.message)
+
+    def test_preflight_agent_descriptor_projection_parity_rejected(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        # Tamper with agent descriptor on plan
+        tampered_desc = dataclasses.replace(plan.agent_descriptor, method_family="corrupted_family")
+        bad_plan = dataclasses.replace(plan, agent_descriptor=tampered_desc)
+
+        rep = run_preflight(bad_plan, self.project_root, registry=self.registry)
+        self.assertFalse(rep.can_execute)
+        check = next(c for c in rep.checks if c.check_id == "agent_descriptor_projection_parity")
+        self.assertEqual(check.status, "FAIL")
+        self.assertIn("method_family", check.message)
+
+    def test_executor_resolves_factory_from_registry_when_omitted(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        executor = ExperimentExecutor(plan=plan, registry=self.registry, project_root=self.project_root)
+        self.assertIsNotNone(executor.agent_factory)
+        agent = executor.agent_factory()
+        self.assertEqual(agent.descriptor.agent_id, "fixture_constant_continuous")
+
+    def test_executor_blocks_unauthorized_custom_factory_on_canonical_run(self):
+        req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        with self.assertRaises(ValueError) as ctx:
+            ExperimentExecutor(plan=plan, agent_factory=lambda: None, registry=self.registry, project_root=self.project_root)
+        self.assertIn("Explicit agent_factory override is strictly forbidden", str(ctx.exception))
+
+    def test_clean_sandbox_audit_runs_persist_noncanonical_in_run_state(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        with tempfile.TemporaryDirectory() as temp_d:
+            runs_dir = Path(temp_d)
+            executor = ExperimentExecutor(
+                plan=plan,
+                registry=self.registry,
+                runs_root=runs_dir,
+                project_root=self.project_root
+            )
+            with patch("src.launcher.executor.build_agent_input"), \
+                 patch("src.launcher.executor.MetaDriveEnv") as mock_env_cls:
+                mock_env = mock_env_cls.return_value
+                mock_env.reset.return_value = (np.zeros(259, dtype=np.float32), {})
+                mock_env.step.return_value = (np.zeros(259, dtype=np.float32), 0.0, True, False, {"route_completion": 1.0, "arrive_dest": True})
+                executor.execute()
+
+            run_dirs = list(runs_dir.iterdir())
+            self.assertEqual(len(run_dirs), 1)
+            with open(run_dirs[0] / "run_state.json", "r", encoding="utf-8") as f:
+                st = json.load(f)
+            self.assertFalse(st["canonical_run"], "Sandbox runs must always persist canonical_run=False")
+
+    def test_resolved_cases_tuple_immutability(self):
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        self.assertIsInstance(plan.resolved_cases, tuple)
+        with self.assertRaises(TypeError):
+            plan.resolved_cases[0] = None  # Tuples cannot be assigned
+
+    def test_custom_run_id_whitespace_rejected(self):
+        from src.launcher.models import validate_custom_run_id
+        with tempfile.TemporaryDirectory() as temp_d:
+            with self.assertRaises(ValueError):
+                validate_custom_run_id(" run_with_space ", Path(temp_d))
+            with self.assertRaises(ValueError):
+                validate_custom_run_id("run_with_newline\n", Path(temp_d))
 
 
 if __name__ == "__main__":

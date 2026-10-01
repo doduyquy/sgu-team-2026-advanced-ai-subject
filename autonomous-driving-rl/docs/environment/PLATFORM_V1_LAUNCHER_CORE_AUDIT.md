@@ -57,11 +57,11 @@ The architecture strictly distinguishes between what the user requested and what
                  ↓
      ResolvedExperimentPlanV1 (Concrete, immutable, fully-specified execution plan)
                  ↓
-          run_preflight()     (Pure validation: 13 check categories)
-                 ↓ (can_execute == True)
-       ExperimentExecutor     (Generic 10 Hz simulation loop)
-                 ↓
-      MetaDrive Simulator + Gate-6 Policy + Gate-7 LocalExperimentLogger
+           run_preflight()     (Pure validation: 7 check categories across 13 scenarios)
+                  ↓ (can_execute == True)
+        ExperimentExecutor     (Generic 10 Hz simulation loop)
+                  ↓
+       MetaDrive Simulator + Gate-6 Policy + Gate-7 LocalExperimentLogger
 ```
 
 ### Deterministic Plan Fingerprinting (`resolved_plan_sha256`)
@@ -84,7 +84,7 @@ Every resolved plan computes an authoritative SHA-256 fingerprint covering:
 
 ### Initial Gate-7.5A Agents (Audit Fixtures Only):
 Gate 7.5A provides verification fixtures from Gate 6:
-1. `fixture_constant_continuous` (`DeterministicConstantFixtureAgent`): Constant steering=0.0, throttle=0.3.
+1. `fixture_constant_continuous` (`DeterministicConstantFixtureAgent`): Constant steering=0.0, throttle=0.4.
 2. `fixture_seeded_random` (`SeededRandomFixtureAgent`): Uniform random continuous actions seeded strictly via `agent_seed`.
 3. `fixture_stateful_counter` (`StatefulCounterFixtureAgent`): Internal step counter verifying episodic state reset.
 4. `fixture_discrete` (`DiscreteFixtureAgent`): Discrete action index 12 (stay still / idle).
@@ -172,8 +172,8 @@ Gate 7.5A introduces additive hashes without altering previously locked platform
 | **`platform_runtime_contract_sha256`** | `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad` | **LOCKED (Untouched)** |
 | **`logging_contract_sha256`** | `0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2` | **LOCKED (Untouched)** |
 | **`platform_observability_contract_sha256`** | `f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581` | **LOCKED (Untouched)** |
-| **`launcher_contract_sha256`** | `b9000bc5dd8820943eff2fa32a9574afe3258363b8854d718bc4183f0cb17ed3` | **AUDIT-CANDIDATE (Gate 7.5A)** |
-| **`platform_execution_contract_sha256`** | `c350f5cb980c1e9a2c32e543306f5ed4e02dc5d1266bb32e222137e189f008e5` | **AUDIT-CANDIDATE (Gate 7.5A)** |
+| **`launcher_contract_sha256`** | `d9365e8c78ed0991612314eee5d9d9a5c34d95ae6f5f70d75f0f41f90a568e90` | **AUDIT-CANDIDATE (Gate 7.5A)** |
+| **`platform_execution_contract_sha256`** | `86c9922cd4aa740dc0d2a57f14b4b82e03146e42a321f19c9ef41678b633b222` | **AUDIT-CANDIDATE (Gate 7.5A)** |
 
 $$\text{platform\_execution\_contract\_sha256} = \text{SHA256}(\text{canonical\_json}(\{\text{"platform\_observability\_contract\_sha256"}, \text{"launcher\_contract\_sha256"}, \dots\}))$$
 

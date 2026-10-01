@@ -106,7 +106,7 @@ def handle_agents(args: argparse.Namespace) -> int:
 
 
 def handle_cases(args: argparse.Namespace) -> int:
-    root = get_default_project_root()
+    root = getattr(args, "project_root", None) or get_default_project_root()
     split = args.split.upper()
 
     if split == "TRAIN":

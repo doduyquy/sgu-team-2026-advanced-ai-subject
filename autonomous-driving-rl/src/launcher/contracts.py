@@ -156,6 +156,18 @@ def build_launcher_contract_core(
     if custom_legacy_policy:
         default_legacy_policy.update(custom_legacy_policy)
 
+    plan_agent_fingerprint_policy = {
+        "registration_fields": [f.name for f in dataclasses.fields(AgentRegistrationV1)],
+        "rule": "ResolvedExperimentPlanV1 must cryptographically fingerprint all 14 registration fields and the projected AgentDescriptor."
+    }
+
+    registry_binding_policy = {
+        "binding_rule": "AUTHORITATIVE_REGISTRY_LOOKUP_MANDATORY",
+        "parity_rule": "ALL_14_REGISTRATION_FIELDS_MUST_MATCH_REGISTRY_EXACTLY",
+        "factory_rule": "CANONICAL_RUNS_MUST_DERIVE_AGENT_FACTORY_FROM_REGISTRY",
+        "descriptor_projection_rule": "AGENT_DESCRIPTOR_MUST_MATCH_REGISTRATION_PROJECTION_EXACTLY"
+    }
+
     core: Dict[str, Any] = {
         "metadata": {
             "contract_name": "LauncherContractV1",
@@ -178,6 +190,8 @@ def build_launcher_contract_core(
         "preflight_policy": default_preflight_policy,
         "control_policy": default_control_policy,
         "custom_run_id_policy": default_run_id_policy,
+        "plan_agent_fingerprint_policy": plan_agent_fingerprint_policy,
+        "registry_binding_policy": registry_binding_policy,
         "agent_lifecycle_policy": {
             "instance_lifecycle": "ONE_AGENT_INSTANCE_PER_EXPERIMENT_RUN_RESET_PER_EPISODE",
             "descriptor_verification": "RUNTIME_DESCRIPTOR_MUST_MATCH_REGISTRATION_EXACTLY",

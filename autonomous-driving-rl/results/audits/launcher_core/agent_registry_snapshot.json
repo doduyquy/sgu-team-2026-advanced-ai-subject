@@ -14,7 +14,7 @@
     "sandbox_eligible": true,
     "audit_eligible": true,
     "requires_checkpoint": false,
-    "description": "Audit fixture emitting constant steering=0.0 and throttle=0.3."
+    "description": "Audit fixture emitting constant steering=0.0 and throttle=0.4."
   },
   {
     "agent_id": "fixture_discrete",

@@ -155,18 +155,30 @@ class ExperimentExecutor:
     def __init__(
         self,
         plan: ResolvedExperimentPlanV1,
-        agent_factory: Callable[[], AgentPolicy],
+        agent_factory: Optional[Callable[[], AgentPolicy]] = None,
+        registry: Optional[Any] = None,
         runs_root: Optional[Path] = None,
         custom_run_id: Optional[str] = None,
         event_callback: Optional[EventCallback] = None,
         project_root: Optional[Path] = None
     ):
         self.plan = plan
-        self.agent_factory = agent_factory
         self.project_root = project_root or get_default_project_root()
         self.runs_root = runs_root or (self.project_root / "runs")
         self.custom_run_id = validate_custom_run_id(custom_run_id, self.runs_root)
         self.event_callback = event_callback
+
+        from src.launcher.registry import build_default_agent_registry
+        self.registry = registry or build_default_agent_registry()
+
+        expected_factory = self.registry.get_factory(plan.agent_registration.agent_id)
+        if plan.canonical_run and agent_factory is not None and agent_factory != expected_factory:
+            raise ValueError(
+                "Explicit agent_factory override is strictly forbidden on canonical benchmark runs! "
+                "Agent must be instantiated via authoritative AgentRegistryV1."
+            )
+
+        self.agent_factory = agent_factory or expected_factory
 
     def _emit(self, event: LauncherEventV1) -> None:
         """Emits event to listener if registered."""
@@ -183,7 +195,7 @@ class ExperimentExecutor:
         Emits lifecycle events and produces durable Gate-7 scientific records.
         """
         # 0. Enforce preflight validation prior to ANY simulator / logger / W&B side effects
-        preflight = run_preflight(self.plan, self.project_root)
+        preflight = run_preflight(self.plan, self.project_root, registry=self.registry)
         if not preflight.can_execute:
             fail_msgs = [f"[{c.category}] {c.message}" for c in preflight.checks if c.status == "FAIL"]
             raise PreflightBlockedError(
@@ -227,7 +239,8 @@ class ExperimentExecutor:
             config=run_config,
             runs_root=self.runs_root,
             custom_run_id=self.custom_run_id,
-            repo_root=self.project_root.parent
+            repo_root=self.project_root.parent,
+            force_noncanonical=(not self.plan.canonical_run)
         )
 
         backend = WandbBackend(mode=self.plan.wandb_mode)

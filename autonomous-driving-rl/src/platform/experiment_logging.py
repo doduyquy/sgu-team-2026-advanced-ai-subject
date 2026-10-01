@@ -733,7 +733,8 @@ class LocalExperimentLogger:
         runs_root: Optional[Path] = None,
         custom_run_id: Optional[str] = None,
         repo_root: Optional[Path] = None,
-        custom_environment_provenance: Optional[Dict[str, Any]] = None
+        custom_environment_provenance: Optional[Dict[str, Any]] = None,
+        force_noncanonical: bool = False
     ):
         self.config = config
         self.repo_root = repo_root or Path(__file__).resolve().parent.parent.parent
@@ -779,6 +780,10 @@ class LocalExperimentLogger:
         self.unverified_env_override = False
         self.environment_verification_status = "UNKNOWN"
         self.environment_verification_reason = ""
+
+        # One-way force non-canonical mechanism (Sandbox / Audit runs are always non-canonical)
+        if force_noncanonical:
+            self.canonical_run = False
 
         if is_dirty and is_benchmark_eval:
             if not self.config.allow_dirty_worktree_override:

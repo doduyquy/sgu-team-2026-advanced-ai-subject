@@ -8,6 +8,7 @@ This module implements the deterministic resolution of LaunchRequestV1 into Reso
 - Computes deterministic resolved_plan_sha256.
 """
 
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -27,15 +28,15 @@ from src.launcher.models import (
     mode_to_run_kind,
 )
 from src.launcher.registry import AgentRegistryV1
-from src.platform import WandbMode
+from src.platform import AgentDescriptor, WandbMode
 
 GATE5_LOCKED_BENCHMARK_HASH = "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77"
 GATE6_LOCKED_AGENT_HASH = "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb"
 GATE6_LOCKED_RUNTIME_HASH = "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad"
 GATE7_LOCKED_LOGGING_HASH = "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2"
 GATE7_LOCKED_OBSERVABILITY_HASH = "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581"
-DEFAULT_LAUNCHER_CONTRACT_HASH = "b9000bc5dd8820943eff2fa32a9574afe3258363b8854d718bc4183f0cb17ed3"
-DEFAULT_PLATFORM_EXECUTION_HASH = "c350f5cb980c1e9a2c32e543306f5ed4e02dc5d1266bb32e222137e189f008e5"
+DEFAULT_LAUNCHER_CONTRACT_HASH = "d9365e8c78ed0991612314eee5d9d9a5c34d95ae6f5f70d75f0f41f90a568e90"
+DEFAULT_PLATFORM_EXECUTION_HASH = "86c9922cd4aa740dc0d2a57f14b4b82e03146e42a321f19c9ef41678b633b222"
 
 
 def resolve_experiment_plan(
@@ -136,16 +137,16 @@ def resolve_experiment_plan(
     launcher_hash = custom_launcher_contract_sha256 or DEFAULT_LAUNCHER_CONTRACT_HASH
     execution_hash = custom_platform_execution_contract_sha256 or DEFAULT_PLATFORM_EXECUTION_HASH
 
-    # Construct plan dictionary for deterministic hashing
-    agent_descriptor = {
-        "agent_id": agent_reg.agent_id,
-        "agent_version": agent_reg.agent_version,
-        "input_profile_id": agent_reg.input_profile_id,
-        "action_adapter_id": agent_reg.action_adapter_id,
-        "inference_stochasticity": agent_reg.inference_stochasticity,
-        "stateful_within_episode": agent_reg.stateful_within_episode,
-        "method_family": agent_reg.method_family
-    }
+    # Construct immutable AgentDescriptor for execution
+    agent_descriptor = AgentDescriptor(
+        agent_id=agent_reg.agent_id,
+        agent_version=agent_reg.agent_version,
+        input_profile_id=agent_reg.input_profile_id,
+        action_adapter_id=agent_reg.action_adapter_id,
+        inference_stochasticity=agent_reg.inference_stochasticity,
+        stateful_within_episode=agent_reg.stateful_within_episode,
+        method_family=agent_reg.method_family
+    )
 
     raw_plan_dict = {
         "launcher_mode": request.mode.value,
@@ -153,7 +154,7 @@ def resolve_experiment_plan(
         "canonical_run": canonical_run,
         "protocol_scope": protocol_scope,
         "agent_registration": agent_reg.to_dict(),
-        "agent_descriptor": agent_descriptor,
+        "agent_descriptor": asdict(agent_descriptor),
         "resolved_cases": [c.to_dict() for c in resolved_cases],
         "render_mode": render_mode,
         "wandb_mode": wandb_mode.value,
@@ -178,7 +179,7 @@ def resolve_experiment_plan(
         protocol_scope=protocol_scope,
         agent_registration=agent_reg,
         agent_descriptor=agent_descriptor,
-        resolved_cases=resolved_cases,
+        resolved_cases=tuple(resolved_cases),
         render_mode=render_mode,
         wandb_mode=wandb_mode,
         agent_seed=resolved_agent_seed,

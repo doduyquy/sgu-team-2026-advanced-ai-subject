@@ -90,7 +90,8 @@ def run_preflight(
     plan: ResolvedExperimentPlanV1,
     project_root: Optional[Path] = None,
     custom_git_provenance: Optional[Dict[str, Any]] = None,
-    custom_environment_provenance: Optional[Dict[str, Any]] = None
+    custom_environment_provenance: Optional[Dict[str, Any]] = None,
+    registry: Optional[Any] = None
 ) -> PreflightReportV1:
     """
     Executes a comprehensive, pure battery of preflight checks against ResolvedExperimentPlanV1.
@@ -100,7 +101,79 @@ def run_preflight(
     git_prov = custom_git_provenance or capture_git_provenance(root)
     env_prov = custom_environment_provenance or capture_environment_provenance(root)
 
+    from src.launcher.registry import build_default_agent_registry
+    authoritative_registry = registry or build_default_agent_registry()
+
     checks: List[PreflightCheckV1] = []
+
+    # 0. Authoritative Registry Binding & Anti-Forgery Check (Problem 1)
+    if not authoritative_registry.has_agent(plan.agent_registration.agent_id):
+        checks.append(PreflightCheckV1(
+            check_id="agent_registry_binding",
+            status="FAIL",
+            message=f"Agent '{plan.agent_registration.agent_id}' is not present in authoritative AgentRegistryV1.",
+            category="AGENT"
+        ))
+    else:
+        trusted_reg = authoritative_registry.get(plan.agent_registration.agent_id)
+        reg_diffs = []
+        for field_name in (
+            "agent_id", "agent_version", "stage_label", "method_family", "purpose",
+            "implementation_ref", "input_profile_id", "action_adapter_id",
+            "inference_stochasticity", "stateful_within_episode", "benchmark_eligible",
+            "sandbox_eligible", "audit_eligible", "requires_checkpoint"
+        ):
+            plan_val = getattr(plan.agent_registration, field_name)
+            trusted_val = getattr(trusted_reg, field_name)
+            if plan_val != trusted_val:
+                reg_diffs.append(f"{field_name} (plan={plan_val} != registry={trusted_val})")
+
+        if reg_diffs:
+            checks.append(PreflightCheckV1(
+                check_id="agent_registry_binding",
+                status="FAIL",
+                message=f"Agent registration divergence from authoritative registry: {'; '.join(reg_diffs)}. Unauthorized metadata tampering detected!",
+                category="AGENT"
+            ))
+        else:
+            checks.append(PreflightCheckV1(
+                check_id="agent_registry_binding",
+                status="PASS",
+                message=f"Agent registration '{plan.agent_registration.agent_id}' strictly verified against authoritative AgentRegistryV1.",
+                category="AGENT"
+            ))
+
+    # 0a. Immutable AgentDescriptor projection parity check (Problem 3)
+    desc_diffs = []
+    if plan.agent_descriptor.agent_id != plan.agent_registration.agent_id:
+        desc_diffs.append("agent_id")
+    if plan.agent_descriptor.agent_version != plan.agent_registration.agent_version:
+        desc_diffs.append("agent_version")
+    if plan.agent_descriptor.input_profile_id != plan.agent_registration.input_profile_id:
+        desc_diffs.append("input_profile_id")
+    if plan.agent_descriptor.action_adapter_id != plan.agent_registration.action_adapter_id:
+        desc_diffs.append("action_adapter_id")
+    if plan.agent_descriptor.inference_stochasticity != plan.agent_registration.inference_stochasticity:
+        desc_diffs.append("inference_stochasticity")
+    if plan.agent_descriptor.stateful_within_episode != plan.agent_registration.stateful_within_episode:
+        desc_diffs.append("stateful_within_episode")
+    if plan.agent_descriptor.method_family != plan.agent_registration.method_family:
+        desc_diffs.append("method_family")
+
+    if desc_diffs:
+        checks.append(PreflightCheckV1(
+            check_id="agent_descriptor_projection_parity",
+            status="FAIL",
+            message=f"Agent descriptor diverges from registration: {', '.join(desc_diffs)}",
+            category="AGENT"
+        ))
+    else:
+        checks.append(PreflightCheckV1(
+            check_id="agent_descriptor_projection_parity",
+            status="PASS",
+            message="Agent descriptor verified identical to registration projection.",
+            category="AGENT"
+        ))
 
     # 0. Contract hash chain verification (Section 3)
     core_contract = build_launcher_contract_core()
