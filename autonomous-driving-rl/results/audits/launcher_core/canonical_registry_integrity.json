@@ -1,0 +1,31 @@
+{
+  "canonical_agent_registry_sha256": "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
+  "registered_agent_count": 4,
+  "registered_agents": [
+    "fixture_constant_continuous",
+    "fixture_discrete",
+    "fixture_seeded_random",
+    "fixture_stateful_counter"
+  ],
+  "all_fixtures_present": true,
+  "all_fixtures_benchmark_ineligible": true,
+  "field_sensitivities": {
+    "agent_id": true,
+    "agent_version": true,
+    "stage_label": true,
+    "method_family": true,
+    "purpose": true,
+    "implementation_ref": true,
+    "input_profile_id": true,
+    "action_adapter_id": true,
+    "inference_stochasticity": true,
+    "stateful_within_episode": true,
+    "benchmark_eligible": true,
+    "sandbox_eligible": true,
+    "audit_eligible": true,
+    "requires_checkpoint": true,
+    "factory_ref": true
+  },
+  "description_neutral": true,
+  "verdict": "PASSED"
+}

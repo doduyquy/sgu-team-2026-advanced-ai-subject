@@ -168,17 +168,29 @@ class ExperimentExecutor:
         self.custom_run_id = validate_custom_run_id(custom_run_id, self.runs_root)
         self.event_callback = event_callback
 
-        from src.launcher.registry import build_default_agent_registry
-        self.registry = registry or build_default_agent_registry()
+        from src.launcher.registry import (
+            build_canonical_agent_registry,
+            compute_canonical_registry_sha256,
+        )
+        canonical_reg = build_canonical_agent_registry()
+        canonical_sha = compute_canonical_registry_sha256(canonical_reg)
 
-        expected_factory = self.registry.get_factory(plan.agent_registration.agent_id)
-        if plan.canonical_run and agent_factory is not None and agent_factory != expected_factory:
-            raise ValueError(
-                "Explicit agent_factory override is strictly forbidden on canonical benchmark runs! "
-                "Agent must be instantiated via authoritative AgentRegistryV1."
-            )
-
-        self.agent_factory = agent_factory or expected_factory
+        if plan.canonical_run:
+            if registry is not None and compute_canonical_registry_sha256(registry) != canonical_sha:
+                raise ValueError(
+                    "External custom AgentRegistryV1 cannot authorize canonical benchmark runs! "
+                    "Authority must come strictly from committed build_canonical_agent_registry()."
+                )
+            if agent_factory is not None:
+                raise ValueError(
+                    "Explicit agent_factory override is strictly forbidden on canonical benchmark runs! "
+                    "Agent must be instantiated via authoritative AgentRegistryV1."
+                )
+            self.registry = canonical_reg
+            self.agent_factory = canonical_reg.get_factory(plan.agent_registration.agent_id)
+        else:
+            self.registry = registry or canonical_reg
+            self.agent_factory = agent_factory or self.registry.get_factory(plan.agent_registration.agent_id)
 
     def _emit(self, event: LauncherEventV1) -> None:
         """Emits event to listener if registered."""
@@ -261,6 +273,16 @@ class ExperimentExecutor:
         agent = None
 
         try:
+            # Verify factory reference against registry on canonical runs
+            expected_factory_ref = self.registry.get_factory_ref(self.plan.agent_registration.agent_id)
+            actual_factory = self.agent_factory
+            actual_factory_ref = f"{getattr(actual_factory, '__module__', 'unknown')}:{getattr(actual_factory, '__qualname__', getattr(actual_factory, '__name__', 'unknown'))}"
+            if self.plan.canonical_run and actual_factory_ref != expected_factory_ref:
+                raise RuntimeError(
+                    f"Agent factory identity mismatch! Expected '{expected_factory_ref}', got '{actual_factory_ref}'. "
+                    "Unauthorized factory substitution detected!"
+                )
+
             # 4. Instantiate agent policy ONCE per ExperimentRun (Section 9)
             agent = self.agent_factory()
             if not hasattr(agent, "descriptor"):
@@ -268,6 +290,30 @@ class ExperimentExecutor:
 
             desc = agent.descriptor
             reg = self.plan.agent_registration
+
+            # Validate runtime descriptor against registration (Section 8)
+            if desc.agent_id != reg.agent_id:
+                raise ValueError(f"Agent descriptor agent_id mismatch: descriptor='{desc.agent_id}' != registration='{reg.agent_id}'")
+            if desc.agent_version != reg.agent_version:
+                raise ValueError(f"Agent descriptor agent_version mismatch: descriptor='{desc.agent_version}' != registration='{reg.agent_version}'")
+            if desc.input_profile_id != reg.input_profile_id:
+                raise ValueError(f"Agent descriptor input_profile_id mismatch: descriptor='{desc.input_profile_id}' != registration='{reg.input_profile_id}'")
+            if desc.action_adapter_id != reg.action_adapter_id:
+                raise ValueError(f"Agent descriptor action_adapter_id mismatch: descriptor='{desc.action_adapter_id}' != registration='{reg.action_adapter_id}'")
+            if desc.inference_stochasticity != reg.inference_stochasticity:
+                raise ValueError(f"Agent descriptor inference_stochasticity mismatch: descriptor='{desc.inference_stochasticity}' != registration='{reg.inference_stochasticity}'")
+            if desc.stateful_within_episode != reg.stateful_within_episode:
+                raise ValueError(f"Agent descriptor stateful_within_episode mismatch: descriptor='{desc.stateful_within_episode}' != registration='{reg.stateful_within_episode}'")
+            if desc.method_family != reg.method_family:
+                raise ValueError(f"Agent descriptor method_family mismatch: descriptor='{desc.method_family}' != registration='{reg.method_family}'")
+
+            # Verify runtime implementation class reference (Fix B)
+            actual_impl_ref = f"{type(agent).__module__}:{type(agent).__qualname__}"
+            if self.plan.canonical_run and actual_impl_ref != self.plan.agent_registration.implementation_ref:
+                raise RuntimeError(
+                    f"Agent runtime implementation mismatch! Expected class '{self.plan.agent_registration.implementation_ref}', "
+                    f"got '{actual_impl_ref}'. Implementation impersonation detected!"
+                )
 
             # Validate runtime descriptor against registration (Section 8)
             if desc.agent_id != reg.agent_id:

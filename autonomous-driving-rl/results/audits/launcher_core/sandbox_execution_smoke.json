@@ -3,6 +3,11 @@
   "launcher_mode": "SANDBOX",
   "status": "COMPLETE",
   "completed_episodes": 1,
+  "plan_canonical_run": false,
+  "persisted_canonical_run": false,
+  "canonicality_parity_verified": true,
+  "resolved_plan_sha256": "4c5caa08ab06ebd7845702bf7920672760aa0454bd5ecb36baf896b88680d801",
+  "canonical_agent_registry_sha256": "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
   "required_files_verified": {
     "run_manifest.json": true,
     "run_state.json": true,
@@ -37,11 +42,11 @@
   "manifest_name_verified": true,
   "manifest_name": "geometry_split_manifest.csv",
   "embedded_launcher_provenance": {
-    "launcher_contract_sha256": "d9365e8c78ed0991612314eee5d9d9a5c34d95ae6f5f70d75f0f41f90a568e90",
+    "launcher_contract_sha256": "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
     "launcher_mode": "SANDBOX",
-    "platform_execution_contract_sha256": "86c9922cd4aa740dc0d2a57f14b4b82e03146e42a321f19c9ef41678b633b222",
+    "platform_execution_contract_sha256": "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
     "protocol_scope": "SANDBOX_SINGLE_CASE",
-    "resolved_plan_sha256": "3762e5374ad9f2b7a9d6b8b0bae84170da888f6299885559278ea198803d70af"
+    "resolved_plan_sha256": "4c5caa08ab06ebd7845702bf7920672760aa0454bd5ecb36baf896b88680d801"
   },
   "verdict": "PASSED"
 }

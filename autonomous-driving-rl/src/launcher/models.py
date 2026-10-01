@@ -50,6 +50,25 @@ def mode_to_run_kind(mode: LauncherMode) -> RunKind:
         raise ValueError(f"Unknown LauncherMode: {mode}")
 
 
+SCIENTIFIC_REGISTRATION_FIELDS: Tuple[str, ...] = (
+    "agent_id",
+    "agent_version",
+    "stage_label",
+    "method_family",
+    "purpose",
+    "implementation_ref",
+    "input_profile_id",
+    "action_adapter_id",
+    "inference_stochasticity",
+    "stateful_within_episode",
+    "benchmark_eligible",
+    "sandbox_eligible",
+    "audit_eligible",
+    "requires_checkpoint",
+)
+EXCLUDED_DESCRIPTIVE_FIELDS: Tuple[str, ...] = ("description",)
+
+
 @dataclass(frozen=True)
 class AgentRegistrationV1:
     """
@@ -225,6 +244,8 @@ class ResolvedExperimentPlanV1:
     platform_observability_contract_sha256: str = ""
     launcher_contract_sha256: str = ""
     platform_execution_contract_sha256: str = ""
+    canonical_agent_registry_sha256: str = ""
+    factory_ref: str = ""
     resolved_plan_sha256: str = ""
     warnings: List[str] = field(default_factory=list)
 
@@ -313,7 +334,9 @@ def compute_resolved_plan_sha256(plan_dict: Dict[str, Any]) -> str:
         "logging_contract_sha256": plan_dict.get("logging_contract_sha256"),
         "platform_observability_contract_sha256": plan_dict.get("platform_observability_contract_sha256"),
         "launcher_contract_sha256": plan_dict.get("launcher_contract_sha256"),
-        "platform_execution_contract_sha256": plan_dict.get("platform_execution_contract_sha256")
+        "platform_execution_contract_sha256": plan_dict.get("platform_execution_contract_sha256"),
+        "canonical_agent_registry_sha256": plan_dict.get("canonical_agent_registry_sha256"),
+        "factory_ref": plan_dict.get("factory_ref")
     }
 
     return canonical_json_sha256(hashable_core)

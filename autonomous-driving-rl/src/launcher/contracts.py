@@ -12,6 +12,8 @@ from typing import Any, Dict, List, Optional
 
 from src.launcher.events import LauncherEventType, LauncherEventV1
 from src.launcher.models import (
+    EXCLUDED_DESCRIPTIVE_FIELDS,
+    SCIENTIFIC_REGISTRATION_FIELDS,
     AgentRegistrationV1,
     LaunchRequestV1,
     LauncherMode,
@@ -157,14 +159,17 @@ def build_launcher_contract_core(
         default_legacy_policy.update(custom_legacy_policy)
 
     plan_agent_fingerprint_policy = {
-        "registration_fields": [f.name for f in dataclasses.fields(AgentRegistrationV1)],
-        "rule": "ResolvedExperimentPlanV1 must cryptographically fingerprint all 14 registration fields and the projected AgentDescriptor."
+        "scientific_registration_fields": list(SCIENTIFIC_REGISTRATION_FIELDS),
+        "excluded_descriptive_fields": list(EXCLUDED_DESCRIPTIVE_FIELDS),
+        "rule": "ResolvedExperimentPlanV1 must cryptographically fingerprint all 14 scientific registration fields, canonical_agent_registry_sha256, factory_ref, and the projected AgentDescriptor, strictly excluding cosmetic description."
     }
 
     registry_binding_policy = {
-        "binding_rule": "AUTHORITATIVE_REGISTRY_LOOKUP_MANDATORY",
-        "parity_rule": "ALL_14_REGISTRATION_FIELDS_MUST_MATCH_REGISTRY_EXACTLY",
-        "factory_rule": "CANONICAL_RUNS_MUST_DERIVE_AGENT_FACTORY_FROM_REGISTRY",
+        "canonical_authority_rule": "CANONICAL_BENCHMARK_MODES_MUST_USE_COMMITTED_CANONICAL_REGISTRY",
+        "custom_registry_scope": "CUSTOM_REGISTRIES_PERMITTED_ONLY_FOR_NONCANONICAL_SANDBOX_AND_AUDIT",
+        "parity_rule": "ALL_14_SCIENTIFIC_FIELDS_MUST_MATCH_CANONICAL_REGISTRY_EXACTLY",
+        "factory_identity_rule": "FACTORY_QUALNAME_MUST_MATCH_CANONICAL_REGISTRY_METADATA",
+        "implementation_identity_rule": "RUNTIME_CLASS_QUALNAME_MUST_MATCH_CANONICAL_IMPLEMENTATION_REF",
         "descriptor_projection_rule": "AGENT_DESCRIPTOR_MUST_MATCH_REGISTRATION_PROJECTION_EXACTLY"
     }
 

@@ -504,8 +504,7 @@ class TestExecutorGuaranteesAndScientificContracts(unittest.TestCase):
         req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101)
         plan = resolve_experiment_plan(req, self.registry, self.project_root)
 
-        factory = self.registry.get_factory("fixture_seeded_random")
-        executor = ExperimentExecutor(plan=plan, agent_factory=factory, project_root=self.project_root)
+        executor = ExperimentExecutor(plan=plan, project_root=self.project_root)
 
         # Calling execute directly without preflight MUST raise PreflightBlockedError
         with self.assertRaises(PreflightBlockedError) as ctx:
@@ -1175,6 +1174,192 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
                 validate_custom_run_id(" run_with_space ", Path(temp_d))
             with self.assertRaises(ValueError):
                 validate_custom_run_id("run_with_newline\n", Path(temp_d))
+
+    def test_forged_custom_benchmark_registry_rejected(self):
+        # 1. Adversary copies real fixture_seeded_random and forges benchmark_eligible=True
+        base_reg = self.registry.get("fixture_seeded_random")
+        forged_reg = dataclasses.replace(base_reg, benchmark_eligible=True)
+
+        custom_registry = AgentRegistryV1()
+        for a in self.registry.list_all():
+            if a.agent_id != "fixture_seeded_random":
+                custom_registry.register(a, self.registry.get_factory(a.agent_id))
+            else:
+                custom_registry.register(forged_reg, self.registry.get_factory(a.agent_id))
+
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101)
+        plan = resolve_experiment_plan(req, custom_registry, self.project_root)
+
+        # 2. Preflight under public platform authority must detect forgery
+        rep = run_preflight(plan, self.project_root)
+        self.assertFalse(rep.can_execute)
+        fail_ids = [c.check_id for c in rep.checks if c.status == "FAIL"]
+        self.assertIn("agent_registry_binding", fail_ids)
+
+        # 3. Passing custom registry to canonical ExperimentExecutor must raise ValueError
+        with self.assertRaises(ValueError) as ctx:
+            ExperimentExecutor(plan=plan, registry=custom_registry, project_root=self.project_root)
+        self.assertIn("cannot authorize canonical benchmark", str(ctx.exception))
+
+    def test_factory_identity_substitution_rejected(self):
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", wandb_mode=WandbMode.DISABLED)
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        executor = ExperimentExecutor(plan=plan, project_root=self.project_root)
+        # Unauthorized factory substitution bypassing constructor
+        object.__setattr__(executor, "agent_factory", lambda: None)
+
+        with patch("src.launcher.executor.run_preflight") as mock_pf, \
+             patch("src.platform.experiment_logging.capture_git_provenance", return_value={"git_worktree_dirty": False, "git_commit_sha": "abc12345"}), \
+             patch("src.platform.experiment_logging.capture_environment_provenance", return_value={"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT}):
+            mock_pf.return_value = PreflightReportV1(can_execute=True, fail_count=0, warning_count=0, pass_count=10, summary_verdict="PASSED", checks=[])
+            with self.assertRaises(RuntimeError) as ctx:
+                executor.execute()
+            self.assertIn("Agent factory identity mismatch", str(ctx.exception))
+
+    def test_same_descriptor_different_runtime_implementation_rejected(self):
+        class ImposterAgent:
+            @property
+            def descriptor(self):
+                from src.platform import AgentDescriptor
+                # Returns 100% identical AgentDescriptor as DeterministicConstantFixtureAgent
+                return AgentDescriptor(
+                    agent_id="fixture_constant_continuous",
+                    agent_version="1.0.0",
+                    input_profile_id="STATE_DECISION_V1",
+                    action_adapter_id="continuous_box2_v1",
+                    inference_stochasticity="deterministic",
+                    stateful_within_episode=False,
+                    method_family="fixture"
+                )
+            def reset(self, ctx, agent_seed=None): pass
+            def act(self, inp): pass
+            def close(self): pass
+
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", wandb_mode=WandbMode.DISABLED)
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+
+        # Uses the canonical factory identity (src.launcher.registry:_factory_fixture_constant_continuous)
+        executor = ExperimentExecutor(plan=plan, project_root=self.project_root)
+
+        # Patch the class produced by the canonical factory so factory identity matches, but runtime class differs
+        with patch("src.launcher.registry.DeterministicConstantFixtureAgent", ImposterAgent), \
+             patch("src.launcher.executor.run_preflight") as mock_pf, \
+             patch("src.platform.experiment_logging.capture_git_provenance", return_value={"git_worktree_dirty": False, "git_commit_sha": "abc12345"}), \
+             patch("src.platform.experiment_logging.capture_environment_provenance", return_value={"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT}):
+            mock_pf.return_value = PreflightReportV1(can_execute=True, fail_count=0, warning_count=0, pass_count=10, summary_verdict="PASSED", checks=[])
+            with self.assertRaises(RuntimeError) as ctx:
+                executor.execute()
+            self.assertIn("Agent runtime implementation mismatch", str(ctx.exception))
+
+    def test_canonical_registry_fingerprint_deterministic_and_sensitive(self):
+        from src.launcher.registry import compute_canonical_registry_sha256
+        h1 = compute_canonical_registry_sha256(self.registry)
+        h2 = compute_canonical_registry_sha256(self.registry)
+        self.assertEqual(h1, h2)
+
+        # Mutate benchmark_eligible on an entry
+        custom_reg = AgentRegistryV1()
+        for a in self.registry.list_all():
+            if a.agent_id == "fixture_constant_continuous":
+                mut_a = dataclasses.replace(a, benchmark_eligible=True)
+                custom_reg.register(mut_a, self.registry.get_factory(a.agent_id))
+            else:
+                custom_reg.register(a, self.registry.get_factory(a.agent_id))
+        h_mut_eligible = compute_canonical_registry_sha256(custom_reg)
+        self.assertNotEqual(h1, h_mut_eligible)
+
+        # Mutate implementation_ref on an entry
+        custom_reg2 = AgentRegistryV1()
+        for a in self.registry.list_all():
+            if a.agent_id == "fixture_constant_continuous":
+                mut_a = dataclasses.replace(a, implementation_ref="src.other.module:OtherAgent")
+                custom_reg2.register(mut_a, self.registry.get_factory(a.agent_id))
+            else:
+                custom_reg2.register(a, self.registry.get_factory(a.agent_id))
+        h_mut_impl = compute_canonical_registry_sha256(custom_reg2)
+        self.assertNotEqual(h1, h_mut_impl)
+
+    def test_plan_hash_14_scientific_fields_sensitivity_and_description_exclusion(self):
+        from src.launcher.models import SCIENTIFIC_REGISTRATION_FIELDS
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        h0 = plan.resolved_plan_sha256
+
+        # Verify each of the 14 scientific fields alters the plan hash
+        mutations = {
+            "agent_id": "mutated_id",
+            "agent_version": "2.0.0",
+            "stage_label": "STAGE_99",
+            "method_family": "mutated_family",
+            "purpose": "MUTATED_PURPOSE",
+            "implementation_ref": "mutated.impl:Ref",
+            "input_profile_id": "MUTATED_PROFILE",
+            "action_adapter_id": "mutated_adapter",
+            "inference_stochasticity": "stochastic",
+            "stateful_within_episode": True,
+            "benchmark_eligible": True,
+            "sandbox_eligible": False,
+            "audit_eligible": False,
+            "requires_checkpoint": True,
+        }
+        for field_name in SCIENTIFIC_REGISTRATION_FIELDS:
+            mut_val = mutations[field_name]
+            mut_reg = dataclasses.replace(plan.agent_registration, **{field_name: mut_val})
+            mut_plan = dataclasses.replace(plan, agent_registration=mut_reg)
+            h_mut = compute_resolved_plan_sha256(mut_plan.to_dict())
+            self.assertNotEqual(h0, h_mut, f"Field '{field_name}' did not alter resolved plan hash!")
+
+        # Verify description does NOT alter the plan hash
+        desc_reg = dataclasses.replace(plan.agent_registration, description="Brand new cosmetic description.")
+        desc_plan = dataclasses.replace(plan, agent_registration=desc_reg)
+        h_desc = compute_resolved_plan_sha256(desc_plan.to_dict())
+        self.assertEqual(h0, h_desc, "Cosmetic description altered resolved plan hash!")
+
+    def test_canonicality_matrix_all_four_modes(self):
+        # 1. Clean Sandbox -> noncanonical
+        req_sb = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy")
+        plan_sb = resolve_experiment_plan(req_sb, self.registry, self.project_root)
+        with tempfile.TemporaryDirectory() as td:
+            ex = ExperimentExecutor(plan=plan_sb, registry=self.registry, runs_root=Path(td), project_root=self.project_root)
+            with patch("src.launcher.executor.build_agent_input"), patch("src.launcher.executor.MetaDriveEnv") as mock_env_cls:
+                m = mock_env_cls.return_value
+                m.reset.return_value = (np.zeros(259, dtype=np.float32), {})
+                m.step.return_value = (np.zeros(259, dtype=np.float32), 0.0, True, False, {"route_completion": 1.0, "arrive_dest": True})
+                ex.execute()
+            rdir = list(Path(td).iterdir())[0]
+            with open(rdir / "run_state.json", "r", encoding="utf-8") as f:
+                st = json.load(f)
+            self.assertFalse(st["canonical_run"])
+
+        # 2. Clean Audit -> noncanonical
+        req_aud = LaunchRequestV1(mode=LauncherMode.AUDIT, agent_id="fixture_constant_continuous")
+        plan_aud = resolve_experiment_plan(req_aud, self.registry, self.project_root)
+        with tempfile.TemporaryDirectory() as td:
+            ex = ExperimentExecutor(plan=plan_aud, registry=self.registry, runs_root=Path(td), project_root=self.project_root)
+            with patch("src.launcher.executor.build_agent_input"), patch("src.launcher.executor.MetaDriveEnv") as mock_env_cls:
+                m = mock_env_cls.return_value
+                m.reset.return_value = (np.zeros(259, dtype=np.float32), {})
+                m.step.return_value = (np.zeros(259, dtype=np.float32), 0.0, True, False, {"route_completion": 1.0, "arrive_dest": True})
+                ex.execute()
+            rdir = list(Path(td).iterdir())[0]
+            with open(rdir / "run_state.json", "r", encoding="utf-8") as f:
+                st = json.load(f)
+            self.assertFalse(st["canonical_run"])
+
+        # 3. Benchmark dirty worktree blocked at preflight before logger
+        req_val = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
+        plan_val = resolve_experiment_plan(req_val, self.registry, self.project_root)
+        rep_dirty = run_preflight(plan_val, self.project_root, custom_git_provenance={"git_worktree_dirty": True})
+        self.assertFalse(rep_dirty.can_execute)
+        chk_git = next(c for c in rep_dirty.checks if c.check_id == "git_cleanliness")
+        self.assertEqual(chk_git.status, "FAIL")
+
+        # 4. Benchmark unverified metadrive blocked at preflight before logger
+        rep_unver = run_preflight(plan_val, self.project_root, custom_environment_provenance={"metadrive_version": "0.1.0", "metadrive_commit": "wrong"})
+        self.assertFalse(rep_unver.can_execute)
+        chk_env = next(c for c in rep_unver.checks if c.check_id == "metadrive_exact_pin")
+        self.assertEqual(chk_env.status, "FAIL")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,8 @@
+{
+  "imposter_class": "ImposterAgent",
+  "expected_class_ref": "src.platform.agent:DeterministicConstantFixtureAgent",
+  "implementation_impersonation_caught": true,
+  "factory_substitution_caught": true,
+  "factory_override_rejected": true,
+  "verdict": "PASSED"
+}

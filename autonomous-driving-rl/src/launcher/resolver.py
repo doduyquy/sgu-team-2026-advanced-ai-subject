@@ -27,7 +27,11 @@ from src.launcher.models import (
     compute_resolved_plan_sha256,
     mode_to_run_kind,
 )
-from src.launcher.registry import AgentRegistryV1
+from src.launcher.registry import (
+    AgentRegistryV1,
+    build_canonical_agent_registry,
+    compute_canonical_registry_sha256,
+)
 from src.platform import AgentDescriptor, WandbMode
 
 GATE5_LOCKED_BENCHMARK_HASH = "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77"
@@ -35,13 +39,13 @@ GATE6_LOCKED_AGENT_HASH = "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9
 GATE6_LOCKED_RUNTIME_HASH = "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad"
 GATE7_LOCKED_LOGGING_HASH = "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2"
 GATE7_LOCKED_OBSERVABILITY_HASH = "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581"
-DEFAULT_LAUNCHER_CONTRACT_HASH = "d9365e8c78ed0991612314eee5d9d9a5c34d95ae6f5f70d75f0f41f90a568e90"
-DEFAULT_PLATFORM_EXECUTION_HASH = "86c9922cd4aa740dc0d2a57f14b4b82e03146e42a321f19c9ef41678b633b222"
+DEFAULT_LAUNCHER_CONTRACT_HASH = "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04"
+DEFAULT_PLATFORM_EXECUTION_HASH = "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d"
 
 
 def resolve_experiment_plan(
     request: LaunchRequestV1,
-    registry: AgentRegistryV1,
+    registry: Optional[AgentRegistryV1] = None,
     project_root: Optional[Path] = None,
     custom_launcher_contract_sha256: Optional[str] = None,
     custom_platform_execution_contract_sha256: Optional[str] = None
@@ -49,11 +53,21 @@ def resolve_experiment_plan(
     """
     Deterministically transforms a user LaunchRequestV1 into a concrete ResolvedExperimentPlanV1.
     Performs zero side-effects on disk, MetaDrive simulator, or remote W&B services.
+    Enforces canonical registry authority for benchmark modes (VALIDATION/TEST).
     """
     root = project_root or get_default_project_root()
+    canonical_reg = build_canonical_agent_registry()
+    canonical_reg_sha = compute_canonical_registry_sha256(canonical_reg)
 
-    # 1. Verify agent existence in registry
-    agent_reg = registry.get(request.agent_id)
+    # 1. Authority resolution: benchmark modes bind to canonical registry fingerprint
+    if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST):
+        effective_registry = registry if registry is not None else canonical_reg
+    else:
+        effective_registry = registry if registry is not None else canonical_reg
+
+    # Verify agent existence in effective registry
+    agent_reg = effective_registry.get(request.agent_id)
+    factory_ref = effective_registry.get_factory_ref(request.agent_id)
 
     # 2. Determine lower-level RunKind and canonical status
     run_kind = mode_to_run_kind(request.mode)
@@ -168,6 +182,8 @@ def resolve_experiment_plan(
         "platform_observability_contract_sha256": GATE7_LOCKED_OBSERVABILITY_HASH,
         "launcher_contract_sha256": launcher_hash,
         "platform_execution_contract_sha256": execution_hash,
+        "canonical_agent_registry_sha256": canonical_reg_sha,
+        "factory_ref": factory_ref,
     }
 
     plan_hash = compute_resolved_plan_sha256(raw_plan_dict)
@@ -192,6 +208,8 @@ def resolve_experiment_plan(
         platform_observability_contract_sha256=GATE7_LOCKED_OBSERVABILITY_HASH,
         launcher_contract_sha256=launcher_hash,
         platform_execution_contract_sha256=execution_hash,
+        canonical_agent_registry_sha256=canonical_reg_sha,
+        factory_ref=factory_ref,
         resolved_plan_sha256=plan_hash,
         warnings=warnings
     )

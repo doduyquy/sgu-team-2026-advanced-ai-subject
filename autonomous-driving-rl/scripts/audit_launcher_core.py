@@ -29,6 +29,7 @@ import sys
 import tempfile
 import time
 from typing import Any, Dict, List, Optional
+from unittest.mock import patch
 
 # Add project root to sys.path portably
 project_root = Path(__file__).resolve().parent.parent
@@ -63,6 +64,7 @@ from src.launcher.executor import (
     resolve_manifest_name_for_mode,
 )
 from src.launcher.models import (
+    SCIENTIFIC_REGISTRATION_FIELDS,
     AgentRegistrationV1,
     LaunchRequestV1,
     LauncherMode,
@@ -74,7 +76,12 @@ from src.launcher.models import (
     mode_to_run_kind,
 )
 from src.launcher.preflight import PreflightCheckV1, PreflightReportV1, run_preflight
-from src.launcher.registry import AgentRegistryV1, build_default_agent_registry
+from src.launcher.registry import (
+    AgentRegistryV1,
+    build_canonical_agent_registry,
+    build_default_agent_registry,
+    compute_canonical_registry_sha256,
+)
 from src.launcher.resolver import (
     DEFAULT_LAUNCHER_CONTRACT_HASH,
     DEFAULT_PLATFORM_EXECUTION_HASH,
@@ -87,6 +94,7 @@ from src.launcher.resolver import (
 from src.platform import (
     PINNED_METADRIVE_COMMIT,
     PINNED_METADRIVE_VERSION,
+    AgentDescriptor,
     RewardSpecV1,
     RunKind,
     RunStatus,
@@ -236,6 +244,8 @@ def audit_contract_and_hashes(configs_dir: Path, results_dir: Path):
 
     h_launch = compute_launcher_contract_sha256(core)
     h_exec = compute_platform_execution_contract_sha256(h_launch)
+    canonical_reg = build_canonical_agent_registry()
+    h_reg = compute_canonical_registry_sha256(canonical_reg)
 
     hashes_data = {
         "gate5_benchmark_contract_sha256": GATE5_LOCKED_BENCHMARK_HASH,
@@ -245,6 +255,7 @@ def audit_contract_and_hashes(configs_dir: Path, results_dir: Path):
         "platform_observability_contract_sha256": GATE7_LOCKED_OBSERVABILITY_HASH,
         "launcher_contract_sha256": h_launch,
         "platform_execution_contract_sha256": h_exec,
+        "canonical_agent_registry_sha256": h_reg,
         "pinned_metadrive_version": PINNED_METADRIVE_VERSION,
         "pinned_metadrive_commit": PINNED_METADRIVE_COMMIT,
         "specification_gate": "Gate 7.5A"
@@ -256,6 +267,7 @@ def audit_contract_and_hashes(configs_dir: Path, results_dir: Path):
 
     print(f"[SAVED] Launcher contract saved to: {contract_file}")
     print(f"[SAVED] Contract hashes saved to:   {out_hashes}")
+    print(f"  canonical_agent_registry_sha256:    {h_reg}")
     print(f"  launcher_contract_sha256:           {h_launch}")
     print(f"  platform_execution_contract_sha256: {h_exec}")
     return hashes_data, core
@@ -791,18 +803,30 @@ def audit_sandbox_execution_smoke(root: Path, results_dir: Path):
     manifest_name = manifest["config"].get("manifest_name")
     assert manifest_name == "geometry_split_manifest.csv", f"Manifest name mismatch: {manifest_name}"
 
+    # 5. Assert Sandbox canonicality invariants (Fix G)
+    plan_canonical_run = bool(plan.canonical_run)
+    persisted_canonical_run = bool(st.get("canonical_run"))
+    assert plan_canonical_run is False, "Plan canonical_run must be False for Sandbox!"
+    assert persisted_canonical_run is False, "Persisted run_state canonical_run must be False for Sandbox!"
+    canonicality_parity = (plan_canonical_run is False and persisted_canonical_run is False)
+
     smoke_artifact = {
         "run_id": report.run_id,
         "launcher_mode": "SANDBOX",
         "status": report.status,
         "completed_episodes": report.completed_episodes,
+        "plan_canonical_run": plan_canonical_run,
+        "persisted_canonical_run": persisted_canonical_run,
+        "canonicality_parity_verified": canonicality_parity,
+        "resolved_plan_sha256": plan.resolved_plan_sha256,
+        "canonical_agent_registry_sha256": plan.canonical_agent_registry_sha256,
         "required_files_verified": files_present,
         "events_captured": events_captured,
         "launcher_provenance_verified": True,
         "manifest_name_verified": True,
         "manifest_name": manifest_name,
         "embedded_launcher_provenance": launcher_prov,
-        "verdict": "PASSED"
+        "verdict": "PASSED" if (all(files_present.values()) and st["status"] == "COMPLETE" and canonicality_parity) else "FAILED"
     }
 
     out_file = results_dir / "sandbox_execution_smoke.json"
@@ -810,6 +834,214 @@ def audit_sandbox_execution_smoke(root: Path, results_dir: Path):
         json.dump(smoke_artifact, f, indent=2)
     print(f"[SAVED] Sandbox execution smoke saved to: {out_file}")
     temp_dir.cleanup()
+
+
+def audit_canonical_registry_integrity(results_dir: Path):
+    """Audits the deterministic SHA-256 fingerprinting of the canonical agent registry."""
+    print("\n--- Auditing Canonical Agent Registry Integrity & Sensitivity ---")
+    canonical_reg = build_canonical_agent_registry()
+    canonical_sha = compute_canonical_registry_sha256(canonical_reg)
+
+    fixture_ids = [
+        "fixture_constant_continuous",
+        "fixture_seeded_random",
+        "fixture_stateful_counter",
+        "fixture_discrete"
+    ]
+    registered_ids = [a.agent_id for a in canonical_reg.list_all()]
+    all_fixtures_present = all(fid in registered_ids for fid in fixture_ids)
+    all_fixtures_ineligible = all(not a.benchmark_eligible for a in canonical_reg.list_all())
+    assert all_fixtures_present, "Missing expected canonical fixtures!"
+    assert all_fixtures_ineligible, "Fixtures must never be marked benchmark eligible!"
+
+    field_sensitivities = {}
+    mutations = {
+        "agent_id": "mutated_id",
+        "agent_version": "2.0.0",
+        "stage_label": "STAGE_99",
+        "method_family": "mutated_family",
+        "purpose": "MUTATED_PURPOSE",
+        "implementation_ref": "mutated.impl:Ref",
+        "input_profile_id": "MUTATED_PROFILE",
+        "action_adapter_id": "mutated_adapter",
+        "inference_stochasticity": "stochastic",
+        "stateful_within_episode": True,
+        "benchmark_eligible": True,
+        "sandbox_eligible": False,
+        "audit_eligible": False,
+        "requires_checkpoint": True,
+    }
+    for field_name in SCIENTIFIC_REGISTRATION_FIELDS:
+        custom_reg = AgentRegistryV1()
+        for a in canonical_reg.list_all():
+            if a.agent_id == "fixture_constant_continuous":
+                mut_val = mutations[field_name]
+                mut_a = dataclasses.replace(a, **{field_name: mut_val})
+                custom_reg.register(mut_a, canonical_reg.get_factory(a.agent_id))
+            else:
+                custom_reg.register(a, canonical_reg.get_factory(a.agent_id))
+        h_mut = compute_canonical_registry_sha256(custom_reg)
+        field_sensitivities[field_name] = (h_mut != canonical_sha)
+
+    # Factory ref sensitivity
+    custom_reg_f = AgentRegistryV1()
+    def _alt_factory(): return None
+    for a in canonical_reg.list_all():
+        if a.agent_id == "fixture_constant_continuous":
+            custom_reg_f.register(a, _alt_factory)
+        else:
+            custom_reg_f.register(a, canonical_reg.get_factory(a.agent_id))
+    h_mut_f = compute_canonical_registry_sha256(custom_reg_f)
+    field_sensitivities["factory_ref"] = (h_mut_f != canonical_sha)
+
+    # Description neutrality (cosmetic exclusion)
+    custom_reg_desc = AgentRegistryV1()
+    for a in canonical_reg.list_all():
+        if a.agent_id == "fixture_constant_continuous":
+            mut_a = dataclasses.replace(a, description="Cosmetic description mutation")
+            custom_reg_desc.register(mut_a, canonical_reg.get_factory(a.agent_id))
+        else:
+            custom_reg_desc.register(a, canonical_reg.get_factory(a.agent_id))
+    h_desc = compute_canonical_registry_sha256(custom_reg_desc)
+    description_neutral = (h_desc == canonical_sha)
+
+    artifact = {
+        "canonical_agent_registry_sha256": canonical_sha,
+        "registered_agent_count": len(registered_ids),
+        "registered_agents": registered_ids,
+        "all_fixtures_present": all_fixtures_present,
+        "all_fixtures_benchmark_ineligible": all_fixtures_ineligible,
+        "field_sensitivities": field_sensitivities,
+        "description_neutral": description_neutral,
+        "verdict": "PASSED" if (all_fixtures_present and all_fixtures_ineligible and all(field_sensitivities.values()) and description_neutral) else "FAILED"
+    }
+
+    out_file = results_dir / "canonical_registry_integrity.json"
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(artifact, f, indent=2)
+    print(f"[SAVED] Canonical registry integrity saved to: {out_file}")
+    assert artifact["verdict"] == "PASSED"
+
+
+def audit_registry_authority_negative_checks(root: Path, results_dir: Path):
+    """Audits negative exploit defenses: custom registry cannot self-certify benchmark execution."""
+    print("\n--- Auditing Registry Authority Negative Checks ---")
+    canonical_reg = build_canonical_agent_registry()
+    base_reg = canonical_reg.get("fixture_seeded_random")
+    forged_reg = dataclasses.replace(base_reg, benchmark_eligible=True)
+
+    custom_registry = AgentRegistryV1()
+    for a in canonical_reg.list_all():
+        if a.agent_id != "fixture_seeded_random":
+            custom_registry.register(a, canonical_reg.get_factory(a.agent_id))
+        else:
+            custom_registry.register(forged_reg, canonical_reg.get_factory(a.agent_id))
+
+    req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_seeded_random", agent_seed=101)
+    plan = resolve_experiment_plan(req, custom_registry, root)
+
+    rep = run_preflight(plan, root)
+    preflight_caught = (not rep.can_execute)
+    fail_ids = [c.check_id for c in rep.checks if c.status == "FAIL"]
+    forgery_detected = ("agent_registry_binding" in fail_ids or "canonical_registry_anti_forgery" in fail_ids)
+
+    executor_rejected = False
+    try:
+        ExperimentExecutor(plan=plan, registry=custom_registry, project_root=root)
+    except ValueError as e:
+        if "cannot authorize canonical benchmark" in str(e):
+            executor_rejected = True
+
+    artifact = {
+        "forged_agent_id": "fixture_seeded_random",
+        "forged_attribute": "benchmark_eligible=True",
+        "preflight_blocked_execution": preflight_caught,
+        "forgery_detected_by_preflight": forgery_detected,
+        "executor_rejected_custom_registry": executor_rejected,
+        "fail_check_ids": fail_ids,
+        "verdict": "PASSED" if (preflight_caught and forgery_detected and executor_rejected) else "FAILED"
+    }
+
+    out_file = results_dir / "registry_authority_negative_checks.json"
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(artifact, f, indent=2)
+    print(f"[SAVED] Registry authority negative checks saved to: {out_file}")
+    assert artifact["verdict"] == "PASSED"
+
+
+def audit_implementation_binding_checks(root: Path, results_dir: Path):
+    """Audits negative exploit defenses: factory identity and implementation class binding."""
+    print("\n--- Auditing Implementation & Factory Identity Binding Checks ---")
+    canonical_reg = build_canonical_agent_registry()
+    req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous", wandb_mode=WandbMode.DISABLED)
+    plan = resolve_experiment_plan(req, canonical_reg, root)
+
+    class ImposterAgent:
+        @property
+        def descriptor(self):
+            return AgentDescriptor(
+                agent_id="fixture_constant_continuous",
+                agent_version="1.0.0",
+                input_profile_id="STATE_DECISION_V1",
+                action_adapter_id="continuous_box2_v1",
+                inference_stochasticity="deterministic",
+                stateful_within_episode=False,
+                method_family="fixture"
+            )
+        def reset(self, ctx, agent_seed=None): pass
+        def act(self, inp): pass
+        def close(self): pass
+
+    # Test A: Canonical factory ref check passes, but runtime class differs -> rejected
+    executor_impl = ExperimentExecutor(plan=plan, project_root=root)
+    impl_impersonation_caught = False
+    with patch("src.launcher.registry.DeterministicConstantFixtureAgent", ImposterAgent), \
+         patch("src.launcher.executor.run_preflight") as mock_pf, \
+         patch("src.platform.experiment_logging.capture_git_provenance", return_value={"git_worktree_dirty": False, "git_commit_sha": "abc12345"}), \
+         patch("src.platform.experiment_logging.capture_environment_provenance", return_value={"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT}):
+        mock_pf.return_value = PreflightReportV1(can_execute=True, fail_count=0, warning_count=0, pass_count=10, summary_verdict="PASSED", checks=[])
+        try:
+            executor_impl.execute()
+        except RuntimeError as e:
+            if "Agent runtime implementation mismatch" in str(e):
+                impl_impersonation_caught = True
+
+    # Test B: Factory identity substitution rejected
+    executor_fact = ExperimentExecutor(plan=plan, project_root=root)
+    object.__setattr__(executor_fact, "agent_factory", lambda: ImposterAgent())
+    factory_substitution_caught = False
+    with patch("src.launcher.executor.run_preflight") as mock_pf, \
+         patch("src.platform.experiment_logging.capture_git_provenance", return_value={"git_worktree_dirty": False, "git_commit_sha": "abc12345"}), \
+         patch("src.platform.experiment_logging.capture_environment_provenance", return_value={"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT}):
+        mock_pf.return_value = PreflightReportV1(can_execute=True, fail_count=0, warning_count=0, pass_count=10, summary_verdict="PASSED", checks=[])
+        try:
+            executor_fact.execute()
+        except RuntimeError as e:
+            if "Agent factory identity mismatch" in str(e):
+                factory_substitution_caught = True
+
+    # Test C: Constructor factory override rejected on canonical run
+    factory_override_rejected = False
+    try:
+        ExperimentExecutor(plan=plan, agent_factory=lambda: ImposterAgent(), project_root=root)
+    except ValueError as e:
+        if "Explicit agent_factory override is strictly forbidden" in str(e):
+            factory_override_rejected = True
+
+    artifact = {
+        "imposter_class": "ImposterAgent",
+        "expected_class_ref": plan.agent_registration.implementation_ref,
+        "implementation_impersonation_caught": impl_impersonation_caught,
+        "factory_substitution_caught": factory_substitution_caught,
+        "factory_override_rejected": factory_override_rejected,
+        "verdict": "PASSED" if (impl_impersonation_caught and factory_substitution_caught and factory_override_rejected) else "FAILED"
+    }
+
+    out_file = results_dir / "implementation_binding_checks.json"
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(artifact, f, indent=2)
+    print(f"[SAVED] Implementation binding checks saved to: {out_file}")
+    assert artifact["verdict"] == "PASSED"
 
 
 def generate_summary_markdown(summary_md_path: Path, hashes_data: Dict[str, Any]):
@@ -848,10 +1080,14 @@ def generate_summary_markdown(summary_md_path: Path, hashes_data: Dict[str, Any]
         f.write(f"- **`platform_runtime_contract_sha256`:** `{hashes_data['platform_runtime_contract_sha256']}` (locked, untouched)\n")
         f.write(f"- **`logging_contract_sha256`:** `{hashes_data['logging_contract_sha256']}` (locked, untouched)\n")
         f.write(f"- **`platform_observability_contract_sha256`:** `{hashes_data['platform_observability_contract_sha256']}` (locked, untouched)\n")
+        f.write(f"- **`canonical_agent_registry_sha256`:** `{hashes_data.get('canonical_agent_registry_sha256')}`\n")
         f.write(f"- **`launcher_contract_sha256`:** `{hashes_data['launcher_contract_sha256']}`\n")
         f.write(f"- **`platform_execution_contract_sha256`:** `{hashes_data['platform_execution_contract_sha256']}`\n\n")
 
         f.write("## 7. Additional Verification Artifacts\n")
+        f.write("- `canonical_registry_integrity.json`: Verified canonical registry SHA-256 sensitivity and description exclusion.\n")
+        f.write("- `registry_authority_negative_checks.json`: Verified negative exploit defenses against forged benchmark eligibility and custom registry authority.\n")
+        f.write("- `implementation_binding_checks.json`: Verified strict runtime implementation class and factory identity binding.\n")
         f.write("- `reward_passthrough_parity.json`: Verified signed progress delta passthrough without clamping.\n")
         f.write("- `execution_config_lock.json`: Verified 10 Hz physical control, 0.02 step, decision repeat 5, Trigger mode.\n")
 
@@ -887,6 +1123,15 @@ def main():
 
     # 6. Agent registry snapshot
     audit_agent_registry_snapshot(results_dir)
+
+    # 6b. Canonical registry integrity & field sensitivity audit
+    audit_canonical_registry_integrity(results_dir)
+
+    # 6c. Registry authority negative checks audit
+    audit_registry_authority_negative_checks(project_root, results_dir)
+
+    # 6d. Implementation and factory identity binding audit
+    audit_implementation_binding_checks(project_root, results_dir)
 
     # 7. Case plan parity audit (11 fields per row)
     audit_case_plan_parity(project_root, results_dir)

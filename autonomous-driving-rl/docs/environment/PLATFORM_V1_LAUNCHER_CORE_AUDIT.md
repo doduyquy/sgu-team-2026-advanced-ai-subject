@@ -172,8 +172,9 @@ Gate 7.5A introduces additive hashes without altering previously locked platform
 | **`platform_runtime_contract_sha256`** | `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad` | **LOCKED (Untouched)** |
 | **`logging_contract_sha256`** | `0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2` | **LOCKED (Untouched)** |
 | **`platform_observability_contract_sha256`** | `f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581` | **LOCKED (Untouched)** |
-| **`launcher_contract_sha256`** | `d9365e8c78ed0991612314eee5d9d9a5c34d95ae6f5f70d75f0f41f90a568e90` | **AUDIT-CANDIDATE (Gate 7.5A)** |
-| **`platform_execution_contract_sha256`** | `86c9922cd4aa740dc0d2a57f14b4b82e03146e42a321f19c9ef41678b633b222` | **AUDIT-CANDIDATE (Gate 7.5A)** |
+| **`canonical_agent_registry_sha256`** | `9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f` | **AUDIT-CANDIDATE (Gate 7.5A)** |
+| **`launcher_contract_sha256`** | `5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04` | **AUDIT-CANDIDATE (Gate 7.5A)** |
+| **`platform_execution_contract_sha256`** | `442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d` | **AUDIT-CANDIDATE (Gate 7.5A)** |
 
 $$\text{platform\_execution\_contract\_sha256} = \text{SHA256}(\text{canonical\_json}(\{\text{"platform\_observability\_contract\_sha256"}, \text{"launcher\_contract\_sha256"}, \dots\}))$$
 
@@ -185,6 +186,9 @@ All verification artifacts are generated in `results/audits/launcher_core/`:
 - `contract_hashes.json`: Locked platform hashes across Gates 5 through 7.5A.
 - `mode_resolution_matrix.csv`: Verified mapping of LauncherMode to RunKind and default policies.
 - `agent_registry_snapshot.json`: Machine-readable snapshot of all registered agent descriptors.
+- `canonical_registry_integrity.json`: Verified canonical registry SHA-256 sensitivity across 14 scientific fields and description exclusion.
+- `registry_authority_negative_checks.json`: Verified defenses rejecting custom registry self-certification and forged benchmark eligibility.
+- `implementation_binding_checks.json`: Verified runtime implementation class and factory identity binding preventing imposter agents.
 - `case_plan_parity.json`: Verified 100% manifest parity across all 11 fields for Validation (96) and Test (60) suites.
 - `benchmark_lock_checks.json`: Verified Sandbox holdout rejection and benchmark fixture rejection.
 - `preflight_matrix.csv`: Empirical evaluation of 13 preflight decision scenarios.
@@ -194,6 +198,7 @@ All verification artifacts are generated in `results/audits/launcher_core/`:
 - `execution_config_lock.json`: Verified 10 Hz physical control, 0.02 step size, decision repeat 5, Trigger mode.
 - `sandbox_execution_smoke.json`: Successful real MetaDrive simulation execution of Sandbox episode:
   - Run state: `COMPLETE`
+  - `plan_canonical_run`: `false`, `persisted_canonical_run`: `false`
   - All 7 Gate-7 local files present and verified.
   - Launcher provenance embedded in `run_manifest.json`.
 

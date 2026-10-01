@@ -1,0 +1,12 @@
+{
+  "forged_agent_id": "fixture_seeded_random",
+  "forged_attribute": "benchmark_eligible=True",
+  "preflight_blocked_execution": true,
+  "forgery_detected_by_preflight": true,
+  "executor_rejected_custom_registry": true,
+  "fail_check_ids": [
+    "agent_registry_binding",
+    "git_cleanliness"
+  ],
+  "verdict": "PASSED"
+}

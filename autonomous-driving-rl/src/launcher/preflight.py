@@ -101,12 +101,66 @@ def run_preflight(
     git_prov = custom_git_provenance or capture_git_provenance(root)
     env_prov = custom_environment_provenance or capture_environment_provenance(root)
 
-    from src.launcher.registry import build_default_agent_registry
-    authoritative_registry = registry or build_default_agent_registry()
+    from src.launcher.registry import (
+        build_canonical_agent_registry,
+        compute_canonical_registry_sha256,
+    )
+    canonical_registry = build_canonical_agent_registry()
+    canonical_reg_sha = compute_canonical_registry_sha256(canonical_registry)
 
     checks: List[PreflightCheckV1] = []
 
-    # 0. Authoritative Registry Binding & Anti-Forgery Check (Problem 1)
+    # 0. Canonical Registry Authority & Anti-Forgery Check (Fix A & C)
+    if plan.canonical_run:
+        # Benchmark authority strictly requires committed canonical registry
+        if plan.canonical_agent_registry_sha256 != canonical_reg_sha:
+            checks.append(PreflightCheckV1(
+                check_id="canonical_registry_authority",
+                status="FAIL",
+                message=f"Plan canonical registry hash mismatch! Plan={plan.canonical_agent_registry_sha256} != Committed={canonical_reg_sha}. Benchmark runs must be authorized strictly by committed canonical registry.",
+                category="AGENT"
+            ))
+        else:
+            checks.append(PreflightCheckV1(
+                check_id="canonical_registry_authority",
+                status="PASS",
+                message="Canonical registry authority verified against committed platform registry.",
+                category="AGENT"
+            ))
+
+        if registry is not None:
+            authoritative_registry = registry
+            # Strict Anti-Forgery: Custom registries cannot forge metadata of committed platform agents
+            if canonical_registry.has_agent(plan.agent_registration.agent_id):
+                canonical_entry = canonical_registry.get(plan.agent_registration.agent_id)
+                tampered = [
+                    f for f in (
+                        "agent_id", "agent_version", "stage_label", "method_family", "purpose",
+                        "implementation_ref", "input_profile_id", "action_adapter_id",
+                        "inference_stochasticity", "stateful_within_episode", "benchmark_eligible",
+                        "sandbox_eligible", "audit_eligible", "requires_checkpoint"
+                    )
+                    if getattr(plan.agent_registration, f) != getattr(canonical_entry, f)
+                ]
+                if tampered:
+                    checks.append(PreflightCheckV1(
+                        check_id="canonical_registry_anti_forgery",
+                        status="FAIL",
+                        message=f"Canonical agent metadata forgery detected in fields: {', '.join(tampered)}! Custom registries cannot alter committed benchmark agent metadata.",
+                        category="AGENT"
+                    ))
+        else:
+            authoritative_registry = canonical_registry
+    else:
+        authoritative_registry = registry if registry is not None else canonical_registry
+        checks.append(PreflightCheckV1(
+            check_id="canonical_registry_authority",
+            status="PASS",
+            message=f"Non-canonical run ({plan.launcher_mode.value}) permits authorized registry configuration.",
+            category="AGENT"
+        ))
+
+    # 0a. Authoritative Registry Binding & Metadata Parity
     if not authoritative_registry.has_agent(plan.agent_registration.agent_id):
         checks.append(PreflightCheckV1(
             check_id="agent_registry_binding",
@@ -140,6 +194,23 @@ def run_preflight(
                 check_id="agent_registry_binding",
                 status="PASS",
                 message=f"Agent registration '{plan.agent_registration.agent_id}' strictly verified against authoritative AgentRegistryV1.",
+                category="AGENT"
+            ))
+
+        # Factory identity binding check
+        expected_factory_ref = authoritative_registry.get_factory_ref(plan.agent_registration.agent_id)
+        if plan.factory_ref != expected_factory_ref:
+            checks.append(PreflightCheckV1(
+                check_id="factory_identity_binding",
+                status="FAIL",
+                message=f"Plan factory_ref '{plan.factory_ref}' does not match registry factory ref '{expected_factory_ref}'.",
+                category="AGENT"
+            ))
+        else:
+            checks.append(PreflightCheckV1(
+                check_id="factory_identity_binding",
+                status="PASS",
+                message=f"Plan factory identity '{plan.factory_ref}' verified against authoritative registry.",
                 category="AGENT"
             ))
 

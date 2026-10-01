@@ -211,7 +211,7 @@ def handle_run(args: argparse.Namespace) -> int:
         print(f"[ERROR] Failed to resolve experiment plan: {e}", file=sys.stderr)
         return 1
 
-    preflight = run_preflight(plan)
+    preflight = run_preflight(plan, registry=registry)
     if not preflight.can_execute:
         print(f"[ERROR] Preflight validation failed with {preflight.fail_count} blocking error(s):", file=sys.stderr)
         for c in preflight.checks:
@@ -219,10 +219,9 @@ def handle_run(args: argparse.Namespace) -> int:
                 print(f"  [FAIL] ({c.category}) {c.message}", file=sys.stderr)
         return 2
 
-    agent_factory = registry.get_factory(plan.agent_registration.agent_id)
     executor = ExperimentExecutor(
         plan=plan,
-        agent_factory=agent_factory,
+        registry=registry,
         runs_root=request.runs_root,
         custom_run_id=request.custom_run_id
     )

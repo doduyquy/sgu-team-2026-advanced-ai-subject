@@ -32,9 +32,13 @@
 - **`platform_runtime_contract_sha256`:** `c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad` (locked, untouched)
 - **`logging_contract_sha256`:** `0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2` (locked, untouched)
 - **`platform_observability_contract_sha256`:** `f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581` (locked, untouched)
-- **`launcher_contract_sha256`:** `d9365e8c78ed0991612314eee5d9d9a5c34d95ae6f5f70d75f0f41f90a568e90`
-- **`platform_execution_contract_sha256`:** `86c9922cd4aa740dc0d2a57f14b4b82e03146e42a321f19c9ef41678b633b222`
+- **`canonical_agent_registry_sha256`:** `9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f`
+- **`launcher_contract_sha256`:** `5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04`
+- **`platform_execution_contract_sha256`:** `442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d`
 
 ## 7. Additional Verification Artifacts
+- `canonical_registry_integrity.json`: Verified canonical registry SHA-256 sensitivity and description exclusion.
+- `registry_authority_negative_checks.json`: Verified negative exploit defenses against forged benchmark eligibility and custom registry authority.
+- `implementation_binding_checks.json`: Verified strict runtime implementation class and factory identity binding.
 - `reward_passthrough_parity.json`: Verified signed progress delta passthrough without clamping.
 - `execution_config_lock.json`: Verified 10 Hz physical control, 0.02 step, decision repeat 5, Trigger mode.
