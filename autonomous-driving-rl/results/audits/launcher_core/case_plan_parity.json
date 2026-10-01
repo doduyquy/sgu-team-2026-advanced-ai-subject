@@ -1,0 +1,16 @@
+{
+  "validation_suite_parity": {
+    "expected_count": 96,
+    "resolved_count": 96,
+    "manifest_mismatches": 0,
+    "order_monotonic": true,
+    "verdict": "PERFECT_PARITY"
+  },
+  "test_benchmark_parity": {
+    "expected_count": 60,
+    "resolved_count": 60,
+    "manifest_mismatches": 0,
+    "order_monotonic": true,
+    "verdict": "PERFECT_PARITY"
+  }
+}

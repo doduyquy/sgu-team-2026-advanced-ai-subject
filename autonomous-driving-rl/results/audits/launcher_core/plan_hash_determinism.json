@@ -1,0 +1,8 @@
+{
+  "identical_requests_match": true,
+  "base_plan_sha256": "adc8f92e6223e8e18f57df943c61a1ec3ffa2da2106f2cd05ec4cd138514dc04",
+  "seed_mutation_differs": true,
+  "tier_mutation_differs": true,
+  "agent_mutation_differs": true,
+  "verdict": "PASSED_STRICT_DETERMINISM"
+}

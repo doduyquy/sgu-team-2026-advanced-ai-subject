@@ -1,0 +1,6 @@
+{
+  "sandbox_test_holdout_rejection_caught": true,
+  "validation_fixture_rejected": true,
+  "test_fixture_rejected": true,
+  "verdict": "PASSED"
+}

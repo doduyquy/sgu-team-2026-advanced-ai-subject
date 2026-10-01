@@ -1,0 +1,164 @@
+"""
+Experiment Plan Resolver for Research Platform V1 Launcher (Gate 7.5A).
+
+This module implements the deterministic resolution of LaunchRequestV1 into ResolvedExperimentPlanV1:
+- Maps LauncherMode to Gate-7 RunKind.
+- Resolves cases via Gate-5 manifests (SANDBOX TRAIN-only, 96 VALIDATION, 60 TEST).
+- Reconciles agent capabilities, seeds, rendering, and W&B modes.
+- Computes deterministic resolved_plan_sha256.
+"""
+
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from src.launcher.cases import (
+    get_default_project_root,
+    resolve_audit_cases,
+    resolve_sandbox_case,
+    resolve_test_cases,
+    resolve_validation_cases,
+)
+from src.launcher.models import (
+    LaunchRequestV1,
+    LauncherMode,
+    ResolvedCaseV1,
+    ResolvedExperimentPlanV1,
+    compute_resolved_plan_sha256,
+    mode_to_run_kind,
+)
+from src.launcher.registry import AgentRegistryV1
+from src.platform import WandbMode
+
+GATE5_LOCKED_BENCHMARK_HASH = "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77"
+GATE6_LOCKED_AGENT_HASH = "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb"
+GATE6_LOCKED_RUNTIME_HASH = "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad"
+GATE7_LOCKED_LOGGING_HASH = "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2"
+GATE7_LOCKED_OBSERVABILITY_HASH = "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581"
+DEFAULT_LAUNCHER_CONTRACT_HASH = "22718d9180b945aea801fe078e9204744dd063fc644301d310ac0db9d9ebd8cc"
+DEFAULT_PLATFORM_EXECUTION_HASH = "fcc9d469466dd55b8a1a2d6f28235695b1130eacff88bcabc2ccc82db428c7a6"
+
+
+def resolve_experiment_plan(
+    request: LaunchRequestV1,
+    registry: AgentRegistryV1,
+    project_root: Optional[Path] = None,
+    custom_launcher_contract_sha256: Optional[str] = None,
+    custom_platform_execution_contract_sha256: Optional[str] = None
+) -> ResolvedExperimentPlanV1:
+    """
+    Deterministically transforms a user LaunchRequestV1 into a concrete ResolvedExperimentPlanV1.
+    Performs zero side-effects on disk, MetaDrive simulator, or remote W&B services.
+    """
+    root = project_root or get_default_project_root()
+
+    # 1. Verify agent existence in registry
+    agent_reg = registry.get(request.agent_id)
+
+    # 2. Determine lower-level RunKind and canonical status
+    run_kind = mode_to_run_kind(request.mode)
+    canonical_run = (request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST))
+
+    # 3. Resolve cases and protocol scope according to mode
+    warnings: List[str] = []
+    if request.mode == LauncherMode.SANDBOX:
+        resolved_cases = [resolve_sandbox_case(request, root)]
+        protocol_scope = "SANDBOX_SINGLE_CASE"
+        if not canonical_run:
+            warnings.append("Sandbox run is exploratory/development; results are non-canonical.")
+    elif request.mode == LauncherMode.VALIDATION:
+        resolved_cases = resolve_validation_cases(root)
+        protocol_scope = "VALIDATION_SUITE_96"
+    elif request.mode == LauncherMode.TEST:
+        resolved_cases = resolve_test_cases(root)
+        protocol_scope = "TEST_SUITE_60"
+    elif request.mode == LauncherMode.AUDIT:
+        resolved_cases = resolve_audit_cases(request, root)
+        protocol_scope = "AUDIT_SUITE"
+        warnings.append("Audit run is for platform verification; results are non-canonical.")
+    else:
+        raise ValueError(f"Unsupported LauncherMode: {request.mode}")
+
+    # 4. Resolve agent seed
+    resolved_agent_seed: Optional[int] = request.agent_seed
+    if agent_reg.inference_stochasticity == "stochastic":
+        if request.mode in (LauncherMode.SANDBOX, LauncherMode.AUDIT) and resolved_agent_seed is None:
+            resolved_agent_seed = 101  # Documented default for exploratory sandbox
+            warnings.append(f"Stochastic agent '{agent_reg.agent_id}' defaulted to agent_seed=101 in {request.mode.value} mode.")
+    elif agent_reg.inference_stochasticity == "deterministic":
+        if request.mode in (LauncherMode.SANDBOX, LauncherMode.AUDIT) and resolved_agent_seed is not None:
+            warnings.append(f"Deterministic agent '{agent_reg.agent_id}' provided with agent_seed={resolved_agent_seed}; seed is ignored by deterministic policy.")
+
+    # 5. Resolve render mode and W&B mode defaults
+    render_mode = request.render_mode.upper()
+    if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST):
+        if render_mode != "OFF":
+            warnings.append(f"Render mode '{render_mode}' requested for benchmark {request.mode.value}; benchmark must execute headless (OFF).")
+
+    wandb_mode = request.wandb_mode
+    if request.wandb_mode == WandbMode.DISABLED:
+        # Default W&B modes per Launcher specification:
+        if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST):
+            wandb_mode = WandbMode.OFFLINE  # Default benchmark runs to OFFLINE
+
+    # 6. Contract hashes
+    launcher_hash = custom_launcher_contract_sha256 or DEFAULT_LAUNCHER_CONTRACT_HASH
+    execution_hash = custom_platform_execution_contract_sha256 or DEFAULT_PLATFORM_EXECUTION_HASH
+
+    # Construct plan dictionary for deterministic hashing
+    agent_descriptor = {
+        "agent_id": agent_reg.agent_id,
+        "agent_version": agent_reg.agent_version,
+        "input_profile_id": agent_reg.input_profile_id,
+        "action_adapter_id": agent_reg.action_adapter_id,
+        "inference_stochasticity": agent_reg.inference_stochasticity,
+        "stateful_within_episode": agent_reg.stateful_within_episode,
+        "method_family": agent_reg.method_family
+    }
+
+    raw_plan_dict = {
+        "launcher_mode": request.mode.value,
+        "run_kind": run_kind.value,
+        "canonical_run": canonical_run,
+        "protocol_scope": protocol_scope,
+        "agent_registration": agent_reg.to_dict(),
+        "agent_descriptor": agent_descriptor,
+        "resolved_cases": [c.to_dict() for c in resolved_cases],
+        "render_mode": render_mode,
+        "wandb_mode": wandb_mode.value,
+        "agent_seed": resolved_agent_seed,
+        "control_frequency_hz": 10.0,
+        "control_dt_s": 0.1,
+        "benchmark_contract_sha256": GATE5_LOCKED_BENCHMARK_HASH,
+        "agent_contract_sha256": GATE6_LOCKED_AGENT_HASH,
+        "platform_runtime_contract_sha256": GATE6_LOCKED_RUNTIME_HASH,
+        "logging_contract_sha256": GATE7_LOCKED_LOGGING_HASH,
+        "platform_observability_contract_sha256": GATE7_LOCKED_OBSERVABILITY_HASH,
+        "launcher_contract_sha256": launcher_hash,
+        "platform_execution_contract_sha256": execution_hash,
+    }
+
+    plan_hash = compute_resolved_plan_sha256(raw_plan_dict)
+
+    return ResolvedExperimentPlanV1(
+        launcher_mode=request.mode,
+        run_kind=run_kind,
+        canonical_run=canonical_run,
+        protocol_scope=protocol_scope,
+        agent_registration=agent_reg,
+        agent_descriptor=agent_descriptor,
+        resolved_cases=resolved_cases,
+        render_mode=render_mode,
+        wandb_mode=wandb_mode,
+        agent_seed=resolved_agent_seed,
+        control_frequency_hz=10.0,
+        control_dt_s=0.1,
+        benchmark_contract_sha256=GATE5_LOCKED_BENCHMARK_HASH,
+        agent_contract_sha256=GATE6_LOCKED_AGENT_HASH,
+        platform_runtime_contract_sha256=GATE6_LOCKED_RUNTIME_HASH,
+        logging_contract_sha256=GATE7_LOCKED_LOGGING_HASH,
+        platform_observability_contract_sha256=GATE7_LOCKED_OBSERVABILITY_HASH,
+        launcher_contract_sha256=launcher_hash,
+        platform_execution_contract_sha256=execution_hash,
+        resolved_plan_sha256=plan_hash,
+        warnings=warnings
+    )
