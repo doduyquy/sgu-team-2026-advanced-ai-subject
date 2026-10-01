@@ -309,9 +309,9 @@ class TestPreflightMatrix(unittest.TestCase):
         self.assertTrue(rep.can_execute)
         self.assertEqual(rep.fail_count, 0)
 
-    def test_fixture_on_validation_fails(self):
+    def test_stochastic_fixture_on_validation_fails(self):
         req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_seeded_random", agent_seed=101)
-        plan = resolve_experiment_plan(req, self.registry, self.project_root)
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
         rep = run_preflight(plan, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
         self.assertFalse(rep.can_execute)
         check = next(c for c in rep.checks if c.check_id == "agent_benchmark_eligibility")
@@ -325,7 +325,7 @@ class TestPreflightMatrix(unittest.TestCase):
         check = next(c for c in rep.checks if c.check_id == "agent_benchmark_eligibility")
         self.assertEqual(check.status, "FAIL")
 
-    def test_fixture_on_validation_fails(self):
+    def test_deterministic_fixture_on_validation_fails(self):
         req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
         plan = resolve_experiment_plan(req, project_root=self.project_root)
         rep = run_preflight(plan, self.project_root, custom_git_provenance=self.clean_git, custom_environment_provenance=self.verified_env)
@@ -500,10 +500,50 @@ class TestExecutorGuaranteesAndScientificContracts(unittest.TestCase):
 
         executor = ExperimentExecutor(plan=plan, project_root=self.project_root)
 
-        # Calling execute directly without preflight MUST raise PreflightBlockedError
+        # Calling execute directly without preflight MUST raise PreflightBlockedError specifically for benchmark eligibility
         with self.assertRaises(PreflightBlockedError) as ctx:
             executor.execute()
-        self.assertIn("benchmark_eligible=False", str(ctx.exception))
+        err_msg = str(ctx.exception)
+        self.assertIn("benchmark_eligible=False", err_msg)
+        # Invariant: Canonical executor internally-created canonical registry must NEVER be misclassified as external
+        self.assertNotIn("canonical_external_registry_forbidden", err_msg)
+
+    def test_canonical_executor_passes_none_registry_to_preflight(self):
+        # Cross-layer proof: canonical executor passes registry=None to run_preflight()
+        req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+        plan = resolve_experiment_plan(req, project_root=self.project_root)
+
+        executor = ExperimentExecutor(plan=plan, registry=None, project_root=self.project_root)
+        self.assertIsNotNone(executor.registry)
+
+        with patch("src.launcher.executor.run_preflight") as mock_pf:
+            mock_pf.side_effect = RuntimeError("Preflight intercept")
+            try:
+                executor.execute()
+            except RuntimeError as e:
+                if "Preflight intercept" not in str(e):
+                    raise
+            self.assertTrue(mock_pf.called)
+            _, kwargs = mock_pf.call_args
+            self.assertIsNone(kwargs.get("registry"), "Canonical executor must pass registry=None to run_preflight()")
+
+    def test_noncanonical_executor_passes_development_registry_to_preflight(self):
+        dev_reg = AgentRegistryV1()
+        dev_reg.register(AgentRegistrationV1(agent_id="dev_agent", sandbox_eligible=True), lambda: None)
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="dev_agent", tier="Easy")
+        plan = resolve_experiment_plan(req, registry=dev_reg, project_root=self.project_root)
+
+        executor = ExperimentExecutor(plan=plan, registry=dev_reg, project_root=self.project_root)
+        with patch("src.launcher.executor.run_preflight") as mock_pf:
+            mock_pf.side_effect = RuntimeError("Preflight intercept")
+            try:
+                executor.execute()
+            except RuntimeError as e:
+                if "Preflight intercept" not in str(e):
+                    raise
+            self.assertTrue(mock_pf.called)
+            _, kwargs = mock_pf.call_args
+            self.assertIs(kwargs.get("registry"), dev_reg)
 
     def test_preflight_blocks_contract_hash_chain_mismatch(self):
         req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_seeded_random", tier="Easy")

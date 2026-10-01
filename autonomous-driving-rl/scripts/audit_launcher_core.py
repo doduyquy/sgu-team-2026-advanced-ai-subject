@@ -1022,6 +1022,21 @@ def audit_registry_authority_negative_checks(root: Path, results_dir: Path):
 
     verdict_b = "PASSED" if (resolution_blocked_b and preflight_blocked_b and "canonical_registry_agent_membership" in targeted_b and executor_rejected_b) else "FAILED"
 
+    # Cross-layer proof: canonical executor internally creates canonical registry and does NOT self-block with canonical_external_registry_forbidden
+    req_canon = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+    plan_canon = resolve_experiment_plan(req_canon, project_root=root)
+    executor_canon = ExperimentExecutor(plan=plan_canon, project_root=root)
+    canon_ext_reg_failure_present = False
+    bm_elig_failure_present = False
+    try:
+        executor_canon.execute()
+    except PreflightBlockedError as e:
+        err_str = str(e)
+        canon_ext_reg_failure_present = ("canonical_external_registry_forbidden" in err_str)
+        bm_elig_failure_present = ("benchmark_eligible=False" in err_str or "agent_benchmark_eligibility" in err_str)
+
+    verdict_c = "PASSED" if ((not canon_ext_reg_failure_present) and bm_elig_failure_present) else "FAILED"
+
     report = {
         "scenario_A_fixture_mutation": {
             "scenario_id": "C1_existing_fixture_mutation",
@@ -1045,7 +1060,16 @@ def audit_registry_authority_negative_checks(root: Path, results_dir: Path):
             "executor_external_registry_rejected": executor_rejected_b,
             "verdict": verdict_b
         },
-        "overall_verdict": "PASSED" if (verdict_a == "PASSED" and verdict_b == "PASSED") else "FAILED"
+        "cross_layer_executor_preflight_integration": {
+            "launcher_mode": "TEST",
+            "agent_id": "fixture_constant_continuous",
+            "canonical_executor_instantiated": True,
+            "canonical_external_registry_failure_present": canon_ext_reg_failure_present,
+            "benchmark_eligibility_failure_present": bm_elig_failure_present,
+            "internal_canonical_registry_not_misclassified_as_external": (not canon_ext_reg_failure_present),
+            "verdict": verdict_c
+        },
+        "overall_verdict": "PASSED" if (verdict_a == "PASSED" and verdict_b == "PASSED" and verdict_c == "PASSED") else "FAILED"
     }
 
     out_file = results_dir / "registry_authority_negative_checks.json"

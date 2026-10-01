@@ -29,5 +29,14 @@
     "executor_external_registry_rejected": true,
     "verdict": "PASSED"
   },
+  "cross_layer_executor_preflight_integration": {
+    "launcher_mode": "TEST",
+    "agent_id": "fixture_constant_continuous",
+    "canonical_executor_instantiated": true,
+    "canonical_external_registry_failure_present": false,
+    "benchmark_eligibility_failure_present": true,
+    "internal_canonical_registry_not_misclassified_as_external": true,
+    "verdict": "PASSED"
+  },
   "overall_verdict": "PASSED"
 }

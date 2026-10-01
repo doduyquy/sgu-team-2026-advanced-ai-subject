@@ -200,7 +200,8 @@ class ExperimentExecutor:
         Emits lifecycle events and produces durable Gate-7 scientific records.
         """
         # 0. Enforce preflight validation prior to ANY simulator / logger / W&B side effects
-        preflight = run_preflight(self.plan, self.project_root, registry=self.registry)
+        preflight_registry = None if self.plan.canonical_run else self.registry
+        preflight = run_preflight(self.plan, self.project_root, registry=preflight_registry)
         if not preflight.can_execute:
             fail_msgs = [f"[{c.category}] {c.message}" for c in preflight.checks if c.status == "FAIL"]
             raise PreflightBlockedError(
