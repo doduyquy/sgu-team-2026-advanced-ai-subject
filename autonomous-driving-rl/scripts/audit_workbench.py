@@ -340,19 +340,19 @@ def run_audit() -> None:
             persisted_state = json.load(f)
         assert persisted_state["status"] == "COMPLETE"
 
-        run_smoke_evidence = {
-            "status": "PASS",
-            "exit_code": run_proc.returncode,
-            "received_message_types": list(set(run_types)),
-            "launcher_event_sequence": launcher_events,
-            "execution_status": exec_rep["status"],
-            "worker_done_success": worker_done["success"],
-            "worker_done_blocked": worker_done["blocked"],
-            "run_id_parity": (worker_done["run_id"] == exec_rep["run_id"]),
-            "gate7_artifacts_present": sorted(gate7_files),
-            "persisted_run_state_status": persisted_state["status"],
-        }
-        print(f"  [OK] RUN smoke verified (COMPLETE status, WORKER_DONE.success=True, run_id parity, 7/7 artifacts)")
+    run_smoke_evidence = {
+        "status": "PASS",
+        "exit_code": run_proc.returncode,
+        "received_message_types": sorted(list(set(run_types))),
+        "launcher_event_sequence": launcher_events,
+        "execution_status": exec_rep["status"],
+        "worker_done_success": worker_done["success"],
+        "worker_done_blocked": worker_done["blocked"],
+        "run_id_parity": (worker_done["run_id"] == exec_rep["run_id"]),
+        "gate7_artifacts_present": sorted(gate7_files),
+        "persisted_run_state_status": persisted_state["status"],
+    }
+    print(f"  [OK] RUN smoke verified (COMPLETE status, WORKER_DONE.success=True, run_id parity, 7/7 artifacts)")
 
     # ---------------------------------------------------------
     # 6. Save Tracked Artifacts
