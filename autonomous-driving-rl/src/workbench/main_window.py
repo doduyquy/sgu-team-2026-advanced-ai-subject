@@ -107,15 +107,25 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Request parameters changed. Plan & Preflight invalidated.")
 
     def _on_resolve_requested(self, request: LaunchRequestV1) -> None:
+        self.setup_widget.set_operation_active(True)
         self.tab_widget.setCurrentIndex(1)  # Switch to Plan & Preflight tab
         self.status_bar.showMessage(f"Resolving plan & running preflight for mode {request.mode.value}...")
-        self._runner.start_operation("PLAN", request)
+        try:
+            self._runner.start_operation("PLAN", request)
+        except Exception as e:
+            self.setup_widget.set_operation_active(False)
+            self.status_bar.showMessage(f"Failed to start PLAN: {e}")
 
     def _on_run_requested(self, request: LaunchRequestV1) -> None:
+        self.setup_widget.set_operation_active(True)
         self.tab_widget.setCurrentIndex(2)  # Switch to Run Monitor tab
         self.run_monitor_widget.reset_monitor()
         self.status_bar.showMessage(f"Starting execution run for mode {request.mode.value}...")
-        self._runner.start_operation("RUN", request)
+        try:
+            self._runner.start_operation("RUN", request)
+        except Exception as e:
+            self.setup_widget.set_operation_active(False)
+            self.status_bar.showMessage(f"Failed to start RUN: {e}")
 
     def _on_terminate_requested(self) -> None:
         warning_msg = (

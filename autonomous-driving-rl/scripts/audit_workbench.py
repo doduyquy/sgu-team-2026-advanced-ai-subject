@@ -249,14 +249,20 @@ def run_audit() -> None:
     pref_msg = next(m for m in test_messages if m["type"] == "PREFLIGHT_REPORT")
     pref_report = pref_msg["payload"]["report"]
     failed_checks = [c["check_id"] for c in pref_report["checks"] if c["status"] == "FAIL"]
-    assert "agent_benchmark_eligibility" in failed_checks, f"Expected agent_benchmark_eligibility failure: {failed_checks}"
+    assert failed_checks == ["agent_benchmark_eligibility"], (
+        f"Exact isolated failure required! Expected ['agent_benchmark_eligibility'], got: {failed_checks}"
+    )
+
+    plan_msg = next(m for m in test_messages if m["type"] == "PLAN_RESOLVED")
 
     blocked_evidence = {
         "status": "PASS",
-        "blocked_as_expected": True,
-        "failed_checks": failed_checks,
-        "targeted_scientific_check": "agent_benchmark_eligibility",
-        "can_execute": pref_report["can_execute"],
+        "plan_resolution_succeeded": True,
+        "preflight_can_execute": pref_report["can_execute"],
+        "preflight_failure_check_ids": failed_checks,
+        "launcher_event_count": 0,
+        "execution_report_present": False,
+        "worker_blocked": True,
         "exit_code": test_proc.returncode,
     }
     print(f"  [OK] Canonical blocked smoke verified (TEST blocked by preflight: {failed_checks})")

@@ -46,6 +46,7 @@ class ExperimentSetupWidget(QWidget):
         super().__init__(parent)
         self._core_adapter = core_adapter
         self._can_run = False
+        self._operation_active = False
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -180,20 +181,53 @@ class ExperimentSetupWidget(QWidget):
 
     def _on_field_changed(self) -> None:
         """Any field edit invalidates previous plan/preflight and disables Run."""
+        if self._operation_active:
+            return
         self._can_run = False
         self.btn_run.setEnabled(False)
         self.requestChanged.emit()
 
     def set_preflight_verdict(self, can_execute: bool) -> None:
-        """Enables Run button only if preflight passed and no worker is running."""
+        """Stores preflight verdict. Enables Run button only if can_execute AND no operation is active."""
         self._can_run = can_execute
-        self.btn_run.setEnabled(can_execute)
+        self.btn_run.setEnabled(self._can_run and not self._operation_active)
+
+    def set_operation_active(self, active: bool) -> None:
+        """Synchronously locks or unlocks all request controls and action buttons."""
+        self._operation_active = active
+
+        # Lock/unlock all request defining controls
+        self.combo_mode.setEnabled(not active)
+        self.combo_agent.setEnabled(not active)
+        self.edit_agent_seed.setEnabled(not active)
+        self.combo_wandb.setEnabled(not active)
+        self.edit_runs_root.setEnabled(not active)
+        self.edit_custom_run_id.setEnabled(not active)
+
+        if active:
+            self.combo_tier.setEnabled(False)
+            self.edit_sequence.setEnabled(False)
+            self.edit_geom_seed.setEnabled(False)
+            self.edit_env_seed.setEnabled(False)
+            self.combo_render.setEnabled(False)
+        else:
+            # Restore mode-aware state
+            mode = self.combo_mode.currentText()
+            is_benchmark = mode in ("VALIDATION", "TEST")
+            self.combo_tier.setEnabled(not is_benchmark)
+            self.edit_sequence.setEnabled(not is_benchmark)
+            self.edit_geom_seed.setEnabled(not is_benchmark)
+            self.edit_env_seed.setEnabled(not is_benchmark)
+            self.combo_render.setEnabled(not is_benchmark)
+
+        # Buttons
+        self.btn_resolve.setEnabled(not active)
+        self.btn_run.setEnabled((not active) and self._can_run)
+        self.btn_terminate.setEnabled(active)
 
     def set_worker_running(self, running: bool) -> None:
         """Updates controls when worker starts or finishes."""
-        self.btn_resolve.setEnabled(not running)
-        self.btn_run.setEnabled((not running) and self._can_run)
-        self.btn_terminate.setEnabled(running)
+        self.set_operation_active(running)
 
     def build_launch_request(self) -> LaunchRequestV1:
         """Constructs LaunchRequestV1 from current UI controls."""

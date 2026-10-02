@@ -479,14 +479,18 @@ class TestWorkbenchSuite(unittest.TestCase):
         )
         self.assertEqual(proc.returncode, 0)
 
+        worker_ready_found = False
         for line in proc.stdout.splitlines():
             msg = parse_sentinel_line(line)
             if msg and msg.type == WorkbenchMessageType.WORKER_READY:
+                worker_ready_found = True
                 py_exec = msg.payload.get("python_executable", "")
                 self.assertNotIn("\\", py_exec)
                 self.assertNotIn("/", py_exec)
                 self.assertEqual(py_exec, Path(sys.executable).name)
+                self.assertIn("python_version", msg.payload)
                 break
+        self.assertTrue(worker_ready_found, "WORKER_READY protocol message was not found in worker stdout")
 
     def test_21_embedded_sentinel_is_ignored_prefix_strict(self):
         """Sentinel that appears in the middle of a line is strictly rejected."""
@@ -504,7 +508,8 @@ class TestWorkbenchSuite(unittest.TestCase):
         self.assertIsNone(parse_sentinel_line(wrong_proto_line))
 
     def test_23_qprocess_failed_to_start_resets_runner_state(self):
-        """When QProcess fails to start, WorkbenchProcessRunner resets state cleanly without hanging."""
+        """When QProcess encounters FailedToStart error, WorkbenchProcessRunner resets state cleanly without hanging."""
+        from unittest.mock import patch
         runner = WorkbenchProcessRunner()
         req = LaunchRequestV1(
             mode=LauncherMode.SANDBOX,
@@ -513,16 +518,80 @@ class TestWorkbenchSuite(unittest.TestCase):
         )
 
         error_received = []
+        finished_exit_codes = []
         runner.workerError.connect(lambda err: error_received.append(err))
+        runner.processFinished.connect(lambda code: finished_exit_codes.append(code))
 
-        runner.start_operation("PLAN", req)
-        # Force simulate FailedToStart error
-        runner._on_process_error(QProcess.ProcessError.FailedToStart)
+        # Launch with a guaranteed nonexistent binary to trigger real FailedToStart from QProcess
+        with patch("sys.executable", "nonexistent_python_binary_path_12345"):
+            runner.start_operation("PLAN", req)
+            # Allow Qt event loop to process process error
+            runner._process.waitForFinished(1000)
 
         self.assertFalse(runner.is_running)
         self.assertIsNone(runner.current_operation)
         self.assertEqual(len(error_received), 1)
         self.assertEqual(error_received[0]["error_type"], "FailedToStart")
+        self.assertEqual(finished_exit_codes, [-1])
+        if runner._temp_request_file:
+            self.assertFalse(runner._temp_request_file.exists())
+
+    def test_24_ui_operation_active_locks_controls_synchronously(self):
+        """Starting PLAN or RUN locks all request controls synchronously."""
+        from unittest.mock import patch
+        window = MainWindow()
+        setup = window.setup_widget
+        req = setup.build_launch_request()
+
+        # Mock runner.start_operation so it does not spawn a background process
+        with patch.object(window._runner, "start_operation"):
+            window._on_resolve_requested(req)
+            # Verify controls locked immediately and synchronously
+            self.assertFalse(setup.combo_mode.isEnabled())
+            self.assertFalse(setup.combo_agent.isEnabled())
+            self.assertFalse(setup.combo_tier.isEnabled())
+            self.assertFalse(setup.edit_sequence.isEnabled())
+            self.assertFalse(setup.btn_resolve.isEnabled())
+            self.assertFalse(setup.btn_run.isEnabled())
+            self.assertTrue(setup.btn_terminate.isEnabled())
+
+            # Finish process
+            window._on_process_finished(0)
+            self.assertTrue(setup.combo_mode.isEnabled())
+            self.assertTrue(setup.combo_agent.isEnabled())
+            self.assertTrue(setup.btn_resolve.isEnabled())
+            self.assertFalse(setup.btn_terminate.isEnabled())
+        window.close()
+
+    def test_25_stale_preflight_verdict_cannot_authorize_while_operation_active(self):
+        """Calling set_preflight_verdict(True) while operation_active=True never enables Run."""
+        window = MainWindow()
+        setup = window.setup_widget
+
+        setup.set_operation_active(True)
+        # Preflight response arrives while worker operation is still finalizing
+        setup.set_preflight_verdict(True)
+        self.assertFalse(setup.btn_run.isEnabled(), "Run button must not enable while operation_active is True")
+
+        # Once operation completes, Run enables only if verdict was True
+        setup.set_operation_active(False)
+        self.assertTrue(setup.btn_run.isEnabled())
+        window.close()
+
+    def test_26_request_edits_invalidate_stored_verdict_and_disable_run(self):
+        """Editing request after successful preflight invalidates verdict and disables Run."""
+        window = MainWindow()
+        setup = window.setup_widget
+
+        setup.set_operation_active(False)
+        setup.set_preflight_verdict(True)
+        self.assertTrue(setup.btn_run.isEnabled())
+
+        # User edits a field
+        setup.edit_sequence.setText("MODIFIED_SEQ")
+        self.assertFalse(setup.btn_run.isEnabled())
+        self.assertFalse(setup._can_run)
+        window.close()
 
 
 if __name__ == "__main__":
