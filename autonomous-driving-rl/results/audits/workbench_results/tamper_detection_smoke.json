@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "tampered_run_id": "b2_tampered_run_copy",
+  "integrity_verdict": "FAILED",
+  "mismatching_artifacts": [
+    "episodes.csv"
+  ],
+  "auto_repair_attempted": false
+}

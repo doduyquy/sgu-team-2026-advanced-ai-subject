@@ -1,14 +1,20 @@
 """
-Live Run Monitor Widget (Gate 7.5B).
+Live Run Monitor Widget (Gate 7.5B Pass B2).
 
 Consumes exclusively LauncherEventV1 messages and ExecutionReport:
 - Displays: run ID, run status, current episode, total episodes, current step,
   route completion, speed km/h, latest event message.
 - Shows chronological event log and execution results summary.
+- Embedded live Matplotlib charts:
+  1. Route Completion vs Decision Step (sampled LauncherEventV1 progress)
+  2. Speed (km/h) vs Decision Step (sampled LauncherEventV1 progress)
+- Strictly decoupled from simulation internals; consumes only passive telemetry.
 """
 
 from typing import Any, Dict, List, Optional
 
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QGroupBox,
@@ -16,10 +22,13 @@ from PySide6.QtWidgets import (
     QLabel,
     QProgressBar,
     QSplitter,
+    QTabWidget,
     QTextEdit,
     QVBoxLayout,
     QWidget,
 )
+
+from src.workbench.live_telemetry import LiveTelemetryBufferV1
 
 
 class RunMonitorWidget(QWidget):
@@ -27,6 +36,7 @@ class RunMonitorWidget(QWidget):
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
+        self._telemetry_buffer = LiveTelemetryBufferV1()
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -66,13 +76,28 @@ class RunMonitorWidget(QWidget):
 
         splitter = QSplitter(Qt.Orientation.Vertical)
 
+        # Matplotlib Live Charts Tab / Area
+        charts_group = QGroupBox("Live Sampled Traces (Sampled LauncherEventV1 progress telemetry)")
+        charts_layout = QVBoxLayout(charts_group)
+
+        self.figure = Figure(figsize=(7, 3), dpi=90)
+        self.canvas = FigureCanvasQTAgg(self.figure)
+        self.ax_route = self.figure.add_subplot(1, 2, 1)
+        self.ax_speed = self.figure.add_subplot(1, 2, 2)
+        self._setup_axes()
+        charts_layout.addWidget(self.canvas)
+        splitter.addWidget(charts_group)
+
+        # Log & Results Splitter
+        lower_splitter = QSplitter(Qt.Orientation.Horizontal)
+
         # Event log
         log_group = QGroupBox("Chronological Telemetry Log (LauncherEventV1)")
         log_layout = QVBoxLayout(log_group)
         self.text_event_log = QTextEdit()
         self.text_event_log.setReadOnly(True)
         log_layout.addWidget(self.text_event_log)
-        splitter.addWidget(log_group)
+        lower_splitter.addWidget(log_group)
 
         # Execution results overview
         results_group = QGroupBox("Execution Results Summary")
@@ -81,11 +106,28 @@ class RunMonitorWidget(QWidget):
         self.text_results.setReadOnly(True)
         self.text_results.setPlaceholderText("Results will appear here upon experiment completion.")
         results_layout.addWidget(self.text_results)
-        splitter.addWidget(results_group)
+        lower_splitter.addWidget(results_group)
 
+        splitter.addWidget(lower_splitter)
         main_layout.addWidget(splitter)
 
+    def _setup_axes(self) -> None:
+        self.ax_route.clear()
+        self.ax_route.set_title("Route Completion vs Decision Step\n(Sampled progress)", fontsize=9)
+        self.ax_route.set_xlabel("Decision Step", fontsize=8)
+        self.ax_route.set_ylabel("Route Completion", fontsize=8)
+        self.ax_route.set_ylim(-0.05, 1.05)
+        self.ax_route.grid(True, linestyle="--", alpha=0.6)
+
+        self.ax_speed.clear()
+        self.ax_speed.set_title("Speed (km/h) vs Decision Step\n(Sampled progress)", fontsize=9)
+        self.ax_speed.set_xlabel("Decision Step", fontsize=8)
+        self.ax_speed.set_ylabel("Speed (km/h)", fontsize=8)
+        self.ax_speed.grid(True, linestyle="--", alpha=0.6)
+        self.figure.tight_layout()
+
     def reset_monitor(self, run_id: Optional[str] = None) -> None:
+        self._telemetry_buffer.reset()
         self.lbl_run_id.setText(f"Run ID: {run_id or '—'}")
         self.lbl_run_status.setText("Status: STARTING")
         self.lbl_episode.setText("Episode: 0 / 0")
@@ -96,6 +138,8 @@ class RunMonitorWidget(QWidget):
         self.progress_bar.setValue(0)
         self.text_event_log.clear()
         self.text_results.clear()
+        self._setup_axes()
+        self.canvas.draw_idle()
 
     def handle_launcher_event(self, event_data: Dict[str, Any]) -> None:
         """Processes a single LauncherEventV1 payload."""
@@ -109,6 +153,9 @@ class RunMonitorWidget(QWidget):
         speed = event.get("speed_kmh")
         message = event.get("message", "")
         timestamp = event.get("timestamp_utc") or event.get("timestamp", "")
+
+        # Update in-memory telemetry buffer
+        self._telemetry_buffer.handle_event(event)
 
         if run_id:
             self.lbl_run_id.setText(f"Run ID: {run_id}")
@@ -132,14 +179,36 @@ class RunMonitorWidget(QWidget):
 
         if event_type == "RUN_STARTED":
             self.lbl_run_status.setText("Status: RUNNING")
+            self._setup_axes()
+            self.canvas.draw_idle()
+        elif event_type == "EPISODE_STARTED":
+            self._setup_axes()
+            self.canvas.draw_idle()
+        elif event_type == "EPISODE_PROGRESS":
+            self._update_live_charts()
         elif event_type == "RUN_FINISHED":
             self.lbl_run_status.setText("Status: FINISHED")
             self.progress_bar.setValue(100)
+            self._update_live_charts()
         elif event_type == "RUN_FAILED":
             self.lbl_run_status.setText("Status: FAILED")
+        elif event_type == "RUN_INTERRUPTED":
+            self.lbl_run_status.setText("Status: INTERRUPTED")
 
         log_line = f"[{timestamp}] {event_type}: {message}"
         self.text_event_log.append(log_line)
+
+    def _update_live_charts(self) -> None:
+        """Renders current episode sampled trace on Matplotlib canvas."""
+        trace = self._telemetry_buffer.current_episode_trace
+        if not trace or not trace.step_indices:
+            return
+
+        self._setup_axes()
+        self.ax_route.plot(trace.step_indices, trace.route_completions, color="#1f77b4", marker="o", markersize=3, label="Route")
+        self.ax_speed.plot(trace.step_indices, trace.speeds_kmh, color="#2ca02c", marker="o", markersize=3, label="Speed")
+        self.figure.tight_layout()
+        self.canvas.draw_idle()
 
     def handle_execution_report(self, report_payload: Dict[str, Any]) -> None:
         """Displays execution summary once run completes."""
@@ -161,15 +230,31 @@ class RunMonitorWidget(QWidget):
 
         if summary:
             lines.append("")
-            lines.append("--- Summary Metrics ---")
-            mean_route = summary.get("mean_route_completion")
-            success_rate = summary.get("success_rate")
-            mean_reward = summary.get("mean_total_reward")
+            lines.append("--- Overall Benchmark Metrics (summary.json) ---")
+            overall = summary.get("overall_metrics", {})
+            clean_success = overall.get("clean_success_rate")
+            safety_fail = overall.get("safety_failure_rate")
+            mean_route = overall.get("mean_final_route_completion")
+            median_route = overall.get("median_final_route_completion")
+            mean_time = overall.get("mean_time_to_clean_success_s")
+
+            if clean_success is not None:
+                lines.append(f"  Clean Success Rate:            {clean_success * 100:.1f}%")
+            if safety_fail is not None:
+                lines.append(f"  Safety Failure Rate:           {safety_fail * 100:.1f}%")
             if mean_route is not None:
-                lines.append(f"  Mean Route Completion: {mean_route * 100:.1f}%")
-            if success_rate is not None:
-                lines.append(f"  Success Rate:          {success_rate * 100:.1f}%")
-            if mean_reward is not None:
-                lines.append(f"  Mean Total Reward:     {mean_reward:.2f}")
+                lines.append(f"  Mean Final Route Completion:   {mean_route * 100:.1f}%")
+            if median_route is not None:
+                lines.append(f"  Median Final Route Completion: {median_route * 100:.1f}%")
+            if mean_time is not None:
+                lines.append(f"  Mean Time to Clean Success:    {mean_time:.2f} s")
+            else:
+                lines.append(f"  Mean Time to Clean Success:    N/A — no clean-success samples")
+
+            lines.append("")
+            lines.append("--- Diagnostic / Training Signals (NOT ranking scores) ---")
+            mean_ret = summary.get("mean_total_reward") or overall.get("mean_episode_return")
+            if mean_ret is not None:
+                lines.append(f"  Diagnostic Mean Episode Return: {mean_ret:.2f}")
 
         self.text_results.setText("\n".join(lines))

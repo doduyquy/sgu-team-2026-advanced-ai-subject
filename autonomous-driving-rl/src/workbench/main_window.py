@@ -34,6 +34,7 @@ from src.workbench.widgets.agent_explorer_widget import AgentExplorerWidget
 from src.workbench.widgets.case_explorer_widget import CaseExplorerWidget
 from src.workbench.widgets.experiment_setup_widget import ExperimentSetupWidget
 from src.workbench.widgets.plan_preflight_widget import PlanAndPreflightWidget
+from src.workbench.widgets.results_widget import ResultsWidget
 from src.workbench.widgets.run_monitor_widget import RunMonitorWidget
 
 
@@ -77,6 +78,10 @@ class MainWindow(QMainWindow):
         # Tab 5: Case Explorer
         self.case_explorer_widget = CaseExplorerWidget(self._core_adapter)
         self.tab_widget.addTab(self.case_explorer_widget, "5. Case Explorer")
+
+        # Tab 6: Results Browser (Pass B2)
+        self.results_widget = ResultsWidget()
+        self.tab_widget.addTab(self.results_widget, "6. Results")
 
         main_layout.addWidget(self.tab_widget)
 
@@ -178,6 +183,13 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(f"Operation {op} blocked by preflight safety check.")
         elif success:
             self.status_bar.showMessage(f"Operation {op} completed successfully.")
+            # Pass B2: Auto-refresh and select completed run in Results tab
+            run_id = payload.get("run_id")
+            if run_id:
+                try:
+                    self.results_widget.select_run_by_id(run_id)
+                except Exception:
+                    pass
         else:
             self.status_bar.showMessage(f"Operation {op} failed.")
 
