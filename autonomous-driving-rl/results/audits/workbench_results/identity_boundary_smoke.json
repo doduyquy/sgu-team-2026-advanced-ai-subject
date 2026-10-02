@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "integrity_run_id_mismatch_rejected": true,
+  "path_traversal_rejected": true
+}

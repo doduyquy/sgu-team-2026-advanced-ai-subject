@@ -62,6 +62,12 @@ def build_workbench_results_contract_core(
             "wandb_sync_sha256",
         ],
         "incomplete_run_semantics": "RUNNING / INITIALIZING / INTERRUPTED / FAILED runs without final summary are NOT_FINAL, not corrupted",
+        "trust_gating_rule": "ONLY_INTEGRITY_VERIFIED_COMPLETE_RUNS_MAY_BE_PRESENTED_AS_AUTHORITATIVE_FINAL_RESULTS",
+        "untrusted_states_policy": {
+            "FAILED": "UNTRUSTED_ARTIFACT_CONTENT_STRONG_WARNING_NO_AUTHORITATIVE_LABELS",
+            "UNVERIFIED": "UNVERIFIED_ARTIFACT_CONTENT_NO_AUTHORITATIVE_OR_VERIFIED_LABELS",
+            "NOT_FINAL": "PROVISIONAL_OR_PRE_FINALIZATION_NO_FINAL_METRIC_CLAIMS",
+        },
     }
     if custom_integrity_policy:
         default_integrity_policy.update(custom_integrity_policy)

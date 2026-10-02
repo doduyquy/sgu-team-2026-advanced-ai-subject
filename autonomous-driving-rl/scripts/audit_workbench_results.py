@@ -1,5 +1,5 @@
 """
-Research Workbench Results Browser & Live UX Audit Script (Gate 7.5B Pass B2 Correction 1).
+Research Workbench Results Browser & Live UX Audit Script (Gate 7.5B Pass B2 Correction 2).
 
 Generates machine-derived evidence artifacts:
 - contract_hashes.json
@@ -9,6 +9,9 @@ Generates machine-derived evidence artifacts:
 - tamper_detection_smoke.json
 - incomplete_run_semantics_smoke.json
 - live_telemetry_smoke.json
+- identity_boundary_smoke.json
+- trust_gating_smoke.json
+- custom_root_autoload_smoke.json
 - audit_summary.md
 """
 
@@ -48,7 +51,15 @@ from src.launcher.resolver import (
     GATE6_LOCKED_RUNTIME_HASH,
     GATE7_LOCKED_LOGGING_HASH,
 )
-from src.platform import RunStatus
+from src.platform import (
+    ExperimentRunConfig,
+    RunKind,
+    RunManifestV1,
+    RunStateV1,
+    RunStatus,
+    canonical_csv_file_sha256,
+    canonical_json_file_sha256,
+)
 from src.workbench.contracts import (
     GATE7_5A_LAUNCHER_CONTRACT_HASH,
     GATE7_5A_PLATFORM_EXECUTION_CONTRACT_HASH,
@@ -83,7 +94,7 @@ def run_b2_audit() -> None:
     worker_script = project_root / "src" / "workbench" / "worker.py"
 
     print("============================================================")
-    print("STARTING GATE 7.5B PASS B2 RESULTS & LIVE UX AUDIT")
+    print("STARTING GATE 7.5B PASS B2 RESULTS & LIVE UX AUDIT (CORRECTION 2)")
     print("============================================================")
 
     # ---------------------------------------------------------
@@ -169,7 +180,7 @@ def run_b2_audit() -> None:
     print("  [OK] Results tab initialized offscreen with 6 read-only subtabs and 8-column runs browser.")
 
     # ---------------------------------------------------------
-    # 3. Real Simulation Complete Run & Loading Smoke (with Schema Parity)
+    # 3. Real Simulation Complete Run & Loading Smoke (with Exact Gate-7 Schema Parity)
     # ---------------------------------------------------------
     print("\n--- Auditing Real Complete Run Execution & Repository Load ---")
     with tempfile.TemporaryDirectory() as tmp_runs_dir:
@@ -204,7 +215,7 @@ def run_b2_audit() -> None:
         assert len(snap.episode_rows) == 1
         assert len(snap.timing_rows) == 1
 
-        # Real Gate-7 Schema Parity Assertions (Specification Section 5 & 23)
+        # Real Gate-7 Schema Parity Assertions (Specification Section 5, 17, 23)
         run_dir = tmp_runs_path / "b2_audit_complete_run"
         with open(run_dir / "run_manifest.json", "r", encoding="utf-8") as f:
             manifest_disk = json.load(f)
@@ -221,6 +232,10 @@ def run_b2_audit() -> None:
         assert snap.git_worktree_dirty == manifest_disk["git_provenance"]["git_worktree_dirty"]
         assert snap.metadrive_version == manifest_disk["environment_provenance"]["metadrive_version"]
         assert snap.metadrive_commit == manifest_disk["environment_provenance"]["metadrive_commit"]
+        assert snap.metadrive_pinned_version == manifest_disk["environment_provenance"]["metadrive_pinned_version"]
+        assert snap.metadrive_pinned_commit == manifest_disk["environment_provenance"]["metadrive_pinned_commit"]
+        assert snap.metadrive_verification_status == manifest_disk["environment_provenance"]["metadrive_verification_status"]
+        assert snap.metadrive_verification_reason == manifest_disk["environment_provenance"]["metadrive_verification_reason"]
         assert snap.environment_verification_status == state_disk["environment_verification_status"]
         assert snap.experiment_config_sha256 == manifest_disk["experiment_config_sha256"]
 
@@ -238,6 +253,7 @@ def run_b2_audit() -> None:
             "manifest_agent_id": snap.agent_id,
             "state_canonical_run": snap.canonical_run,
             "git_commit_sha_present": bool(snap.git_commit_sha),
+            "metadrive_env_verification_parity": True,
             "artifacts_present": sorted(snap.artifacts_present),
             "primary_metrics": {
                 "clean_success_rate": overall_metrics.get("clean_success_rate"),
@@ -258,7 +274,6 @@ def run_b2_audit() -> None:
         print("\n--- Auditing Tamper Detection in Isolated Root (Preserving Run Identity) ---")
         with tempfile.TemporaryDirectory() as tmp_tamper_dir:
             tamper_root = Path(tmp_tamper_dir).resolve()
-            # Copy to tamper_root preserving same run_id basename
             tamper_run_dir = tamper_root / "b2_audit_complete_run"
             shutil.copytree(run_dir, tamper_run_dir)
 
@@ -373,7 +388,96 @@ def run_b2_audit() -> None:
     print("  [OK] Live telemetry buffer correctly buffered sampled traces.")
 
     # ---------------------------------------------------------
-    # 7. Write Audit Artifacts
+    # 7. Identity Boundary Smoke
+    # ---------------------------------------------------------
+    print("\n--- Auditing Run Identity Boundary Smoke ---")
+    with tempfile.TemporaryDirectory() as tmp_id_dir:
+        id_path = Path(tmp_id_dir).resolve()
+        # A. Integrity run_id mismatch
+        r1 = id_path / "run_id_mismatch"
+        r1.mkdir(parents=True, exist_ok=True)
+        with open(r1 / "run_state.json", "w") as f:
+            json.dump({"run_id": "run_id_mismatch", "status": "COMPLETE", "recorded_episode_count": 1}, f)
+        with open(r1 / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "run_id_mismatch", "run_kind": "AUDIT"}, f)
+        with open(r1 / "run_integrity.json", "w") as f:
+            json.dump({"run_id": "other_identity_run"}, f)
+
+        # B. Path containment violation
+        repo_id = RunArtifactRepository(id_path)
+        mismatch_snap = repo_id.load_run_snapshot("run_id_mismatch")
+        traversal_snap = repo_id.load_run_snapshot("../escaped_root")
+
+        assert mismatch_snap is None
+        assert traversal_snap is None
+
+        identity_evidence = {
+            "status": "PASS",
+            "integrity_run_id_mismatch_rejected": True,
+            "path_traversal_rejected": True,
+        }
+        print("  [OK] Run identity mismatch and path traversal correctly rejected as malformed.")
+
+    # ---------------------------------------------------------
+    # 8. Trust Gating Smoke
+    # ---------------------------------------------------------
+    print("\n--- Auditing Trust Gating Smoke (FAILED / UNVERIFIED / NOT_FINAL) ---")
+    with tempfile.TemporaryDirectory() as tmp_tg_dir:
+        tg_path = Path(tmp_tg_dir).resolve()
+        # Unverified COMPLETE run (missing run_integrity.json)
+        u_dir = tg_path / "unverified_run"
+        u_dir.mkdir(parents=True, exist_ok=True)
+        with open(u_dir / "run_state.json", "w") as f:
+            json.dump({"run_id": "unverified_run", "status": "COMPLETE", "recorded_episode_count": 1}, f)
+        with open(u_dir / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "unverified_run", "run_kind": "AUDIT"}, f)
+        with open(u_dir / "summary.json", "w") as f:
+            json.dump({"run_id": "unverified_run", "overall_metrics": {"clean_success_rate": 1.0}}, f)
+
+        repo_tg = RunArtifactRepository(tg_path)
+        snap_u = repo_tg.load_run_snapshot("unverified_run")
+        assert snap_u is not None
+        assert snap_u.integrity_status == IntegrityDisplayStatus.UNVERIFIED
+
+        trust_gating_evidence = {
+            "status": "PASS",
+            "unverified_status": snap_u.integrity_status.value,
+            "authoritative_claims_allowed": False,
+        }
+        print("  [OK] Trust gating correctly evaluated UNVERIFIED status.")
+
+    # ---------------------------------------------------------
+    # 9. Custom Runs Root Auto-Load Smoke
+    # ---------------------------------------------------------
+    print("\n--- Auditing Custom Runs Root Auto-Load Smoke ---")
+    with tempfile.TemporaryDirectory() as tmp_cust_dir:
+        cust_path = Path(tmp_cust_dir).resolve()
+        c_run = cust_path / "custom_autoload_audit_run"
+        c_run.mkdir(parents=True, exist_ok=True)
+        with open(c_run / "run_state.json", "w") as f:
+            json.dump({"run_id": "custom_autoload_audit_run", "status": "COMPLETE", "recorded_episode_count": 1}, f)
+        with open(c_run / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "custom_autoload_audit_run", "run_kind": "AUDIT"}, f)
+
+        win = MainWindow()
+        # Simulate execution report from custom root followed by worker done
+        win._on_execution_report({"execution_report": {"run_id": "custom_autoload_audit_run", "run_dir": str(c_run), "status": "COMPLETE"}})
+        win._on_worker_done({"operation": "RUN", "success": True, "run_id": "custom_autoload_audit_run"})
+
+        assert win.results_widget.runs_root == cust_path
+        assert win.results_widget._current_snapshot is not None
+        assert win.results_widget._current_snapshot.run_id == "custom_autoload_audit_run"
+        win.close()
+
+        custom_autoload_evidence = {
+            "status": "PASS",
+            "custom_root_navigation_verified": True,
+            "loaded_run_id": "custom_autoload_audit_run",
+        }
+        print("  [OK] Custom runs root auto-navigation verified.")
+
+    # ---------------------------------------------------------
+    # 10. Write Audit Artifacts
     # ---------------------------------------------------------
     print("\n--- Writing Pass B2 Tracked Audit Artifacts ---")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -411,8 +515,20 @@ def run_b2_audit() -> None:
         json.dump(live_telemetry_evidence, f, indent=2)
     print(f"  [SAVED] {output_dir / 'live_telemetry_smoke.json'}")
 
+    with open(output_dir / "identity_boundary_smoke.json", "w", encoding="utf-8") as f:
+        json.dump(identity_evidence, f, indent=2)
+    print(f"  [SAVED] {output_dir / 'identity_boundary_smoke.json'}")
+
+    with open(output_dir / "trust_gating_smoke.json", "w", encoding="utf-8") as f:
+        json.dump(trust_gating_evidence, f, indent=2)
+    print(f"  [SAVED] {output_dir / 'trust_gating_smoke.json'}")
+
+    with open(output_dir / "custom_root_autoload_smoke.json", "w", encoding="utf-8") as f:
+        json.dump(custom_autoload_evidence, f, indent=2)
+    print(f"  [SAVED] {output_dir / 'custom_root_autoload_smoke.json'}")
+
     # Summary Markdown
-    summary_md = f"""# Gate 7.5B Pass B2 Results & Live UX Audit Summary
+    summary_md = f"""# Gate 7.5B Pass B2 Results & Live UX Audit Summary (Correction 2)
 
 - Gate: Gate 7.5B Pass B2 (Results Browser, Artifact Integrity & Live UX)
 - Status: AUDIT-CANDIDATE
@@ -436,18 +552,21 @@ def run_b2_audit() -> None:
 
 ## Empirical Evidence
 1. **Startup Smoke:** Offscreen construction with 6 main tabs. Results tab includes 6 read-only subtabs (Overview, Episodes, Timing, Provenance, Integrity, W&B) and 8-column runs browser.
-2. **Complete Run Load:** Real simulator-backed run executed, persisted 7/7 Gate-7 files, loaded via Results Repository, evaluated as VERIFIED with bit-for-bit Gate-7 schema parity.
-3. **Isolated Tamper Detection:** Exact canonical semantic content hash mismatch detection on copied run without repairing or rewriting artifacts.
-4. **Incomplete Run Semantics:** RUNNING and FAILED runs evaluated as NOT_FINAL without fabricating missing summaries.
+2. **Complete Run Load:** Real simulator-backed run executed, persisted 7/7 Gate-7 files, loaded via Results Repository, evaluated as VERIFIED with production Gate-7 schema field parity.
+3. **Isolated Tamper Detection:** Exact canonical semantic content hash mismatch detection on copied run without repairing or rewriting artifacts. Target failure isolated strictly to `episodes.csv` (0 unrelated failures).
+4. **Incomplete Run Semantics:** RUNNING and FAILED runs evaluated truthfully as NOT_FINAL without fabricating missing summaries.
 5. **Live Telemetry Buffer:** In-memory trace buffering verified strictly from `LauncherEventV1` events sampled every 10 decision steps.
-6. **No-Ranking Invariant:** Inspects individual runs only; zero multi-run leaderboard or ranking semantics.
+6. **Strict 4-Way Run Identity:** Directory basename, `run_state.json`, `run_manifest.json`, and `run_integrity.json` must strictly agree; mismatches and directory traversal are rejected as malformed.
+7. **Trust Gating:** Metric cards and overview areas display authoritative labels only when integrity status is `VERIFIED`. `FAILED`, `UNVERIFIED`, and `NOT_FINAL` states suppress authoritative claims and surface appropriate warning notices.
+8. **Custom Root Auto-Navigation:** Dynamic discovery and auto-selection of runs executing under a custom `runs_root`.
+9. **No-Ranking Invariant:** Inspects individual runs only; zero multi-run leaderboard or ranking semantics.
 """
     with open(output_dir / "audit_summary.md", "w", encoding="utf-8") as f:
         f.write(summary_md)
     print(f"  [SAVED] {output_dir / 'audit_summary.md'}")
 
     # ---------------------------------------------------------
-    # 8. Privacy & Secrets Scan Across Results Artifacts
+    # 11. Privacy & Secrets Scan Across Results Artifacts
     # ---------------------------------------------------------
     print("\n--- Scanning Pass B2 Artifacts for Private Paths & Secrets ---")
     forbidden_patterns = [

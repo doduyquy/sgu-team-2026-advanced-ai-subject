@@ -16,18 +16,20 @@ Deleting `src/workbench/` leaves every completed experiment run on disk complete
 Gate 7 local run directories are the sole scientific authority:
 - `RunArtifactRepository` (`src/workbench/results_repository.py`) discovers and inspects runs on disk without modifying, repairing, appending to, or deleting any files.
 - Consumes exact Gate-7 production schemas: `RunManifestV1`, `RunStateV1`, `ExperimentRunConfig.to_dict()`, and `RunIntegrityRecord`.
-- Enforces strict run identity parity across directory basename, `run_state.json`, `run_manifest.json`, and `run_integrity.json`.
+- Enforces strict 4-way run identity parity across directory basename, `run_state.json`, `run_manifest.json`, and `run_integrity.json`.
 - Enforces strict path containment preventing directory traversal outside the configured runs root.
 - `RunArtifactSnapshotV1` is an immutable, read-only view model representing a single run folder.
 - All presentation tables in `ResultsWidget` (`src/workbench/widgets/results_widget.py`) enforce `QAbstractItemView.EditTrigger.NoEditTriggers`.
+- Single-sources episode table columns directly from Gate-7 `EPISODE_CSV_COLUMNS` (31 columns).
+- Single-sources timing table columns directly from `dataclasses.fields(EpisodeTimingRecord)` (8 fields).
 
 ---
 
 ## 2. Integrity Status Model & Trust-Gating
 The Workbench defines four mutually exclusive integrity display states:
 1. **`VERIFIED`:** Run lifecycle status is `COMPLETE`, all 7 core Gate-7 artifacts are present, `run_integrity.json` exists, and every semantic hash matches observed disk contents via Gate-7 canonical semantic content hash verification (`canonical_json_file_sha256`, `canonical_csv_file_sha256`). Authoritative metric cards are displayed normally.
-2. **`NOT_FINAL`:** Run lifecycle status is `INITIALIZING`, `RUNNING`, `INTERRUPTED`, or `FAILED`. Incomplete runs truthfully lack final summary or integrity records and are never misclassified as corrupted.
-3. **`UNVERIFIED`:** Run claims `COMPLETE` status but lacks `run_integrity.json`.
+2. **`NOT_FINAL`:** Run lifecycle status is `INITIALIZING`, `RUNNING`, `INTERRUPTED`, or `FAILED`. Incomplete runs truthfully lack final summary or integrity records and are never misclassified as corrupted. Any pre-finalization metrics are explicitly labeled `PROVISIONAL / NOT FINAL`.
+3. **`UNVERIFIED`:** Run claims `COMPLETE` status but lacks `run_integrity.json`. The UI displays an explicit notice stating final integrity is unavailable and suppresses authoritative claims.
 4. **`FAILED`:** Run claims `COMPLETE` but one or more artifact fingerprints mismatch observed disk contents.
    - **Trust-Gating Behavior:** Potentially tampered summary values are never displayed under an authoritative heading. The UI surfaces an explicit `UNTRUSTED — INTEGRITY FAILED` state with prominent warning banner. No auto-repair or hash regeneration is ever performed.
 
@@ -41,6 +43,7 @@ The Workbench defines four mutually exclusive integrity display states:
   - `median_final_route_completion`
   - `mean_time_to_clean_success_s` (displayed as `N/A — no clean-success samples` when `None`, never converted to zero).
 - **Stored Macro Metrics:** When `summary.json["macro_metrics"]` is present, it is displayed directly without recomputation.
+- **Outcome Breakdown Rates:** All 9 mutually-exclusive Gate-4 outcome rates (`success_rate`, `timeout_rate`, `crash_human_rate`, `crash_vehicle_rate`, `crash_object_rate`, `crash_building_rate`, `crash_sidewalk_rate`, `out_of_road_rate`, `unknown_termination_rate`) displayed in the overview breakdown bar chart directly from `summary.json`.
 - **Diagnostic / Training Signals:** Clearly labeled as `Diagnostic / training signal — NOT a benchmark ranking score`:
   - `mean_episode_return`
   - `episode_return`
@@ -77,17 +80,17 @@ The Workbench defines four mutually exclusive integrity display states:
 | `workbench_contract_sha256` (B1) | `e5711485e6571a04c336739ebc6f285213a1d9631fa29820a89707b37875a82b` | PASS |
 | `platform_workbench_contract_sha256` (B1) | `36f3a0891a9153df12a8b53b01f2064afbf848eafda462149a768ec989199e47` | PASS |
 
-### Candidate Gate 7.5B Pass B2 Hashes (Recomputed Semantic Wording)
-- **`workbench_results_contract_sha256`**: `25716cc6aa0d93b2e6a282e51a7e23b37b050a975654ae2852726c2e86828244`
-- **`platform_workbench_results_contract_sha256`**: `b53e56b6344c53299ffdee8f1402e4fccb16c375eeb08205897cf909effd89a3`
+### Candidate Gate 7.5B Pass B2 Hashes (Recomputed Semantic Wording & Trust Rules)
+- **`workbench_results_contract_sha256`**: `21c2c541a891967d9206e2dc86781f1bfc62b794c13e7e1ee1c3732676e38429`
+- **`platform_workbench_results_contract_sha256`**: `a241e2890b65290e28d717714123625bc2809100fe3287f2fb3e14dba8d6e433`
 
 ---
 
 ## 6. Verification & Regression Evidence
 
 ### A. Pass B2 Unit Tests (`tests/test_workbench_results.py`)
-- 33 dedicated tests covering real Gate-7 schema parsing, run identity parity, path containment, tamper detection, trust-gated primary metrics, custom runs root auto-load, complete episodes/timing/provenance/macro columns, NoEditTriggers, live telemetry buffering, and contract determinism.
-- All 33 tests passed cleanly.
+- 42 dedicated tests covering real Gate-7 schema parsing, strict 4-way run identity parity, path containment, isolated tamper detection, trust-gated primary metrics, custom runs root auto-load, single-source 31-column episode schema, single-source 8-field timing schema, detailed environment provenance, NoEditTriggers, live telemetry buffering, and contract determinism.
+- All 42 tests passed cleanly.
 
 ### B. Total Platform Regression
 - `tests.test_agent_contract`: 37 tests (PASS)
@@ -95,18 +98,21 @@ The Workbench defines four mutually exclusive integrity display states:
 - `tests.test_evaluation_protocol`: 20 tests (PASS)
 - `tests.test_reward_metrics`: 16 tests (PASS)
 - `tests.test_workbench`: 29 tests (PASS)
-- `tests.test_workbench_results`: 33 tests (PASS)
+- `tests.test_workbench_results`: 42 tests (PASS)
 - `tests.test_logging_contract`: 47 tests (PASS)
 - `tests.test_launcher_core`: 97 tests (PASS)
-- **Total Suite:** **289 tests**, 0 failures, 0 errors.
+- **Total Suite:** **298 tests**, 0 failures, 0 errors.
 
 ### C. Machine-Derived Audit Smokes (`scripts/audit_workbench_results.py`)
 1. **Startup Smoke (`results_startup_smoke.json`):** Offscreen construction with 6 main tabs, 6 read-only results subtabs, and 8-column runs browser.
-2. **Complete Run Load Smoke (`complete_run_load_smoke.json`):** Real simulation run executed, loaded from disk, evaluated as `VERIFIED` with exact Gate-7 schema parity.
-3. **Isolated Tamper Detection Smoke (`tamper_detection_smoke.json`):** Exact canonical semantic content hash mismatch detection on copied run without repairing or rewriting artifacts.
+2. **Complete Run Load Smoke (`complete_run_load_smoke.json`):** Real simulation run executed, loaded from disk, evaluated as `VERIFIED` with exact Gate-7 schema parity and full environment verification provenance.
+3. **Isolated Tamper Detection Smoke (`tamper_detection_smoke.json`):** Exact canonical semantic content hash mismatch detection on copied run without repairing or rewriting artifacts. Target failure isolated strictly to `episodes.csv` (0 unrelated failures).
 4. **Incomplete Run Semantics Smoke (`incomplete_run_semantics_smoke.json`):** `RUNNING` and `FAILED` runs evaluated truthfully as `NOT_FINAL`.
 5. **Live Telemetry Smoke (`live_telemetry_smoke.json`):** In-memory trace buffering verified strictly from `LauncherEventV1`.
-6. **Artifact Privacy Scan:** Verified 0 private machine paths or credentials persisted in audit artifacts.
+6. **Identity Boundary Smoke (`identity_boundary_smoke.json`):** Verified run identity mismatches across dir/manifest/state/integrity and directory traversals are rejected as malformed.
+7. **Trust Gating Smoke (`trust_gating_smoke.json`):** Verified non-VERIFIED runs suppress authoritative labels and surface appropriate trust warnings.
+8. **Custom Root Auto-Load Smoke (`custom_root_autoload_smoke.json`):** Verified automatic repository navigation and run selection when a run executes under a custom `runs_root`.
+9. **Artifact Privacy Scan:** Verified 0 private machine paths or credentials persisted in audit artifacts.
 
 ---
 

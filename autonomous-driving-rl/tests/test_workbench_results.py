@@ -1,5 +1,5 @@
 """
-Unit and Integration Tests for Research Workbench Results Browser, Artifact Integrity & Live UX (Gate 7.5B Pass B2 Correction 1).
+Unit and Integration Tests for Research Workbench Results Browser, Artifact Integrity & Live UX (Gate 7.5B Pass B2 Correction 2).
 
 Verifies:
 1. Run repository discovers valid run directories.
@@ -35,9 +35,18 @@ Verifies:
 31. FAILED integrity trust-gates primary metric display with prominent warning banner.
 32. Custom runs_root auto-loads without preconfiguring ResultsWidget.
 33. Stored macro_metrics in summary.json is displayed without recomputation.
+34. Strict 4-way run identity: COMPLETE run_integrity.run_id mismatch is rejected as malformed.
+35. Copied run with different directory basename without rewriting identity is rejected as malformed.
+36. Missing run_state.json or missing run_manifest.json is rejected as malformed.
+37. Malformed JSON in run_state or run_manifest is rejected cleanly without crashing.
+38. UNVERIFIED run displays warning and avoids authoritative claims.
+39. NOT_FINAL run with summary displays provisional notice and avoids final authoritative claims.
+40. Single-source episode table column names match EPISODE_CSV_COLUMNS exactly (31 columns).
+41. Single-source timing table column names match EpisodeTimingRecord dataclass fields exactly (8 fields).
+42. Full detailed MetaDrive environment provenance fields are exposed and match manifest.
 """
 
-from dataclasses import asdict
+import dataclasses
 import json
 import os
 from pathlib import Path
@@ -76,6 +85,7 @@ from src.platform import (
     canonical_json_file_sha256,
     canonical_json_sha256,
 )
+from src.platform.experiment_logging import EPISODE_CSV_COLUMNS, EpisodeTimingRecord
 from src.workbench.contracts import (
     GATE7_5A_LAUNCHER_CONTRACT_HASH,
     GATE7_5A_PLATFORM_EXECUTION_CONTRACT_HASH,
@@ -123,6 +133,7 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
         tamper_file: Optional[str] = None,
         omit_integrity: bool = False,
         macro_metrics: Optional[Dict[str, Any]] = None,
+        custom_integrity_run_id: Optional[str] = None,
     ) -> Path:
         """Helper to create a standard mock run directory matching exact Gate-7 schemas."""
         run_dir = self.runs_root / run_id
@@ -153,7 +164,14 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
             experiment_config_sha256=config.compute_config_sha256(),
             config=cfg_dict,
             git_provenance={"git_commit_sha": "abc12345", "git_worktree_dirty": False},
-            environment_provenance={"metadrive_version": "0.4.3", "metadrive_commit": "85e5dadc"},
+            environment_provenance={
+                "metadrive_version": "0.4.3",
+                "metadrive_commit": "85e5dadc",
+                "metadrive_pinned_version": "0.4.3",
+                "metadrive_pinned_commit": "85e5dadc",
+                "metadrive_verification_status": "EXACT_PIN_VERIFIED",
+                "metadrive_verification_reason": "Exact pin match",
+            },
             platform_contracts={"gate5": GATE5_LOCKED_BENCHMARK_HASH},
         )
 
@@ -199,7 +217,7 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
         with open(run_dir / "run_state.json", "w", encoding="utf-8") as f:
             json.dump(state.to_dict(), f, indent=2)
 
-        if status == "COMPLETE":
+        if status == "COMPLETE" or macro_metrics is not None:
             with open(run_dir / "summary.json", "w", encoding="utf-8") as f:
                 json.dump(summary_data, f, indent=2)
 
@@ -223,7 +241,7 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
 
             if not omit_integrity:
                 integrity_data = {
-                    "run_id": run_id,
+                    "run_id": custom_integrity_run_id or run_id,
                     "experiment_config_sha256": config.compute_config_sha256(),
                     "run_manifest_sha256": canonical_json_file_sha256(run_dir / "run_manifest.json"),
                     "episodes_sha256": canonical_csv_file_sha256(run_dir / "episodes.csv"),
@@ -531,7 +549,6 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
     def test_29_run_identity_parity_enforced(self):
         """Mismatch between dir basename, state run_id, or manifest run_id causes snapshot to be None."""
         run_dir = self._create_real_schema_run("identity_mismatch_run")
-        # Change manifest run_id to mismatch directory
         m_path = run_dir / "run_manifest.json"
         with open(m_path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -551,13 +568,15 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
         self.assertIsNone(repo.load_run_snapshot("sub/nested"))
 
     def test_31_failed_integrity_trust_gates_primary_metrics(self):
-        """When integrity fails, ResultsWidget displays UNTRUSTED warning banner."""
+        """When integrity fails, ResultsWidget displays UNTRUSTED warning banner and no Authoritative labels."""
         self._create_real_schema_run("untrusted_metrics_run", tamper_file="summary.json")
         widget = ResultsWidget(runs_root=self.runs_root)
         widget.show()
         widget.select_run_by_id("untrusted_metrics_run")
 
         self.assertIn("UNTRUSTED", widget.cards_group.title())
+        self.assertNotIn("Authoritative Primary", widget.cards_group.title())
+        self.assertNotIn("Authoritative", widget.chart_box.title())
         self.assertFalse(widget.lbl_trust_warning.isHidden())
         self.assertIn("CRITICAL WARNING", widget.lbl_trust_warning.text())
         widget.close()
@@ -569,7 +588,6 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
         custom_run_dir = custom_root / "custom_autoload_run"
         custom_run_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create real run in custom_root
         config = ExperimentRunConfig(
             run_kind=RunKind.AUDIT,
             benchmark_contract_sha256=GATE5_LOCKED_BENCHMARK_HASH,
@@ -615,15 +633,11 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
             json.dump(state.to_dict(), f)
 
         window = MainWindow()
-        # Initial root is default project runs/
         self.assertNotEqual(window.results_widget.runs_root, custom_root)
 
-        # 1. Execution report arrives with run_dir pointing to custom_root
         window._on_execution_report({"execution_report": {"run_id": "custom_autoload_run", "run_dir": str(custom_run_dir), "status": "COMPLETE"}})
-        # 2. Worker done arrives
         window._on_worker_done({"operation": "RUN", "success": True, "run_id": "custom_autoload_run"})
 
-        # Verify ResultsWidget updated its root to custom_root and selected the run
         self.assertEqual(window.results_widget.runs_root, custom_root)
         self.assertIsNotNone(window.results_widget._current_snapshot)
         self.assertEqual(window.results_widget._current_snapshot.run_id, "custom_autoload_run")
@@ -642,6 +656,121 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
         self.assertIn("clean_success_rate_macro: 0.85", text)
         self.assertIn("route_completion_macro: 0.92", text)
         widget.close()
+
+    def test_34_strict_integrity_run_id_mismatch_rejected_as_malformed(self):
+        """COMPLETE run where run_integrity.json has a different run_id is rejected as malformed."""
+        self._create_real_schema_run(
+            "integrity_id_mismatch_run",
+            status="COMPLETE",
+            custom_integrity_run_id="imposter_run_id",
+        )
+        repo = RunArtifactRepository(self.runs_root)
+        snap = repo.load_run_snapshot("integrity_id_mismatch_run")
+        self.assertIsNone(snap, "Run with run_integrity.run_id mismatch must be rejected as malformed")
+
+    def test_35_copied_run_with_different_basename_rejected_as_malformed(self):
+        """Copying a valid run directory to a different folder basename without rewriting identity is malformed."""
+        self._create_real_schema_run("original_run_id")
+        copied_dir = self.runs_root / "renamed_folder"
+        shutil.copytree(self.runs_root / "original_run_id", copied_dir)
+
+        repo = RunArtifactRepository(self.runs_root)
+        snap = repo.load_run_snapshot("renamed_folder")
+        self.assertIsNone(snap, "Copied run with mismatched directory basename must be rejected as malformed")
+
+    def test_36_missing_root_artifacts_rejected_as_malformed(self):
+        """Missing run_state.json or run_manifest.json returns None."""
+        run_dir = self.runs_root / "missing_artifacts_run"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        repo = RunArtifactRepository(self.runs_root)
+
+        # Neither exists
+        self.assertIsNone(repo.load_run_snapshot("missing_artifacts_run"))
+
+        # Only manifest exists
+        with open(run_dir / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "missing_artifacts_run"}, f)
+        self.assertIsNone(repo.load_run_snapshot("missing_artifacts_run"))
+
+        # Only state exists
+        (run_dir / "run_manifest.json").unlink()
+        with open(run_dir / "run_state.json", "w") as f:
+            json.dump({"run_id": "missing_artifacts_run"}, f)
+        self.assertIsNone(repo.load_run_snapshot("missing_artifacts_run"))
+
+    def test_37_malformed_json_in_root_artifacts_rejected(self):
+        """Corrupted JSON in root manifest or state returns None cleanly."""
+        run_dir = self._create_real_schema_run("corrupt_json_run")
+        repo = RunArtifactRepository(self.runs_root)
+
+        # Corrupt manifest
+        with open(run_dir / "run_manifest.json", "w") as f:
+            f.write("{ not valid json")
+        self.assertIsNone(repo.load_run_snapshot("corrupt_json_run"))
+
+        # Restore manifest, corrupt state
+        self._create_real_schema_run("corrupt_json_run")
+        with open(run_dir / "run_state.json", "w") as f:
+            f.write("[ not a dict ]")
+        self.assertIsNone(repo.load_run_snapshot("corrupt_json_run"))
+
+    def test_38_unverified_run_avoids_authoritative_claims(self):
+        """COMPLETE run missing run_integrity.json avoids Authoritative wording in UI."""
+        self._create_real_schema_run("unverified_ui_run", status="COMPLETE", omit_integrity=True)
+        widget = ResultsWidget(runs_root=self.runs_root)
+        widget.show()
+        widget.select_run_by_id("unverified_ui_run")
+
+        self.assertIn("UNVERIFIED", widget.cards_group.title())
+        self.assertNotIn("Authoritative", widget.cards_group.title())
+        self.assertFalse(widget.lbl_trust_warning.isHidden())
+        self.assertIn("NOTICE", widget.lbl_trust_warning.text())
+        widget.close()
+
+    def test_39_not_final_run_with_summary_displays_provisional_notice(self):
+        """RUNNING run with transient summary.json is displayed as provisional/not-final."""
+        # Create RUNNING run but inject summary.json
+        macro = {"clean_success_rate_macro": 1.0}
+        self._create_real_schema_run("provisional_run", status="RUNNING", macro_metrics=macro)
+        widget = ResultsWidget(runs_root=self.runs_root)
+        widget.show()
+        widget.select_run_by_id("provisional_run")
+
+        self.assertIn("PROVISIONAL", widget.cards_group.title())
+        self.assertNotIn("Authoritative", widget.cards_group.title())
+        self.assertFalse(widget.lbl_trust_warning.isHidden())
+        self.assertIn("provisional", widget.lbl_trust_warning.text().lower())
+        widget.close()
+
+    def test_40_episode_table_columns_single_sourced_from_platform(self):
+        """ResultsWidget episode columns match Gate-7 EPISODE_CSV_COLUMNS exactly."""
+        widget = ResultsWidget(runs_root=self.runs_root)
+        self.assertEqual(widget._episode_columns, list(EPISODE_CSV_COLUMNS))
+        self.assertEqual(len(widget._episode_columns), 31)
+        self.assertEqual(widget.table_episodes.columnCount(), 31)
+        widget.close()
+
+    def test_41_timing_table_columns_single_sourced_from_dataclass(self):
+        """ResultsWidget timing columns match EpisodeTimingRecord dataclass fields exactly."""
+        expected_fields = [f.name for f in dataclasses.fields(EpisodeTimingRecord)]
+        widget = ResultsWidget(runs_root=self.runs_root)
+        self.assertEqual(widget._timing_columns, expected_fields)
+        self.assertEqual(len(widget._timing_columns), 8)
+        self.assertEqual(widget.table_timing.columnCount(), 8)
+        widget.close()
+
+    def test_42_detailed_metadrive_provenance_parity(self):
+        """Snapshot view model extracts full environment verification fields from manifest."""
+        self._create_real_schema_run("env_prov_run")
+        repo = RunArtifactRepository(self.runs_root)
+        snap = repo.load_run_snapshot("env_prov_run")
+
+        self.assertEqual(snap.metadrive_version, "0.4.3")
+        self.assertEqual(snap.metadrive_commit, "85e5dadc")
+        self.assertEqual(snap.metadrive_pinned_version, "0.4.3")
+        self.assertEqual(snap.metadrive_pinned_commit, "85e5dadc")
+        self.assertEqual(snap.metadrive_verification_status, "EXACT_PIN_VERIFIED")
+        self.assertEqual(snap.metadrive_verification_reason, "Exact pin match")
 
 
 if __name__ == "__main__":

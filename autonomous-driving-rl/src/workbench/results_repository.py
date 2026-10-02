@@ -1,5 +1,5 @@
 """
-Workbench Results Repository and Read-Only Artifact Access Layer (Gate 7.5B Pass B2).
+Workbench Results Repository and Read-Only Artifact Access Layer (Gate 7.5B Pass B2 Correction 2).
 
 This module provides the read-only inspection and integrity verification layer for Gate-7
 experiment runs. It strictly consumes authoritative Gate-7 schemas (RunManifestV1, RunStateV1,
@@ -72,6 +72,10 @@ class RunArtifactSnapshotV1:
     environment_verification_status: str
     metadrive_version: Optional[str]
     metadrive_commit: Optional[str]
+    metadrive_pinned_version: Optional[str]
+    metadrive_pinned_commit: Optional[str]
+    metadrive_verification_status: Optional[str]
+    metadrive_verification_reason: Optional[str]
     platform_contracts: Dict[str, str]
     integrity_status: IntegrityDisplayStatus
     integrity_details: List[ArtifactIntegrityCheckResult]
@@ -125,7 +129,7 @@ class RunArtifactRepository:
     def load_run_snapshot(self, run_id: str) -> Optional[RunArtifactSnapshotV1]:
         """
         Loads a single run directory into a RunArtifactSnapshotV1 view model.
-        Returns None if directory does not exist, escapes runs_root, or is malformed.
+        Returns None if directory does not exist, escapes runs_root, or fails run identity parity.
         """
         # Strict path containment check (Specification Section 8)
         try:
@@ -166,8 +170,7 @@ class RunArtifactRepository:
         except Exception:
             return None
 
-        # 3. Strict Run Identity Parity (Specification Section 6)
-        # Directory basename == run_state.json["run_id"] == run_manifest.json["run_id"]
+        # 3. Strict Run Identity Parity across dir, state, and manifest
         dir_basename = run_dir.name
         state_run_id = state_data.get("run_id")
         manifest_run_id = manifest_data.get("run_id")
@@ -177,6 +180,22 @@ class RunArtifactRepository:
 
         actual_run_id = dir_basename
         status_str = state_data.get("status", "UNKNOWN")
+
+        # 4. Strict 4-Way Run Identity Parity (Specification Section 2)
+        # If COMPLETE and run_integrity.json exists, integrity run_id MUST equal actual_run_id
+        integrity_path = run_dir / "run_integrity.json"
+        if status_str == "COMPLETE" and integrity_path.exists():
+            try:
+                with open(integrity_path, "r", encoding="utf-8") as f:
+                    integ_data = json.load(f)
+                if isinstance(integ_data, dict):
+                    integ_run_id = integ_data.get("run_id")
+                    if integ_run_id != actual_run_id:
+                        # Cross-run identity corruption: reject run snapshot as malformed
+                        return None
+            except Exception:
+                pass
+
         run_kind_str = manifest_data.get("run_kind", "UNKNOWN")
         canonical_run = bool(state_data.get("canonical_run", False))
         started_at = state_data.get("started_at_utc")
@@ -209,10 +228,14 @@ class RunArtifactRepository:
         env_prov = manifest_data.get("environment_provenance", {})
         md_ver = env_prov.get("metadrive_version")
         md_commit = env_prov.get("metadrive_commit")
+        md_pin_ver = env_prov.get("metadrive_pinned_version")
+        md_pin_commit = env_prov.get("metadrive_pinned_commit")
+        md_verif_status = env_prov.get("metadrive_verification_status")
+        md_verif_reason = env_prov.get("metadrive_verification_reason")
 
         platform_contracts = manifest_data.get("platform_contracts", {})
 
-        # 4. Read summary.json if present
+        # 5. Read summary.json if present
         summary_path = run_dir / "summary.json"
         summary_payload = None
         if summary_path.exists():
@@ -222,7 +245,7 @@ class RunArtifactRepository:
             except Exception:
                 summary_payload = None
 
-        # 5. Read episodes.csv rows if present
+        # 6. Read episodes.csv rows if present
         episodes_path = run_dir / "episodes.csv"
         episode_rows = []
         if episodes_path.exists():
@@ -233,7 +256,7 @@ class RunArtifactRepository:
             except Exception:
                 episode_rows = []
 
-        # 6. Read timing.csv rows if present
+        # 7. Read timing.csv rows if present
         timing_path = run_dir / "timing.csv"
         timing_rows = []
         if timing_path.exists():
@@ -244,7 +267,7 @@ class RunArtifactRepository:
             except Exception:
                 timing_rows = []
 
-        # 7. Read wandb_sync.json if present
+        # 8. Read wandb_sync.json if present
         wandb_path = run_dir / "wandb_sync.json"
         wandb_payload = None
         if wandb_path.exists():
@@ -254,7 +277,7 @@ class RunArtifactRepository:
             except Exception:
                 wandb_payload = None
 
-        # 8. Read technical_failures.jsonl if present
+        # 9. Read technical_failures.jsonl if present
         tf_path = run_dir / "technical_failures.jsonl"
         tf_payload = None
         if tf_path.exists():
@@ -271,7 +294,7 @@ class RunArtifactRepository:
         # Determine artifacts present
         artifacts_present = [f.name for f in run_dir.iterdir() if f.is_file()]
 
-        # 9. Evaluate Integrity
+        # 10. Evaluate Integrity
         integrity_status, integrity_checks = self._evaluate_integrity(
             run_dir=run_dir,
             run_id=actual_run_id,
@@ -305,6 +328,10 @@ class RunArtifactRepository:
             environment_verification_status=env_verif_status,
             metadrive_version=md_ver,
             metadrive_commit=md_commit,
+            metadrive_pinned_version=md_pin_ver,
+            metadrive_pinned_commit=md_pin_commit,
+            metadrive_verification_status=md_verif_status,
+            metadrive_verification_reason=md_verif_reason,
             platform_contracts=platform_contracts,
             integrity_status=integrity_status,
             integrity_details=integrity_checks,
