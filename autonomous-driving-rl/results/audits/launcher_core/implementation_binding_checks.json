@@ -2,7 +2,7 @@
   "factory_substitution_test": {
     "layer_isolated_test": true,
     "caught": true,
-    "error_message": "Experiment execution failed in run 'run_d33f2e10d36b': Agent factory identity mismatch! Expected 'src.launcher.registry:_factory_fixture_constant_continuous', got '__main__:audit_implementation_binding_checks.<locals>.<lambda>'. Unauthorized factory substitution detected!"
+    "error_message": "Experiment execution failed in run 'run_f82c9d350a3b': Agent factory identity mismatch! Expected 'src.launcher.registry:_factory_fixture_constant_continuous', got '__main__:audit_implementation_binding_checks.<locals>.<lambda>'. Unauthorized factory substitution detected!"
   },
   "runtime_implementation_impersonation": {
     "layer_isolated_test": true,
@@ -11,7 +11,7 @@
     "runtime_class_mismatch_caught": true,
     "imposter_class": "ImposterAgent",
     "expected_class_ref": "src.platform.agent:DeterministicConstantFixtureAgent",
-    "error_message": "Experiment execution failed in run 'run_270f1412e9dc': Agent runtime implementation mismatch! Expected class 'src.platform.agent:DeterministicConstantFixtureAgent', got '__main__:audit_implementation_binding_checks.<locals>.ImposterAgent'. Implementation impersonation detected!"
+    "error_message": "Experiment execution failed in run 'run_da4487b0a0e6': Agent runtime implementation mismatch! Expected class 'src.platform.agent:DeterministicConstantFixtureAgent', got '__main__:audit_implementation_binding_checks.<locals>.ImposterAgent'. Implementation impersonation detected!"
   },
   "factory_constructor_override": {
     "caught": true,

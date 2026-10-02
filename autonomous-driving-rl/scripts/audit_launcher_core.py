@@ -831,6 +831,115 @@ def audit_sandbox_execution_smoke(root: Path, results_dir: Path):
         json.dump(smoke_artifact, f, indent=2)
     print(f"[SAVED] Sandbox execution smoke saved to: {out_file}")
     temp_dir.cleanup()
+    return smoke_artifact
+
+
+def audit_execution_smoke(root: Path, results_dir: Path) -> Dict[str, Any]:
+    """
+    Executes a real simulator-backed AUDIT execution on a deterministic TRAIN geometry.
+    Proves real MetaDrive simulation, lifecycle transitions, and Gate-7 artifacts in AUDIT mode.
+    """
+    print("\n--- Executing Real Simulator-Backed Audit-Mode Smoke Test ---")
+    registry = build_default_agent_registry()
+    temp_dir = tempfile.TemporaryDirectory()
+    runs_root = Path(temp_dir.name)
+
+    request = LaunchRequestV1(
+        mode=LauncherMode.AUDIT,
+        agent_id="fixture_constant_continuous",
+        tier="Easy",
+        sequence="SCS",
+        geometry_generation_seed=0,
+        environment_seed=0,
+        render_mode="OFF",
+        wandb_mode=WandbMode.DISABLED,
+        runs_root=runs_root
+    )
+
+    plan = resolve_experiment_plan(request, registry, root)
+    preflight = run_preflight(plan, root, registry=registry)
+    assert preflight.can_execute, f"Audit smoke preflight failed: {preflight.to_dict()}"
+
+    events_captured = []
+    def on_event(ev: LauncherEventV1):
+        events_captured.append(ev.event_type.value)
+
+    executor = ExperimentExecutor(
+        plan=plan,
+        registry=registry,
+        runs_root=runs_root,
+        custom_run_id="run_audit_smoke_01",
+        event_callback=on_event,
+        project_root=root
+    )
+
+    report = executor.execute()
+    run_dir = Path(report.run_dir)
+
+    # 1. Assert required Gate-7 files exist
+    required_files = [
+        "run_manifest.json",
+        "run_state.json",
+        "episodes.csv",
+        "timing.csv",
+        "summary.json",
+        "wandb_sync.json",
+        "run_integrity.json"
+    ]
+    files_present = {f: (run_dir / f).exists() for f in required_files}
+    assert all(files_present.values()), f"Missing local run artifacts: {files_present}"
+
+    # 2. Assert run_state is COMPLETE and recorded_episode_count == 1
+    with open(run_dir / "run_state.json", "r", encoding="utf-8") as f:
+        st = json.load(f)
+    assert st["status"] == "COMPLETE"
+    assert st["recorded_episode_count"] == 1
+
+    # 3. Assert launcher provenance in run_manifest.json
+    with open(run_dir / "run_manifest.json", "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+
+    launcher_prov = manifest["config"]["algorithm_hyperparameters"]["launcher"]
+    assert launcher_prov["launcher_mode"] == "AUDIT"
+    assert launcher_prov["resolved_plan_sha256"] == plan.resolved_plan_sha256
+    assert launcher_prov["protocol_scope"] == "AUDIT_SUITE"
+
+    # 4. Assert correct Gate-7 manifest_name provenance
+    manifest_name = manifest["config"].get("manifest_name")
+    assert manifest_name == "geometry_split_manifest.csv", f"Manifest name mismatch: {manifest_name}"
+
+    # 5. Assert Audit canonicality invariants
+    plan_canonical_run = bool(plan.canonical_run)
+    persisted_canonical_run = bool(st.get("canonical_run"))
+    assert plan_canonical_run is False, "Plan canonical_run must be False for Audit!"
+    assert persisted_canonical_run is False, "Persisted run_state canonical_run must be False for Audit!"
+    canonicality_parity = (plan_canonical_run is False and persisted_canonical_run is False)
+
+    audit_artifact = {
+        "run_id": report.run_id,
+        "launcher_mode": "AUDIT",
+        "status": report.status,
+        "completed_episodes": report.completed_episodes,
+        "plan_canonical_run": plan_canonical_run,
+        "persisted_canonical_run": persisted_canonical_run,
+        "canonicality_parity_verified": canonicality_parity,
+        "resolved_plan_sha256": plan.resolved_plan_sha256,
+        "canonical_agent_registry_sha256": plan.canonical_agent_registry_sha256,
+        "required_files_verified": files_present,
+        "events_captured": events_captured,
+        "launcher_provenance_verified": True,
+        "manifest_name_verified": True,
+        "manifest_name": manifest_name,
+        "embedded_launcher_provenance": launcher_prov,
+        "verdict": "PASSED" if (all(files_present.values()) and st["status"] == "COMPLETE" and canonicality_parity) else "FAILED"
+    }
+
+    out_file = results_dir / "audit_execution_smoke.json"
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(audit_artifact, f, indent=2)
+    print(f"[SAVED] Audit execution smoke saved to: {out_file}")
+    temp_dir.cleanup()
+    return audit_artifact
 
 
 def audit_canonical_registry_integrity(results_dir: Path):
@@ -1172,48 +1281,61 @@ def audit_implementation_binding_checks(root: Path, results_dir: Path):
     assert artifact["verdict"] == "PASSED"
 
 
-def audit_canonicality_matrix(results_dir: Path):
-    """Generates machine-readable canonicality matrix representing actual demonstrated platform capabilities."""
-    print("\n--- Auditing Canonicality Matrix ---")
+def audit_canonicality_matrix(root: Path, results_dir: Path, sandbox_artifact: Dict[str, Any], audit_artifact: Dict[str, Any]):
+    """Generates machine-derived canonicality matrix representing actual demonstrated platform capabilities."""
+    print("\n--- Auditing Canonicality Matrix (Machine-Derived) ---")
+
+    # Validation dynamic evaluation
+    val_req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
+    val_plan = resolve_experiment_plan(val_req, project_root=root)
+    val_rep = run_preflight(val_plan, root)
+    val_blocked_reasons = [c.message for c in val_rep.checks if c.status == "FAIL"]
+
+    # Test dynamic evaluation
+    test_req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+    test_plan = resolve_experiment_plan(test_req, project_root=root)
+    test_rep = run_preflight(test_plan, root)
+    test_blocked_reasons = [c.message for c in test_rep.checks if c.status == "FAIL"]
+
     matrix = {
         "SANDBOX": {
             "launcher_mode": "SANDBOX",
-            "plan_canonical_run": False,
+            "plan_canonical_run": sandbox_artifact["plan_canonical_run"],
             "current_canonical_agent_benchmark_eligible": False,
             "launcher_execution_attempted": True,
-            "launcher_execution_completed": True,
-            "persisted_canonical_run": False,
+            "launcher_execution_completed": (sandbox_artifact["status"] == "COMPLETE" and sandbox_artifact["completed_episodes"] == 1),
+            "persisted_canonical_run": sandbox_artifact["persisted_canonical_run"],
             "block_reason": None,
             "evidence_level": "SIMULATOR_BACKED_EXECUTION_VERIFIED"
         },
         "AUDIT": {
             "launcher_mode": "AUDIT",
-            "plan_canonical_run": False,
+            "plan_canonical_run": audit_artifact["plan_canonical_run"],
             "current_canonical_agent_benchmark_eligible": False,
             "launcher_execution_attempted": True,
-            "launcher_execution_completed": True,
-            "persisted_canonical_run": False,
+            "launcher_execution_completed": (audit_artifact["status"] == "COMPLETE" and audit_artifact["completed_episodes"] == 1),
+            "persisted_canonical_run": audit_artifact["persisted_canonical_run"],
             "block_reason": None,
             "evidence_level": "SIMULATOR_BACKED_EXECUTION_VERIFIED"
         },
         "VALIDATION": {
             "launcher_mode": "VALIDATION",
-            "plan_canonical_run": True,
-            "current_canonical_agent_benchmark_eligible": False,
+            "plan_canonical_run": val_plan.canonical_run,
+            "current_canonical_agent_benchmark_eligible": val_plan.agent_registration.benchmark_eligible,
             "launcher_execution_attempted": False,
             "launcher_execution_completed": False,
             "persisted_canonical_run": None,
-            "block_reason": "Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False",
+            "block_reason": f"Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False ({'; '.join(val_blocked_reasons)})",
             "evidence_level": "PREFLIGHT_AND_RESOLUTION_BLOCKED_PENDING_STAGE_0"
         },
         "TEST": {
             "launcher_mode": "TEST",
-            "plan_canonical_run": True,
-            "current_canonical_agent_benchmark_eligible": False,
+            "plan_canonical_run": test_plan.canonical_run,
+            "current_canonical_agent_benchmark_eligible": test_plan.agent_registration.benchmark_eligible,
             "launcher_execution_attempted": False,
             "launcher_execution_completed": False,
             "persisted_canonical_run": None,
-            "block_reason": "Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False",
+            "block_reason": f"Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False ({'; '.join(test_blocked_reasons)})",
             "evidence_level": "PREFLIGHT_AND_RESOLUTION_BLOCKED_PENDING_STAGE_0"
         }
     }
@@ -1267,9 +1389,11 @@ def generate_summary_markdown(summary_md_path: Path, hashes_data: Dict[str, Any]
         f.write("- `canonical_registry_integrity.json`: Verified canonical registry SHA-256 sensitivity and description exclusion.\n")
         f.write("- `registry_authority_negative_checks.json`: Verified negative exploit defenses against forged benchmark eligibility and custom registry authority.\n")
         f.write("- `implementation_binding_checks.json`: Verified strict runtime implementation class and factory identity binding.\n")
-        f.write("- `canonicality_matrix.json`: Truthful representation of demonstrated mode capabilities across Platform V1.\n")
+        f.write("- `canonicality_matrix.json`: Machine-derived representation of demonstrated mode capabilities across Platform V1.\n")
         f.write("- `reward_passthrough_parity.json`: Verified signed progress delta passthrough without clamping.\n")
         f.write("- `execution_config_lock.json`: Verified 10 Hz physical control, 0.02 step, decision repeat 5, Trigger mode.\n")
+        f.write("- `sandbox_execution_smoke.json`: Successful real MetaDrive simulation execution of Sandbox episode.\n")
+        f.write("- `audit_execution_smoke.json`: Successful real MetaDrive simulation execution of Audit episode.\n")
 
     print(f"[SAVED] Audit summary markdown saved to: {summary_md_path}")
 
@@ -1313,9 +1437,6 @@ def main():
     # 6d. Implementation and factory identity binding audit
     audit_implementation_binding_checks(project_root, results_dir)
 
-    # 6e. Canonicality matrix audit
-    audit_canonicality_matrix(results_dir)
-
     # 7. Case plan parity audit (11 fields per row)
     audit_case_plan_parity(project_root, results_dir)
 
@@ -1338,7 +1459,13 @@ def main():
     audit_execution_config_lock(project_root, results_dir)
 
     # 14. Real simulator-backed Sandbox smoke execution
-    audit_sandbox_execution_smoke(project_root, results_dir)
+    sandbox_obs = audit_sandbox_execution_smoke(project_root, results_dir)
+
+    # 14b. Real simulator-backed Audit smoke execution
+    audit_obs = audit_execution_smoke(project_root, results_dir)
+
+    # 14c. Canonicality matrix audit (machine-derived)
+    audit_canonicality_matrix(project_root, results_dir, sandbox_obs, audit_obs)
 
     # 15. Generate summary markdown
     summary_md_path = results_dir / "audit_summary.md"
