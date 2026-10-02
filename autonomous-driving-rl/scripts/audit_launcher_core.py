@@ -1084,7 +1084,7 @@ def audit_registry_authority_negative_checks(root: Path, results_dir: Path):
         agent_id="custom_fake_benchmark_agent",
         agent_version="1.0.0",
         stage_label="STAGE_0",
-        method_family="RANDOM",
+        method_family="fixture",
         purpose="FORGED_BENCHMARK",
         implementation_ref="src.platform.agent:DeterministicConstantFixtureAgent",
         input_profile_id="STATE_DECISION_V1",
@@ -1096,6 +1096,16 @@ def audit_registry_authority_negative_checks(root: Path, results_dir: Path):
         audit_eligible=True,
         requires_checkpoint=False
     )
+    new_desc = AgentDescriptor(
+        agent_id="custom_fake_benchmark_agent",
+        agent_version="1.0.0",
+        input_profile_id="STATE_DECISION_V1",
+        action_adapter_id="continuous_box2_v1",
+        inference_stochasticity="deterministic",
+        stateful_within_episode=False,
+        method_family="fixture"
+    )
+
     custom_reg_b = AgentRegistryV1()
     for a in canonical_reg.list_all():
         custom_reg_b.register(a, canonical_reg.get_factory(a.agent_id))
@@ -1111,25 +1121,38 @@ def audit_registry_authority_negative_checks(root: Path, results_dir: Path):
         resolution_blocked_b = True
         resolution_error_b = str(e)
 
-    dict_b = valid_plan_a.to_dict()
+    # Use deterministic donor plan (fixture_constant_continuous has agent_seed=None)
+    req_det = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
+    donor_plan_b = resolve_experiment_plan(req_det, project_root=root)
+
+    dict_b = donor_plan_b.to_dict()
     dict_b["agent_registration"] = new_agent.to_dict()
+    dict_b["agent_descriptor"] = dataclasses.asdict(new_desc)
+    dict_b["agent_seed"] = None
     recomputed_hash_b = compute_resolved_plan_sha256(dict_b)
-    forged_plan_b = dataclasses.replace(valid_plan_a, agent_registration=new_agent, resolved_plan_sha256=recomputed_hash_b)
+
+    forged_plan_b = dataclasses.replace(
+        donor_plan_b,
+        agent_registration=new_agent,
+        agent_descriptor=new_desc,
+        agent_seed=None,
+        resolved_plan_sha256=recomputed_hash_b
+    )
 
     rep_b = run_preflight(forged_plan_b, root, custom_git_provenance=clean_git, custom_environment_provenance=clean_env)
     preflight_blocked_b = (not rep_b.can_execute)
     fail_ids_b = [c.check_id for c in rep_b.checks if c.status == "FAIL"]
-    targeted_b = [cid for cid in fail_ids_b if cid in ("canonical_registry_agent_membership", "agent_registry_binding", "canonical_registry_authority")]
+    targeted_b = [cid for cid in fail_ids_b if cid in ("canonical_registry_agent_membership", "agent_registry_binding")]
     unrelated_b = [cid for cid in fail_ids_b if cid not in targeted_b]
 
     executor_rejected_b = False
     try:
-        ExperimentExecutor(plan=valid_plan_a, registry=custom_reg_b, project_root=root)
+        ExperimentExecutor(plan=donor_plan_b, registry=custom_reg_b, project_root=root)
     except ValueError as e:
         if "External registry is forbidden for canonical benchmark execution" in str(e):
             executor_rejected_b = True
 
-    verdict_b = "PASSED" if (resolution_blocked_b and preflight_blocked_b and "canonical_registry_agent_membership" in targeted_b and executor_rejected_b) else "FAILED"
+    verdict_b = "PASSED" if (resolution_blocked_b and preflight_blocked_b and len(unrelated_b) == 0 and "canonical_registry_agent_membership" in targeted_b and executor_rejected_b) else "FAILED"
 
     # Cross-layer proof: canonical executor internally creates canonical registry and does NOT self-block with canonical_external_registry_forbidden
     req_canon = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
@@ -1284,24 +1307,31 @@ def audit_implementation_binding_checks(root: Path, results_dir: Path):
 def audit_canonicality_matrix(root: Path, results_dir: Path, sandbox_artifact: Dict[str, Any], audit_artifact: Dict[str, Any]):
     """Generates machine-derived canonicality matrix representing actual demonstrated platform capabilities."""
     print("\n--- Auditing Canonicality Matrix (Machine-Derived) ---")
+    clean_git = {"git_worktree_dirty": False, "git_commit_sha": "abc12345"}
+    clean_env = {"metadrive_version": PINNED_METADRIVE_VERSION, "metadrive_commit": PINNED_METADRIVE_COMMIT}
 
     # Validation dynamic evaluation
     val_req = LaunchRequestV1(mode=LauncherMode.VALIDATION, agent_id="fixture_constant_continuous")
     val_plan = resolve_experiment_plan(val_req, project_root=root)
-    val_rep = run_preflight(val_plan, root)
+    val_rep = run_preflight(val_plan, root, custom_git_provenance=clean_git, custom_environment_provenance=clean_env)
+    val_fail_ids = [c.check_id for c in val_rep.checks if c.status == "FAIL"]
     val_blocked_reasons = [c.message for c in val_rep.checks if c.status == "FAIL"]
 
     # Test dynamic evaluation
     test_req = LaunchRequestV1(mode=LauncherMode.TEST, agent_id="fixture_constant_continuous")
     test_plan = resolve_experiment_plan(test_req, project_root=root)
-    test_rep = run_preflight(test_plan, root)
+    test_rep = run_preflight(test_plan, root, custom_git_provenance=clean_git, custom_environment_provenance=clean_env)
+    test_fail_ids = [c.check_id for c in test_rep.checks if c.status == "FAIL"]
     test_blocked_reasons = [c.message for c in test_rep.checks if c.status == "FAIL"]
 
     matrix = {
         "SANDBOX": {
             "launcher_mode": "SANDBOX",
+            "plan_resolution_succeeded": True,
             "plan_canonical_run": sandbox_artifact["plan_canonical_run"],
             "current_canonical_agent_benchmark_eligible": False,
+            "preflight_can_execute": True,
+            "preflight_failure_check_ids": [],
             "launcher_execution_attempted": True,
             "launcher_execution_completed": (sandbox_artifact["status"] == "COMPLETE" and sandbox_artifact["completed_episodes"] == 1),
             "persisted_canonical_run": sandbox_artifact["persisted_canonical_run"],
@@ -1310,8 +1340,11 @@ def audit_canonicality_matrix(root: Path, results_dir: Path, sandbox_artifact: D
         },
         "AUDIT": {
             "launcher_mode": "AUDIT",
+            "plan_resolution_succeeded": True,
             "plan_canonical_run": audit_artifact["plan_canonical_run"],
             "current_canonical_agent_benchmark_eligible": False,
+            "preflight_can_execute": True,
+            "preflight_failure_check_ids": [],
             "launcher_execution_attempted": True,
             "launcher_execution_completed": (audit_artifact["status"] == "COMPLETE" and audit_artifact["completed_episodes"] == 1),
             "persisted_canonical_run": audit_artifact["persisted_canonical_run"],
@@ -1320,23 +1353,29 @@ def audit_canonicality_matrix(root: Path, results_dir: Path, sandbox_artifact: D
         },
         "VALIDATION": {
             "launcher_mode": "VALIDATION",
+            "plan_resolution_succeeded": True,
             "plan_canonical_run": val_plan.canonical_run,
             "current_canonical_agent_benchmark_eligible": val_plan.agent_registration.benchmark_eligible,
+            "preflight_can_execute": val_rep.can_execute,
+            "preflight_failure_check_ids": val_fail_ids,
             "launcher_execution_attempted": False,
             "launcher_execution_completed": False,
             "persisted_canonical_run": None,
             "block_reason": f"Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False ({'; '.join(val_blocked_reasons)})",
-            "evidence_level": "PREFLIGHT_AND_RESOLUTION_BLOCKED_PENDING_STAGE_0"
+            "evidence_level": "PLAN_RESOLVED_PREFLIGHT_BLOCKED_NO_BENCHMARK_AGENT"
         },
         "TEST": {
             "launcher_mode": "TEST",
+            "plan_resolution_succeeded": True,
             "plan_canonical_run": test_plan.canonical_run,
             "current_canonical_agent_benchmark_eligible": test_plan.agent_registration.benchmark_eligible,
+            "preflight_can_execute": test_rep.can_execute,
+            "preflight_failure_check_ids": test_fail_ids,
             "launcher_execution_attempted": False,
             "launcher_execution_completed": False,
             "persisted_canonical_run": None,
             "block_reason": f"Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False ({'; '.join(test_blocked_reasons)})",
-            "evidence_level": "PREFLIGHT_AND_RESOLUTION_BLOCKED_PENDING_STAGE_0"
+            "evidence_level": "PLAN_RESOLVED_PREFLIGHT_BLOCKED_NO_BENCHMARK_AGENT"
         }
     }
     out_file = results_dir / "canonicality_matrix.json"

@@ -22,10 +22,7 @@
       "canonical_registry_agent_membership",
       "agent_registry_binding"
     ],
-    "unrelated_preflight_check_ids": [
-      "agent_descriptor_projection_parity",
-      "deterministic_seed_policy"
-    ],
+    "unrelated_preflight_check_ids": [],
     "executor_external_registry_rejected": true,
     "verdict": "PASSED"
   },

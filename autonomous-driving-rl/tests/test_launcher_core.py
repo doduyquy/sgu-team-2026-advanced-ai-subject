@@ -1280,11 +1280,22 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
             agent_id="custom_fake_benchmark_agent",
             benchmark_eligible=True
         )
+        forged_desc = dataclasses.replace(
+            valid_plan.agent_descriptor,
+            agent_id="custom_fake_benchmark_agent"
+        )
         temp_dict = valid_plan.to_dict()
         temp_dict["agent_registration"] = forged_reg.to_dict()
+        temp_dict["agent_descriptor"] = dataclasses.asdict(forged_desc)
         recomputed_hash = compute_resolved_plan_sha256(temp_dict)
 
-        forged_plan = dataclasses.replace(valid_plan, agent_registration=forged_reg, resolved_plan_sha256=recomputed_hash)
+        forged_plan = dataclasses.replace(
+            valid_plan,
+            agent_registration=forged_reg,
+            agent_descriptor=forged_desc,
+            agent_seed=None,
+            resolved_plan_sha256=recomputed_hash
+        )
 
         rep = run_preflight(
             forged_plan,
@@ -1295,6 +1306,9 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
         self.assertFalse(rep.can_execute)
         fail_ids = [c.check_id for c in rep.checks if c.status == "FAIL"]
         self.assertIn("canonical_registry_agent_membership", fail_ids)
+        targeted = {"canonical_registry_agent_membership", "agent_registry_binding"}
+        unrelated = [cid for cid in fail_ids if cid not in targeted]
+        self.assertEqual(unrelated, [], f"Unexpected unrelated preflight failures: {unrelated}")
 
     def test_canonical_preflight_external_registry_rejected(self):
         # R9 & C4: Canonical preflight with external registry argument produces blocking check
