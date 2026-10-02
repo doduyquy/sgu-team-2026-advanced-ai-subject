@@ -13,6 +13,7 @@ from typing import List, Optional
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QGroupBox,
     QHeaderView,
     QLabel,
@@ -57,6 +58,7 @@ class AgentExplorerWidget(QWidget):
         self.table_agents.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
         self.table_agents.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
         self.table_agents.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table_agents.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table_agents.itemSelectionChanged.connect(self._on_selection_changed)
 
         table_layout.addWidget(self.table_agents)

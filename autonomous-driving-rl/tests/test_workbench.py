@@ -39,7 +39,7 @@ import unittest
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 from PySide6.QtCore import QProcess
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QAbstractItemView, QApplication
 
 from src.launcher.cases import (
     LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256,
@@ -591,6 +591,47 @@ class TestWorkbenchSuite(unittest.TestCase):
         setup.edit_sequence.setText("MODIFIED_SEQ")
         self.assertFalse(setup.btn_run.isEnabled())
         self.assertFalse(setup._can_run)
+        window.close()
+
+    def test_27_presentation_tables_have_no_edit_triggers(self):
+        """Authoritative scientific tables strictly enforce NoEditTriggers policy."""
+        window = MainWindow()
+        agent_table = window.agent_explorer_widget.table_agents
+        case_table = window.case_explorer_widget.table_cases
+        preflight_table = window.plan_preflight_widget.table_checks
+
+        self.assertEqual(agent_table.editTriggers(), QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.assertEqual(case_table.editTriggers(), QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.assertEqual(preflight_table.editTriggers(), QAbstractItemView.EditTrigger.NoEditTriggers)
+        window.close()
+
+    def test_28_agent_row_selection_remains_interactive_with_no_edit_triggers(self):
+        """Agent table row selection still works and updates capability specification pane."""
+        window = MainWindow()
+        agent_explorer = window.agent_explorer_widget
+        table = agent_explorer.table_agents
+
+        self.assertGreater(table.rowCount(), 1)
+        # Select row 1
+        table.selectRow(1)
+        selected_agent = table.item(1, 0).text()
+        self.assertIn(selected_agent, agent_explorer.text_details.toPlainText())
+        window.close()
+
+    def test_29_case_explorer_filtering_remains_interactive_with_no_edit_triggers(self):
+        """Case Explorer tier and sequence filtering works interactively on read-only table."""
+        window = MainWindow()
+        case_explorer = window.case_explorer_widget
+
+        # Select Easy tier
+        case_explorer.combo_tier.setCurrentText("Easy")
+        for row in range(case_explorer.table_cases.rowCount()):
+            self.assertEqual(case_explorer.table_cases.item(row, 2).text(), "Easy")
+
+        # Filter by sequence
+        case_explorer.edit_seq_filter.setText("SCCS")
+        for row in range(case_explorer.table_cases.rowCount()):
+            self.assertIn("SCCS", case_explorer.table_cases.item(row, 3).text())
         window.close()
 
 

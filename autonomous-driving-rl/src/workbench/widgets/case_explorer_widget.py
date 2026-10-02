@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QComboBox,
     QGroupBox,
     QHBoxLayout,
@@ -82,6 +83,7 @@ class CaseExplorerWidget(QWidget):
             self.table_cases.horizontalHeader().setSectionResizeMode(c, QHeaderView.ResizeMode.ResizeToContents)
         self.table_cases.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeMode.Stretch)
         self.table_cases.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table_cases.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
         main_layout.addWidget(self.table_cases)
 

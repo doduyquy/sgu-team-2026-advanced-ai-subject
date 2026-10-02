@@ -47,7 +47,7 @@ All structured messages adhere to:
 ```
 
 ### Supported Message Types
-- `WORKER_READY`: Subprocess initialized, reporting PID and Python path.
+- `WORKER_READY`: Subprocess initialized, reporting PID, sanitized Python executable basename, Python version, and protocol version.
 - `PLAN_RESOLVED`: Contains full `ResolvedExperimentPlanV1` dict and `resolved_plan_sha256`.
 - `PREFLIGHT_REPORT`: Contains full `PreflightReportV1` dictionary, checks list, and `can_execute` verdict.
 - `LAUNCHER_EVENT`: Streams `LauncherEventV1` telemetry (`RUN_STARTED`, `EPISODE_STARTED`, `EPISODE_PROGRESS`, `EPISODE_FINISHED`, `RUN_FINISHED`).
@@ -143,7 +143,7 @@ The Workbench contains 5 tabs:
   - MetaDrive opens a separate native window.
   - Workbench GUI remains responsive and continues logging telemetry.
   - Normal closing of native window does not corrupt Workbench state.
-- **Evidence status:** Documented as manual operational verification. Automated test runs strictly headless (`render=OFF`, `QT_QPA_PLATFORM=offscreen`).
+- **Evidence status:** Manual check procedure documented; not part of automated evidence. Automated test and audit runs execute strictly headless (`render=OFF`, `QT_QPA_PLATFORM=offscreen`).
 
 ---
 

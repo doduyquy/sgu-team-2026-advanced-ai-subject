@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -63,6 +64,7 @@ class PlanAndPreflightWidget(QWidget):
         self.table_checks.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.table_checks.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.table_checks.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        self.table_checks.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         preflight_layout.addWidget(self.table_checks)
 
         splitter.addWidget(preflight_group)

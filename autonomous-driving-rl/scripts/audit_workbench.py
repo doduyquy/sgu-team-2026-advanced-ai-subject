@@ -1,5 +1,5 @@
 """
-Research Workbench Audit and Verification Script (Gate 7.5B Pass B1 Correction 1).
+Research Workbench Audit and Verification Script (Gate 7.5B Pass B1 Final Audit).
 
 Generates machine-derived evidence artifacts following an in-memory evidence collection pipeline:
 A. Workbench offscreen startup smoke (asserting exact manifest counts: TRAIN=180, VAL=96, TEST=60).
@@ -12,7 +12,7 @@ C. Worker RUN smoke (real MetaDrive, SANDBOX, fixture_constant_continuous, TRAIN
    - WORKER_DONE.run_id == EXECUTION_REPORT.run_id
    - 7/7 Gate-7 files exist and run_state is COMPLETE.
 D. Canonical blocked smoke (TEST + non-benchmark fixture):
-   - Preflight failure check isolated to ["agent_benchmark_eligibility"].
+   - Preflight failure check isolated strictly to ["agent_benchmark_eligibility"].
    - Zero simulator execution steps.
 E. Privacy & Secrets Scan:
    - Verified 0 private absolute interpreter paths, user profiles, or credentials across all audit artifacts.
@@ -84,7 +84,7 @@ def run_audit() -> None:
     worker_script = project_root / "src" / "workbench" / "worker.py"
 
     print("============================================================")
-    print("STARTING GATE 7.5B RESEARCH WORKBENCH AUDIT (CORRECTION 1)")
+    print("STARTING GATE 7.5B RESEARCH WORKBENCH AUDIT (FINAL AUDIT)")
     print("============================================================")
 
     # ---------------------------------------------------------
@@ -386,9 +386,9 @@ def run_audit() -> None:
     print(f"  [SAVED] {output_dir / 'canonical_blocked_smoke.json'}")
 
     # Summary markdown
-    summary_md = f"""# Gate 7.5B Workbench Audit Summary (Pass B1 Correction 1)
+    summary_md = f"""# Gate 7.5B Workbench Audit Summary — Pass B1 Final Audit
 
-- Gate: Gate 7.5B (Research Workbench GUI Pass B1 Correction 1)
+- Gate: Gate 7.5B (Research Workbench GUI Pass B1 Final Audit)
 - Status: AUDIT-CANDIDATE
 - Baseline Main Merge SHA: `{GATE7_5A_BASELINE_MERGE_SHA}`
 - PySide6 Pinned Version: `{PINNED_PYSIDE6_VERSION}`
