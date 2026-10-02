@@ -131,7 +131,7 @@ The Workbench contains 5 tabs:
 ### B. Machine-Derived Audit Smokes (`scripts/audit_workbench.py`)
 1. **Startup Smoke (`startup_smoke.json`):** Verified offscreen `MainWindow` initialization, 5 tabs, combobox population, Extreme tier availability, and exact manifest table bindings (TRAIN 180, VALIDATION 96, TEST 60).
 2. **Worker PLAN Smoke (`plan_smoke.json`):** Verified plan resolution and preflight execution without simulator invocation. Sanitized `WORKER_READY` payload (basename only).
-3. **Worker RUN Smoke (`run_smoke.json`):** Verified real MetaDrive execution under `SANDBOX`, streaming 10 Hz telemetry, `status="COMPLETE"`, `WORKER_DONE.success=True`, `run_id` parity, and writing 7/7 required Gate-7 artifacts (`run_manifest.json`, `run_state.json`, `episodes.csv`, `timing.csv`, `summary.json`, `wandb_sync.json`, `run_integrity.json`).
+3. **Worker RUN Smoke (`run_smoke.json`):** Verified real MetaDrive execution under `SANDBOX`, streaming sampled LauncherEventV1 progress telemetry (sampled every 10 decision steps), `status="COMPLETE"`, `WORKER_DONE.success=True`, `run_id` parity, and writing 7/7 required Gate-7 artifacts (`run_manifest.json`, `run_state.json`, `episodes.csv`, `timing.csv`, `summary.json`, `wandb_sync.json`, `run_integrity.json`).
 4. **Canonical Blocked Smoke (`canonical_blocked_smoke.json`):** Verified benchmark `TEST` request with non-benchmark fixture resolves plan, fails preflight with targeted reason `agent_benchmark_eligibility`, and exits with 0 simulator steps.
 5. **Artifact Privacy Scan:** Verified 0 private absolute interpreter paths, user directories, or secrets across all committed audit artifacts.
 

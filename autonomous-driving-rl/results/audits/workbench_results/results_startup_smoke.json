@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "total_tabs": 6,
+  "tab_titles": [
+    "1. Experiment Setup",
+    "2. Plan & Preflight",
+    "3. Run Monitor",
+    "4. Agents Explorer",
+    "5. Case Explorer",
+    "6. Results"
+  ],
+  "results_tab_index": 5,
+  "subtab_count": 6,
+  "subtab_titles": [
+    "Overview & Metrics",
+    "Episodes (episodes.csv)",
+    "Decision Latency (timing.csv)",
+    "Provenance (run_manifest.json)",
+    "Artifact Integrity (run_integrity.json)",
+    "W&B / Diagnostics"
+  ],
+  "runs_table_columns": [
+    "Run ID",
+    "Status",
+    "Kind",
+    "Canonical",
+    "Agent",
+    "Episodes",
+    "Integrity",
+    "Started Time"
+  ],
+  "tables_no_edit_triggers": {
+    "runs": true,
+    "episodes": true,
+    "timing": true,
+    "integrity": true
+  }
+}

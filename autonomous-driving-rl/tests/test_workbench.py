@@ -99,12 +99,13 @@ class TestWorkbenchSuite(unittest.TestCase):
         """MainWindow instantiates cleanly with all tabs in offscreen mode."""
         window = MainWindow()
         self.assertIsNotNone(window)
-        self.assertEqual(window.tab_widget.count(), 5)
+        self.assertEqual(window.tab_widget.count(), 6)
         self.assertEqual(window.tab_widget.tabText(0), "1. Experiment Setup")
         self.assertEqual(window.tab_widget.tabText(1), "2. Plan & Preflight")
         self.assertEqual(window.tab_widget.tabText(2), "3. Run Monitor")
         self.assertEqual(window.tab_widget.tabText(3), "4. Agents Explorer")
         self.assertEqual(window.tab_widget.tabText(4), "5. Case Explorer")
+        self.assertEqual(window.tab_widget.tabText(5), "6. Results")
         window.close()
 
     def test_02_request_widgets_map_to_launch_request(self):

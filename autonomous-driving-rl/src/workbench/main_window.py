@@ -14,6 +14,7 @@ Handles:
 - Window close confirmation dialog when worker is actively executing (Specification Section 22).
 """
 
+from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import Qt
@@ -34,6 +35,7 @@ from src.workbench.widgets.agent_explorer_widget import AgentExplorerWidget
 from src.workbench.widgets.case_explorer_widget import CaseExplorerWidget
 from src.workbench.widgets.experiment_setup_widget import ExperimentSetupWidget
 from src.workbench.widgets.plan_preflight_widget import PlanAndPreflightWidget
+from src.workbench.widgets.results_widget import ResultsWidget
 from src.workbench.widgets.run_monitor_widget import RunMonitorWidget
 
 
@@ -47,6 +49,7 @@ class MainWindow(QMainWindow):
 
         self._core_adapter = core_adapter or CoreAdapter()
         self._runner = WorkbenchProcessRunner(self)
+        self._last_completed_run_dir: Optional[Path] = None
 
         self._init_ui()
         self._connect_signals()
@@ -77,6 +80,10 @@ class MainWindow(QMainWindow):
         # Tab 5: Case Explorer
         self.case_explorer_widget = CaseExplorerWidget(self._core_adapter)
         self.tab_widget.addTab(self.case_explorer_widget, "5. Case Explorer")
+
+        # Tab 6: Results Browser (Pass B2)
+        self.results_widget = ResultsWidget()
+        self.tab_widget.addTab(self.results_widget, "6. Results")
 
         main_layout.addWidget(self.tab_widget)
 
@@ -165,6 +172,10 @@ class MainWindow(QMainWindow):
 
     def _on_execution_report(self, payload: dict) -> None:
         self.run_monitor_widget.handle_execution_report(payload)
+        rep = payload.get("execution_report", payload)
+        run_dir_str = rep.get("run_dir")
+        if run_dir_str:
+            self._last_completed_run_dir = Path(run_dir_str)
 
     def _on_worker_error(self, payload: dict) -> None:
         err_msg = payload.get("message", "Unknown error")
@@ -178,6 +189,22 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(f"Operation {op} blocked by preflight safety check.")
         elif success:
             self.status_bar.showMessage(f"Operation {op} completed successfully.")
+            # Pass B2: Auto-refresh and select completed run in Results tab
+            # If a custom runs_root was used, update ResultsWidget repository root to parent(run_dir)
+            run_id = payload.get("run_id")
+            if self._last_completed_run_dir and self._last_completed_run_dir.exists():
+                try:
+                    parent_root = self._last_completed_run_dir.parent
+                    if self.results_widget.runs_root != parent_root:
+                        self.results_widget.set_runs_root(parent_root)
+                except Exception:
+                    pass
+
+            if run_id:
+                try:
+                    self.results_widget.select_run_by_id(run_id)
+                except Exception:
+                    pass
         else:
             self.status_bar.showMessage(f"Operation {op} failed.")
 

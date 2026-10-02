@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "run_id": "b2_audit_complete_run",
+  "lifecycle_status": "COMPLETE",
+  "integrity_status": "VERIFIED",
+  "recorded_episodes": 1,
+  "schema_parity_verified": true,
+  "manifest_agent_id": "fixture_constant_continuous",
+  "state_canonical_run": false,
+  "git_commit_sha_present": true,
+  "metadrive_env_verification_parity": true,
+  "artifacts_present": [
+    "episodes.csv",
+    "run_integrity.json",
+    "run_manifest.json",
+    "run_state.json",
+    "summary.json",
+    "timing.csv",
+    "wandb_sync.json"
+  ],
+  "primary_metrics": {
+    "clean_success_rate": 0.0,
+    "safety_failure_rate": 1.0,
+    "mean_final_route_completion": 0.21974535375063298,
+    "median_final_route_completion": 0.21974535375063298,
+    "mean_time_to_clean_success_s": null
+  },
+  "diagnostic_metrics": {
+    "mean_episode_return": -0.8015857042698448
+  }
+}
