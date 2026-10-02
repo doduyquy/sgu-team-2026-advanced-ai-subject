@@ -1,0 +1,39 @@
+{
+  "scenario_A_fixture_mutation": {
+    "scenario_id": "C1_existing_fixture_mutation",
+    "attack_description": "Adversary copies fixture_seeded_random, sets benchmark_eligible=True in custom registry, requests TEST",
+    "public_resolution_blocked": true,
+    "resolution_error": "External registry is forbidden for canonical benchmark resolution (TEST). Authority must come strictly from committed build_canonical_agent_registry().",
+    "defense_in_depth_preflight_blocked": true,
+    "targeted_preflight_check_ids": [
+      "agent_registry_binding"
+    ],
+    "unrelated_preflight_check_ids": [],
+    "executor_external_registry_rejected": true,
+    "verdict": "PASSED"
+  },
+  "scenario_B_new_agent_insertion": {
+    "scenario_id": "C2_new_custom_agent_insertion",
+    "attack_description": "Adversary creates new custom_fake_benchmark_agent with benchmark_eligible=True, requests TEST",
+    "public_resolution_blocked": true,
+    "resolution_error": "External registry is forbidden for canonical benchmark resolution (TEST). Authority must come strictly from committed build_canonical_agent_registry().",
+    "defense_in_depth_preflight_blocked": true,
+    "targeted_preflight_check_ids": [
+      "canonical_registry_agent_membership",
+      "agent_registry_binding"
+    ],
+    "unrelated_preflight_check_ids": [],
+    "executor_external_registry_rejected": true,
+    "verdict": "PASSED"
+  },
+  "cross_layer_executor_preflight_integration": {
+    "launcher_mode": "TEST",
+    "agent_id": "fixture_constant_continuous",
+    "canonical_executor_instantiated": true,
+    "canonical_external_registry_failure_present": false,
+    "benchmark_eligibility_failure_present": true,
+    "internal_canonical_registry_not_misclassified_as_external": true,
+    "verdict": "PASSED"
+  },
+  "overall_verdict": "PASSED"
+}

@@ -1,0 +1,46 @@
+{
+  "production_helper": "src.launcher.executor.compute_step_route_progress_and_reward",
+  "synthetic_rc_trace": [
+    0.0,
+    0.1,
+    0.08,
+    0.2
+  ],
+  "expected_deltas": [
+    0.1,
+    -0.02,
+    0.12
+  ],
+  "actual_deltas": [
+    0.1,
+    -0.020000000000000004,
+    0.12000000000000001
+  ],
+  "all_deltas_match": true,
+  "signed_progress_preserved": true,
+  "clamping_absent": true,
+  "steps": [
+    {
+      "previous_route_completion": 0.0,
+      "current_route_completion": 0.1,
+      "delta_route": 0.1,
+      "progress_reward": 0.1,
+      "total_step_reward": 0.09975
+    },
+    {
+      "previous_route_completion": 0.1,
+      "current_route_completion": 0.08,
+      "delta_route": -0.020000000000000004,
+      "progress_reward": -0.020000000000000004,
+      "total_step_reward": -0.020250000000000004
+    },
+    {
+      "previous_route_completion": 0.08,
+      "current_route_completion": 0.2,
+      "delta_route": 0.12000000000000001,
+      "progress_reward": 0.12000000000000001,
+      "total_step_reward": 0.11975000000000001
+    }
+  ],
+  "verdict": "PASSED"
+}

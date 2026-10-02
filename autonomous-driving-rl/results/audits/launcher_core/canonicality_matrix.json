@@ -1,0 +1,58 @@
+{
+  "SANDBOX": {
+    "launcher_mode": "SANDBOX",
+    "plan_resolution_succeeded": true,
+    "plan_canonical_run": false,
+    "current_canonical_agent_benchmark_eligible": false,
+    "preflight_can_execute": true,
+    "preflight_failure_check_ids": [],
+    "launcher_execution_attempted": true,
+    "launcher_execution_completed": true,
+    "persisted_canonical_run": false,
+    "block_reason": null,
+    "evidence_level": "SIMULATOR_BACKED_EXECUTION_VERIFIED"
+  },
+  "AUDIT": {
+    "launcher_mode": "AUDIT",
+    "plan_resolution_succeeded": true,
+    "plan_canonical_run": false,
+    "current_canonical_agent_benchmark_eligible": false,
+    "preflight_can_execute": true,
+    "preflight_failure_check_ids": [],
+    "launcher_execution_attempted": true,
+    "launcher_execution_completed": true,
+    "persisted_canonical_run": false,
+    "block_reason": null,
+    "evidence_level": "SIMULATOR_BACKED_EXECUTION_VERIFIED"
+  },
+  "VALIDATION": {
+    "launcher_mode": "VALIDATION",
+    "plan_resolution_succeeded": true,
+    "plan_canonical_run": true,
+    "current_canonical_agent_benchmark_eligible": false,
+    "preflight_can_execute": false,
+    "preflight_failure_check_ids": [
+      "agent_benchmark_eligibility"
+    ],
+    "launcher_execution_attempted": false,
+    "launcher_execution_completed": false,
+    "persisted_canonical_run": null,
+    "block_reason": "Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False (Agent 'fixture_constant_continuous' is flagged benchmark_eligible=False (e.g. audit fixture). Cannot execute benchmark evaluations on TEST or VALIDATION!)",
+    "evidence_level": "PLAN_RESOLVED_PREFLIGHT_BLOCKED_NO_BENCHMARK_AGENT"
+  },
+  "TEST": {
+    "launcher_mode": "TEST",
+    "plan_resolution_succeeded": true,
+    "plan_canonical_run": true,
+    "current_canonical_agent_benchmark_eligible": false,
+    "preflight_can_execute": false,
+    "preflight_failure_check_ids": [
+      "agent_benchmark_eligibility"
+    ],
+    "launcher_execution_attempted": false,
+    "launcher_execution_completed": false,
+    "persisted_canonical_run": null,
+    "block_reason": "Stage-0 Random benchmark agent not yet implemented; all current Gate-6 canonical fixtures are benchmark_eligible=False (Agent 'fixture_constant_continuous' is flagged benchmark_eligible=False (e.g. audit fixture). Cannot execute benchmark evaluations on TEST or VALIDATION!)",
+    "evidence_level": "PLAN_RESOLVED_PREFLIGHT_BLOCKED_NO_BENCHMARK_AGENT"
+  }
+}

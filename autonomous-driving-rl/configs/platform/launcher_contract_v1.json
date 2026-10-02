@@ -1,0 +1,287 @@
+{
+  "metadata": {
+    "contract_name": "LauncherContractV1",
+    "spec_version": "1.0.0",
+    "status": "AUDIT-CANDIDATE",
+    "gate": "Gate 7.5A (Research Platform V1)"
+  },
+  "launcher_modes": [
+    "SANDBOX",
+    "VALIDATION",
+    "TEST",
+    "AUDIT"
+  ],
+  "run_kind_mapping": {
+    "SANDBOX": "AUDIT",
+    "AUDIT": "AUDIT",
+    "VALIDATION": "VALIDATION_EVALUATION",
+    "TEST": "TEST_EVALUATION"
+  },
+  "sandbox_resolution_policy": {
+    "split_restriction": "TRAIN_ONLY",
+    "holdout_violation_policy": "FAIL_LOUDLY_NO_SILENT_FALLBACK",
+    "ambiguity_policy": "EXPLICIT_SEED_APPLIES_ALL_SELECTORS_MULTIPLE_MATCHES_FAIL",
+    "default_geometry_selection": "DETERMINISTIC_SORTED_FIRST_ELIGIBLE",
+    "default_environment_seed": 0,
+    "default_stochastic_agent_seed": 101,
+    "episode_count": 1,
+    "description": "Sandbox V1 resolves exactly one episode strictly within TRAIN split for exploratory inspection."
+  },
+  "validation_resolution_policy": {
+    "source_manifest": "validation_case_manifest.csv",
+    "expected_case_count": 96,
+    "split": "VALIDATION",
+    "custom_subset_policy": "PROHIBITED_IN_GATE_7_5A",
+    "description": "Validation resolves the full frozen Gate-5 validation suite across 48 geometries and 2 seeds."
+  },
+  "test_resolution_policy": {
+    "source_manifest": "test_case_manifest.csv",
+    "expected_case_count": 60,
+    "split": "TEST",
+    "partial_run_policy": "STRICTLY_PROHIBITED",
+    "test_smoke_policy": "STRICTLY_PROHIBITED",
+    "description": "Test resolves the immutable 60 paired cases across 12 test geometries and 5 seeds."
+  },
+  "render_policy": {
+    "SANDBOX": [
+      "OFF",
+      "NATIVE"
+    ],
+    "AUDIT": [
+      "OFF",
+      "NATIVE"
+    ],
+    "VALIDATION": [
+      "OFF"
+    ],
+    "TEST": [
+      "OFF"
+    ],
+    "benchmark_rule": "VALIDATION and TEST benchmark runs must execute headless (render=OFF) to prevent timing distortion."
+  },
+  "seed_policy": {
+    "stochastic_benchmark_replicate_seeds": [
+      101,
+      202,
+      303
+    ],
+    "deterministic_benchmark_agent_seed": "MUST_BE_NONE",
+    "sandbox_stochastic_default": 101,
+    "description": "Stochastic benchmark agents require explicit seed in {101, 202, 303}; deterministic agents require None."
+  },
+  "preflight_policy": {
+    "rule": "ZERO_FAIL_CHECKS_TO_EXECUTE",
+    "check_categories": [
+      "CONTRACT",
+      "ENVIRONMENT",
+      "AGENT",
+      "CASE_PLAN",
+      "SEED",
+      "OBSERVABILITY",
+      "SECURITY"
+    ],
+    "contract_chain_verification": "PREFLIGHT_VERIFIES_ENTIRE_HASH_CHAIN_ACROSS_GATES_5_6_7_7.5A",
+    "manifest_hash_verification": "PREFLIGHT_VERIFIES_LOCKED_GATE5_MANIFEST_HASHES",
+    "plan_integrity_recomputation": "PREFLIGHT_RECOMPUTES_RESOLVED_PLAN_SHA256_AND_REJECTS_TAMPERING",
+    "deep_manifest_parity_rule": "PREFLIGHT_VERIFIES_ALL_11_FIELDS_ROW_BY_ROW_AGAINST_SOURCE_MANIFEST",
+    "custom_run_id_sanitization": "STRICT_CONTAINMENT_GRAMMAR_NO_TRAVERSAL",
+    "benchmark_dirty_git_policy": "FAIL_PREFLIGHT",
+    "benchmark_unverified_env_policy": "FAIL_PREFLIGHT",
+    "fixture_on_benchmark_policy": "FAIL_PREFLIGHT",
+    "online_without_key_policy": "FAIL_PREFLIGHT"
+  },
+  "control_policy": {
+    "physics_world_step_size": 0.02,
+    "decision_repeat": 5,
+    "decision_dt_s": 0.1,
+    "control_frequency_hz": 10.0,
+    "traffic_mode": "trigger",
+    "truncate_as_terminate": false,
+    "reward_passthrough": "SIGNED_DELTA_ROUTE_COMPLETION_PRESERVED_WITHOUT_CLAMPING"
+  },
+  "custom_run_id_policy": {
+    "grammar": "^[a-zA-Z0-9_\\-\\.]+$",
+    "max_length": 64,
+    "containment": "STRICTLY_WITHIN_RUNS_ROOT_NO_NESTED_DIRS",
+    "plan_hash_inclusion": false
+  },
+  "plan_agent_fingerprint_policy": {
+    "scientific_registration_fields": [
+      "agent_id",
+      "agent_version",
+      "stage_label",
+      "method_family",
+      "purpose",
+      "implementation_ref",
+      "input_profile_id",
+      "action_adapter_id",
+      "inference_stochasticity",
+      "stateful_within_episode",
+      "benchmark_eligible",
+      "sandbox_eligible",
+      "audit_eligible",
+      "requires_checkpoint"
+    ],
+    "excluded_descriptive_fields": [
+      "description"
+    ],
+    "rule": "ResolvedExperimentPlanV1 must cryptographically fingerprint all 14 scientific registration fields, canonical_agent_registry_sha256, factory_ref, and the projected AgentDescriptor, strictly excluding cosmetic description."
+  },
+  "registry_binding_policy": {
+    "canonical_authority_rule": "CANONICAL_BENCHMARK_MODES_MUST_USE_COMMITTED_CANONICAL_REGISTRY",
+    "custom_registry_scope": "CUSTOM_REGISTRIES_PERMITTED_ONLY_FOR_NONCANONICAL_SANDBOX_AND_AUDIT",
+    "parity_rule": "ALL_14_SCIENTIFIC_FIELDS_MUST_MATCH_CANONICAL_REGISTRY_EXACTLY",
+    "factory_identity_rule": "FACTORY_QUALNAME_MUST_MATCH_CANONICAL_REGISTRY_METADATA",
+    "implementation_identity_rule": "RUNTIME_CLASS_QUALNAME_MUST_MATCH_CANONICAL_IMPLEMENTATION_REF",
+    "descriptor_projection_rule": "AGENT_DESCRIPTOR_MUST_MATCH_REGISTRATION_PROJECTION_EXACTLY"
+  },
+  "agent_lifecycle_policy": {
+    "instance_lifecycle": "ONE_AGENT_INSTANCE_PER_EXPERIMENT_RUN_RESET_PER_EPISODE",
+    "descriptor_verification": "RUNTIME_DESCRIPTOR_MUST_MATCH_REGISTRATION_EXACTLY",
+    "cleanup": "TRY_FINALLY_GUARANTEES_ENV_AND_AGENT_CLOSE"
+  },
+  "wandb_auto_resolution_policy": {
+    "unspecified_defaults": {
+      "SANDBOX": "DISABLED",
+      "AUDIT": "DISABLED",
+      "VALIDATION": "OFFLINE",
+      "TEST": "OFFLINE"
+    },
+    "explicit_override_rule": "EXPLICIT_DISABLED_REMAINS_DISABLED_ACROSS_ALL_MODES"
+  },
+  "manifest_name_mapping": {
+    "SANDBOX": "geometry_split_manifest.csv",
+    "AUDIT": "geometry_split_manifest.csv",
+    "VALIDATION": "validation_case_manifest.csv",
+    "TEST": "test_case_manifest.csv"
+  },
+  "legacy_exclusion_policy": {
+    "excluded_legacy_components": [
+      "src/environments/course_env_v1.py",
+      "src/evaluation/evaluate_random.py",
+      "CourseEnvV1 (35D observation, Discrete(5))"
+    ],
+    "rule": "Launcher Core must never import, instantiate, or invoke legacy CourseEnvV1 or evaluate_random.py."
+  },
+  "provenance_embedding_policy": {
+    "target": "ExperimentRunConfig.algorithm_hyperparameters['launcher']",
+    "embedded_keys": [
+      "launcher_mode",
+      "launcher_contract_sha256",
+      "platform_execution_contract_sha256",
+      "resolved_plan_sha256",
+      "protocol_scope"
+    ]
+  },
+  "event_policy": {
+    "types": [
+      "RUN_STARTED",
+      "EPISODE_STARTED",
+      "EPISODE_PROGRESS",
+      "EPISODE_FINISHED",
+      "RUN_FINISHED",
+      "RUN_INTERRUPTED",
+      "RUN_FAILED"
+    ],
+    "isolation": "Observer telemetry strictly decoupled from AgentPolicy"
+  },
+  "runtime_dataclass_schemas": {
+    "AgentRegistrationV1": [
+      "agent_id",
+      "agent_version",
+      "stage_label",
+      "method_family",
+      "purpose",
+      "implementation_ref",
+      "input_profile_id",
+      "action_adapter_id",
+      "inference_stochasticity",
+      "stateful_within_episode",
+      "benchmark_eligible",
+      "sandbox_eligible",
+      "audit_eligible",
+      "requires_checkpoint",
+      "description"
+    ],
+    "LaunchRequestV1": [
+      "mode",
+      "agent_id",
+      "tier",
+      "sequence",
+      "geometry_generation_seed",
+      "environment_seed",
+      "agent_seed",
+      "render_mode",
+      "wandb_mode",
+      "runs_root",
+      "custom_run_id"
+    ],
+    "ResolvedCaseV1": [
+      "case_id",
+      "case_index",
+      "protocol_order_index",
+      "split",
+      "tier",
+      "sequence",
+      "geometry_generation_seed",
+      "geometry_sha256",
+      "environment_seed",
+      "traffic_density",
+      "horizon_steps"
+    ],
+    "ResolvedExperimentPlanV1": [
+      "launcher_mode",
+      "run_kind",
+      "canonical_run",
+      "protocol_scope",
+      "agent_registration",
+      "agent_descriptor",
+      "resolved_cases",
+      "render_mode",
+      "wandb_mode",
+      "agent_seed",
+      "control_frequency_hz",
+      "control_dt_s",
+      "benchmark_contract_sha256",
+      "agent_contract_sha256",
+      "platform_runtime_contract_sha256",
+      "logging_contract_sha256",
+      "platform_observability_contract_sha256",
+      "launcher_contract_sha256",
+      "platform_execution_contract_sha256",
+      "canonical_agent_registry_sha256",
+      "factory_ref",
+      "resolved_plan_sha256",
+      "warnings"
+    ],
+    "LauncherEventV1": [
+      "event_type",
+      "run_id",
+      "episode_index",
+      "total_episodes",
+      "step_index",
+      "route_completion",
+      "speed_kmh",
+      "status",
+      "message",
+      "timestamp_utc"
+    ]
+  },
+  "runtime_enum_schemas": {
+    "LauncherMode": [
+      "SANDBOX",
+      "VALIDATION",
+      "TEST",
+      "AUDIT"
+    ],
+    "LauncherEventType": [
+      "RUN_STARTED",
+      "EPISODE_STARTED",
+      "EPISODE_PROGRESS",
+      "EPISODE_FINISHED",
+      "RUN_FINISHED",
+      "RUN_INTERRUPTED",
+      "RUN_FAILED"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+launcher_mode,mapped_run_kind,canonical_status,resolved_cases_count,render_mode_policy,default_wandb_mode,verdict
+SANDBOX,AUDIT,False,1,OFF or NATIVE,DISABLED,VERIFIED
+VALIDATION,VALIDATION_EVALUATION,True,96,OFF,OFFLINE,VERIFIED
+TEST,TEST_EVALUATION,True,60,OFF,OFFLINE,VERIFIED
+AUDIT,AUDIT,False,1,OFF or NATIVE,DISABLED,VERIFIED
