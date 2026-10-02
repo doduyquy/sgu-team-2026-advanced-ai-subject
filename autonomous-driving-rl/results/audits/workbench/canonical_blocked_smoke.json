@@ -1,11 +1,12 @@
 {
   "status": "PASS",
-  "blocked_as_expected": true,
-  "failed_checks": [
-    "git_cleanliness",
+  "plan_resolution_succeeded": true,
+  "preflight_can_execute": false,
+  "preflight_failure_check_ids": [
     "agent_benchmark_eligibility"
   ],
-  "targeted_scientific_check": "agent_benchmark_eligibility",
-  "can_execute": false,
+  "launcher_event_count": 0,
+  "execution_report_present": false,
+  "worker_blocked": true,
   "exit_code": 1
 }

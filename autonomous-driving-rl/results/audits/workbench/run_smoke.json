@@ -2,12 +2,12 @@
   "status": "PASS",
   "exit_code": 0,
   "received_message_types": [
-    "WORKER_READY",
-    "PLAN_RESOLVED",
     "LAUNCHER_EVENT",
     "WORKER_DONE",
+    "WORKER_READY",
+    "EXECUTION_REPORT",
     "PREFLIGHT_REPORT",
-    "EXECUTION_REPORT"
+    "PLAN_RESOLVED"
   ],
   "launcher_event_sequence": [
     "RUN_STARTED",
