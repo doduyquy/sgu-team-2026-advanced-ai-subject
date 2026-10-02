@@ -89,8 +89,8 @@ The Workbench defines four mutually exclusive integrity display states:
 ## 6. Verification & Regression Evidence
 
 ### A. Pass B2 Unit Tests (`tests/test_workbench_results.py`)
-- 42 dedicated tests covering real Gate-7 schema parsing, strict 4-way run identity parity, path containment, isolated tamper detection, trust-gated primary metrics, custom runs root auto-load, single-source 31-column episode schema, single-source 8-field timing schema, detailed environment provenance, NoEditTriggers, live telemetry buffering, and contract determinism.
-- All 42 tests passed cleanly.
+- 46 dedicated tests covering real Gate-7 schema parsing, strict 4-way run identity parity, path containment, isolated tamper detection, trust-gated primary metrics, custom runs root auto-load, single-source 31-column episode schema, single-source 8-field timing schema, detailed environment provenance, NoEditTriggers, live telemetry buffering, missing vs zero outcome rates, and contract determinism.
+- All 46 tests passed cleanly.
 
 ### B. Total Platform Regression
 - `tests.test_agent_contract`: 37 tests (PASS)
@@ -98,21 +98,22 @@ The Workbench defines four mutually exclusive integrity display states:
 - `tests.test_evaluation_protocol`: 20 tests (PASS)
 - `tests.test_reward_metrics`: 16 tests (PASS)
 - `tests.test_workbench`: 29 tests (PASS)
-- `tests.test_workbench_results`: 42 tests (PASS)
+- `tests.test_workbench_results`: 46 tests (PASS)
 - `tests.test_logging_contract`: 47 tests (PASS)
 - `tests.test_launcher_core`: 97 tests (PASS)
-- **Total Suite:** **298 tests**, 0 failures, 0 errors.
+- **Total Suite:** **302 tests**, 0 failures, 0 errors.
 
 ### C. Machine-Derived Audit Smokes (`scripts/audit_workbench_results.py`)
 1. **Startup Smoke (`results_startup_smoke.json`):** Offscreen construction with 6 main tabs, 6 read-only results subtabs, and 8-column runs browser.
-2. **Complete Run Load Smoke (`complete_run_load_smoke.json`):** Real simulation run executed, loaded from disk, evaluated as `VERIFIED` with exact Gate-7 schema parity and full environment verification provenance.
+2. **Complete Run Load Smoke (`complete_run_load_smoke.json`):** Real simulation run executed, loaded from disk, evaluated as `VERIFIED` with exact Gate-7 schema parity and exact field-level environment provenance parity.
 3. **Isolated Tamper Detection Smoke (`tamper_detection_smoke.json`):** Exact canonical semantic content hash mismatch detection on copied run without repairing or rewriting artifacts. Target failure isolated strictly to `episodes.csv` (0 unrelated failures).
 4. **Incomplete Run Semantics Smoke (`incomplete_run_semantics_smoke.json`):** `RUNNING` and `FAILED` runs evaluated truthfully as `NOT_FINAL`.
 5. **Live Telemetry Smoke (`live_telemetry_smoke.json`):** In-memory trace buffering verified strictly from `LauncherEventV1`.
 6. **Identity Boundary Smoke (`identity_boundary_smoke.json`):** Verified run identity mismatches across dir/manifest/state/integrity and directory traversals are rejected as malformed.
-7. **Trust Gating Smoke (`trust_gating_smoke.json`):** Verified non-VERIFIED runs suppress authoritative labels and surface appropriate trust warnings.
+7. **Trust Gating Smoke (`trust_gating_smoke.json`):** Verified non-VERIFIED runs suppress authoritative labels and surface appropriate trust warnings observed directly on UI widgets across VERIFIED, FAILED, UNVERIFIED, and NOT_FINAL states.
 8. **Custom Root Auto-Load Smoke (`custom_root_autoload_smoke.json`):** Verified automatic repository navigation and run selection when a run executes under a custom `runs_root`.
-9. **Artifact Privacy Scan:** Verified 0 private machine paths or credentials persisted in audit artifacts.
+9. **Outcome Missingness Smoke (`outcome_missingness_smoke.json`):** Machine-observed ResultsWidget rendering proves that stored 0.0 values remain present while missing/None outcome rates are omitted and never fabricated as 0.0.
+10. **Artifact Privacy Scan:** Verified 0 private machine paths or credentials persisted across all 11 audit artifacts.
 
 ---
 

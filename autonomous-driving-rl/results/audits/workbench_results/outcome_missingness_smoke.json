@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "stored_success_rate": 1.0,
+  "stored_timeout_rate": 0.0,
+  "crash_human_rate_present_in_summary": false,
+  "plotted_labels": [
+    "Success",
+    "Timeout"
+  ],
+  "plotted_values": [
+    1.0,
+    0.0
+  ],
+  "timeout_label_present": true,
+  "timeout_plotted_value": 0.0,
+  "missing_crash_human_label_absent": true,
+  "missing_rate_fabricated_as_zero": false,
+  "verdict": "CONFIRMED_MISSING_NOT_ZERO"
+}

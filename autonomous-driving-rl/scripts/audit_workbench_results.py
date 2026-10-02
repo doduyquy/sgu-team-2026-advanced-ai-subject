@@ -598,7 +598,74 @@ def run_b2_audit() -> None:
         print("  [OK] Custom runs root auto-navigation verified.")
 
     # ---------------------------------------------------------
-    # 10. Write Audit Artifacts
+    # 10. Outcome Missingness Smoke (Missing != Zero Machine Proof)
+    # ---------------------------------------------------------
+    print("\n--- Auditing Outcome Missingness Semantics (Missing != Zero) ---")
+    with tempfile.TemporaryDirectory() as tmp_om_dir:
+        om_path = Path(tmp_om_dir).resolve()
+        om_run = om_path / "outcome_missingness_run"
+        om_run.mkdir(parents=True, exist_ok=True)
+
+        with open(om_run / "run_state.json", "w") as f:
+            json.dump({"run_id": "outcome_missingness_run", "status": "COMPLETE", "recorded_episode_count": 1}, f)
+        with open(om_run / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "outcome_missingness_run", "run_kind": "AUDIT", "config": {"agent_id": "test_agent"}}, f)
+
+        # Explicitly store success_rate=1.0, timeout_rate=0.0, and omit crash_human_rate
+        summary_payload = {
+            "run_id": "outcome_missingness_run",
+            "overall_metrics": {
+                "clean_success_rate": 1.0,
+                "success_rate": 1.0,
+                "timeout_rate": 0.0,
+                # "crash_human_rate" intentionally OMITTED
+            }
+        }
+        with open(om_run / "summary.json", "w") as f:
+            json.dump(summary_payload, f)
+
+        widget = ResultsWidget(runs_root=om_path)
+        widget.show()
+        widget.select_run_by_id("outcome_missingness_run")
+
+        # Inspect actual Matplotlib rendering state
+        plotted_labels = [tick.get_text() for tick in widget.ax_outcomes.get_xticklabels()]
+        patches = widget.ax_outcomes.patches
+        plotted_values = [p.get_height() for p in patches]
+
+        # Verify Timeout is present with bar height exactly 0.0
+        assert "Timeout" in plotted_labels
+        timeout_idx = plotted_labels.index("Timeout")
+        timeout_bar_val = plotted_values[timeout_idx]
+        assert timeout_bar_val == 0.0, f"Expected Timeout bar value 0.0, got {timeout_bar_val}"
+
+        # Verify Crash Hum is absent from plotted labels
+        assert "Crash Hum" not in plotted_labels, "Missing crash_human_rate must NOT be plotted as a bar!"
+
+        # Verify Success is present with bar height 1.0
+        assert "Success" in plotted_labels
+        success_idx = plotted_labels.index("Success")
+        assert plotted_values[success_idx] == 1.0
+
+        widget.close()
+
+        outcome_missingness_evidence = {
+            "status": "PASS",
+            "stored_success_rate": 1.0,
+            "stored_timeout_rate": 0.0,
+            "crash_human_rate_present_in_summary": False,
+            "plotted_labels": plotted_labels,
+            "plotted_values": plotted_values,
+            "timeout_label_present": True,
+            "timeout_plotted_value": timeout_bar_val,
+            "missing_crash_human_label_absent": True,
+            "missing_rate_fabricated_as_zero": False,
+            "verdict": "CONFIRMED_MISSING_NOT_ZERO",
+        }
+        print("  [OK] Outcome missingness semantics machine-verified (missing != zero).")
+
+    # ---------------------------------------------------------
+    # 11. Write Audit Artifacts
     # ---------------------------------------------------------
     print("\n--- Writing Pass B2 Tracked Audit Artifacts ---")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -648,8 +715,12 @@ def run_b2_audit() -> None:
         json.dump(custom_autoload_evidence, f, indent=2)
     print(f"  [SAVED] {output_dir / 'custom_root_autoload_smoke.json'}")
 
+    with open(output_dir / "outcome_missingness_smoke.json", "w", encoding="utf-8") as f:
+        json.dump(outcome_missingness_evidence, f, indent=2)
+    print(f"  [SAVED] {output_dir / 'outcome_missingness_smoke.json'}")
+
     # Summary Markdown
-    summary_md = f"""# Gate 7.5B Pass B2 Results & Live UX Audit Summary (Correction 2)
+    summary_md = f"""# Gate 7.5B Pass B2 Results & Live UX Audit Summary (Final Correction)
 
 - Gate: Gate 7.5B Pass B2 (Results Browser, Artifact Integrity & Live UX)
 - Status: AUDIT-CANDIDATE
@@ -680,7 +751,8 @@ def run_b2_audit() -> None:
 6. **Strict 4-Way Run Identity:** Directory basename, `run_state.json`, `run_manifest.json`, and `run_integrity.json` must strictly agree; mismatches, directory traversal, and malformed integrity JSON are rejected as malformed.
 7. **Machine-Observed Trust Gating:** Metric cards and overview areas display authoritative labels only when integrity status is `VERIFIED`. `FAILED`, `UNVERIFIED`, and `NOT_FINAL` states suppress authoritative claims and surface appropriate warning notices directly observed on UI widgets.
 8. **Custom Root Auto-Navigation:** Dynamic discovery and auto-selection of runs executing under a custom `runs_root`.
-9. **No-Ranking Invariant:** Inspects individual runs only; zero multi-run leaderboard or ranking semantics.
+9. **Outcome Missingness Semantics:** Machine-observed ResultsWidget rendering proves that stored 0.0 values remain present while missing/None outcome rates are omitted and never fabricated as 0.0.
+10. **No-Ranking Invariant:** Inspects individual runs only; zero multi-run leaderboard or ranking semantics.
 """
     with open(output_dir / "audit_summary.md", "w", encoding="utf-8") as f:
         f.write(summary_md)

@@ -1,4 +1,4 @@
-# Gate 7.5B Pass B2 Results & Live UX Audit Summary (Correction 2)
+# Gate 7.5B Pass B2 Results & Live UX Audit Summary (Final Correction)
 
 - Gate: Gate 7.5B Pass B2 (Results Browser, Artifact Integrity & Live UX)
 - Status: AUDIT-CANDIDATE
@@ -29,4 +29,5 @@
 6. **Strict 4-Way Run Identity:** Directory basename, `run_state.json`, `run_manifest.json`, and `run_integrity.json` must strictly agree; mismatches, directory traversal, and malformed integrity JSON are rejected as malformed.
 7. **Machine-Observed Trust Gating:** Metric cards and overview areas display authoritative labels only when integrity status is `VERIFIED`. `FAILED`, `UNVERIFIED`, and `NOT_FINAL` states suppress authoritative claims and surface appropriate warning notices directly observed on UI widgets.
 8. **Custom Root Auto-Navigation:** Dynamic discovery and auto-selection of runs executing under a custom `runs_root`.
-9. **No-Ranking Invariant:** Inspects individual runs only; zero multi-run leaderboard or ranking semantics.
+9. **Outcome Missingness Semantics:** Machine-observed ResultsWidget rendering proves that stored 0.0 values remain present while missing/None outcome rates are omitted and never fabricated as 0.0.
+10. **No-Ranking Invariant:** Inspects individual runs only; zero multi-run leaderboard or ranking semantics.
