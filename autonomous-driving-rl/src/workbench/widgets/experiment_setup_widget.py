@@ -74,6 +74,7 @@ class ExperimentSetupWidget(QWidget):
         self.combo_tier.addItem("Easy", userData="Easy")
         self.combo_tier.addItem("Medium", userData="Medium")
         self.combo_tier.addItem("Hard", userData="Hard")
+        self.combo_tier.addItem("Extreme", userData="Extreme")
         form_layout.addRow(QLabel("Tier:"), self.combo_tier)
 
         # Sequence

@@ -12,8 +12,9 @@
       "type": "WORKER_READY",
       "payload": {
         "operation": "PLAN",
-        "pid": 34884,
-        "python_executable": "C:\\Users\\ADMIN\\anaconda3\\envs\\metadrive\\python.exe",
+        "pid": 7592,
+        "python_executable": "python.exe",
+        "python_version": "3.10.21",
         "protocol_version": "WORKBENCH_PROTOCOL_V1"
       }
     },

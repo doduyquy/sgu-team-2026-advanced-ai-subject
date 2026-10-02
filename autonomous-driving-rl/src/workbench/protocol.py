@@ -68,24 +68,26 @@ class WorkbenchMessageV1:
 def parse_sentinel_line(line: str) -> Optional[WorkbenchMessageV1]:
     """
     Parses a single line of stdout.
-    Returns WorkbenchMessageV1 if the line contains @@WORKBENCH@@ and valid JSON.
-    Returns None if the line does not start with or contain the sentinel, or if JSON is invalid.
+    Returns WorkbenchMessageV1 if the line strictly STARTS with @@WORKBENCH@@ (allowing optional leading whitespace)
+    and contains valid JSON adhering to WORKBENCH_PROTOCOL_V1.
+    Returns None if the line does not start with the sentinel, has wrong protocol version, or has invalid JSON.
     Safe against non-sentinel MetaDrive / Panda3D / OS stdout.
     """
     clean_line = line.strip()
-    idx = clean_line.find(WORKBENCH_SENTINEL)
-    if idx < 0:
+    if not clean_line.startswith(WORKBENCH_SENTINEL):
         return None
 
-    raw_json = clean_line[idx + len(WORKBENCH_SENTINEL):].strip()
+    raw_json = clean_line[len(WORKBENCH_SENTINEL):].strip()
     try:
         data = json.loads(raw_json)
         if not isinstance(data, dict):
             return None
         proto = data.get("protocol_version")
+        if proto != WORKBENCH_PROTOCOL_VERSION:
+            return None
         m_type_raw = data.get("type")
         payload = data.get("payload")
-        if not proto or not m_type_raw or payload is None or not isinstance(payload, dict):
+        if not m_type_raw or payload is None or not isinstance(payload, dict):
             return None
         try:
             m_type = WorkbenchMessageType(m_type_raw)

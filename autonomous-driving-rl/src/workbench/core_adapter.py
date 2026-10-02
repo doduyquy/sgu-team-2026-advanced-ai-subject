@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from src.launcher.cases import (
+    LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256,
+    LOCKED_TEST_CASE_MANIFEST_SHA256,
+    LOCKED_VALIDATION_CASE_MANIFEST_SHA256,
     get_default_project_root,
     load_manifest_csv,
 )
@@ -46,17 +49,19 @@ class CoreAdapter:
         """
         Loads frozen manifest rows for read-only browsing in Case Explorer.
         split: 'TRAIN', 'VALIDATION', or 'TEST'.
+        Uses authoritative Gate-5 manifest paths and locked cryptographic hashes.
         """
         split_norm = split.upper()
+        audit_manifest_dir = self._project_root / "results" / "audits" / "evaluation_protocol"
         if split_norm == "TRAIN":
-            manifest_file = "geometry_split_manifest.csv"
-            raw_cases = load_manifest_csv(self._project_root / "configs" / "benchmarks" / manifest_file)
+            manifest_path = audit_manifest_dir / "geometry_split_manifest.csv"
+            raw_cases = load_manifest_csv(manifest_path, expected_sha256=LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256)
             return [c for c in raw_cases if c.get("split") == "TRAIN"]
         elif split_norm == "VALIDATION":
-            manifest_file = "validation_case_manifest.csv"
-            return load_manifest_csv(self._project_root / "configs" / "benchmarks" / manifest_file)
+            manifest_path = audit_manifest_dir / "validation_case_manifest.csv"
+            return load_manifest_csv(manifest_path, expected_sha256=LOCKED_VALIDATION_CASE_MANIFEST_SHA256)
         elif split_norm == "TEST":
-            manifest_file = "test_case_manifest.csv"
-            return load_manifest_csv(self._project_root / "configs" / "benchmarks" / manifest_file)
+            manifest_path = audit_manifest_dir / "test_case_manifest.csv"
+            return load_manifest_csv(manifest_path, expected_sha256=LOCKED_TEST_CASE_MANIFEST_SHA256)
         else:
             raise ValueError(f"Unknown split: {split}")

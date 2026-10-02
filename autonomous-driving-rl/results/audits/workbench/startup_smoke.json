@@ -9,5 +9,10 @@
     "5. Case Explorer"
   ],
   "registered_agents_in_combobox": 4,
-  "cases_in_explorer_train": 0
+  "cases_in_explorer_train": 180,
+  "cases_unfiltered_train_manifest": 180,
+  "cases_unfiltered_validation_manifest": 96,
+  "cases_unfiltered_test_manifest": 60,
+  "extreme_tier_available": true,
+  "benchmark_execution_controls_present": false
 }

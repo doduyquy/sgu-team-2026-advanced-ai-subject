@@ -53,7 +53,7 @@ class CaseExplorerWidget(QWidget):
 
         filter_layout.addWidget(QLabel("Tier:"))
         self.combo_tier = QComboBox()
-        self.combo_tier.addItems(["ALL", "Easy", "Medium", "Hard"])
+        self.combo_tier.addItems(["ALL", "Easy", "Medium", "Hard", "Extreme"])
         filter_layout.addWidget(self.combo_tier)
 
         filter_layout.addWidget(QLabel("Sequence Search:"))
@@ -62,6 +62,11 @@ class CaseExplorerWidget(QWidget):
         filter_layout.addWidget(self.edit_seq_filter)
 
         main_layout.addWidget(filter_group)
+
+        # Status / error banner
+        self.lbl_status = QLabel("")
+        self.lbl_status.setVisible(False)
+        main_layout.addWidget(self.lbl_status)
 
         # Scientific constraint note
         lbl_note = QLabel("Scientific Policy: Manifest browsing is strictly read-only. Partial benchmark execution is prohibited.")
@@ -89,8 +94,13 @@ class CaseExplorerWidget(QWidget):
         split = self.combo_split.currentText()
         try:
             self._all_cases = self._core_adapter.load_case_manifest(split)
-        except Exception:
+            self.lbl_status.setVisible(False)
+            self.lbl_status.setText("")
+        except Exception as e:
             self._all_cases = []
+            self.lbl_status.setVisible(True)
+            self.lbl_status.setStyleSheet("color: red; font-weight: bold; background: #ffe6e6; padding: 4px; border: 1px solid red;")
+            self.lbl_status.setText(f"ERROR: Failed to load manifest for split '{split}': {e}")
         self._apply_filter()
 
     def _apply_filter(self) -> None:

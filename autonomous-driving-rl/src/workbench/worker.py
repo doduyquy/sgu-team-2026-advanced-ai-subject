@@ -39,6 +39,7 @@ from src.launcher.executor import ExperimentExecutor
 from src.launcher.models import LauncherMode, PreflightBlockedError
 from src.launcher.preflight import run_preflight
 from src.launcher.resolver import resolve_experiment_plan
+from src.platform import RunStatus
 from src.workbench.contracts import WORKBENCH_PROTOCOL_VERSION
 from src.workbench.protocol import (
     WorkbenchMessageType,
@@ -64,7 +65,8 @@ def run_worker_main() -> int:
     emit(WorkbenchMessageType.WORKER_READY, {
         "operation": args.operation,
         "pid": os.getpid(),
-        "python_executable": sys.executable,
+        "python_executable": Path(sys.executable).name,
+        "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
         "protocol_version": WORKBENCH_PROTOCOL_VERSION,
     })
 
@@ -149,7 +151,7 @@ def run_worker_main() -> int:
 
         emit(WorkbenchMessageType.WORKER_DONE, {
             "operation": "RUN",
-            "success": (report_dict.get("status") == "COMPLETED"),
+            "success": (report_dict.get("status") == RunStatus.COMPLETE.value),
             "blocked": False,
             "run_id": report_dict.get("run_id"),
         })

@@ -2,13 +2,38 @@
   "status": "PASS",
   "exit_code": 0,
   "received_message_types": [
-    "WORKER_DONE",
+    "WORKER_READY",
     "PLAN_RESOLVED",
-    "PREFLIGHT_REPORT",
     "LAUNCHER_EVENT",
-    "EXECUTION_REPORT",
-    "WORKER_READY"
+    "WORKER_DONE",
+    "PREFLIGHT_REPORT",
+    "EXECUTION_REPORT"
   ],
+  "launcher_event_sequence": [
+    "RUN_STARTED",
+    "EPISODE_STARTED",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_PROGRESS",
+    "EPISODE_FINISHED",
+    "RUN_FINISHED"
+  ],
+  "execution_status": "COMPLETE",
+  "worker_done_success": true,
+  "worker_done_blocked": false,
+  "run_id_parity": true,
   "gate7_artifacts_present": [
     "episodes.csv",
     "run_integrity.json",
@@ -17,5 +42,6 @@
     "summary.json",
     "timing.csv",
     "wandb_sync.json"
-  ]
+  ],
+  "persisted_run_state_status": "COMPLETE"
 }

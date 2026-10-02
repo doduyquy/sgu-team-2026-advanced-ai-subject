@@ -108,7 +108,7 @@ class RunMonitorWidget(QWidget):
         route = event.get("route_completion")
         speed = event.get("speed_kmh")
         message = event.get("message", "")
-        timestamp = event.get("timestamp", "")
+        timestamp = event.get("timestamp_utc") or event.get("timestamp", "")
 
         if run_id:
             self.lbl_run_id.setText(f"Run ID: {run_id}")

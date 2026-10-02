@@ -94,12 +94,34 @@ class WorkbenchProcessRunner(QObject):
             str(self._temp_request_file),
         ])
 
+        self._process.started.connect(self._on_process_started)
+        self._process.errorOccurred.connect(self._on_process_error)
         self._process.readyReadStandardOutput.connect(self._on_ready_read_stdout)
         self._process.readyReadStandardError.connect(self._on_ready_read_stderr)
         self._process.finished.connect(self._on_process_finished)
 
         self._process.start()
+
+    def _on_process_started(self) -> None:
         self.processStarted.emit()
+
+    def _on_process_error(self, error: QProcess.ProcessError) -> None:
+        if error == QProcess.ProcessError.FailedToStart:
+            self._cleanup_temp_file()
+            self._is_running = False
+            self._current_operation = None
+            err_msg = "Worker process failed to start (executable not found or permission denied)."
+            self.workerError.emit({"message": err_msg, "error_type": "FailedToStart"})
+            self.rawOutputReceived.emit(f"[ERROR] {err_msg}")
+            self.processFinished.emit(-1)
+
+    def _cleanup_temp_file(self) -> None:
+        if self._temp_request_file and self._temp_request_file.exists():
+            try:
+                self._temp_request_file.unlink()
+            except OSError:
+                pass
+            self._temp_request_file = None
 
     def force_terminate(self) -> None:
         """
@@ -165,13 +187,5 @@ class WorkbenchProcessRunner(QObject):
 
         self._is_running = False
         self._current_operation = None
-
-        # Clean up temporary request file
-        if self._temp_request_file and self._temp_request_file.exists():
-            try:
-                self._temp_request_file.unlink()
-            except OSError:
-                pass
-            self._temp_request_file = None
-
+        self._cleanup_temp_file()
         self.processFinished.emit(exit_code)

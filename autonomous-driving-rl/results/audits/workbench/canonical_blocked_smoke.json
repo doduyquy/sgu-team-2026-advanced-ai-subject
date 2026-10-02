@@ -5,6 +5,7 @@
     "git_cleanliness",
     "agent_benchmark_eligibility"
   ],
+  "targeted_scientific_check": "agent_benchmark_eligibility",
   "can_execute": false,
   "exit_code": 1
 }
