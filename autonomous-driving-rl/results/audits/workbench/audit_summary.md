@@ -1,6 +1,6 @@
-# Gate 7.5B Workbench Audit Summary (Pass B1 Correction 1)
+# Gate 7.5B Workbench Audit Summary — Pass B1 Final Audit
 
-- Gate: Gate 7.5B (Research Workbench GUI Pass B1 Correction 1)
+- Gate: Gate 7.5B (Research Workbench GUI Pass B1 Final Audit)
 - Status: AUDIT-CANDIDATE
 - Baseline Main Merge SHA: `0376da8b8bd3e1c3b60d43ed371b6713c0cb31f6`
 - PySide6 Pinned Version: `6.11.2`
