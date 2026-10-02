@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "blocked_as_expected": true,
+  "failed_checks": [
+    "git_cleanliness",
+    "agent_benchmark_eligibility"
+  ],
+  "can_execute": false,
+  "exit_code": 1
+}

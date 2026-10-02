@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "contract_name": "WorkbenchContractV1",
+    "spec_version": "1.0.0",
+    "status": "AUDIT-CANDIDATE",
+    "gate": "Gate 7.5B (Research Workbench GUI)"
+  },
+  "baseline_provenance": {
+    "baseline_main_merge_sha": "0376da8b8bd3e1c3b60d43ed371b6713c0cb31f6",
+    "baseline_launcher_contract_sha256": "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
+    "baseline_platform_execution_contract_sha256": "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d"
+  },
+  "gui_technology": {
+    "framework": "PySide6",
+    "pinned_version": "6.11.2"
+  },
+  "protocol_policy": {
+    "protocol_version": "WORKBENCH_PROTOCOL_V1",
+    "sentinel": "@@WORKBENCH@@",
+    "message_types": [
+      "WORKER_READY",
+      "PLAN_RESOLVED",
+      "PREFLIGHT_REPORT",
+      "LAUNCHER_EVENT",
+      "EXECUTION_REPORT",
+      "WORKER_ERROR",
+      "WORKER_DONE"
+    ],
+    "serialization": "JSON-safe fields matching LaunchRequestV1 directly",
+    "malformed_stdout_policy": "IGNORE_NON_SENTINEL_OUTPUT_SAFELY_CAPTURE_WORKER_LOGS"
+  },
+  "isolation_policy": {
+    "mechanism": "QProcess subprocess isolation",
+    "python_executable": "sys.executable (inherits exact active Conda/Python environment)",
+    "gui_thread_policy": "NO_SIMULATOR_OR_EXECUTOR_IN_QT_THREAD",
+    "qthread_policy": "PROHIBITED_FOR_METADRIVE_EXECUTOR"
+  },
+  "rendering_policy": {
+    "native_render_window": "SEPARATE_NATIVE_WINDOW_FOR_SANDBOX_AUDIT",
+    "embedded_viewport": "PROHIBITED_IN_GATE_7_5B_PASS_B1",
+    "rgb_streaming": "PROHIBITED_IN_GATE_7_5B_PASS_B1",
+    "scientific_observation_profile_modification": "STRICTLY_PROHIBITED"
+  },
+  "authority_policy": {
+    "scientific_authority_rule": "GUI_IS_THIN_PRESENTATION_CONTROL_ONLY_GATE_7_5A_REMAINS_FINAL_AUTHORITY",
+    "benchmark_subset_policy": "NO_PARTIAL_VALIDATION_OR_TEST_EXECUTION_STRICTLY_PROHIBITED",
+    "control_disabling_rule": "UX_CONVENIENCE_ONLY_NOT_SCIENTIFIC_ENFORCEMENT",
+    "telemetry_source_rule": "DERIVED_EXCLUSIVELY_FROM_LAUNCHER_EVENT_V1",
+    "no_internal_inspection_rule": "NO_INSPECTION_OF_AGENT_POLICY_INTERNALS_OR_SIMULATOR_OBJECTS"
+  },
+  "security_policy": {
+    "secret_handling": "NO_SECRETS_IN_COMMAND_LINE_OR_WORKBENCH_REQUEST_JSON",
+    "wandb_api_key_policy": "INHERITED_FROM_ENVIRONMENT_ONLY_NEVER_SERIALIZED_OR_COMMITTED",
+    "ephemeral_credentials_scan": "AUDIT_VERIFIES_ZERO_TOKENS_KEYS_COMMITTED"
+  },
+  "cancellation_policy": {
+    "graceful_cancellation_scope": "OUTSIDE_GATE_7_5B_PASS_B1",
+    "telemetry_control_separation": "LAUNCHER_EVENT_IS_OBSERVATIONAL_TELEMETRY_NOT_CONTROL_CHANNEL",
+    "force_terminate_policy": "NON_GRACEFUL_LABELED_FORCE_TERMINATE_NO_RUN_STATE_FALSIFICATION",
+    "window_close_policy": "CONFIRMATION_DIALOG_IF_WORKER_ACTIVE_NO_SILENT_KILL"
+  },
+  "thin_client_invariant": "The Research Workbench can disappear entirely and every scientific experiment remains fully definable, resolvable, validated, executable, and reproducible through Gate 7.5A alone."
+}

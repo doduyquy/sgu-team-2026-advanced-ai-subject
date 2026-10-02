@@ -1,0 +1,229 @@
+{
+  "status": "PASS",
+  "exit_code": 0,
+  "message_sequence": [
+    "WORKER_READY",
+    "PLAN_RESOLVED",
+    "PREFLIGHT_REPORT",
+    "WORKER_DONE"
+  ],
+  "messages": [
+    {
+      "type": "WORKER_READY",
+      "payload": {
+        "operation": "PLAN",
+        "pid": 34884,
+        "python_executable": "C:\\Users\\ADMIN\\anaconda3\\envs\\metadrive\\python.exe",
+        "protocol_version": "WORKBENCH_PROTOCOL_V1"
+      }
+    },
+    {
+      "type": "PLAN_RESOLVED",
+      "payload": {
+        "plan": {
+          "launcher_mode": "SANDBOX",
+          "run_kind": "AUDIT",
+          "canonical_run": false,
+          "protocol_scope": "SANDBOX_SINGLE_CASE",
+          "agent_registration": {
+            "agent_id": "fixture_constant_continuous",
+            "agent_version": "1.0.0",
+            "stage_label": null,
+            "method_family": "fixture",
+            "purpose": "AUDIT_FIXTURE",
+            "implementation_ref": "src.platform.agent:DeterministicConstantFixtureAgent",
+            "input_profile_id": "STATE_DECISION_V1",
+            "action_adapter_id": "continuous_box2_v1",
+            "inference_stochasticity": "deterministic",
+            "stateful_within_episode": false,
+            "benchmark_eligible": false,
+            "sandbox_eligible": true,
+            "audit_eligible": true,
+            "requires_checkpoint": false,
+            "description": "Audit fixture emitting constant steering=0.0 and throttle=0.4."
+          },
+          "agent_descriptor": {
+            "agent_id": "fixture_constant_continuous",
+            "agent_version": "1.0.0",
+            "input_profile_id": "STATE_DECISION_V1",
+            "action_adapter_id": "continuous_box2_v1",
+            "inference_stochasticity": "deterministic",
+            "stateful_within_episode": false,
+            "method_family": "fixture"
+          },
+          "resolved_cases": [
+            {
+              "case_id": "sandbox/Easy/SCCS/0/0",
+              "case_index": 1,
+              "protocol_order_index": 1,
+              "split": "TRAIN",
+              "tier": "Easy",
+              "sequence": "SCCS",
+              "geometry_generation_seed": 0,
+              "geometry_sha256": "df9c8bb722fc6517de55dc18838470b91ec43b89767ede19d93b72dc94674f9b",
+              "environment_seed": 0,
+              "traffic_density": 0.0,
+              "horizon_steps": 1758
+            }
+          ],
+          "render_mode": "OFF",
+          "wandb_mode": "DISABLED",
+          "agent_seed": null,
+          "control_frequency_hz": 10.0,
+          "control_dt_s": 0.1,
+          "benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+          "agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+          "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
+          "logging_contract_sha256": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+          "platform_observability_contract_sha256": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+          "launcher_contract_sha256": "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
+          "platform_execution_contract_sha256": "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
+          "canonical_agent_registry_sha256": "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
+          "factory_ref": "src.launcher.registry:_factory_fixture_constant_continuous",
+          "resolved_plan_sha256": "82bae82bdbd47a6e0d4c0334dfea9794c8ef751625b17b4850bbf02423a07ea7",
+          "warnings": [
+            "Sandbox run is exploratory/development; results are non-canonical."
+          ]
+        },
+        "resolved_plan_sha256": "82bae82bdbd47a6e0d4c0334dfea9794c8ef751625b17b4850bbf02423a07ea7",
+        "case_count": 1,
+        "canonical_run": false
+      }
+    },
+    {
+      "type": "PREFLIGHT_REPORT",
+      "payload": {
+        "report": {
+          "can_execute": true,
+          "fail_count": 0,
+          "warning_count": 1,
+          "pass_count": 17,
+          "summary_verdict": "PROCEED_WITH_WARNINGS",
+          "checks": [
+            {
+              "check_id": "canonical_registry_authority",
+              "status": "PASS",
+              "message": "Non-canonical run (SANDBOX) permits authorized registry configuration.",
+              "category": "AGENT"
+            },
+            {
+              "check_id": "agent_registry_binding",
+              "status": "PASS",
+              "message": "Agent registration 'fixture_constant_continuous' strictly verified against authoritative AgentRegistryV1.",
+              "category": "AGENT"
+            },
+            {
+              "check_id": "factory_identity_binding",
+              "status": "PASS",
+              "message": "Plan factory identity 'src.launcher.registry:_factory_fixture_constant_continuous' verified against authoritative registry.",
+              "category": "AGENT"
+            },
+            {
+              "check_id": "agent_descriptor_projection_parity",
+              "status": "PASS",
+              "message": "Agent descriptor verified identical to registration projection.",
+              "category": "AGENT"
+            },
+            {
+              "check_id": "contract_hash_chain",
+              "status": "PASS",
+              "message": "Full contract hash chain verified across Gates 5, 6, 7, and 7.5A.",
+              "category": "CONTRACT"
+            },
+            {
+              "check_id": "gate5_manifest_hashes",
+              "status": "PASS",
+              "message": "Gate-5 source CSV manifests verified against locked cryptographic hashes.",
+              "category": "CONTRACT"
+            },
+            {
+              "check_id": "plan_hash_integrity",
+              "status": "PASS",
+              "message": "Resolved plan hash strictly verified against actual current plan semantics.",
+              "category": "CONTRACT"
+            },
+            {
+              "check_id": "plan_structural_consistency",
+              "status": "PASS",
+              "message": "Plan structural semantics, canonical status, and 10 Hz control verified.",
+              "category": "CONTRACT"
+            },
+            {
+              "check_id": "metadrive_exact_pin",
+              "status": "PASS",
+              "message": "MetaDrive exact pin verified: version 0.4.3, commit 85e5dadc...",
+              "category": "ENVIRONMENT"
+            },
+            {
+              "check_id": "git_cleanliness",
+              "status": "WARNING",
+              "message": "Git working tree is dirty; acceptable for exploratory SANDBOX mode.",
+              "category": "SECURITY"
+            },
+            {
+              "check_id": "agent_mode_eligibility",
+              "status": "PASS",
+              "message": "Agent 'fixture_constant_continuous' is eligible for mode SANDBOX.",
+              "category": "AGENT"
+            },
+            {
+              "check_id": "input_profile_support",
+              "status": "PASS",
+              "message": "Input profile 'STATE_DECISION_V1' verified.",
+              "category": "AGENT"
+            },
+            {
+              "check_id": "action_adapter_support",
+              "status": "PASS",
+              "message": "Action adapter 'continuous_box2_v1' verified.",
+              "category": "AGENT"
+            },
+            {
+              "check_id": "sandbox_split_isolation",
+              "status": "PASS",
+              "message": "Sandbox case strictly confined to TRAIN split.",
+              "category": "CASE_PLAN"
+            },
+            {
+              "check_id": "protocol_order_monotonicity",
+              "status": "PASS",
+              "message": "Protocol order indices strictly sequential 1 through 1.",
+              "category": "CASE_PLAN"
+            },
+            {
+              "check_id": "sandbox_seed_policy",
+              "status": "PASS",
+              "message": "Agent seed=None accepted for SANDBOX.",
+              "category": "SEED"
+            },
+            {
+              "check_id": "sandbox_render_policy",
+              "status": "PASS",
+              "message": "Render mode 'OFF' allowed for SANDBOX.",
+              "category": "OBSERVABILITY"
+            },
+            {
+              "check_id": "wandb_mode_policy",
+              "status": "PASS",
+              "message": "WandbMode 'DISABLED' requires no online credentials.",
+              "category": "OBSERVABILITY"
+            }
+          ]
+        },
+        "can_execute": true,
+        "summary_verdict": "PROCEED_WITH_WARNINGS",
+        "fail_count": 0,
+        "warning_count": 1,
+        "pass_count": 17
+      }
+    },
+    {
+      "type": "WORKER_DONE",
+      "payload": {
+        "operation": "PLAN",
+        "success": true,
+        "can_execute": true
+      }
+    }
+  ]
+}

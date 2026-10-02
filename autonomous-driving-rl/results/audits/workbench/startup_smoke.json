@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "tab_count": 5,
+  "tabs": [
+    "1. Experiment Setup",
+    "2. Plan & Preflight",
+    "3. Run Monitor",
+    "4. Agents Explorer",
+    "5. Case Explorer"
+  ],
+  "registered_agents_in_combobox": 4,
+  "cases_in_explorer_train": 0
+}

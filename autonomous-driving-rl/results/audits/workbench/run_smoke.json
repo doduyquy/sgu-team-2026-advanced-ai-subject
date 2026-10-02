@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "exit_code": 0,
+  "received_message_types": [
+    "WORKER_DONE",
+    "PLAN_RESOLVED",
+    "PREFLIGHT_REPORT",
+    "LAUNCHER_EVENT",
+    "EXECUTION_REPORT",
+    "WORKER_READY"
+  ],
+  "gate7_artifacts_present": [
+    "episodes.csv",
+    "run_integrity.json",
+    "run_manifest.json",
+    "run_state.json",
+    "summary.json",
+    "timing.csv",
+    "wandb_sync.json"
+  ]
+}
