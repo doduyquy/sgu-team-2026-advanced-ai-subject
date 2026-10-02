@@ -182,19 +182,27 @@ class RunArtifactRepository:
         status_str = state_data.get("status", "UNKNOWN")
 
         # 4. Strict 4-Way Run Identity Parity (Specification Section 2)
-        # If COMPLETE and run_integrity.json exists, integrity run_id MUST equal actual_run_id
+        # If COMPLETE and run_integrity.json exists, it must be a valid JSON dict
+        # with a non-empty string run_id that strictly equals actual_run_id.
         integrity_path = run_dir / "run_integrity.json"
         if status_str == "COMPLETE" and integrity_path.exists():
             try:
                 with open(integrity_path, "r", encoding="utf-8") as f:
                     integ_data = json.load(f)
-                if isinstance(integ_data, dict):
-                    integ_run_id = integ_data.get("run_id")
-                    if integ_run_id != actual_run_id:
-                        # Cross-run identity corruption: reject run snapshot as malformed
-                        return None
             except Exception:
-                pass
+                # Malformed JSON in present integrity artifact -> reject as malformed
+                return None
+
+            if not isinstance(integ_data, dict):
+                return None
+
+            integ_run_id = integ_data.get("run_id")
+            if not isinstance(integ_run_id, str) or not integ_run_id.strip():
+                return None
+
+            if integ_run_id != actual_run_id:
+                # Cross-run identity corruption: reject run snapshot as malformed
+                return None
 
         run_kind_str = manifest_data.get("run_kind", "UNKNOWN")
         canonical_run = bool(state_data.get("canonical_run", False))

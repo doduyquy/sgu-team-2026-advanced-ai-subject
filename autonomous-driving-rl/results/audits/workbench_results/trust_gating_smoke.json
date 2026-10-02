@@ -1,5 +1,26 @@
 {
   "status": "PASS",
-  "unverified_status": "UNVERIFIED",
-  "authoritative_claims_allowed": false
+  "machine_observed_ui_states": {
+    "verified": {
+      "cards_title": "Authoritative Primary Benchmark Metrics (summary.json)",
+      "warning_visible": false,
+      "chart_title": "Outcome Rates Breakdown (Authoritative Rates)"
+    },
+    "failed": {
+      "cards_title": "UNTRUSTED ARTIFACT CONTENT \u2014 INTEGRITY FAILED (summary.json)",
+      "warning_visible": true,
+      "chart_title": "Outcome Rates Breakdown (Untrusted / Non-Verified Rates)"
+    },
+    "unverified": {
+      "cards_title": "UNVERIFIED ARTIFACT CONTENT (run_integrity.json Missing)",
+      "warning_visible": true,
+      "chart_title": "Outcome Rates Breakdown (Untrusted / Non-Verified Rates)"
+    },
+    "not_final": {
+      "cards_title": "PROVISIONAL / NOT FINAL METRICS (RUNNING)",
+      "warning_visible": true,
+      "chart_title": "Outcome Rates Breakdown (Untrusted / Non-Verified Rates)"
+    }
+  },
+  "trust_gating_verified": true
 }

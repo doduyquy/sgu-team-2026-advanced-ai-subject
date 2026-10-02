@@ -246,7 +246,7 @@ class ResultsWidget(QWidget):
 
     def _setup_overview_chart(self, is_authoritative: bool = True) -> None:
         self.ax_outcomes.clear()
-        title = "Outcome Rates Breakdown (Authoritative)" if is_authoritative else "Outcome Rates Breakdown (Non-Authoritative)"
+        title = "Outcome Rates Breakdown (Authoritative Rates)" if is_authoritative else "Outcome Rates Breakdown (Untrusted / Non-Verified Rates)"
         self.ax_outcomes.set_title(title, fontsize=8)
         self.ax_outcomes.set_ylabel("Rate", fontsize=8)
         self.ax_outcomes.set_ylim(0, 1.05)
@@ -529,29 +529,42 @@ class ResultsWidget(QWidget):
 
         self.text_summary_details.setText("\n".join(lines))
 
-        # Outcome Chart (Complete 9 Mutually-Exclusive Outcome Rates)
+        # Outcome Chart (Truthful 9 Mutually-Exclusive Outcome Rates, Specification Section 10-11)
+        # Distinguish actual 0.0 from missing/None. Do NOT fabricate missing rates as 0.0.
         self._setup_overview_chart(is_authoritative=is_verified)
-        rates = [
-            overall.get("success_rate", 0.0) or 0.0,
-            overall.get("timeout_rate", 0.0) or 0.0,
-            overall.get("crash_human_rate", 0.0) or 0.0,
-            overall.get("crash_vehicle_rate", 0.0) or 0.0,
-            overall.get("crash_object_rate", 0.0) or 0.0,
-            overall.get("crash_building_rate", 0.0) or 0.0,
-            overall.get("crash_sidewalk_rate", 0.0) or 0.0,
-            overall.get("out_of_road_rate", 0.0) or 0.0,
-            overall.get("unknown_termination_rate", 0.0) or 0.0,
+        outcome_defs = [
+            ("success_rate", "Success", "#2ca02c"),
+            ("timeout_rate", "Timeout", "#ff7f0e"),
+            ("crash_human_rate", "Crash Hum", "#9467bd"),
+            ("crash_vehicle_rate", "Crash Veh", "#d62728"),
+            ("crash_object_rate", "Crash Obj", "#8c564b"),
+            ("crash_building_rate", "Crash Bld", "#e377c2"),
+            ("crash_sidewalk_rate", "Crash Swk", "#7f7f7f"),
+            ("out_of_road_rate", "Off Road", "#bcbd22"),
+            ("unknown_termination_rate", "Unknown", "#17becf"),
         ]
-        labels = [
-            "Success", "Timeout", "Crash Hum", "Crash Veh",
-            "Crash Obj", "Crash Bld", "Crash Swk", "Off Road", "Unknown"
-        ]
-        colors = [
-            "#2ca02c", "#ff7f0e", "#9467bd", "#d62728",
-            "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
-        ]
-        self.ax_outcomes.bar(labels, rates, color=colors)
-        self.ax_outcomes.tick_params(axis="x", rotation=35, labelsize=7.5)
+
+        present_labels = []
+        present_rates = []
+        present_colors = []
+
+        for key, lbl, color in outcome_defs:
+            val = overall.get(key)
+            if val is not None:
+                try:
+                    num_val = float(val)
+                    present_labels.append(lbl)
+                    present_rates.append(num_val)
+                    present_colors.append(color)
+                except (ValueError, TypeError):
+                    pass
+
+        if present_labels:
+            self.ax_outcomes.bar(present_labels, present_rates, color=present_colors)
+            self.ax_outcomes.tick_params(axis="x", rotation=35, labelsize=7.5)
+        else:
+            self.ax_outcomes.text(0.5, 0.5, "No stored outcome-rate data available", horizontalalignment='center', verticalalignment='center', transform=self.ax_outcomes.transAxes, color='gray', fontsize=8)
+
         self.overview_figure.tight_layout()
         self.overview_canvas.draw_idle()
 

@@ -772,6 +772,74 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
         self.assertEqual(snap.metadrive_verification_status, "EXACT_PIN_VERIFIED")
         self.assertEqual(snap.metadrive_verification_reason, "Exact pin match")
 
+    def test_43_malformed_integrity_json_rejected_as_malformed(self):
+        """COMPLETE run with malformed JSON in run_integrity.json returns None."""
+        run_dir = self._create_real_schema_run("bad_json_integ_run")
+        with open(run_dir / "run_integrity.json", "w", encoding="utf-8") as f:
+            f.write("{ invalid json")
+
+        repo = RunArtifactRepository(self.runs_root)
+        snap = repo.load_run_snapshot("bad_json_integ_run")
+        self.assertIsNone(snap, "Malformed run_integrity JSON must be rejected as malformed")
+
+    def test_44_non_dict_integrity_json_rejected_as_malformed(self):
+        """COMPLETE run with non-dict run_integrity.json (list or string) returns None."""
+        run_dir = self._create_real_schema_run("list_integ_run")
+        with open(run_dir / "run_integrity.json", "w", encoding="utf-8") as f:
+            f.write("[\"run_id\", 123]")
+
+        repo = RunArtifactRepository(self.runs_root)
+        snap = repo.load_run_snapshot("list_integ_run")
+        self.assertIsNone(snap, "Non-dict run_integrity must be rejected as malformed")
+
+    def test_45_missing_or_empty_integrity_run_id_rejected_as_malformed(self):
+        """COMPLETE run where run_integrity is missing run_id or has empty run_id returns None."""
+        run_dir = self._create_real_schema_run("empty_id_integ_run")
+        # Missing run_id
+        with open(run_dir / "run_integrity.json", "w", encoding="utf-8") as f:
+            json.dump({"experiment_config_sha256": "123"}, f)
+
+        repo = RunArtifactRepository(self.runs_root)
+        self.assertIsNone(repo.load_run_snapshot("empty_id_integ_run"))
+
+        # Empty string run_id
+        with open(run_dir / "run_integrity.json", "w", encoding="utf-8") as f:
+            json.dump({"run_id": "   ", "experiment_config_sha256": "123"}, f)
+        self.assertIsNone(repo.load_run_snapshot("empty_id_integ_run"))
+
+    def test_46_missing_outcome_rate_not_fabricated_as_zero(self):
+        """Missing or None outcome rates are not converted to 0.0 in the chart."""
+        run_dir = self._create_real_schema_run("missing_outcome_run")
+        sum_path = run_dir / "summary.json"
+        with open(sum_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # Set success_rate to 1.0, timeout_rate to 0.0, ensure crash_human_rate is absent
+        data["overall_metrics"]["success_rate"] = 1.0
+        data["overall_metrics"]["timeout_rate"] = 0.0
+        data["overall_metrics"].pop("crash_human_rate", None)
+
+        with open(sum_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+
+        # Re-save integrity to keep it VERIFIED for inspection
+        from src.platform import canonical_json_file_sha256
+        with open(run_dir / "run_integrity.json", "r", encoding="utf-8") as f:
+            integ_d = json.load(f)
+        integ_d["summary_sha256"] = canonical_json_file_sha256(sum_path)
+        with open(run_dir / "run_integrity.json", "w", encoding="utf-8") as f:
+            json.dump(integ_d, f, indent=2)
+
+        widget = ResultsWidget(runs_root=self.runs_root)
+        widget.show()
+        widget.select_run_by_id("missing_outcome_run")
+
+        # Check plotted labels in ax_outcomes
+        plotted_labels = [tick.get_text() for tick in widget.ax_outcomes.get_xticklabels()]
+        self.assertNotIn("Crash Hum", plotted_labels, "Missing outcome rate must NOT be fabricated in chart")
+        self.assertIn("Timeout", plotted_labels, "Actual 0.0 rate must remain present in chart")
+        widget.close()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,11 +22,11 @@
 
 ## Empirical Evidence
 1. **Startup Smoke:** Offscreen construction with 6 main tabs. Results tab includes 6 read-only subtabs (Overview, Episodes, Timing, Provenance, Integrity, W&B) and 8-column runs browser.
-2. **Complete Run Load:** Real simulator-backed run executed, persisted 7/7 Gate-7 files, loaded via Results Repository, evaluated as VERIFIED with production Gate-7 schema field parity.
+2. **Complete Run Load:** Real simulator-backed run executed, persisted 7/7 Gate-7 files, loaded via Results Repository, evaluated as VERIFIED with production Gate-7 schema field parity and exact field-level environment provenance parity.
 3. **Isolated Tamper Detection:** Exact canonical semantic content hash mismatch detection on copied run without repairing or rewriting artifacts. Target failure isolated strictly to `episodes.csv` (0 unrelated failures).
 4. **Incomplete Run Semantics:** RUNNING and FAILED runs evaluated truthfully as NOT_FINAL without fabricating missing summaries.
 5. **Live Telemetry Buffer:** In-memory trace buffering verified strictly from `LauncherEventV1` events sampled every 10 decision steps.
-6. **Strict 4-Way Run Identity:** Directory basename, `run_state.json`, `run_manifest.json`, and `run_integrity.json` must strictly agree; mismatches and directory traversal are rejected as malformed.
-7. **Trust Gating:** Metric cards and overview areas display authoritative labels only when integrity status is `VERIFIED`. `FAILED`, `UNVERIFIED`, and `NOT_FINAL` states suppress authoritative claims and surface appropriate warning notices.
+6. **Strict 4-Way Run Identity:** Directory basename, `run_state.json`, `run_manifest.json`, and `run_integrity.json` must strictly agree; mismatches, directory traversal, and malformed integrity JSON are rejected as malformed.
+7. **Machine-Observed Trust Gating:** Metric cards and overview areas display authoritative labels only when integrity status is `VERIFIED`. `FAILED`, `UNVERIFIED`, and `NOT_FINAL` states suppress authoritative claims and surface appropriate warning notices directly observed on UI widgets.
 8. **Custom Root Auto-Navigation:** Dynamic discovery and auto-selection of runs executing under a custom `runs_root`.
 9. **No-Ranking Invariant:** Inspects individual runs only; zero multi-run leaderboard or ranking semantics.

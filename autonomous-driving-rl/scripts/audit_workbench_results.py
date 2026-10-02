@@ -1,5 +1,5 @@
 """
-Research Workbench Results Browser & Live UX Audit Script (Gate 7.5B Pass B2 Correction 2).
+Research Workbench Results Browser & Live UX Audit Script (Gate 7.5B Pass B2 Final Audit).
 
 Generates machine-derived evidence artifacts:
 - contract_hashes.json
@@ -94,7 +94,7 @@ def run_b2_audit() -> None:
     worker_script = project_root / "src" / "workbench" / "worker.py"
 
     print("============================================================")
-    print("STARTING GATE 7.5B PASS B2 RESULTS & LIVE UX AUDIT (CORRECTION 2)")
+    print("STARTING GATE 7.5B PASS B2 RESULTS & LIVE UX AUDIT")
     print("============================================================")
 
     # ---------------------------------------------------------
@@ -388,7 +388,7 @@ def run_b2_audit() -> None:
     print("  [OK] Live telemetry buffer correctly buffered sampled traces.")
 
     # ---------------------------------------------------------
-    # 7. Identity Boundary Smoke
+    # 7. Identity Boundary Smoke (Specification Section 2-4)
     # ---------------------------------------------------------
     print("\n--- Auditing Run Identity Boundary Smoke ---")
     with tempfile.TemporaryDirectory() as tmp_id_dir:
@@ -408,43 +408,165 @@ def run_b2_audit() -> None:
         mismatch_snap = repo_id.load_run_snapshot("run_id_mismatch")
         traversal_snap = repo_id.load_run_snapshot("../escaped_root")
 
+        # C. Malformed integrity JSON
+        r2 = id_path / "malformed_integ_json"
+        r2.mkdir(parents=True, exist_ok=True)
+        with open(r2 / "run_state.json", "w") as f:
+            json.dump({"run_id": "malformed_integ_json", "status": "COMPLETE", "recorded_episode_count": 1}, f)
+        with open(r2 / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "malformed_integ_json", "run_kind": "AUDIT"}, f)
+        with open(r2 / "run_integrity.json", "w") as f:
+            f.write("{ not valid json")
+        malformed_integ_snap = repo_id.load_run_snapshot("malformed_integ_json")
+
         assert mismatch_snap is None
         assert traversal_snap is None
+        assert malformed_integ_snap is None
 
         identity_evidence = {
             "status": "PASS",
             "integrity_run_id_mismatch_rejected": True,
             "path_traversal_rejected": True,
+            "malformed_integrity_json_rejected": True,
         }
-        print("  [OK] Run identity mismatch and path traversal correctly rejected as malformed.")
+        print("  [OK] Run identity mismatch, path traversal, and malformed integrity JSON rejected as malformed.")
 
     # ---------------------------------------------------------
-    # 8. Trust Gating Smoke
+    # 8. Machine-Observed Trust Gating Smoke across all 4 UI States
     # ---------------------------------------------------------
-    print("\n--- Auditing Trust Gating Smoke (FAILED / UNVERIFIED / NOT_FINAL) ---")
+    print("\n--- Auditing Machine-Observed Trust Gating across all 4 UI States ---")
     with tempfile.TemporaryDirectory() as tmp_tg_dir:
         tg_path = Path(tmp_tg_dir).resolve()
-        # Unverified COMPLETE run (missing run_integrity.json)
+        widget = ResultsWidget(runs_root=tg_path)
+        widget.show()
+
+        # State 1: VERIFIED
+        v_dir = tg_path / "verified_run"
+        v_dir.mkdir(parents=True, exist_ok=True)
+        with open(v_dir / "run_state.json", "w") as f:
+            json.dump({"run_id": "verified_run", "status": "COMPLETE", "recorded_episode_count": 1}, f)
+        with open(v_dir / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "verified_run", "run_kind": "AUDIT", "config": {"agent_id": "test_agent", "experiment_config_sha256": "mock_cfg_sha_123"}}, f)
+        with open(v_dir / "summary.json", "w") as f:
+            json.dump({"run_id": "verified_run", "overall_metrics": {"clean_success_rate": 1.0, "success_rate": 1.0, "timeout_rate": 0.0}}, f)
+        with open(v_dir / "episodes.csv", "w") as f:
+            f.write("ep\n0\n")
+        with open(v_dir / "timing.csv", "w") as f:
+            f.write("t\n0\n")
+        with open(v_dir / "wandb_sync.json", "w") as f:
+            json.dump({}, f)
+        with open(v_dir / "run_integrity.json", "w") as f:
+            json.dump({
+                "run_id": "verified_run",
+                "experiment_config_sha256": "mock_cfg_sha_123",
+                "run_manifest_sha256": canonical_json_file_sha256(v_dir / "run_manifest.json"),
+                "episodes_sha256": canonical_csv_file_sha256(v_dir / "episodes.csv"),
+                "summary_sha256": canonical_json_file_sha256(v_dir / "summary.json"),
+                "timing_sha256": canonical_csv_file_sha256(v_dir / "timing.csv"),
+                "run_state_sha256": canonical_json_file_sha256(v_dir / "run_state.json"),
+                "wandb_sync_sha256": canonical_json_file_sha256(v_dir / "wandb_sync.json"),
+                "technical_failures_sha256": None,
+            }, f)
+
+        widget.select_run_by_id("verified_run")
+        v_cards_title = widget.cards_group.title()
+        v_warn_vis = not widget.lbl_trust_warning.isHidden()
+        v_chart_title = widget.ax_outcomes.get_title()
+
+        assert "Authoritative" in v_cards_title
+        assert not v_warn_vis
+
+        # State 2: FAILED
+        f_dir = tg_path / "failed_run"
+        f_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(v_dir, f_dir, dirs_exist_ok=True)
+        with open(f_dir / "run_state.json", "w") as f:
+            json.dump({"run_id": "failed_run", "status": "COMPLETE", "recorded_episode_count": 1}, f)
+        with open(f_dir / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "failed_run", "run_kind": "AUDIT", "config": {"agent_id": "test_agent"}}, f)
+        with open(f_dir / "summary.json", "w") as f:
+            json.dump({"run_id": "failed_run", "overall_metrics": {"clean_success_rate": 0.5}}, f)
+        with open(f_dir / "run_integrity.json", "w") as f:
+            json.dump({"run_id": "failed_run", "summary_sha256": "fake_sha_does_not_match"}, f)
+
+        widget.select_run_by_id("failed_run")
+        f_cards_title = widget.cards_group.title()
+        f_warn_vis = not widget.lbl_trust_warning.isHidden()
+        f_chart_title = widget.ax_outcomes.get_title()
+
+        assert "UNTRUSTED" in f_cards_title
+        assert "Authoritative" not in f_cards_title
+        assert f_warn_vis
+        assert "Untrusted" in f_chart_title
+        assert "Authoritative" not in f_chart_title
+
+        # State 3: UNVERIFIED
         u_dir = tg_path / "unverified_run"
         u_dir.mkdir(parents=True, exist_ok=True)
         with open(u_dir / "run_state.json", "w") as f:
             json.dump({"run_id": "unverified_run", "status": "COMPLETE", "recorded_episode_count": 1}, f)
         with open(u_dir / "run_manifest.json", "w") as f:
-            json.dump({"run_id": "unverified_run", "run_kind": "AUDIT"}, f)
+            json.dump({"run_id": "unverified_run", "run_kind": "AUDIT", "config": {"agent_id": "test_agent"}}, f)
         with open(u_dir / "summary.json", "w") as f:
             json.dump({"run_id": "unverified_run", "overall_metrics": {"clean_success_rate": 1.0}}, f)
 
-        repo_tg = RunArtifactRepository(tg_path)
-        snap_u = repo_tg.load_run_snapshot("unverified_run")
-        assert snap_u is not None
-        assert snap_u.integrity_status == IntegrityDisplayStatus.UNVERIFIED
+        widget.select_run_by_id("unverified_run")
+        u_cards_title = widget.cards_group.title()
+        u_warn_vis = not widget.lbl_trust_warning.isHidden()
+        u_chart_title = widget.ax_outcomes.get_title()
+
+        assert "UNVERIFIED" in u_cards_title
+        assert "Authoritative" not in u_cards_title
+        assert u_warn_vis
+
+        # State 4: NOT_FINAL (RUNNING with summary)
+        nf_dir = tg_path / "not_final_run"
+        nf_dir.mkdir(parents=True, exist_ok=True)
+        with open(nf_dir / "run_state.json", "w") as f:
+            json.dump({"run_id": "not_final_run", "status": "RUNNING", "recorded_episode_count": 0}, f)
+        with open(nf_dir / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "not_final_run", "run_kind": "AUDIT", "config": {"agent_id": "test_agent"}}, f)
+        with open(nf_dir / "summary.json", "w") as f:
+            json.dump({"run_id": "not_final_run", "overall_metrics": {"clean_success_rate": 0.8}}, f)
+
+        widget.select_run_by_id("not_final_run")
+        nf_cards_title = widget.cards_group.title()
+        nf_warn_vis = not widget.lbl_trust_warning.isHidden()
+        nf_chart_title = widget.ax_outcomes.get_title()
+
+        assert "PROVISIONAL" in nf_cards_title
+        assert "Authoritative" not in nf_cards_title
+        assert nf_warn_vis
+
+        widget.close()
 
         trust_gating_evidence = {
             "status": "PASS",
-            "unverified_status": snap_u.integrity_status.value,
-            "authoritative_claims_allowed": False,
+            "machine_observed_ui_states": {
+                "verified": {
+                    "cards_title": v_cards_title,
+                    "warning_visible": v_warn_vis,
+                    "chart_title": v_chart_title,
+                },
+                "failed": {
+                    "cards_title": f_cards_title,
+                    "warning_visible": f_warn_vis,
+                    "chart_title": f_chart_title,
+                },
+                "unverified": {
+                    "cards_title": u_cards_title,
+                    "warning_visible": u_warn_vis,
+                    "chart_title": u_chart_title,
+                },
+                "not_final": {
+                    "cards_title": nf_cards_title,
+                    "warning_visible": nf_warn_vis,
+                    "chart_title": nf_chart_title,
+                },
+            },
+            "trust_gating_verified": True,
         }
-        print("  [OK] Trust gating correctly evaluated UNVERIFIED status.")
+        print("  [OK] Trust gating verified across all 4 machine-observed UI states.")
 
     # ---------------------------------------------------------
     # 9. Custom Runs Root Auto-Load Smoke
@@ -460,7 +582,6 @@ def run_b2_audit() -> None:
             json.dump({"run_id": "custom_autoload_audit_run", "run_kind": "AUDIT"}, f)
 
         win = MainWindow()
-        # Simulate execution report from custom root followed by worker done
         win._on_execution_report({"execution_report": {"run_id": "custom_autoload_audit_run", "run_dir": str(c_run), "status": "COMPLETE"}})
         win._on_worker_done({"operation": "RUN", "success": True, "run_id": "custom_autoload_audit_run"})
 
@@ -552,12 +673,12 @@ def run_b2_audit() -> None:
 
 ## Empirical Evidence
 1. **Startup Smoke:** Offscreen construction with 6 main tabs. Results tab includes 6 read-only subtabs (Overview, Episodes, Timing, Provenance, Integrity, W&B) and 8-column runs browser.
-2. **Complete Run Load:** Real simulator-backed run executed, persisted 7/7 Gate-7 files, loaded via Results Repository, evaluated as VERIFIED with production Gate-7 schema field parity.
+2. **Complete Run Load:** Real simulator-backed run executed, persisted 7/7 Gate-7 files, loaded via Results Repository, evaluated as VERIFIED with production Gate-7 schema field parity and exact field-level environment provenance parity.
 3. **Isolated Tamper Detection:** Exact canonical semantic content hash mismatch detection on copied run without repairing or rewriting artifacts. Target failure isolated strictly to `episodes.csv` (0 unrelated failures).
 4. **Incomplete Run Semantics:** RUNNING and FAILED runs evaluated truthfully as NOT_FINAL without fabricating missing summaries.
 5. **Live Telemetry Buffer:** In-memory trace buffering verified strictly from `LauncherEventV1` events sampled every 10 decision steps.
-6. **Strict 4-Way Run Identity:** Directory basename, `run_state.json`, `run_manifest.json`, and `run_integrity.json` must strictly agree; mismatches and directory traversal are rejected as malformed.
-7. **Trust Gating:** Metric cards and overview areas display authoritative labels only when integrity status is `VERIFIED`. `FAILED`, `UNVERIFIED`, and `NOT_FINAL` states suppress authoritative claims and surface appropriate warning notices.
+6. **Strict 4-Way Run Identity:** Directory basename, `run_state.json`, `run_manifest.json`, and `run_integrity.json` must strictly agree; mismatches, directory traversal, and malformed integrity JSON are rejected as malformed.
+7. **Machine-Observed Trust Gating:** Metric cards and overview areas display authoritative labels only when integrity status is `VERIFIED`. `FAILED`, `UNVERIFIED`, and `NOT_FINAL` states suppress authoritative claims and surface appropriate warning notices directly observed on UI widgets.
 8. **Custom Root Auto-Navigation:** Dynamic discovery and auto-selection of runs executing under a custom `runs_root`.
 9. **No-Ranking Invariant:** Inspects individual runs only; zero multi-run leaderboard or ranking semantics.
 """
