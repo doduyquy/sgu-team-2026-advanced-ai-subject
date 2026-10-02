@@ -124,9 +124,9 @@ The Workbench contains 5 tabs:
 ## 8. Verification Results
 
 ### A. Unit Test Suite (`tests/test_workbench.py`)
-23 tests executed in offscreen mode (`QT_QPA_PLATFORM=offscreen`):
-- All 23 tests passed cleanly in ~13s.
-- Total platform test suite: 250 tests (227 prior + 23 Workbench), 0 failures, 0 errors.
+29 tests executed in offscreen mode (`QT_QPA_PLATFORM=offscreen`):
+- All 29 tests passed cleanly in ~27s.
+- Total platform test suite: 256 tests (227 prior + 29 Workbench), 0 failures, 0 errors.
 
 ### B. Machine-Derived Audit Smokes (`scripts/audit_workbench.py`)
 1. **Startup Smoke (`startup_smoke.json`):** Verified offscreen `MainWindow` initialization, 5 tabs, combobox population, Extreme tier availability, and exact manifest table bindings (TRAIN 180, VALIDATION 96, TEST 60).
