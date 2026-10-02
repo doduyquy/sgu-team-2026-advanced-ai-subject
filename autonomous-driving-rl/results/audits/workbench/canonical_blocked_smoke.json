@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "plan_resolution_succeeded": true,
+  "preflight_can_execute": false,
+  "preflight_failure_check_ids": [
+    "agent_benchmark_eligibility"
+  ],
+  "launcher_event_count": 0,
+  "execution_report_present": false,
+  "worker_blocked": true,
+  "exit_code": 1
+}

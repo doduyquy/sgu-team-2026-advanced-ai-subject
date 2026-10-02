@@ -3,3 +3,4 @@ matplotlib>=3.8,<4
 pandas>=2.0,<3
 ipykernel>=6.29,<8
 wandb==0.30.0
+PySide6==6.11.2
