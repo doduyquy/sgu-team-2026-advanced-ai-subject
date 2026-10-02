@@ -19,6 +19,16 @@
     "Artifact Integrity (run_integrity.json)",
     "W&B / Diagnostics"
   ],
+  "runs_table_columns": [
+    "Run ID",
+    "Status",
+    "Kind",
+    "Canonical",
+    "Agent",
+    "Episodes",
+    "Integrity",
+    "Started Time"
+  ],
   "tables_no_edit_triggers": {
     "runs": true,
     "episodes": true,

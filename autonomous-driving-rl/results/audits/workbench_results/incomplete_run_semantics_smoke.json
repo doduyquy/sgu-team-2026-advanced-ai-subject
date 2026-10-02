@@ -4,5 +4,6 @@
   "running_summary_present": false,
   "failed_run_integrity": "NOT_FINAL",
   "failed_summary_present": false,
-  "failed_failure_category": "TECHNICAL_FAILURE"
+  "failed_failure_category": "TECHNICAL_FAILURE",
+  "failed_sanitized_message": "Subprocess crash"
 }

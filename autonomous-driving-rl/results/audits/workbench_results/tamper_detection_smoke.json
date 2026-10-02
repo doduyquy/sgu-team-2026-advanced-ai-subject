@@ -1,9 +1,11 @@
 {
   "status": "PASS",
-  "tampered_run_id": "b2_tampered_run_copy",
+  "tampered_run_id": "b2_audit_complete_run",
   "integrity_verdict": "FAILED",
-  "mismatching_artifacts": [
+  "target_failure_artifacts": [
     "episodes.csv"
   ],
+  "unrelated_failures": [],
+  "run_integrity_bytes_unchanged": true,
   "auto_repair_attempted": false
 }

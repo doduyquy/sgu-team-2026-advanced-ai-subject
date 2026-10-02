@@ -15,17 +15,21 @@ Deleting `src/workbench/` leaves every completed experiment run on disk complete
 ## 1. Results Architecture & Local-First Authority
 Gate 7 local run directories are the sole scientific authority:
 - `RunArtifactRepository` (`src/workbench/results_repository.py`) discovers and inspects runs on disk without modifying, repairing, appending to, or deleting any files.
+- Consumes exact Gate-7 production schemas: `RunManifestV1`, `RunStateV1`, `ExperimentRunConfig.to_dict()`, and `RunIntegrityRecord`.
+- Enforces strict run identity parity across directory basename, `run_state.json`, `run_manifest.json`, and `run_integrity.json`.
+- Enforces strict path containment preventing directory traversal outside the configured runs root.
 - `RunArtifactSnapshotV1` is an immutable, read-only view model representing a single run folder.
 - All presentation tables in `ResultsWidget` (`src/workbench/widgets/results_widget.py`) enforce `QAbstractItemView.EditTrigger.NoEditTriggers`.
 
 ---
 
-## 2. Integrity Status Model
+## 2. Integrity Status Model & Trust-Gating
 The Workbench defines four mutually exclusive integrity display states:
-1. **`VERIFIED`:** Run lifecycle status is `COMPLETE`, all 7 core Gate-7 artifacts are present, `run_integrity.json` exists, and every semantic hash matches observed disk contents bit-for-bit.
+1. **`VERIFIED`:** Run lifecycle status is `COMPLETE`, all 7 core Gate-7 artifacts are present, `run_integrity.json` exists, and every semantic hash matches observed disk contents via Gate-7 canonical semantic content hash verification (`canonical_json_file_sha256`, `canonical_csv_file_sha256`). Authoritative metric cards are displayed normally.
 2. **`NOT_FINAL`:** Run lifecycle status is `INITIALIZING`, `RUNNING`, `INTERRUPTED`, or `FAILED`. Incomplete runs truthfully lack final summary or integrity records and are never misclassified as corrupted.
 3. **`UNVERIFIED`:** Run claims `COMPLETE` status but lacks `run_integrity.json`.
-4. **`FAILED`:** Run claims `COMPLETE` but one or more artifact fingerprints mismatch observed disk contents. Mismatches are highlighted explicitly; no auto-repair or hash regeneration is ever performed.
+4. **`FAILED`:** Run claims `COMPLETE` but one or more artifact fingerprints mismatch observed disk contents.
+   - **Trust-Gating Behavior:** Potentially tampered summary values are never displayed under an authoritative heading. The UI surfaces an explicit `UNTRUSTED — INTEGRITY FAILED` state with prominent warning banner. No auto-repair or hash regeneration is ever performed.
 
 ---
 
@@ -36,6 +40,7 @@ The Workbench defines four mutually exclusive integrity display states:
   - `mean_final_route_completion`
   - `median_final_route_completion`
   - `mean_time_to_clean_success_s` (displayed as `N/A — no clean-success samples` when `None`, never converted to zero).
+- **Stored Macro Metrics:** When `summary.json["macro_metrics"]` is present, it is displayed directly without recomputation.
 - **Diagnostic / Training Signals:** Clearly labeled as `Diagnostic / training signal — NOT a benchmark ranking score`:
   - `mean_episode_return`
   - `episode_return`
@@ -44,7 +49,7 @@ The Workbench defines four mutually exclusive integrity display states:
 ---
 
 ## 4. Live Sampled Telemetry UX
-- **Cadence Clarification:** Control and decision loop executes at 10 Hz (`dt=0.1s`). The current `ExperimentExecutor` emits `EPISODE_PROGRESS` events every 10 decision steps. Thus progress telemetry is sampled approximately once per simulated second.
+- **Cadence Clarification:** Control and decision loop executes at 10 Hz (`dt=0.1s`). The current `ExperimentExecutor` emits `EPISODE_PROGRESS` events every 10 decision steps. Thus progress telemetry is sampled approximately once per simulated second under the current executor.
 - **`LiveTelemetryBufferV1`:** Consumes only passive `LauncherEventV1` events:
   - `RUN_STARTED` resets the entire run buffer.
   - `EPISODE_STARTED` resets the current episode trace.
@@ -72,17 +77,17 @@ The Workbench defines four mutually exclusive integrity display states:
 | `workbench_contract_sha256` (B1) | `e5711485e6571a04c336739ebc6f285213a1d9631fa29820a89707b37875a82b` | PASS |
 | `platform_workbench_contract_sha256` (B1) | `36f3a0891a9153df12a8b53b01f2064afbf848eafda462149a768ec989199e47` | PASS |
 
-### Candidate Gate 7.5B Pass B2 Hashes
-- **`workbench_results_contract_sha256`**: `dea8631e7fbb2da366478b8fc68b9d4d751c6831262739efa14134c27a2a516e`
-- **`platform_workbench_results_contract_sha256`**: `4a64ac284590a60285d80e742b1b657a6b98e334b1bff829515ccb0164df0c90`
+### Candidate Gate 7.5B Pass B2 Hashes (Recomputed Semantic Wording)
+- **`workbench_results_contract_sha256`**: `25716cc6aa0d93b2e6a282e51a7e23b37b050a975654ae2852726c2e86828244`
+- **`platform_workbench_results_contract_sha256`**: `b53e56b6344c53299ffdee8f1402e4fccb16c375eeb08205897cf909effd89a3`
 
 ---
 
 ## 6. Verification & Regression Evidence
 
 ### A. Pass B2 Unit Tests (`tests/test_workbench_results.py`)
-- 27 dedicated tests covering repository discovery, tamper detection, incomplete run semantics, card values, NoEditTriggers, live telemetry buffering, and contract determinism.
-- All 27 tests passed cleanly.
+- 33 dedicated tests covering real Gate-7 schema parsing, run identity parity, path containment, tamper detection, trust-gated primary metrics, custom runs root auto-load, complete episodes/timing/provenance/macro columns, NoEditTriggers, live telemetry buffering, and contract determinism.
+- All 33 tests passed cleanly.
 
 ### B. Total Platform Regression
 - `tests.test_agent_contract`: 37 tests (PASS)
@@ -90,15 +95,15 @@ The Workbench defines four mutually exclusive integrity display states:
 - `tests.test_evaluation_protocol`: 20 tests (PASS)
 - `tests.test_reward_metrics`: 16 tests (PASS)
 - `tests.test_workbench`: 29 tests (PASS)
-- `tests.test_workbench_results`: 27 tests (PASS)
+- `tests.test_workbench_results`: 33 tests (PASS)
 - `tests.test_logging_contract`: 47 tests (PASS)
 - `tests.test_launcher_core`: 97 tests (PASS)
-- **Total Suite:** **283 tests**, 0 failures, 0 errors.
+- **Total Suite:** **289 tests**, 0 failures, 0 errors.
 
 ### C. Machine-Derived Audit Smokes (`scripts/audit_workbench_results.py`)
-1. **Startup Smoke (`results_startup_smoke.json`):** Offscreen construction with 6 main tabs and 6 read-only results subtabs.
-2. **Complete Run Load Smoke (`complete_run_load_smoke.json`):** Real simulation run executed, loaded from disk, evaluated as `VERIFIED`.
-3. **Tamper Detection Smoke (`tamper_detection_smoke.json`):** Exact byte-level mismatch detection on copied run without repairing or rewriting artifacts.
+1. **Startup Smoke (`results_startup_smoke.json`):** Offscreen construction with 6 main tabs, 6 read-only results subtabs, and 8-column runs browser.
+2. **Complete Run Load Smoke (`complete_run_load_smoke.json`):** Real simulation run executed, loaded from disk, evaluated as `VERIFIED` with exact Gate-7 schema parity.
+3. **Isolated Tamper Detection Smoke (`tamper_detection_smoke.json`):** Exact canonical semantic content hash mismatch detection on copied run without repairing or rewriting artifacts.
 4. **Incomplete Run Semantics Smoke (`incomplete_run_semantics_smoke.json`):** `RUNNING` and `FAILED` runs evaluated truthfully as `NOT_FINAL`.
 5. **Live Telemetry Smoke (`live_telemetry_smoke.json`):** In-memory trace buffering verified strictly from `LauncherEventV1`.
 6. **Artifact Privacy Scan:** Verified 0 private machine paths or credentials persisted in audit artifacts.

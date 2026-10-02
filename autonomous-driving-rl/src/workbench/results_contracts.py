@@ -51,7 +51,7 @@ def build_workbench_results_contract_core(
 
     default_integrity_policy = {
         "integrity_states": ["VERIFIED", "NOT_FINAL", "UNVERIFIED", "FAILED"],
-        "tamper_detection": "BIT_LEVEL_HASH_MISMATCH_MARKS_FAILED_NO_AUTO_REPAIR",
+        "tamper_detection": "GATE7_CANONICAL_SEMANTIC_CONTENT_HASH_MISMATCH_MARKS_FAILED_NO_AUTO_REPAIR",
         "hash_verification_targets": [
             "experiment_config_sha256",
             "run_manifest_sha256",

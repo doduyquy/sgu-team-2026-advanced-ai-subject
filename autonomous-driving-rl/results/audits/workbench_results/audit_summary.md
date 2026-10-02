@@ -17,13 +17,13 @@
 - `canonical_agent_registry_sha256`: `9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f` (VERIFIED UNCHANGED)
 - `workbench_contract_sha256`: `e5711485e6571a04c336739ebc6f285213a1d9631fa29820a89707b37875a82b` (VERIFIED UNCHANGED)
 - `platform_workbench_contract_sha256`: `36f3a0891a9153df12a8b53b01f2064afbf848eafda462149a768ec989199e47` (VERIFIED UNCHANGED)
-- `workbench_results_contract_sha256`: `dea8631e7fbb2da366478b8fc68b9d4d751c6831262739efa14134c27a2a516e` (CANDIDATE)
-- `platform_workbench_results_contract_sha256`: `4a64ac284590a60285d80e742b1b657a6b98e334b1bff829515ccb0164df0c90` (CANDIDATE)
+- `workbench_results_contract_sha256`: `25716cc6aa0d93b2e6a282e51a7e23b37b050a975654ae2852726c2e86828244` (CANDIDATE)
+- `platform_workbench_results_contract_sha256`: `b53e56b6344c53299ffdee8f1402e4fccb16c375eeb08205897cf909effd89a3` (CANDIDATE)
 
 ## Empirical Evidence
-1. **Startup Smoke:** Offscreen construction with 6 main tabs. Results tab includes 6 read-only subtabs (Overview, Episodes, Timing, Provenance, Integrity, W&B).
-2. **Complete Run Load:** Real simulator-backed run executed, persisted 7/7 Gate-7 files, loaded via Results Repository, evaluated as VERIFIED.
-3. **Tamper Detection:** Exact byte-level mismatch detection on copied run without repairing or rewriting artifacts.
+1. **Startup Smoke:** Offscreen construction with 6 main tabs. Results tab includes 6 read-only subtabs (Overview, Episodes, Timing, Provenance, Integrity, W&B) and 8-column runs browser.
+2. **Complete Run Load:** Real simulator-backed run executed, persisted 7/7 Gate-7 files, loaded via Results Repository, evaluated as VERIFIED with bit-for-bit Gate-7 schema parity.
+3. **Isolated Tamper Detection:** Exact canonical semantic content hash mismatch detection on copied run without repairing or rewriting artifacts.
 4. **Incomplete Run Semantics:** RUNNING and FAILED runs evaluated as NOT_FINAL without fabricating missing summaries.
 5. **Live Telemetry Buffer:** In-memory trace buffering verified strictly from `LauncherEventV1` events sampled every 10 decision steps.
 6. **No-Ranking Invariant:** Inspects individual runs only; zero multi-run leaderboard or ranking semantics.

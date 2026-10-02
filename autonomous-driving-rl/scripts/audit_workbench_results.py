@@ -1,5 +1,5 @@
 """
-Research Workbench Results Browser & Live UX Audit Script (Gate 7.5B Pass B2).
+Research Workbench Results Browser & Live UX Audit Script (Gate 7.5B Pass B2 Correction 1).
 
 Generates machine-derived evidence artifacts:
 - contract_hashes.json
@@ -50,7 +50,6 @@ from src.launcher.resolver import (
 )
 from src.platform import RunStatus
 from src.workbench.contracts import (
-    GATE7_5A_BASELINE_MERGE_SHA,
     GATE7_5A_LAUNCHER_CONTRACT_HASH,
     GATE7_5A_PLATFORM_EXECUTION_CONTRACT_HASH,
     PINNED_PYSIDE6_VERSION,
@@ -75,6 +74,7 @@ from src.workbench.results_repository import (
     RunArtifactRepository,
     RunArtifactSnapshotV1,
 )
+from src.workbench.widgets.results_widget import ResultsWidget
 
 
 def run_b2_audit() -> None:
@@ -155,6 +155,7 @@ def run_b2_audit() -> None:
         "results_tab_index": 5,
         "subtab_count": results_tab.subtabs.count(),
         "subtab_titles": [results_tab.subtabs.tabText(i) for i in range(results_tab.subtabs.count())],
+        "runs_table_columns": [results_tab.table_runs.horizontalHeaderItem(i).text() for i in range(results_tab.table_runs.columnCount())],
         "tables_no_edit_triggers": {
             "runs": (results_tab.table_runs.editTriggers() == results_tab.table_runs.EditTrigger.NoEditTriggers),
             "episodes": (results_tab.table_episodes.editTriggers() == results_tab.table_episodes.EditTrigger.NoEditTriggers),
@@ -163,11 +164,12 @@ def run_b2_audit() -> None:
         },
     }
     assert all(startup_evidence["tables_no_edit_triggers"].values())
+    assert len(startup_evidence["runs_table_columns"]) == 8
     window.close()
-    print("  [OK] Results tab initialized offscreen with 6 read-only subtabs.")
+    print("  [OK] Results tab initialized offscreen with 6 read-only subtabs and 8-column runs browser.")
 
     # ---------------------------------------------------------
-    # 3. Real Simulation Complete Run & Loading Smoke
+    # 3. Real Simulation Complete Run & Loading Smoke (with Schema Parity)
     # ---------------------------------------------------------
     print("\n--- Auditing Real Complete Run Execution & Repository Load ---")
     with tempfile.TemporaryDirectory() as tmp_runs_dir:
@@ -202,6 +204,26 @@ def run_b2_audit() -> None:
         assert len(snap.episode_rows) == 1
         assert len(snap.timing_rows) == 1
 
+        # Real Gate-7 Schema Parity Assertions (Specification Section 5 & 23)
+        run_dir = tmp_runs_path / "b2_audit_complete_run"
+        with open(run_dir / "run_manifest.json", "r", encoding="utf-8") as f:
+            manifest_disk = json.load(f)
+        with open(run_dir / "run_state.json", "r", encoding="utf-8") as f:
+            state_disk = json.load(f)
+
+        assert snap.agent_id == manifest_disk["config"]["agent_id"]
+        assert snap.agent_version == manifest_disk["config"]["agent_version"]
+        assert snap.input_profile_id == manifest_disk["config"]["input_profile_id"]
+        assert snap.action_adapter_id == manifest_disk["config"]["action_adapter_id"]
+        assert snap.inference_stochasticity == manifest_disk["config"]["inference_stochasticity"]
+        assert snap.canonical_run == state_disk["canonical_run"]
+        assert snap.git_commit_sha == manifest_disk["git_provenance"]["git_commit_sha"]
+        assert snap.git_worktree_dirty == manifest_disk["git_provenance"]["git_worktree_dirty"]
+        assert snap.metadrive_version == manifest_disk["environment_provenance"]["metadrive_version"]
+        assert snap.metadrive_commit == manifest_disk["environment_provenance"]["metadrive_commit"]
+        assert snap.environment_verification_status == state_disk["environment_verification_status"]
+        assert snap.experiment_config_sha256 == manifest_disk["experiment_config_sha256"]
+
         overall_metrics = snap.summary_payload.get("overall_metrics", {})
         assert "clean_success_rate" in overall_metrics
         assert "mean_final_route_completion" in overall_metrics
@@ -212,6 +234,10 @@ def run_b2_audit() -> None:
             "lifecycle_status": snap.status,
             "integrity_status": snap.integrity_status.value,
             "recorded_episodes": snap.recorded_episode_count,
+            "schema_parity_verified": True,
+            "manifest_agent_id": snap.agent_id,
+            "state_canonical_run": snap.canonical_run,
+            "git_commit_sha_present": bool(snap.git_commit_sha),
             "artifacts_present": sorted(snap.artifacts_present),
             "primary_metrics": {
                 "clean_success_rate": overall_metrics.get("clean_success_rate"),
@@ -224,33 +250,47 @@ def run_b2_audit() -> None:
                 "mean_episode_return": overall_metrics.get("mean_episode_return"),
             }
         }
-        print("  [OK] Complete run executed, persisted 7/7 artifacts, and verified via Results Repository.")
+        print("  [OK] Complete run executed, persisted 7/7 artifacts, and verified via exact Gate-7 schema.")
 
         # ---------------------------------------------------------
-        # 4. Tamper Detection Smoke
+        # 4. Isolated Tamper Detection Smoke (Separate Root, Same Basename)
         # ---------------------------------------------------------
-        print("\n--- Auditing Tamper Detection on Run Copy ---")
-        tamper_dir = tmp_runs_path / "b2_tampered_run_copy"
-        shutil.copytree(tmp_runs_path / "b2_audit_complete_run", tamper_dir)
+        print("\n--- Auditing Tamper Detection in Isolated Root (Preserving Run Identity) ---")
+        with tempfile.TemporaryDirectory() as tmp_tamper_dir:
+            tamper_root = Path(tmp_tamper_dir).resolve()
+            # Copy to tamper_root preserving same run_id basename
+            tamper_run_dir = tamper_root / "b2_audit_complete_run"
+            shutil.copytree(run_dir, tamper_run_dir)
 
-        # Alter episodes.csv
-        with open(tamper_dir / "episodes.csv", "a", encoding="utf-8") as f:
-            f.write("\n999,tampered_case,TEST,Hard,UNKNOWN,False,0.0,0,0,0\n")
+            integ_before_bytes = (tamper_run_dir / "run_integrity.json").read_bytes()
 
-        snap_tampered = repo.load_run_snapshot("b2_tampered_run_copy")
-        assert snap_tampered is not None
-        assert snap_tampered.integrity_status == IntegrityDisplayStatus.FAILED
-        failed_checks = [c.artifact_name for c in snap_tampered.integrity_details if c.status == "FAIL"]
-        assert "episodes.csv" in failed_checks
+            # Alter ONLY episodes.csv
+            with open(tamper_run_dir / "episodes.csv", "a", encoding="utf-8") as f:
+                f.write("999,1,case_tampered,TRAIN,Easy,SCCS,0,0,1758,101,UNKNOWN,UNKNOWN,False,False,0.0,0.0,0,0,0,0,0,0,False,False,False,False,False,False,False,False,\n")
 
-        tamper_evidence = {
-            "status": "PASS",
-            "tampered_run_id": "b2_tampered_run_copy",
-            "integrity_verdict": snap_tampered.integrity_status.value,
-            "mismatching_artifacts": failed_checks,
-            "auto_repair_attempted": False,
-        }
-        print(f"  [OK] Tamper detected! Mismatched artifact: {failed_checks} (No auto-repair performed).")
+            repo_tamper = RunArtifactRepository(tamper_root)
+            snap_tampered = repo_tamper.load_run_snapshot("b2_audit_complete_run")
+            assert snap_tampered is not None
+            assert snap_tampered.integrity_status == IntegrityDisplayStatus.FAILED
+
+            failed_checks = [c.artifact_name for c in snap_tampered.integrity_details if c.status == "FAIL"]
+            unrelated_fails = [c for c in failed_checks if c != "episodes.csv"]
+            assert failed_checks == ["episodes.csv"], f"Expected ONLY episodes.csv failure, got: {failed_checks}"
+            assert unrelated_fails == []
+
+            integ_after_bytes = (tamper_run_dir / "run_integrity.json").read_bytes()
+            assert integ_before_bytes == integ_after_bytes, "run_integrity.json must never be mutated or rewritten on failure!"
+
+            tamper_evidence = {
+                "status": "PASS",
+                "tampered_run_id": "b2_audit_complete_run",
+                "integrity_verdict": snap_tampered.integrity_status.value,
+                "target_failure_artifacts": failed_checks,
+                "unrelated_failures": unrelated_fails,
+                "run_integrity_bytes_unchanged": True,
+                "auto_repair_attempted": False,
+            }
+            print(f"  [OK] Isolated tamper detected: {failed_checks} with 0 unrelated failures (no auto-repair).")
 
     # ---------------------------------------------------------
     # 5. Incomplete Run Semantics Smoke (Controlled Fixture)
@@ -263,9 +303,9 @@ def run_b2_audit() -> None:
         r_dir = inc_path / "running_fixture"
         r_dir.mkdir(parents=True, exist_ok=True)
         with open(r_dir / "run_state.json", "w", encoding="utf-8") as f:
-            json.dump({"run_id": "running_fixture", "status": "RUNNING", "recorded_episode_count": 0}, f)
+            json.dump({"run_id": "running_fixture", "status": "RUNNING", "recorded_episode_count": 0, "canonical_run": False}, f)
         with open(r_dir / "run_manifest.json", "w", encoding="utf-8") as f:
-            json.dump({"run_id": "running_fixture", "run_kind": "AUDIT"}, f)
+            json.dump({"run_id": "running_fixture", "run_kind": "AUDIT", "config": {"agent_id": "test_agent"}}, f)
 
         # FAILED fixture
         f_dir = inc_path / "failed_fixture"
@@ -274,11 +314,12 @@ def run_b2_audit() -> None:
             json.dump({
                 "run_id": "failed_fixture",
                 "status": "FAILED",
+                "canonical_run": False,
                 "failure_category": "TECHNICAL_FAILURE",
-                "failure_message": "Subprocess crash",
+                "sanitized_failure_message": "Subprocess crash",
             }, f)
         with open(f_dir / "run_manifest.json", "w", encoding="utf-8") as f:
-            json.dump({"run_id": "failed_fixture", "run_kind": "AUDIT"}, f)
+            json.dump({"run_id": "failed_fixture", "run_kind": "AUDIT", "config": {"agent_id": "test_agent"}}, f)
 
         repo_inc = RunArtifactRepository(inc_path)
         snap_r = repo_inc.load_run_snapshot("running_fixture")
@@ -289,6 +330,7 @@ def run_b2_audit() -> None:
         assert snap_f.integrity_status == IntegrityDisplayStatus.NOT_FINAL
         assert snap_f.summary_payload is None
         assert snap_f.failure_category == "TECHNICAL_FAILURE"
+        assert snap_f.sanitized_failure_message == "Subprocess crash"
 
         incomplete_evidence = {
             "status": "PASS",
@@ -297,6 +339,7 @@ def run_b2_audit() -> None:
             "failed_run_integrity": snap_f.integrity_status.value,
             "failed_summary_present": False,
             "failed_failure_category": snap_f.failure_category,
+            "failed_sanitized_message": snap_f.sanitized_failure_message,
         }
         print("  [OK] Incomplete runs evaluated to NOT_FINAL without fabricated summary.")
 
@@ -392,9 +435,9 @@ def run_b2_audit() -> None:
 - `platform_workbench_results_contract_sha256`: `{p_wb_results_hash}` (CANDIDATE)
 
 ## Empirical Evidence
-1. **Startup Smoke:** Offscreen construction with 6 main tabs. Results tab includes 6 read-only subtabs (Overview, Episodes, Timing, Provenance, Integrity, W&B).
-2. **Complete Run Load:** Real simulator-backed run executed, persisted 7/7 Gate-7 files, loaded via Results Repository, evaluated as VERIFIED.
-3. **Tamper Detection:** Exact byte-level mismatch detection on copied run without repairing or rewriting artifacts.
+1. **Startup Smoke:** Offscreen construction with 6 main tabs. Results tab includes 6 read-only subtabs (Overview, Episodes, Timing, Provenance, Integrity, W&B) and 8-column runs browser.
+2. **Complete Run Load:** Real simulator-backed run executed, persisted 7/7 Gate-7 files, loaded via Results Repository, evaluated as VERIFIED with bit-for-bit Gate-7 schema parity.
+3. **Isolated Tamper Detection:** Exact canonical semantic content hash mismatch detection on copied run without repairing or rewriting artifacts.
 4. **Incomplete Run Semantics:** RUNNING and FAILED runs evaluated as NOT_FINAL without fabricating missing summaries.
 5. **Live Telemetry Buffer:** In-memory trace buffering verified strictly from `LauncherEventV1` events sampled every 10 decision steps.
 6. **No-Ranking Invariant:** Inspects individual runs only; zero multi-run leaderboard or ranking semantics.

@@ -1,5 +1,5 @@
 """
-Unit and Integration Tests for Research Workbench Results Browser, Artifact Integrity & Live UX (Gate 7.5B Pass B2).
+Unit and Integration Tests for Research Workbench Results Browser, Artifact Integrity & Live UX (Gate 7.5B Pass B2 Correction 1).
 
 Verifies:
 1. Run repository discovers valid run directories.
@@ -29,8 +29,15 @@ Verifies:
 25. Auto-refresh after execution loads disk artifact state.
 26. Existing B1 frozen hashes remain unchanged.
 27. New B2 contract hashes are deterministic.
+28. Exact real Gate-7 schema parsing with ExperimentRunConfig, RunManifestV1, RunStateV1.
+29. Strict run_id parity across dir basename, state, manifest, and integrity.
+30. Path traversal in load_run_snapshot is strictly rejected.
+31. FAILED integrity trust-gates primary metric display with prominent warning banner.
+32. Custom runs_root auto-loads without preconfiguring ResultsWidget.
+33. Stored macro_metrics in summary.json is displayed without recomputation.
 """
 
+from dataclasses import asdict
 import json
 import os
 from pathlib import Path
@@ -57,6 +64,17 @@ from src.launcher.resolver import (
     GATE6_LOCKED_AGENT_HASH,
     GATE6_LOCKED_RUNTIME_HASH,
     GATE7_LOCKED_LOGGING_HASH,
+)
+from src.platform import (
+    ExperimentRunConfig,
+    RunKind,
+    RunManifestV1,
+    RunStateV1,
+    RunStatus,
+    WandbMode,
+    canonical_csv_file_sha256,
+    canonical_json_file_sha256,
+    canonical_json_sha256,
 )
 from src.workbench.contracts import (
     GATE7_5A_LAUNCHER_CONTRACT_HASH,
@@ -98,78 +116,103 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    def _create_mock_run(
+    def _create_real_schema_run(
         self,
         run_id: str,
         status: str = "COMPLETE",
         tamper_file: Optional[str] = None,
         omit_integrity: bool = False,
+        macro_metrics: Optional[Dict[str, Any]] = None,
     ) -> Path:
-        """Helper to create a standard mock run directory with Gate-7 artifacts."""
+        """Helper to create a standard mock run directory matching exact Gate-7 schemas."""
         run_dir = self.runs_root / run_id
         run_dir.mkdir(parents=True, exist_ok=True)
 
-        config_data = {
-            "run_id": run_id,
-            "run_kind": "AUDIT",
-            "agent_descriptor": {"agent_id": "test_agent", "agent_version": "1.0.0"},
-            "expected_episode_count": 1,
-            "experiment_config_sha256": "mock_cfg_sha256_12345",
+        config = ExperimentRunConfig(
+            run_kind=RunKind.AUDIT,
+            benchmark_contract_sha256=GATE5_LOCKED_BENCHMARK_HASH,
+            agent_contract_sha256=GATE6_LOCKED_AGENT_HASH,
+            platform_runtime_contract_sha256=GATE6_LOCKED_RUNTIME_HASH,
+            logging_contract_sha256=GATE7_LOCKED_LOGGING_HASH,
+            platform_observability_contract_sha256=GATE7_LOCKED_OBSERVABILITY_HASH,
+            agent_id="fixture_constant_continuous",
+            agent_version="1.0.0",
+            input_profile_id="STATE_DECISION_V1",
+            action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic",
+            stateful_within_episode=False,
+            expected_episode_count=1,
+            manifest_name="geometry_split_manifest.csv",
+        )
+        cfg_dict = config.to_dict()
+
+        manifest = RunManifestV1(
+            run_id=run_id,
+            run_kind="AUDIT",
+            created_at_utc="2026-10-02T12:00:00Z",
+            experiment_config_sha256=config.compute_config_sha256(),
+            config=cfg_dict,
+            git_provenance={"git_commit_sha": "abc12345", "git_worktree_dirty": False},
+            environment_provenance={"metadrive_version": "0.4.3", "metadrive_commit": "85e5dadc"},
+            platform_contracts={"gate5": GATE5_LOCKED_BENCHMARK_HASH},
+        )
+
+        state = RunStateV1(
+            run_id=run_id,
+            status=status,
+            started_at_utc="2026-10-02T12:00:00Z",
+            updated_at_utc="2026-10-02T12:01:00Z",
+            finished_at_utc="2026-10-02T12:01:00Z" if status == "COMPLETE" else None,
+            recorded_episode_count=1 if status == "COMPLETE" else 0,
+            expected_episode_count=1,
+            canonical_run=False,
+            dirty_override=False,
+            unverified_env_override=False,
+            environment_verification_status="VERIFIED",
+            failure_category="TEST_FAILURE" if status == "FAILED" else None,
+            sanitized_failure_message="Simulated failure occurred" if status == "FAILED" else None,
+        )
+
+        overall_metrics = {
+            "clean_success_rate": 1.0,
+            "safety_failure_rate": 0.0,
+            "mean_final_route_completion": 1.0,
+            "median_final_route_completion": 1.0,
+            "mean_time_to_clean_success_s": 24.5,
+            "mean_episode_return": 18.2,
+            "success_rate": 1.0,
         }
-        manifest_data = {
+        summary_data: Dict[str, Any] = {
             "run_id": run_id,
-            "run_kind": "AUDIT",
-            "canonical_run": False,
-            "config": config_data,
-            "provenance": {
-                "git": {"git_commit_sha": "abc12345", "git_worktree_dirty": False},
-                "environment": {"metadrive_version": "0.4.3", "metadrive_commit": "85e5dadc"},
-            },
-        }
-        state_data = {
-            "run_id": run_id,
-            "status": status,
-            "started_at_utc": "2026-10-02T12:00:00Z",
-            "finished_at_utc": "2026-10-02T12:01:00Z" if status == "COMPLETE" else None,
-            "recorded_episode_count": 1 if status == "COMPLETE" else 0,
-        }
-        summary_data = {
-            "run_id": run_id,
-            "overall_metrics": {
-                "clean_success_rate": 1.0,
-                "safety_failure_rate": 0.0,
-                "mean_final_route_completion": 1.0,
-                "median_final_route_completion": 1.0,
-                "mean_time_to_clean_success_s": 24.5,
-                "mean_episode_return": 18.2,
-                "success_rate": 1.0,
-            },
+            "overall_metrics": overall_metrics,
             "tier_metrics": {
                 "Easy": {"clean_success_rate": 1.0, "mean_final_route_completion": 1.0}
             },
         }
+        if macro_metrics:
+            summary_data["macro_metrics"] = macro_metrics
 
-        # Write core files
+        # Write core Gate-7 files
         with open(run_dir / "run_manifest.json", "w", encoding="utf-8") as f:
-            json.dump(manifest_data, f, indent=2)
+            json.dump(manifest.to_dict(), f, indent=2)
 
         with open(run_dir / "run_state.json", "w", encoding="utf-8") as f:
-            json.dump(state_data, f, indent=2)
+            json.dump(state.to_dict(), f, indent=2)
 
         if status == "COMPLETE":
             with open(run_dir / "summary.json", "w", encoding="utf-8") as f:
                 json.dump(summary_data, f, indent=2)
 
             episodes_csv_content = (
-                "episode_index,case_id,split,tier,primary_terminal_reason,clean_success,final_route_completion,episode_steps,episode_time_s,episode_return\n"
-                "0,case_1,TRAIN,Easy,SUCCESS,True,1.0,245,24.5,18.2\n"
+                "episode_index,protocol_order_index,case_id,split,tier,sequence,geometry_generation_seed,environment_seed,horizon_steps,agent_seed,primary_terminal_reason,terminal_reason,clean_success,raw_arrival,final_route_completion,max_route_completion,episode_steps,episode_time_s,time_to_clean_success_s,mean_speed_kmh,max_speed_kmh,episode_return,crash_human,crash_vehicle,crash_object,crash_building,crash_sidewalk,out_of_road,timeout,has_technical_failure,technical_failure_reason\n"
+                "0,1,sandbox/Easy/SCCS/0/0,TRAIN,Easy,SCCS,0,0,1758,101,SUCCESS,SUCCESS,True,True,1.0,1.0,245,24.5,24.5,32.4,45.2,18.2,False,False,False,False,False,False,False,False,\n"
             )
             with open(run_dir / "episodes.csv", "w", encoding="utf-8", newline="") as f:
                 f.write(episodes_csv_content)
 
             timing_csv_content = (
-                "episode_index,act_count,mean_act_ms,median_act_ms,p95_act_ms,max_act_ms\n"
-                "0,245,0.45,0.42,0.61,1.2\n"
+                "episode_index,act_count,mean_act_ms,median_act_ms,p95_act_ms,max_act_ms,total_act_ms,latency_sync_policy\n"
+                "0,245,0.45,0.42,0.61,1.2,110.25,NONE\n"
             )
             with open(run_dir / "timing.csv", "w", encoding="utf-8", newline="") as f:
                 f.write(timing_csv_content)
@@ -179,16 +222,17 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
                 json.dump(wandb_sync_data, f, indent=2)
 
             if not omit_integrity:
-                from src.platform import canonical_csv_file_sha256, canonical_json_file_sha256, canonical_json_sha256
                 integrity_data = {
                     "run_id": run_id,
-                    "experiment_config_sha256": "mock_cfg_sha256_12345",
+                    "experiment_config_sha256": config.compute_config_sha256(),
                     "run_manifest_sha256": canonical_json_file_sha256(run_dir / "run_manifest.json"),
                     "episodes_sha256": canonical_csv_file_sha256(run_dir / "episodes.csv"),
                     "summary_sha256": canonical_json_file_sha256(run_dir / "summary.json"),
                     "timing_sha256": canonical_csv_file_sha256(run_dir / "timing.csv"),
                     "run_state_sha256": canonical_json_file_sha256(run_dir / "run_state.json"),
                     "wandb_sync_sha256": canonical_json_file_sha256(run_dir / "wandb_sync.json"),
+                    "technical_failures_sha256": None,
+                    "finalized_at_utc": "2026-10-02T12:01:00Z",
                 }
                 with open(run_dir / "run_integrity.json", "w", encoding="utf-8") as f:
                     json.dump(integrity_data, f, indent=2)
@@ -204,8 +248,8 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
 
     def test_01_run_repository_discovers_valid_run_directories(self):
         """Repository discovers valid run directories and sorts them."""
-        self._create_mock_run("run_b")
-        self._create_mock_run("run_a")
+        self._create_real_schema_run("run_b")
+        self._create_real_schema_run("run_a")
         repo = RunArtifactRepository(self.runs_root)
         discovered = repo.discover_run_ids()
         self.assertEqual(discovered, ["run_a", "run_b"])
@@ -214,14 +258,14 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
         """Random subdirectories without run_state or run_manifest are ignored."""
         (self.runs_root / "random_folder").mkdir(parents=True, exist_ok=True)
         (self.runs_root / "empty_dir").mkdir(parents=True, exist_ok=True)
-        self._create_mock_run("valid_run")
+        self._create_real_schema_run("valid_run")
         repo = RunArtifactRepository(self.runs_root)
         discovered = repo.discover_run_ids()
         self.assertEqual(discovered, ["valid_run"])
 
     def test_03_complete_run_loads_all_required_artifacts(self):
         """Snapshot loads manifest, state, summary, episodes, timing, and wandb_sync."""
-        self._create_mock_run("complete_run_01")
+        self._create_real_schema_run("complete_run_01")
         repo = RunArtifactRepository(self.runs_root)
         snap = repo.load_run_snapshot("complete_run_01")
         self.assertIsNotNone(snap)
@@ -232,14 +276,14 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
 
     def test_04_complete_untampered_run_integrity_verifies(self):
         """Untampered COMPLETE run evaluates to VERIFIED integrity status."""
-        self._create_mock_run("clean_run")
+        self._create_real_schema_run("clean_run")
         repo = RunArtifactRepository(self.runs_root)
         snap = repo.load_run_snapshot("clean_run")
         self.assertEqual(snap.integrity_status, IntegrityDisplayStatus.VERIFIED)
 
     def test_05_tampered_episodes_csv_produces_integrity_failure(self):
         """Tampering with episodes.csv marks integrity as FAILED and identifies mismatch."""
-        self._create_mock_run("tampered_ep_run", tamper_file="episodes.csv")
+        self._create_real_schema_run("tampered_ep_run", tamper_file="episodes.csv")
         repo = RunArtifactRepository(self.runs_root)
         snap = repo.load_run_snapshot("tampered_ep_run")
         self.assertEqual(snap.integrity_status, IntegrityDisplayStatus.FAILED)
@@ -248,7 +292,7 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
 
     def test_06_tampered_summary_json_produces_integrity_failure(self):
         """Tampering with summary.json marks integrity as FAILED."""
-        self._create_mock_run("tampered_sum_run", tamper_file="summary.json")
+        self._create_real_schema_run("tampered_sum_run", tamper_file="summary.json")
         repo = RunArtifactRepository(self.runs_root)
         snap = repo.load_run_snapshot("tampered_sum_run")
         self.assertEqual(snap.integrity_status, IntegrityDisplayStatus.FAILED)
@@ -257,7 +301,7 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
 
     def test_07_hash_failure_never_rewrites_run_integrity(self):
         """Evaluating integrity never mutates run_integrity.json on disk."""
-        run_dir = self._create_mock_run("tamper_check_run", tamper_file="episodes.csv")
+        run_dir = self._create_real_schema_run("tamper_check_run", tamper_file="episodes.csv")
         integ_file = run_dir / "run_integrity.json"
         with open(integ_file, "rb") as f:
             original_bytes = f.read()
@@ -272,33 +316,26 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
 
     def test_08_running_run_is_not_final_not_corrupted(self):
         """RUNNING run with no summary/integrity evaluates to NOT_FINAL, not FAILED."""
-        self._create_mock_run("running_run", status="RUNNING")
+        self._create_real_schema_run("running_run", status="RUNNING")
         repo = RunArtifactRepository(self.runs_root)
         snap = repo.load_run_snapshot("running_run")
         self.assertEqual(snap.status, "RUNNING")
         self.assertEqual(snap.integrity_status, IntegrityDisplayStatus.NOT_FINAL)
 
     def test_09_failed_run_loads_without_fabricated_summary(self):
-        """FAILED run loads failure category without fabricating summary payload."""
-        run_dir = self._create_mock_run("failed_run", status="FAILED")
-        with open(run_dir / "run_state.json", "w", encoding="utf-8") as f:
-            json.dump({
-                "run_id": "failed_run",
-                "status": "FAILED",
-                "failure_category": "SIMULATION_CRASH",
-                "failure_message": "Segmentation fault in physics engine",
-            }, f, indent=2)
-
+        """FAILED run loads failure category and sanitized_failure_message without fabricating summary."""
+        self._create_real_schema_run("failed_run", status="FAILED")
         repo = RunArtifactRepository(self.runs_root)
         snap = repo.load_run_snapshot("failed_run")
         self.assertEqual(snap.status, "FAILED")
         self.assertIsNone(snap.summary_payload)
-        self.assertEqual(snap.failure_category, "SIMULATION_CRASH")
+        self.assertEqual(snap.failure_category, "TEST_FAILURE")
+        self.assertEqual(snap.sanitized_failure_message, "Simulated failure occurred")
         self.assertEqual(snap.integrity_status, IntegrityDisplayStatus.NOT_FINAL)
 
     def test_10_interrupted_run_loads_without_fabricated_summary(self):
         """INTERRUPTED run loads truthfully without fabricated summary."""
-        self._create_mock_run("interrupted_run", status="INTERRUPTED")
+        self._create_real_schema_run("interrupted_run", status="INTERRUPTED")
         repo = RunArtifactRepository(self.runs_root)
         snap = repo.load_run_snapshot("interrupted_run")
         self.assertEqual(snap.status, "INTERRUPTED")
@@ -307,7 +344,7 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
 
     def test_11_complete_missing_integrity_is_unverified(self):
         """COMPLETE run missing run_integrity.json evaluates to UNVERIFIED, never VERIFIED."""
-        self._create_mock_run("missing_integ_run", status="COMPLETE", omit_integrity=True)
+        self._create_real_schema_run("missing_integ_run", status="COMPLETE", omit_integrity=True)
         repo = RunArtifactRepository(self.runs_root)
         snap = repo.load_run_snapshot("missing_integ_run")
         self.assertEqual(snap.status, "COMPLETE")
@@ -315,7 +352,7 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
 
     def test_12_summary_cards_use_values_directly_from_summary_json(self):
         """Overview metric cards display exact values from summary.json['overall_metrics']."""
-        self._create_mock_run("cards_test_run")
+        self._create_real_schema_run("cards_test_run")
         widget = ResultsWidget(runs_root=self.runs_root)
         widget.select_run_by_id("cards_test_run")
 
@@ -327,8 +364,7 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
 
     def test_13_none_time_to_success_remains_na(self):
         """mean_time_to_clean_success_s = None is displayed as N/A, never zero."""
-        run_dir = self._create_mock_run("no_clean_success_run")
-        # Update summary with mean_time_to_clean_success_s = None
+        run_dir = self._create_real_schema_run("no_clean_success_run")
         sum_path = run_dir / "summary.json"
         with open(sum_path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -345,8 +381,8 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
         widget.close()
 
     def test_14_episode_return_is_labeled_diagnostic(self):
-        """Overview text and tab explicitly label return as diagnostic training signal."""
-        self._create_mock_run("diag_label_run")
+        """Overview text explicitly labels return as diagnostic training signal."""
+        self._create_real_schema_run("diag_label_run")
         widget = ResultsWidget(runs_root=self.runs_root)
         widget.select_run_by_id("diag_label_run")
 
@@ -428,9 +464,7 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
         """Scientific status is read from structured fields, never parsed from free-text message."""
         buf = LiveTelemetryBufferV1()
         buf.handle_event({"event": {"event_type": "EPISODE_STARTED", "episode_index": 0}})
-        # Message says SUCCESS but structured status says FAILURE
         buf.handle_event({"event": {"event_type": "EPISODE_FINISHED", "status": "FAILURE", "message": "Fabricated SUCCESS in message string"}})
-
         self.assertEqual(buf.completed_episode_traces[0].final_status, "FAILURE")
 
     def test_23_run_finished_sets_completed_presentation_state(self):
@@ -451,11 +485,10 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
 
     def test_25_auto_refresh_after_execution_loads_disk_artifact_state(self):
         """MainWindow auto-selects and loads completed run from disk on successful workerDone."""
-        self._create_mock_run("auto_refresh_run")
+        self._create_real_schema_run("auto_refresh_run")
         window = MainWindow()
         window.results_widget.set_runs_root(self.runs_root)
 
-        # Emit worker done with run_id
         window._on_worker_done({"operation": "RUN", "success": True, "run_id": "auto_refresh_run"})
         self.assertIsNotNone(window.results_widget._current_snapshot)
         self.assertEqual(window.results_widget._current_snapshot.run_id, "auto_refresh_run")
@@ -476,6 +509,139 @@ class TestWorkbenchResultsSuite(unittest.TestCase):
         ph1 = compute_platform_workbench_results_contract_sha256(h1)
         ph2 = compute_platform_workbench_results_contract_sha256(h2)
         self.assertEqual(ph1, ph2)
+
+    def test_28_real_gate7_schema_parity(self):
+        """Snapshot view model extracts exact fields from RunManifestV1 and RunStateV1."""
+        self._create_real_schema_run("schema_parity_run")
+        repo = RunArtifactRepository(self.runs_root)
+        snap = repo.load_run_snapshot("schema_parity_run")
+
+        self.assertEqual(snap.agent_id, "fixture_constant_continuous")
+        self.assertEqual(snap.agent_version, "1.0.0")
+        self.assertEqual(snap.input_profile_id, "STATE_DECISION_V1")
+        self.assertEqual(snap.action_adapter_id, "continuous_box2_v1")
+        self.assertEqual(snap.inference_stochasticity, "deterministic")
+        self.assertFalse(snap.stateful_within_episode)
+        self.assertEqual(snap.git_commit_sha, "abc12345")
+        self.assertFalse(snap.git_worktree_dirty)
+        self.assertEqual(snap.metadrive_version, "0.4.3")
+        self.assertEqual(snap.metadrive_commit, "85e5dadc")
+        self.assertFalse(snap.canonical_run)
+
+    def test_29_run_identity_parity_enforced(self):
+        """Mismatch between dir basename, state run_id, or manifest run_id causes snapshot to be None."""
+        run_dir = self._create_real_schema_run("identity_mismatch_run")
+        # Change manifest run_id to mismatch directory
+        m_path = run_dir / "run_manifest.json"
+        with open(m_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        data["run_id"] = "different_id"
+        with open(m_path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
+        repo = RunArtifactRepository(self.runs_root)
+        snap = repo.load_run_snapshot("identity_mismatch_run")
+        self.assertIsNone(snap, "Run with identity mismatch between manifest and dir must be rejected as malformed")
+
+    def test_30_path_traversal_in_load_run_snapshot_rejected(self):
+        """Traversing outside runs_root returns None."""
+        repo = RunArtifactRepository(self.runs_root)
+        self.assertIsNone(repo.load_run_snapshot("../unauthorized_path"))
+        self.assertIsNone(repo.load_run_snapshot(".."))
+        self.assertIsNone(repo.load_run_snapshot("sub/nested"))
+
+    def test_31_failed_integrity_trust_gates_primary_metrics(self):
+        """When integrity fails, ResultsWidget displays UNTRUSTED warning banner."""
+        self._create_real_schema_run("untrusted_metrics_run", tamper_file="summary.json")
+        widget = ResultsWidget(runs_root=self.runs_root)
+        widget.show()
+        widget.select_run_by_id("untrusted_metrics_run")
+
+        self.assertIn("UNTRUSTED", widget.cards_group.title())
+        self.assertFalse(widget.lbl_trust_warning.isHidden())
+        self.assertIn("CRITICAL WARNING", widget.lbl_trust_warning.text())
+        widget.close()
+
+    def test_32_custom_runs_root_autoload_without_preconfiguration(self):
+        """Custom runs_root auto-loads into ResultsWidget via execution report without preconfiguring root."""
+        custom_temp = tempfile.TemporaryDirectory()
+        custom_root = Path(custom_temp.name)
+        custom_run_dir = custom_root / "custom_autoload_run"
+        custom_run_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create real run in custom_root
+        config = ExperimentRunConfig(
+            run_kind=RunKind.AUDIT,
+            benchmark_contract_sha256=GATE5_LOCKED_BENCHMARK_HASH,
+            agent_contract_sha256=GATE6_LOCKED_AGENT_HASH,
+            platform_runtime_contract_sha256=GATE6_LOCKED_RUNTIME_HASH,
+            logging_contract_sha256=GATE7_LOCKED_LOGGING_HASH,
+            platform_observability_contract_sha256=GATE7_LOCKED_OBSERVABILITY_HASH,
+            agent_id="fixture_constant_continuous",
+            agent_version="1.0.0",
+            input_profile_id="STATE_DECISION_V1",
+            action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic",
+            stateful_within_episode=False,
+            expected_episode_count=1,
+            manifest_name="geometry_split_manifest.csv",
+        )
+        manifest = RunManifestV1(
+            run_id="custom_autoload_run",
+            run_kind="AUDIT",
+            created_at_utc="2026-10-02T12:00:00Z",
+            experiment_config_sha256=config.compute_config_sha256(),
+            config=config.to_dict(),
+            git_provenance={"git_commit_sha": "abc12345", "git_worktree_dirty": False},
+            environment_provenance={"metadrive_version": "0.4.3", "metadrive_commit": "85e5dadc"},
+            platform_contracts={"gate5": GATE5_LOCKED_BENCHMARK_HASH},
+        )
+        state = RunStateV1(
+            run_id="custom_autoload_run",
+            status="COMPLETE",
+            started_at_utc="2026-10-02T12:00:00Z",
+            updated_at_utc="2026-10-02T12:01:00Z",
+            finished_at_utc="2026-10-02T12:01:00Z",
+            recorded_episode_count=1,
+            expected_episode_count=1,
+            canonical_run=False,
+            dirty_override=False,
+            unverified_env_override=False,
+            environment_verification_status="VERIFIED",
+        )
+        with open(custom_run_dir / "run_manifest.json", "w") as f:
+            json.dump(manifest.to_dict(), f)
+        with open(custom_run_dir / "run_state.json", "w") as f:
+            json.dump(state.to_dict(), f)
+
+        window = MainWindow()
+        # Initial root is default project runs/
+        self.assertNotEqual(window.results_widget.runs_root, custom_root)
+
+        # 1. Execution report arrives with run_dir pointing to custom_root
+        window._on_execution_report({"execution_report": {"run_id": "custom_autoload_run", "run_dir": str(custom_run_dir), "status": "COMPLETE"}})
+        # 2. Worker done arrives
+        window._on_worker_done({"operation": "RUN", "success": True, "run_id": "custom_autoload_run"})
+
+        # Verify ResultsWidget updated its root to custom_root and selected the run
+        self.assertEqual(window.results_widget.runs_root, custom_root)
+        self.assertIsNotNone(window.results_widget._current_snapshot)
+        self.assertEqual(window.results_widget._current_snapshot.run_id, "custom_autoload_run")
+        window.close()
+        custom_temp.cleanup()
+
+    def test_33_stored_macro_metrics_displayed_without_recomputation(self):
+        """Stored macro_metrics from summary.json is displayed directly in summary details."""
+        macro = {"clean_success_rate_macro": 0.85, "route_completion_macro": 0.92}
+        self._create_real_schema_run("macro_metrics_run", macro_metrics=macro)
+        widget = ResultsWidget(runs_root=self.runs_root)
+        widget.select_run_by_id("macro_metrics_run")
+
+        text = widget.text_summary_details.toPlainText()
+        self.assertIn("Stored Authoritative Macro Metrics (summary.json)", text)
+        self.assertIn("clean_success_rate_macro: 0.85", text)
+        self.assertIn("route_completion_macro: 0.92", text)
+        widget.close()
 
 
 if __name__ == "__main__":

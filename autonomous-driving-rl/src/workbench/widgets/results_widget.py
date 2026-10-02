@@ -1,14 +1,14 @@
 """
-Workbench Results Tab and Run Inspection Panel (Gate 7.5B Pass B2).
+Workbench Results Tab and Run Inspection Panel (Gate 7.5B Pass B2 Correction 1).
 
 Provides comprehensive read-only browsing of Gate-7 experiment runs:
-- Left pane: Discovered run candidate list (Run ID, Status, Kind, Canonical, Agent, Episodes, Integrity).
-- Right pane (Tabs):
-  1. Overview: Authoritative primary metric cards from summary.json['overall_metrics'],
-     tier breakdown, outcome breakdown bar chart, and clearly labeled diagnostic return signal.
-  2. Episodes: Complete read-only table from episodes.csv.
-  3. Timing: Decision latency timing table from timing.csv.
-  4. Provenance: Experiment configuration and git/platform environment records.
+- Left pane: Discovered run candidate list (Run ID, Status, Kind, Canonical, Agent, Episodes, Integrity, Started time).
+- Right pane (Subtabs):
+  1. Overview: Authoritative primary metric cards from summary.json['overall_metrics'] (trust-gated upon VERIFIED),
+     tier breakdown, stored macro_metrics display, outcome breakdown bar chart, and clearly labeled diagnostic return signal.
+  2. Episodes: Complete read-only table displaying all 30 Gate-7 columns defined in EPISODE_CSV_COLUMNS.
+  3. Timing: Decision latency timing table displaying all 8 fields from EpisodeTimingRecord.
+  4. Provenance: Experiment configuration, git provenance, environment provenance, and platform contract hashes.
   5. Integrity: Artifact hash check verification against run_integrity.json.
   6. W&B / Tech: W&B sync status and technical failure diagnostics.
 - All presentation tables use QAbstractItemView.EditTrigger.NoEditTriggers.
@@ -55,7 +55,7 @@ class ResultsWidget(QWidget):
     def __init__(self, runs_root: Optional[Path] = None, parent: Optional[QWidget] = None):
         super().__init__(parent)
         project_root = get_default_project_root()
-        self._runs_root = runs_root or (project_root / "runs")
+        self._runs_root = Path(runs_root).resolve() if runs_root else (project_root / "runs").resolve()
         self._repo = RunArtifactRepository(self._runs_root)
         self._current_snapshot: Optional[RunArtifactSnapshotV1] = None
         self._init_ui()
@@ -67,7 +67,8 @@ class ResultsWidget(QWidget):
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # -------------------------------------------------------------
-        # Left Pane: Run Browser List
+        # Left Pane: Run Browser List (Specification Section 15)
+        # Required columns: Run ID, Status, Kind, Canonical, Agent, Episodes, Integrity, Started time
         # -------------------------------------------------------------
         left_group = QGroupBox("Discovered Runs Repository")
         left_layout = QVBoxLayout(left_group)
@@ -87,14 +88,14 @@ class ResultsWidget(QWidget):
         self.lbl_current_root.setStyleSheet("color: gray; font-size: 11px;")
         left_layout.addWidget(self.lbl_current_root)
 
-        # Runs table
-        self.table_runs = QTableWidget(0, 5)
+        # Runs table (8 required columns)
+        self.table_runs = QTableWidget(0, 8)
         self.table_runs.setHorizontalHeaderLabels([
-            "Run ID", "Status", "Kind", "Integrity", "Agent"
+            "Run ID", "Status", "Kind", "Canonical", "Agent", "Episodes", "Integrity", "Started Time"
         ])
-        for col in range(4):
+        for col in range(7):
             self.table_runs.horizontalHeader().setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
-        self.table_runs.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        self.table_runs.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeMode.Stretch)
         self.table_runs.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table_runs.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table_runs.itemSelectionChanged.connect(self._on_run_selection_changed)
@@ -164,9 +165,9 @@ class ResultsWidget(QWidget):
         banner_row.addWidget(self.lbl_integrity_badge)
         layout.addLayout(banner_row)
 
-        # Primary Benchmark Metric Cards Group
-        cards_group = QGroupBox("Authoritative Primary Benchmark Metrics (summary.json)")
-        cards_layout = QHBoxLayout(cards_group)
+        # Primary Benchmark Metric Cards Group (Trust-Gated on Integrity VERIFIED)
+        self.cards_group = QGroupBox("Authoritative Primary Benchmark Metrics (summary.json)")
+        cards_layout = QHBoxLayout(self.cards_group)
 
         self.card_success = self._create_metric_card("Clean Success Rate", "—")
         self.card_safety = self._create_metric_card("Safety Failure Rate", "—")
@@ -179,7 +180,12 @@ class ResultsWidget(QWidget):
         cards_layout.addWidget(self.card_mean_route)
         cards_layout.addWidget(self.card_median_route)
         cards_layout.addWidget(self.card_time)
-        layout.addWidget(cards_group)
+        layout.addWidget(self.cards_group)
+
+        # Trust Warning Banner (Visible on FAILED / UNVERIFIED integrity)
+        self.lbl_trust_warning = QLabel("")
+        self.lbl_trust_warning.setVisible(False)
+        layout.addWidget(self.lbl_trust_warning)
 
         # Diagnostic Signal Labeling Note
         diag_note = QLabel(
@@ -203,7 +209,7 @@ class ResultsWidget(QWidget):
         mid_splitter.addWidget(chart_box)
 
         # Text Summary
-        text_box = QGroupBox("Summary Details (Tier Breakdown & Macro Metrics)")
+        text_box = QGroupBox("Summary Details (Tier Breakdown & Stored Macro Metrics)")
         text_layout = QVBoxLayout(text_box)
         self.text_summary_details = QTextEdit()
         self.text_summary_details.setReadOnly(True)
@@ -235,14 +241,22 @@ class ResultsWidget(QWidget):
 
     def _init_episodes_tab(self) -> None:
         layout = QVBoxLayout(self.tab_episodes)
-        self.table_episodes = QTableWidget(0, 10)
-        self.table_episodes.setHorizontalHeaderLabels([
-            "Ep Index", "Case ID", "Split", "Tier", "Terminal Reason",
-            "Clean Success", "Final Route", "Steps", "Time (s)", "Episode Return (Diagnostic)"
-        ])
-        for c in range(9):
+        # Expose all important Gate-7 EPISODE_CSV_COLUMNS (Specification Section 16)
+        columns = [
+            "episode_index", "protocol_order_index", "case_id", "split", "tier",
+            "sequence", "geometry_generation_seed", "environment_seed", "horizon_steps",
+            "agent_seed", "primary_terminal_reason", "terminal_reason", "clean_success",
+            "raw_arrival", "final_route_completion", "max_route_completion", "episode_steps",
+            "episode_time_s", "time_to_clean_success_s", "mean_speed_kmh", "max_speed_kmh",
+            "episode_return", "crash_human", "crash_vehicle", "crash_object",
+            "crash_building", "crash_sidewalk", "out_of_road", "timeout",
+            "has_technical_failure", "technical_failure_reason"
+        ]
+        self._episode_columns = columns
+        self.table_episodes = QTableWidget(0, len(columns))
+        self.table_episodes.setHorizontalHeaderLabels(columns)
+        for c in range(len(columns)):
             self.table_episodes.horizontalHeader().setSectionResizeMode(c, QHeaderView.ResizeMode.ResizeToContents)
-        self.table_episodes.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeMode.Stretch)
         self.table_episodes.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table_episodes.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         layout.addWidget(self.table_episodes)
@@ -253,13 +267,16 @@ class ResultsWidget(QWidget):
         timing_note.setStyleSheet("color: gray; font-style: italic;")
         layout.addWidget(timing_note)
 
-        self.table_timing = QTableWidget(0, 6)
-        self.table_timing.setHorizontalHeaderLabels([
-            "Ep Index", "Act Count", "Mean Act (ms)", "Median Act (ms)", "P95 Act (ms)", "Max Act (ms)"
-        ])
-        for c in range(5):
+        # All 8 EpisodeTimingRecord fields (Specification Section 17)
+        timing_cols = [
+            "episode_index", "act_count", "mean_act_ms", "median_act_ms",
+            "p95_act_ms", "max_act_ms", "total_act_ms", "latency_sync_policy"
+        ]
+        self._timing_columns = timing_cols
+        self.table_timing = QTableWidget(0, len(timing_cols))
+        self.table_timing.setHorizontalHeaderLabels(timing_cols)
+        for c in range(len(timing_cols)):
             self.table_timing.horizontalHeader().setSectionResizeMode(c, QHeaderView.ResizeMode.ResizeToContents)
-        self.table_timing.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
         self.table_timing.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table_timing.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         layout.addWidget(self.table_timing)
@@ -278,7 +295,7 @@ class ResultsWidget(QWidget):
 
         self.table_integrity = QTableWidget(0, 4)
         self.table_integrity.setHorizontalHeaderLabels([
-            "Artifact", "Status", "Expected SHA-256", "Observed SHA-256"
+            "Artifact", "Status", "Expected Fingerprint", "Observed Fingerprint"
         ])
         self.table_integrity.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.table_integrity.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
@@ -297,6 +314,10 @@ class ResultsWidget(QWidget):
     # -------------------------------------------------------------
     # Logic & Presentation Population
     # -------------------------------------------------------------
+    @property
+    def runs_root(self) -> Path:
+        return self._runs_root
+
     def set_runs_root(self, runs_root: Path) -> None:
         """Sets a new runs_root and refreshes the run list."""
         self._runs_root = Path(runs_root).resolve()
@@ -321,13 +342,18 @@ class ResultsWidget(QWidget):
             if not snap:
                 self.table_runs.setItem(row, 0, QTableWidgetItem(rid))
                 self.table_runs.setItem(row, 1, QTableWidgetItem("MALFORMED"))
+                for c in range(2, 8):
+                    self.table_runs.setItem(row, c, QTableWidgetItem("—"))
                 continue
 
             item_id = QTableWidgetItem(snap.run_id)
             item_status = QTableWidgetItem(snap.status)
             item_kind = QTableWidgetItem(snap.run_kind)
-            item_integ = QTableWidgetItem(snap.integrity_status.value)
+            item_canon = QTableWidgetItem(str(snap.canonical_run))
             item_agent = QTableWidgetItem(snap.agent_id or "—")
+            item_eps = QTableWidgetItem(f"{snap.recorded_episode_count}/{snap.expected_episode_count or '—'}")
+            item_integ = QTableWidgetItem(snap.integrity_status.value)
+            item_start = QTableWidgetItem(snap.started_at_utc or "—")
 
             if snap.integrity_status == IntegrityDisplayStatus.VERIFIED:
                 item_integ.setForeground(Qt.GlobalColor.darkGreen)
@@ -339,8 +365,11 @@ class ResultsWidget(QWidget):
             self.table_runs.setItem(row, 0, item_id)
             self.table_runs.setItem(row, 1, item_status)
             self.table_runs.setItem(row, 2, item_kind)
-            self.table_runs.setItem(row, 3, item_integ)
+            self.table_runs.setItem(row, 3, item_canon)
             self.table_runs.setItem(row, 4, item_agent)
+            self.table_runs.setItem(row, 5, item_eps)
+            self.table_runs.setItem(row, 6, item_integ)
+            self.table_runs.setItem(row, 7, item_start)
 
         if run_ids and self.table_runs.currentRow() < 0:
             self.table_runs.selectRow(0)
@@ -401,7 +430,6 @@ class ResultsWidget(QWidget):
         self._populate_wandb(snap)
 
     def _populate_overview(self, snap: RunArtifactSnapshotV1) -> None:
-        # Default empty cards
         def set_card_val(card: QWidget, text: str):
             lbl = card.findChild(QLabel, "value_label")
             if lbl:
@@ -409,6 +437,26 @@ class ResultsWidget(QWidget):
 
         summary = snap.summary_payload or {}
         overall = summary.get("overall_metrics", {})
+
+        # Trust-Gating (Specification Section 11):
+        # A run with FAILED integrity must NOT present potentially tampered metrics as authoritative
+        is_verified = (snap.integrity_status == IntegrityDisplayStatus.VERIFIED)
+        is_failed = (snap.integrity_status == IntegrityDisplayStatus.FAILED)
+
+        if is_failed:
+            self.cards_group.setTitle("UNTRUSTED — INTEGRITY FAILED (Potentially Tampered Artifacts)")
+            self.cards_group.setStyleSheet("QGroupBox { font-weight: bold; color: #b22222; border: 2px solid #b22222; }")
+            self.lbl_trust_warning.setVisible(True)
+            self.lbl_trust_warning.setStyleSheet("color: #b22222; font-weight: bold; background: #ffe6e6; padding: 6px; border: 1px solid #b22222;")
+            self.lbl_trust_warning.setText(
+                "CRITICAL WARNING: Run integrity verification FAILED! Stored metrics mismatch canonical "
+                "artifact fingerprints and must NOT be trusted as authoritative benchmark results."
+            )
+        else:
+            self.cards_group.setTitle("Authoritative Primary Benchmark Metrics (summary.json)")
+            self.cards_group.setStyleSheet("")
+            self.lbl_trust_warning.setVisible(False)
+            self.lbl_trust_warning.setText("")
 
         clean_succ = overall.get("clean_success_rate")
         safety_fail = overall.get("safety_failure_rate")
@@ -426,23 +474,41 @@ class ResultsWidget(QWidget):
             set_card_val(self.card_time, "N/A — no clean-success samples" if clean_succ is not None else "—")
 
         # Summary text details
+        trust_header = "=== AUTHORITATIVE EXPERIMENT SUMMARY ===" if is_verified else f"=== EXPERIMENT SUMMARY ({snap.integrity_status.value}) ==="
         lines = [
-            f"=== AUTHORITATIVE EXPERIMENT SUMMARY ===",
+            trust_header,
             f"Run ID:                 {snap.run_id}",
             f"Lifecycle Status:       {snap.status}",
+            f"Integrity Status:       {snap.integrity_status.value}",
+            f"Canonical Run:          {snap.canonical_run}",
             f"Recorded Episodes:      {snap.recorded_episode_count} / {snap.expected_episode_count or '—'}",
             f"Started UTC:            {snap.started_at_utc}",
             f"Finished UTC:           {snap.finished_at_utc}",
+        ]
+
+        if snap.failure_category or snap.sanitized_failure_message:
+            lines.append(f"Failure Category:       {snap.failure_category or '—'}")
+            lines.append(f"Failure Message:        {snap.sanitized_failure_message or '—'}")
+
+        lines.extend([
             "",
             f"--- Diagnostic Signal (NOT Ranking Score) ---",
             f"Diagnostic Mean Return: {overall.get('mean_episode_return', '—')}",
-        ]
+        ])
+
+        # Stored Macro Metrics (Specification Section 20)
+        macro_metrics = summary.get("macro_metrics")
+        if macro_metrics:
+            lines.append("")
+            lines.append("--- Stored Authoritative Macro Metrics (summary.json) ---")
+            for mk, mv in macro_metrics.items():
+                lines.append(f"  {mk}: {mv}")
 
         # Tier metrics
         tier_metrics = summary.get("tier_metrics")
         if tier_metrics:
             lines.append("")
-            lines.append("--- Tier Breakdown ---")
+            lines.append("--- Tier Breakdown (summary.json) ---")
             for t_name, t_vals in tier_metrics.items():
                 t_succ = t_vals.get("clean_success_rate")
                 t_route = t_vals.get("mean_final_route_completion")
@@ -471,42 +537,53 @@ class ResultsWidget(QWidget):
         rows = snap.episode_rows
         self.table_episodes.setRowCount(len(rows))
         for r_idx, r in enumerate(rows):
-            self.table_episodes.setItem(r_idx, 0, QTableWidgetItem(str(r.get("episode_index", ""))))
-            self.table_episodes.setItem(r_idx, 1, QTableWidgetItem(str(r.get("case_id", ""))))
-            self.table_episodes.setItem(r_idx, 2, QTableWidgetItem(str(r.get("split", ""))))
-            self.table_episodes.setItem(r_idx, 3, QTableWidgetItem(str(r.get("tier", ""))))
-            self.table_episodes.setItem(r_idx, 4, QTableWidgetItem(str(r.get("primary_terminal_reason", ""))))
-            self.table_episodes.setItem(r_idx, 5, QTableWidgetItem(str(r.get("clean_success", ""))))
-            self.table_episodes.setItem(r_idx, 6, QTableWidgetItem(str(r.get("final_route_completion", ""))))
-            self.table_episodes.setItem(r_idx, 7, QTableWidgetItem(str(r.get("episode_steps", ""))))
-            self.table_episodes.setItem(r_idx, 8, QTableWidgetItem(str(r.get("episode_time_s", ""))))
-            self.table_episodes.setItem(r_idx, 9, QTableWidgetItem(str(r.get("episode_return", ""))))
+            for c_idx, col_name in enumerate(self._episode_columns):
+                val = r.get(col_name, "")
+                self.table_episodes.setItem(r_idx, c_idx, QTableWidgetItem(str(val)))
 
     def _populate_timing(self, snap: RunArtifactSnapshotV1) -> None:
         rows = snap.timing_rows
         self.table_timing.setRowCount(len(rows))
         for r_idx, r in enumerate(rows):
-            self.table_timing.setItem(r_idx, 0, QTableWidgetItem(str(r.get("episode_index", ""))))
-            self.table_timing.setItem(r_idx, 1, QTableWidgetItem(str(r.get("act_count", ""))))
-            self.table_timing.setItem(r_idx, 2, QTableWidgetItem(str(r.get("mean_act_ms", ""))))
-            self.table_timing.setItem(r_idx, 3, QTableWidgetItem(str(r.get("median_act_ms", ""))))
-            self.table_timing.setItem(r_idx, 4, QTableWidgetItem(str(r.get("p95_act_ms", ""))))
-            self.table_timing.setItem(r_idx, 5, QTableWidgetItem(str(r.get("max_act_ms", ""))))
+            for c_idx, col_name in enumerate(self._timing_columns):
+                val = r.get(col_name, "")
+                self.table_timing.setItem(r_idx, c_idx, QTableWidgetItem(str(val)))
 
     def _populate_provenance(self, snap: RunArtifactSnapshotV1) -> None:
         lines = [
-            f"=== EXPERIMENT PROVENANCE (run_manifest.json) ===",
-            f"Run ID:                 {snap.run_id}",
-            f"Run Directory:          {snap.run_dir}",
-            f"Run Kind:               {snap.run_kind}",
-            f"Canonical Run:          {snap.canonical_run}",
-            f"Agent ID:               {snap.agent_id}",
-            f"Agent Version:          {snap.agent_version}",
-            f"Git Commit SHA:         {snap.git_commit_sha}",
-            f"Git Worktree Dirty:     {snap.git_worktree_dirty}",
+            f"=== EXPERIMENT PROVENANCE (run_manifest.json & run_state.json) ===",
+            f"Run ID:                          {snap.run_id}",
+            f"Run Directory:                   {snap.run_dir}",
+            f"Run Kind:                        {snap.run_kind}",
+            f"Canonical Run:                   {snap.canonical_run}",
+            f"Dirty Worktree Override:         {snap.dirty_override}",
+            f"Unverified Environment Override: {snap.unverified_env_override}",
+            f"Environment Verification Status: {snap.environment_verification_status}",
             "",
-            f"--- Artifact Presence ---",
+            f"--- Agent Specification ---",
+            f"Agent ID:                        {snap.agent_id}",
+            f"Agent Version:                   {snap.agent_version}",
+            f"Input Profile ID:                {snap.input_profile_id}",
+            f"Action Adapter ID:               {snap.action_adapter_id}",
+            f"Inference Stochasticity:         {snap.inference_stochasticity}",
+            f"Stateful in Episode:             {snap.stateful_within_episode}",
+            f"Agent Seed:                      {snap.agent_seed}",
+            f"Manifest Name:                   {snap.manifest_name}",
+            f"Experiment Config SHA-256:       {snap.experiment_config_sha256}",
+            "",
+            f"--- Provenance ---",
+            f"Git Commit SHA:                  {snap.git_commit_sha}",
+            f"Git Worktree Dirty:              {snap.git_worktree_dirty}",
+            f"MetaDrive Version:               {snap.metadrive_version}",
+            f"MetaDrive Commit:                {snap.metadrive_commit}",
+            "",
+            f"--- Platform Contract Hashes ---",
         ]
+        for ck, cv in snap.platform_contracts.items():
+            lines.append(f"  {ck}: {cv}")
+
+        lines.append("")
+        lines.append("--- Local Artifact Presence ---")
         for art in snap.artifacts_present:
             lines.append(f"  * {art}")
 
@@ -518,6 +595,8 @@ class ResultsWidget(QWidget):
             self.lbl_integrity_verdict.setStyleSheet("color: darkgreen; font-weight: bold; padding: 4px;")
         elif snap.integrity_status == IntegrityDisplayStatus.FAILED:
             self.lbl_integrity_verdict.setStyleSheet("color: darkred; font-weight: bold; padding: 4px;")
+        elif snap.integrity_status == IntegrityDisplayStatus.NOT_FINAL:
+            self.lbl_integrity_verdict.setStyleSheet("color: #b8860b; font-weight: bold; padding: 4px;")
         else:
             self.lbl_integrity_verdict.setStyleSheet("color: gray; font-weight: bold; padding: 4px;")
 
@@ -529,6 +608,8 @@ class ResultsWidget(QWidget):
             if c.status == "PASS":
                 item_status.setForeground(Qt.GlobalColor.darkGreen)
             elif c.status == "FAIL":
+                item_status.setForeground(Qt.GlobalColor.darkRed)
+            elif c.status == "MISSING":
                 item_status.setForeground(Qt.GlobalColor.darkRed)
             self.table_integrity.setItem(row, 1, item_status)
             self.table_integrity.setItem(row, 2, QTableWidgetItem(str(c.expected_sha256 or "—")))

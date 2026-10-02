@@ -4,6 +4,10 @@
   "lifecycle_status": "COMPLETE",
   "integrity_status": "VERIFIED",
   "recorded_episodes": 1,
+  "schema_parity_verified": true,
+  "manifest_agent_id": "fixture_constant_continuous",
+  "state_canonical_run": false,
+  "git_commit_sha_present": true,
   "artifacts_present": [
     "episodes.csv",
     "run_integrity.json",

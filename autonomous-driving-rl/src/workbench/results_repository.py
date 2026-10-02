@@ -2,7 +2,9 @@
 Workbench Results Repository and Read-Only Artifact Access Layer (Gate 7.5B Pass B2).
 
 This module provides the read-only inspection and integrity verification layer for Gate-7
-experiment runs. It never mutates, appends, repairs, or recalculates official metrics.
+experiment runs. It strictly consumes authoritative Gate-7 schemas (RunManifestV1, RunStateV1,
+ExperimentRunConfig, RunIntegrityRecord) and never mutates, appends, repairs, or recalculates
+official metrics.
 """
 
 import csv
@@ -56,8 +58,21 @@ class RunArtifactSnapshotV1:
     expected_episode_count: Optional[int]
     agent_id: Optional[str]
     agent_version: Optional[str]
+    input_profile_id: Optional[str]
+    action_adapter_id: Optional[str]
+    inference_stochasticity: Optional[str]
+    stateful_within_episode: Optional[bool]
+    agent_seed: Optional[int]
+    manifest_name: Optional[str]
+    experiment_config_sha256: Optional[str]
     git_commit_sha: Optional[str]
     git_worktree_dirty: Optional[bool]
+    dirty_override: bool
+    unverified_env_override: bool
+    environment_verification_status: str
+    metadrive_version: Optional[str]
+    metadrive_commit: Optional[str]
+    platform_contracts: Dict[str, str]
     integrity_status: IntegrityDisplayStatus
     integrity_details: List[ArtifactIntegrityCheckResult]
     artifacts_present: List[str]
@@ -67,7 +82,7 @@ class RunArtifactSnapshotV1:
     wandb_sync_payload: Optional[Dict[str, Any]]
     technical_failures_payload: Optional[List[Dict[str, Any]]]
     failure_category: Optional[str] = None
-    failure_message: Optional[str] = None
+    sanitized_failure_message: Optional[str] = None
 
 
 class RunArtifactRepository:
@@ -101,7 +116,7 @@ class RunArtifactRepository:
         candidates = []
         for entry in self._runs_root.iterdir():
             if entry.is_dir():
-                # A valid candidate run directory must at least have run_state.json or run_manifest.json
+                # A candidate run directory must have run_state.json or run_manifest.json
                 if (entry / "run_state.json").exists() or (entry / "run_manifest.json").exists():
                     candidates.append(entry.name)
 
@@ -110,62 +125,94 @@ class RunArtifactRepository:
     def load_run_snapshot(self, run_id: str) -> Optional[RunArtifactSnapshotV1]:
         """
         Loads a single run directory into a RunArtifactSnapshotV1 view model.
-        Returns None if directory does not exist or is not a valid run folder.
+        Returns None if directory does not exist, escapes runs_root, or is malformed.
         """
-        run_dir = (self._runs_root / run_id).resolve()
-        if not run_dir.exists() or not run_dir.is_dir():
+        # Strict path containment check (Specification Section 8)
+        try:
+            target_path = (self._runs_root / run_id).resolve()
+            target_path.relative_to(self._runs_root)
+            if target_path.parent != self._runs_root:
+                return None
+        except Exception:
             return None
 
-        # 1. Inspect run_state.json (lifecycle authority)
+        if not target_path.exists() or not target_path.is_dir():
+            return None
+
+        run_dir = target_path
+
+        # Both run_state.json and run_manifest.json are required for a valid Gate-7 run snapshot
         run_state_path = run_dir / "run_state.json"
-        state_data: Dict[str, Any] = {}
-        if run_state_path.exists():
-            try:
-                with open(run_state_path, "r", encoding="utf-8") as f:
-                    state_data = json.load(f)
-            except Exception:
-                state_data = {}
-
-        # 2. Inspect run_manifest.json (configuration authority)
         manifest_path = run_dir / "run_manifest.json"
-        manifest_data: Dict[str, Any] = {}
-        if manifest_path.exists():
-            try:
-                with open(manifest_path, "r", encoding="utf-8") as f:
-                    manifest_data = json.load(f)
-            except Exception:
-                manifest_data = {}
 
-        # If neither run_state nor run_manifest could be parsed, not a valid run
-        if not state_data and not manifest_data:
+        if not run_state_path.exists() or not manifest_path.exists():
             return None
 
-        actual_run_id = state_data.get("run_id") or manifest_data.get("run_id") or run_id
+        # 1. Parse run_state.json (lifecycle authority)
+        try:
+            with open(run_state_path, "r", encoding="utf-8") as f:
+                state_data = json.load(f)
+            if not isinstance(state_data, dict):
+                return None
+        except Exception:
+            return None
+
+        # 2. Parse run_manifest.json (configuration authority)
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                manifest_data = json.load(f)
+            if not isinstance(manifest_data, dict):
+                return None
+        except Exception:
+            return None
+
+        # 3. Strict Run Identity Parity (Specification Section 6)
+        # Directory basename == run_state.json["run_id"] == run_manifest.json["run_id"]
+        dir_basename = run_dir.name
+        state_run_id = state_data.get("run_id")
+        manifest_run_id = manifest_data.get("run_id")
+
+        if not (dir_basename == state_run_id == manifest_run_id):
+            return None
+
+        actual_run_id = dir_basename
         status_str = state_data.get("status", "UNKNOWN")
         run_kind_str = manifest_data.get("run_kind", "UNKNOWN")
-        canonical_run = bool(manifest_data.get("canonical_run", False))
-        started_at = state_data.get("started_at_utc") or manifest_data.get("started_at_utc")
+        canonical_run = bool(state_data.get("canonical_run", False))
+        started_at = state_data.get("started_at_utc")
         finished_at = state_data.get("finished_at_utc")
         recorded_eps = int(state_data.get("recorded_episode_count", 0))
+        expected_eps = state_data.get("expected_episode_count")
+        dirty_override = bool(state_data.get("dirty_override", False))
+        unverified_env_override = bool(state_data.get("unverified_env_override", False))
+        env_verif_status = state_data.get("environment_verification_status", "UNKNOWN")
+        failure_category = state_data.get("failure_category")
+        sanitized_failure_message = state_data.get("sanitized_failure_message")
 
+        # Parse config fields from run_manifest.json["config"]
         config_data = manifest_data.get("config", {})
-        expected_eps = config_data.get("expected_episode_count")
-        if expected_eps is not None:
-            expected_eps = int(expected_eps)
+        agent_id = config_data.get("agent_id")
+        agent_version = config_data.get("agent_version")
+        input_profile_id = config_data.get("input_profile_id")
+        action_adapter_id = config_data.get("action_adapter_id")
+        inference_stoch = config_data.get("inference_stochasticity")
+        stateful_in_ep = config_data.get("stateful_within_episode")
+        agent_seed = config_data.get("agent_seed")
+        manifest_name = config_data.get("manifest_name")
+        cfg_sha = manifest_data.get("experiment_config_sha256") or config_data.get("experiment_config_sha256")
 
-        agent_desc = config_data.get("agent_descriptor", {})
-        agent_id = agent_desc.get("agent_id")
-        agent_version = agent_desc.get("agent_version")
-
-        prov_data = manifest_data.get("provenance", {})
-        git_prov = prov_data.get("git", {})
+        # Parse git and environment provenance
+        git_prov = manifest_data.get("git_provenance", {})
         git_commit = git_prov.get("git_commit_sha")
         git_dirty = git_prov.get("git_worktree_dirty")
 
-        failure_category = state_data.get("failure_category")
-        failure_message = state_data.get("failure_message")
+        env_prov = manifest_data.get("environment_provenance", {})
+        md_ver = env_prov.get("metadrive_version")
+        md_commit = env_prov.get("metadrive_commit")
 
-        # 3. Read summary.json if present
+        platform_contracts = manifest_data.get("platform_contracts", {})
+
+        # 4. Read summary.json if present
         summary_path = run_dir / "summary.json"
         summary_payload = None
         if summary_path.exists():
@@ -175,7 +222,7 @@ class RunArtifactRepository:
             except Exception:
                 summary_payload = None
 
-        # 4. Read episodes.csv rows if present
+        # 5. Read episodes.csv rows if present
         episodes_path = run_dir / "episodes.csv"
         episode_rows = []
         if episodes_path.exists():
@@ -186,7 +233,7 @@ class RunArtifactRepository:
             except Exception:
                 episode_rows = []
 
-        # 5. Read timing.csv rows if present
+        # 6. Read timing.csv rows if present
         timing_path = run_dir / "timing.csv"
         timing_rows = []
         if timing_path.exists():
@@ -197,7 +244,7 @@ class RunArtifactRepository:
             except Exception:
                 timing_rows = []
 
-        # 6. Read wandb_sync.json if present
+        # 7. Read wandb_sync.json if present
         wandb_path = run_dir / "wandb_sync.json"
         wandb_payload = None
         if wandb_path.exists():
@@ -207,7 +254,7 @@ class RunArtifactRepository:
             except Exception:
                 wandb_payload = None
 
-        # 7. Read technical_failures.jsonl if present
+        # 8. Read technical_failures.jsonl if present
         tf_path = run_dir / "technical_failures.jsonl"
         tf_payload = None
         if tf_path.exists():
@@ -224,7 +271,7 @@ class RunArtifactRepository:
         # Determine artifacts present
         artifacts_present = [f.name for f in run_dir.iterdir() if f.is_file()]
 
-        # 8. Evaluate Integrity
+        # 9. Evaluate Integrity
         integrity_status, integrity_checks = self._evaluate_integrity(
             run_dir=run_dir,
             run_id=actual_run_id,
@@ -244,8 +291,21 @@ class RunArtifactRepository:
             expected_episode_count=expected_eps,
             agent_id=agent_id,
             agent_version=agent_version,
+            input_profile_id=input_profile_id,
+            action_adapter_id=action_adapter_id,
+            inference_stochasticity=inference_stoch,
+            stateful_within_episode=stateful_in_ep,
+            agent_seed=agent_seed,
+            manifest_name=manifest_name,
+            experiment_config_sha256=cfg_sha,
             git_commit_sha=git_commit,
             git_worktree_dirty=git_dirty,
+            dirty_override=dirty_override,
+            unverified_env_override=unverified_env_override,
+            environment_verification_status=env_verif_status,
+            metadrive_version=md_ver,
+            metadrive_commit=md_commit,
+            platform_contracts=platform_contracts,
             integrity_status=integrity_status,
             integrity_details=integrity_checks,
             artifacts_present=artifacts_present,
@@ -255,7 +315,7 @@ class RunArtifactRepository:
             wandb_sync_payload=wandb_payload,
             technical_failures_payload=tf_payload,
             failure_category=failure_category,
-            failure_message=failure_message,
+            sanitized_failure_message=sanitized_failure_message,
         )
 
     def _evaluate_integrity(
@@ -266,7 +326,7 @@ class RunArtifactRepository:
         manifest_data: Dict[str, Any],
     ) -> Tuple[IntegrityDisplayStatus, List[ArtifactIntegrityCheckResult]]:
         """
-        Evaluates run integrity against run_integrity.json.
+        Evaluates run integrity against run_integrity.json using Gate-7 canonical semantic hash helpers.
         Never rewrites or repairs mismatching hashes.
         """
         checks: List[ArtifactIntegrityCheckResult] = []
@@ -282,6 +342,8 @@ class RunArtifactRepository:
         try:
             with open(integrity_path, "r", encoding="utf-8") as f:
                 stored = json.load(f)
+            if not isinstance(stored, dict):
+                return IntegrityDisplayStatus.FAILED, checks
         except Exception:
             return IntegrityDisplayStatus.FAILED, [
                 ArtifactIntegrityCheckResult(
@@ -292,19 +354,20 @@ class RunArtifactRepository:
                 )
             ]
 
-        # Verify run_id parity
-        if stored.get("run_id") != run_id:
-            checks.append(ArtifactIntegrityCheckResult(
-                artifact_name="run_id",
-                expected_sha256=stored.get("run_id"),
-                observed_sha256=run_id,
-                status="FAIL",
-            ))
+        # Verify run_id parity inside run_integrity.json
+        stored_run_id = stored.get("run_id")
+        run_id_match = (stored_run_id == run_id)
+        checks.append(ArtifactIntegrityCheckResult(
+            artifact_name="run_id",
+            expected_sha256=stored_run_id,
+            observed_sha256=run_id,
+            status="PASS" if run_id_match else "FAIL",
+        ))
 
         # Check experiment_config_sha256 parity against run manifest
         expected_cfg_hash = stored.get("experiment_config_sha256")
         cfg_dict = manifest_data.get("config", {})
-        observed_cfg_hash = cfg_dict.get("experiment_config_sha256")
+        observed_cfg_hash = cfg_dict.get("experiment_config_sha256") or manifest_data.get("experiment_config_sha256")
         cfg_status = "PASS" if (expected_cfg_hash and expected_cfg_hash == observed_cfg_hash) else "FAIL"
         checks.append(ArtifactIntegrityCheckResult(
             artifact_name="experiment_config",
@@ -313,7 +376,7 @@ class RunArtifactRepository:
             status=cfg_status,
         ))
 
-        # Check target artifacts
+        # Check target artifacts via Gate-7 canonical semantic hash helpers
         target_files = [
             ("run_manifest.json", "run_manifest_sha256", "json"),
             ("episodes.csv", "episodes_sha256", "csv"),
