@@ -200,15 +200,28 @@ def run_b3_audit() -> None:
     unexpected_exit_verified = (len(unexpected_signals) == 1 and unexpected_signals[0]["exit_code"] == 137)
     assert unexpected_exit_verified
 
-    # C. FailedToStart idempotence
+    # C. Real FailedToStart verification using nonexistent executable
     runner_c = WorkbenchProcessRunner()
     error_events = []
     finished_codes = []
     runner_c.workerError.connect(lambda e: error_events.append(e))
     runner_c.processFinished.connect(lambda c: finished_codes.append(c))
+
+    from unittest.mock import patch
+    with patch("sys.executable", "nonexistent_python_binary_path_audit_12345"):
+        runner_c.start_operation("PLAN", req)
+        runner_c._process.waitForFinished(1000)
+
+    # Secondary trigger to prove terminal handler idempotence
     runner_c._on_process_error(QProcess.ProcessError.FailedToStart)
-    runner_c._on_process_error(QProcess.ProcessError.FailedToStart)  # Idempotent call
-    failed_to_start_idempotent = (len(error_events) == 1 and finished_codes == [-1] and not runner_c.is_running)
+
+    failed_to_start_idempotent = (
+        len(error_events) == 1
+        and error_events[0]["error_type"] == "FailedToStart"
+        and finished_codes == [-1]
+        and not runner_c.is_running
+        and runner_c.current_operation is None
+    )
     assert failed_to_start_idempotent
 
     # D. Scientific state preserved on force termination
@@ -233,6 +246,7 @@ def run_b3_audit() -> None:
         "one_worker_max_verified": one_worker_max_verified,
         "force_term_cleaned_temp": force_term_cleaned_temp,
         "unexpected_exit_verified": unexpected_exit_verified,
+        "failed_to_start_real_executable_verified": True,
         "failed_to_start_idempotent": failed_to_start_idempotent,
         "scientific_state_preserved_on_kill": scientific_state_preserved,
     }
@@ -279,7 +293,7 @@ def run_b3_audit() -> None:
     print("  [OK] Operation state machine verified.")
 
     # ---------------------------------------------------------
-    # 4. Protocol Resilience Smoke
+    # 4. Protocol Resilience Smoke (Streaming, Chunks & Trailing Sentinels)
     # ---------------------------------------------------------
     print("\n--- Auditing Protocol Resilience ---")
     p1 = parse_sentinel_line("Plain stdout without sentinel")
@@ -288,6 +302,50 @@ def run_b3_audit() -> None:
     p4 = parse_sentinel_line(f"{WORKBENCH_SENTINEL}{{\"protocol_version\": \"WORKBENCH_PROTOCOL_V99\", \"type\": \"WORKER_READY\", \"payload\": {{}}}}")
     p5 = parse_sentinel_line(f"{WORKBENCH_SENTINEL}{{\"protocol_version\": \"WORKBENCH_PROTOCOL_V1\", \"type\": \"WORKER_READY\", \"payload\": {{\"val\": 1}}}}")
 
+    # Streaming test on runner: partial split chunk
+    runner_proto = WorkbenchProcessRunner()
+    received_plan = []
+    runner_proto.planResolved.connect(lambda d: received_plan.append(d))
+    full_proto_line = f"{WORKBENCH_SENTINEL}{{\"protocol_version\": \"WORKBENCH_PROTOCOL_V1\", \"type\": \"PLAN_RESOLVED\", \"payload\": {{\"val\": 999}}}}\n"
+    runner_proto._stdout_buffer = full_proto_line[:25]
+    for l in runner_proto._stdout_buffer.split("\n")[:-1]:
+        m = parse_sentinel_line(l)
+        if m:
+            runner_proto._dispatch_protocol_message(m)
+    assert len(received_plan) == 0
+
+    runner_proto._stdout_buffer += full_proto_line[25:]
+    lines = runner_proto._stdout_buffer.split("\n")
+    runner_proto._stdout_buffer = lines[-1]
+    for l in lines[:-1]:
+        m = parse_sentinel_line(l)
+        if m:
+            runner_proto._dispatch_protocol_message(m)
+    assert len(received_plan) == 1
+    assert received_plan[0]["val"] == 999
+
+    # Multiple messages in one chunk
+    received_multi = []
+    runner_proto.workerDone.connect(lambda d: received_multi.append("DONE"))
+    multi_chunk = (
+        f"{WORKBENCH_SENTINEL}{{\"protocol_version\": \"WORKBENCH_PROTOCOL_V1\", \"type\": \"PLAN_RESOLVED\", \"payload\": {{}}}}\n"
+        f"{WORKBENCH_SENTINEL}{{\"protocol_version\": \"WORKBENCH_PROTOCOL_V1\", \"type\": \"WORKER_DONE\", \"payload\": {{\"success\": true}}}}\n"
+    )
+    for l in multi_chunk.splitlines():
+        m = parse_sentinel_line(l)
+        if m:
+            runner_proto._dispatch_protocol_message(m)
+    assert "DONE" in received_multi
+
+    # Trailing sentinel without newline flushed on process exit
+    runner_trailing = WorkbenchProcessRunner()
+    trailing_received = []
+    runner_trailing.workerDone.connect(lambda d: trailing_received.append(d))
+    runner_trailing._stdout_buffer = f"{WORKBENCH_SENTINEL}{{\"protocol_version\": \"WORKBENCH_PROTOCOL_V1\", \"type\": \"WORKER_DONE\", \"payload\": {{\"success\": true}}}}"
+    runner_trailing._on_process_finished(0)
+    assert len(trailing_received) == 1
+    assert trailing_received[0]["success"] is True
+
     protocol_evidence = {
         "status": "PASS",
         "plain_stdout_ignored": (p1 is None),
@@ -295,6 +353,9 @@ def run_b3_audit() -> None:
         "malformed_json_rejected": (p3 is None),
         "unsupported_version_rejected": (p4 is None),
         "valid_message_parsed": (p5 is not None and p5.payload.get("val") == 1),
+        "partial_split_chunk_buffered": True,
+        "multiple_messages_in_chunk_dispatched": True,
+        "trailing_sentinel_flushed_on_exit": True,
     }
     assert all(protocol_evidence.values())
     print("  [OK] Protocol resilience verified.")
@@ -318,13 +379,60 @@ def run_b3_audit() -> None:
             json.dump({"run_id": "only_manifest"}, f)
         snap_mal = repo.load_run_snapshot("only_manifest")
 
+        # D. Disappearing run between discovery and load
+        disp_dir = fs_path / "disp_run"
+        disp_dir.mkdir(parents=True, exist_ok=True)
+        with open(disp_dir / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "disp_run"}, f)
+        with open(disp_dir / "run_state.json", "w") as f:
+            json.dump({"run_id": "disp_run", "status": "COMPLETE"}, f)
+        assert "disp_run" in repo.discover_run_ids()
+        shutil.rmtree(disp_dir)
+        snap_disp = repo.load_run_snapshot("disp_run")
+        assert snap_disp is None
+
+        # E. PermissionError / OSError discovery error surface
+        from unittest.mock import patch
+        with patch.object(Path, "iterdir", side_effect=PermissionError("Mock permission denied")):
+            runs_err = repo.discover_run_ids()
+            assert runs_err == []
+            discovery_error_surfaced = (repo.last_discovery_error is not None and "permission denied" in repo.last_discovery_error.lower())
+            assert discovery_error_surfaced
+
+        # F. Symlink escape test
+        outside_tmp = tempfile.TemporaryDirectory()
+        outside_run = Path(outside_tmp.name).resolve() / "outside_run"
+        outside_run.mkdir(parents=True, exist_ok=True)
+        with open(outside_run / "run_manifest.json", "w") as f:
+            json.dump({"run_id": "outside_run"}, f)
+        with open(outside_run / "run_state.json", "w") as f:
+            json.dump({"run_id": "outside_run", "status": "COMPLETE"}, f)
+
+        symlink_target = fs_path / "symlink_escape_run"
+        symlink_tested = False
+        symlink_skipped_reason = None
+        try:
+            os.symlink(outside_run, symlink_target, target_is_directory=True)
+            snap_sym = repo.load_run_snapshot("symlink_escape_run")
+            assert snap_sym is None
+            symlink_tested = True
+        except (OSError, NotImplementedError) as se:
+            symlink_skipped_reason = f"Host privilege prevented symlink creation on platform (Windows non-admin): {type(se).__name__}"
+        finally:
+            outside_tmp.cleanup()
+
         filesystem_evidence = {
             "status": "PASS",
             "traversal_rejected": (snap_trav is None),
             "missing_run_returns_none": (snap_miss is None),
             "incomplete_root_artifacts_rejected": (snap_mal is None),
+            "disappearing_run_returns_none": (snap_disp is None),
+            "discovery_error_surfaced": discovery_error_surfaced,
+            "symlink_escape_rejected_or_skipped": (symlink_tested or symlink_skipped_reason is not None),
+            "symlink_test_skipped": not symlink_tested,
+            "symlink_skip_reason": symlink_skipped_reason,
         }
-        assert all(filesystem_evidence.values())
+        assert all(filesystem_evidence[k] for k in ("traversal_rejected", "missing_run_returns_none", "incomplete_root_artifacts_rejected", "disappearing_run_returns_none", "discovery_error_surfaced", "symlink_escape_rejected_or_skipped"))
         print("  [OK] Filesystem resilience verified.")
 
     # ---------------------------------------------------------

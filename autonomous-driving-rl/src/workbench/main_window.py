@@ -250,9 +250,21 @@ class MainWindow(QMainWindow):
                 QMessageBox.StandardButton.Cancel,
             )
             if reply == QMessageBox.StandardButton.Discard:
-                # Bounded force termination on close
-                self._runner.force_terminate_and_wait(timeout_ms=2000)
-                event.accept()
+                # Bounded force termination on close (Specification Correction 2)
+                terminated = self._runner.force_terminate_and_wait(timeout_ms=2000)
+                if terminated:
+                    event.accept()
+                else:
+                    # Bounded termination failed: surface diagnostic, do not silently close while worker may still be alive
+                    self.status_bar.showMessage("Error: Bounded termination timed out. Worker process could not be confirmed stopped.")
+                    QMessageBox.critical(
+                        self,
+                        "Termination Timeout",
+                        "Failed to terminate worker process within the 2000ms timeout.\n"
+                        "To prevent orphaned simulation processes or corrupted state, window close was aborted.\n"
+                        "Please retry FORCE TERMINATE or inspect system processes.",
+                    )
+                    event.ignore()
             else:
                 event.ignore()
         else:

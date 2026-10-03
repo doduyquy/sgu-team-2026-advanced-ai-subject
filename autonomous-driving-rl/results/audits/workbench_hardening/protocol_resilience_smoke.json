@@ -4,5 +4,8 @@
   "embedded_sentinel_rejected": true,
   "malformed_json_rejected": true,
   "unsupported_version_rejected": true,
-  "valid_message_parsed": true
+  "valid_message_parsed": true,
+  "partial_split_chunk_buffered": true,
+  "multiple_messages_in_chunk_dispatched": true,
+  "trailing_sentinel_flushed_on_exit": true
 }

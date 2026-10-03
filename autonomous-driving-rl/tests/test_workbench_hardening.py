@@ -305,7 +305,29 @@ class TestWorkbenchHardeningSuite(unittest.TestCase):
         window.close()
 
     def test_17_close_running_worker_confirm_force_terminates(self):
-        """Closing window during active worker and confirming Discard terminates worker and accepts close."""
+        """Closing window during active worker and confirming Discard terminates worker boundedly, cleans temp files, and accepts close."""
+        from unittest.mock import patch
+        from PySide6.QtGui import QCloseEvent
+        window = MainWindow()
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", render_mode="OFF")
+        with patch.object(QProcess, "start"):
+            with patch.object(QProcess, "waitForFinished", return_value=True):
+                window._runner.start_operation("PLAN", req)
+                temp_file = window._runner._temp_request_file
+                self.assertTrue(temp_file.exists())
+                self.assertTrue(window._runner.is_running)
+
+                event = QCloseEvent()
+                with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Discard):
+                    window.closeEvent(event)
+                    # Verified: bounded termination executed, close accepted, temp file cleaned, runner stopped
+                    self.assertTrue(event.isAccepted())
+                    self.assertFalse(window._runner.is_running)
+                    self.assertFalse(temp_file.exists())
+        window.close()
+
+    def test_17b_close_running_worker_timeout_failure_aborts_close(self):
+        """If bounded termination fails/times out, window close is ignored and diagnostic is surfaced."""
         from unittest.mock import patch
         from PySide6.QtGui import QCloseEvent
         window = MainWindow()
@@ -313,10 +335,14 @@ class TestWorkbenchHardeningSuite(unittest.TestCase):
 
         event = QCloseEvent()
         with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Discard):
-            with patch.object(window._runner, "force_terminate_and_wait") as mock_ft_wait:
-                window.closeEvent(event)
-                self.assertTrue(event.isAccepted())
-                mock_ft_wait.assert_called_once_with(timeout_ms=2000)
+            with patch.object(window._runner, "force_terminate_and_wait", return_value=False) as mock_ft_wait:
+                with patch.object(QMessageBox, "critical") as mock_crit:
+                    window.closeEvent(event)
+                    # Verified: close was aborted because worker could not be confirmed stopped
+                    self.assertFalse(event.isAccepted())
+                    mock_ft_wait.assert_called_once_with(timeout_ms=2000)
+                    mock_crit.assert_called_once()
+                    self.assertIn("Error: Bounded termination timed out", window.status_bar.currentMessage())
         window._runner._is_running = False
         window.close()
 

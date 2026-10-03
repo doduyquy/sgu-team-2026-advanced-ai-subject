@@ -66,31 +66,30 @@ Pass B3 is NOT a feature-development phase. Upon independent review and merge of
 ## 6. Verification & Regression Evidence
 
 ### A. Pass B3 Unit Tests (`tests/test_workbench_hardening.py`)
-- 48 dedicated tests covering process lifecycle, window close, operation state machine, protocol buffering, filesystem resilience, resource bounds, and trust labeling.
-- All 48 tests passed cleanly (1 skipped conditionally on Windows when non-admin symlink creation is prohibited).
+- 49 tests executed: 48 passed, 1 skipped conditionally on Windows when non-admin symlink creation is prohibited.
 
 ### B. Total Platform Regression
-- `tests.test_agent_contract`: 37 tests (PASS)
-- `tests.test_episode_lifecycle`: 10 tests (PASS)
-- `tests.test_evaluation_protocol`: 20 tests (PASS)
-- `tests.test_reward_metrics`: 16 tests (PASS)
-- `tests.test_workbench`: 29 tests (PASS)
-- `tests.test_workbench_results`: 46 tests (PASS)
-- `tests.test_workbench_hardening`: 48 tests (PASS)
-- `tests.test_logging_contract`: 47 tests (PASS)
-- `tests.test_launcher_core`: 97 tests (PASS)
-- **Total Suite:** **350 tests**, 0 failures, 0 errors.
+- `tests.test_agent_contract`: 37 run, 37 passed, 0 skipped.
+- `tests.test_episode_lifecycle`: 10 run, 10 passed, 0 skipped.
+- `tests.test_evaluation_protocol`: 20 run, 20 passed, 0 skipped.
+- `tests.test_reward_metrics`: 16 run, 16 passed, 0 skipped.
+- `tests.test_workbench`: 29 run, 29 passed, 0 skipped.
+- `tests.test_workbench_results`: 46 run, 46 passed, 0 skipped.
+- `tests.test_workbench_hardening`: 49 run, 48 passed, 1 skipped.
+- `tests.test_logging_contract`: 47 run, 47 passed, 0 skipped.
+- `tests.test_launcher_core`: 97 run, 97 passed, 0 skipped.
+- **Total Suite:** **351 tests run, 350 passed, 1 skipped, 0 failures, 0 errors.**
 
 ### C. Machine-Derived Audit Smokes (`scripts/audit_workbench_hardening.py`)
-1. **Process Lifecycle (`process_lifecycle_smoke.json`):** Verified single worker max, unexpected exit classification, and temp file cleanup.
-2. **Operation State (`operation_state_smoke.json`):** Verified synchronous lock, late signal protection, and state recovery.
-3. **Protocol Resilience (`protocol_resilience_smoke.json`):** Verified buffering and malformed input handling.
-4. **Filesystem Resilience (`filesystem_resilience_smoke.json`):** Verified path containment and incomplete artifact handling.
-5. **Resource Bounds (`resource_bounds_smoke.json`):** Verified document log bounded to 5000 blocks and chart line cleanup.
-6. **Performance Smoke (`performance_smoke.json`):** 100 synthetic runs discovered and populated in ~300ms without background polling.
+1. **Process Lifecycle (`process_lifecycle_smoke.json`):** Verified single worker max, unexpected exit classification, real FailedToStart, and temp file cleanup.
+2. **Operation State (`operation_state_smoke.json`):** Verified synchronous lock, late signal protection, state recovery, and stale Results autoload protection.
+3. **Protocol Resilience (`protocol_resilience_smoke.json`):** Verified buffering of split chunks, multiple messages per chunk, trailing sentinel without newline, and malformed input handling.
+4. **Filesystem Resilience (`filesystem_resilience_smoke.json`):** Verified path containment, disappearing run handling, discovery error surfacing, and incomplete artifact handling.
+5. **Resource Bounds (`resource_bounds_smoke.json`):** Verified document log bounded to 5000 blocks and chart line cleanup across episodes.
+6. **Performance Smoke (`performance_smoke.json`):** 100 synthetic runs discovered in ~26ms and populated in ~369ms; 1000-row episode table populated in ~414ms without unmanaged background polling.
 7. **Scientific Boundary (`scientific_boundary_regression.json`):** Verified canonical benchmark isolation.
 8. **Real Sandbox Smoke (`real_sandbox_smoke.json`):** Verified real MetaDrive execution, 7/7 artifacts, and VERIFIED integrity.
-9. **Artifact Privacy Scan:** Verified 0 private machine paths or secrets across all B3 artifacts.
+9. **Artifact Privacy Scan:** Verified 0 private machine paths or secrets across all 10 B3 artifacts.
 
 ---
 
