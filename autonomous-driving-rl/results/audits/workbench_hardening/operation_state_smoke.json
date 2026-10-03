@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "sync_lock_verified": true,
+  "late_signal_protected": true,
+  "controls_recovered": true,
+  "stale_results_autoload_protected": true
+}

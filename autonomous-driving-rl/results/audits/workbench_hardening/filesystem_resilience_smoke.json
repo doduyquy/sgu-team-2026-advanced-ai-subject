@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "traversal_rejected": true,
+  "missing_run_returns_none": true,
+  "incomplete_root_artifacts_rejected": true,
+  "disappearing_run_returns_none": true,
+  "discovery_error_surfaced": true,
+  "symlink_escape_rejected_or_skipped": true,
+  "symlink_test_skipped": true,
+  "symlink_skip_reason": "Host privilege prevented symlink creation on platform (Windows non-admin): OSError"
+}
