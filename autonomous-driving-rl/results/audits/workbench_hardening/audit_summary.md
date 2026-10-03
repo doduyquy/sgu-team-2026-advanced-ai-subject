@@ -24,10 +24,10 @@
 
 ## Empirical Evidence Classification
 1. **Real Simulator Evidence (`real_sandbox_smoke.json`):** Real MetaDrive simulator-backed SANDBOX execution verified; persisted 7/7 Gate-7 files; integrity status VERIFIED.
-2. **Synthetic Process Lifecycle Evidence (`process_lifecycle_smoke.json`):** Maximum one active worker; unexpected worker exit handling; temp file cleanup on all terminal outcomes; non-graceful FORCE TERMINATE verified without fabricating state.
-3. **Operation State Machine (`operation_state_smoke.json`):** Synchronous UI lock prevents overlapping operations; late preflight signals rejected; controls recover deterministically.
+2. **Synthetic Process Lifecycle Evidence (`process_lifecycle_smoke.json`):** Maximum one active worker; unexpected worker exit handling verified; FailedToStart idempotence verified; temp file cleanup on all terminal outcomes; non-graceful FORCE TERMINATE verified with disk state strictly preserved.
+3. **Operation State Machine (`operation_state_smoke.json`):** Synchronous UI lock prevents overlapping operations; late preflight signals rejected; controls recover deterministically; stale Results autoload prevented.
 4. **Protocol Resilience (`protocol_resilience_smoke.json`):** Non-protocol lines safely ignored; malformed sentinel and unsupported protocol versions rejected.
 5. **Filesystem Resilience (`filesystem_resilience_smoke.json`):** Directory traversal, missing roots, and incomplete root artifacts rejected as malformed without application crash.
 6. **GUI Resource Bounds (`resource_bounds_smoke.json`):** Live telemetry log bounded to 5000 blocks; chart lines reset cleanly per episode.
-7. **Informational Performance Measurements (`performance_smoke.json`):** 100 synthetic run directories discovered and populated without unmanaged background polling.
+7. **Informational Performance Measurements (`performance_smoke.json`):** 100 synthetic run directories discovered and populated in ~300ms; 1000-row episode table populated in ~200ms without unmanaged background polling.
 8. **Scientific Boundary Regression (`scientific_boundary_regression.json`):** Fixtures remain benchmark-ineligible; TEST evaluations strictly blocked by preflight without simulation.
