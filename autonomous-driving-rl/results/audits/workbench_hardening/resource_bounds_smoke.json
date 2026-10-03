@@ -3,5 +3,7 @@
   "max_event_log_blocks_configured": 5000,
   "observed_blocks_after_5100_lines": 5000,
   "newest_lines_preserved": true,
+  "route_lines_during_episode_0": 1,
+  "route_lines_after_episode_1_start": 0,
   "chart_lines_reset_on_episode": true
 }

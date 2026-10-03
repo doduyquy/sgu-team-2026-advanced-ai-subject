@@ -1,11 +1,13 @@
 {
   "status": "PASS",
   "synthetic_run_count": 100,
-  "discovery_elapsed_ms": 35.65,
-  "list_population_elapsed_ms": 371.35,
+  "discovery_elapsed_ms": 30.87,
+  "list_population_elapsed_ms": 439.9,
   "episode_row_count": 1000,
+  "rendered_episode_row_count": 1000,
   "episode_column_count": 31,
-  "episode_population_elapsed_ms": 290.74,
+  "episode_population_elapsed_ms": 329.36,
   "episodes_table_read_only": true,
+  "timing_classification": "INFORMATIONAL_NON_GATING",
   "verdict": "COMPLETED_WITHOUT_EXCEPTION"
 }

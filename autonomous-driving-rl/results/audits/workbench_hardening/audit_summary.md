@@ -24,10 +24,10 @@
 
 ## Empirical Evidence Classification
 1. **Real Simulator Evidence (`real_sandbox_smoke.json`):** Real MetaDrive simulator-backed SANDBOX execution verified; persisted 7/7 Gate-7 files; integrity status VERIFIED.
-2. **Synthetic Process Lifecycle Evidence (`process_lifecycle_smoke.json`):** Maximum one active worker; unexpected worker exit handling verified; FailedToStart idempotence verified; temp file cleanup on all terminal outcomes; non-graceful FORCE TERMINATE verified with disk state strictly preserved.
+2. **Synthetic + Real Process Lifecycle Evidence (`process_lifecycle_smoke.json`):** Maximum one active worker; bounded force termination confirmed only when QProcess reports NotRunning (unconfirmed termination retains running state); unexpected worker exit handling verified; real FailedToStart observed from a nonexistent executable BEFORE any idempotence re-invocation; temp file cleanup on all terminal outcomes; non-graceful FORCE TERMINATE verified with disk state strictly preserved.
 3. **Operation State Machine (`operation_state_smoke.json`):** Synchronous UI lock prevents overlapping operations; late preflight signals rejected; controls recover deterministically; stale Results autoload prevented.
-4. **Protocol Resilience (`protocol_resilience_smoke.json`):** Non-protocol lines safely ignored; malformed sentinel and unsupported protocol versions rejected.
-5. **Filesystem Resilience (`filesystem_resilience_smoke.json`):** Directory traversal, missing roots, and incomplete root artifacts rejected as malformed without application crash.
+4. **Protocol Resilience (`protocol_resilience_smoke.json`):** Non-protocol lines safely ignored; malformed sentinel and unsupported protocol versions rejected; partial-line buffering, multi-message chunks and trailing sentinel flush observed through the real runner stdout path.
+5. **Filesystem Resilience (`filesystem_resilience_smoke.json`):** Directory traversal, missing roots, disappearing runs and incomplete root artifacts rejected without application crash; discovery errors surfaced.
 6. **GUI Resource Bounds (`resource_bounds_smoke.json`):** Live telemetry log bounded to 5000 blocks; chart lines reset cleanly per episode.
-7. **Informational Performance Measurements (`performance_smoke.json`):** 100 synthetic run directories discovered and populated in ~300ms; 1000-row episode table populated in ~200ms without unmanaged background polling.
-8. **Scientific Boundary Regression (`scientific_boundary_regression.json`):** Fixtures remain benchmark-ineligible; TEST evaluations strictly blocked by preflight without simulation.
+7. **Informational Performance Measurements (`performance_smoke.json`):** 100 synthetic run directories and a 1000-row episode table populated without exception. Timings are informational, non-gating and vary per run; `performance_smoke.json` is the sole source of measured values.
+8. **Scientific Boundary Regression (`scientific_boundary_regression.json`):** Fixtures remain benchmark-ineligible; TEST evaluation observed blocked by preflight (`agent_benchmark_eligibility`) with no LAUNCHER_EVENT / EXECUTION_REPORT emitted.
