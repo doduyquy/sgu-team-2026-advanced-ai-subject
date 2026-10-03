@@ -161,6 +161,31 @@ class WorkbenchProcessRunner(QObject):
             self._force_terminated = True
             self._process.kill()
 
+    def force_terminate_and_wait(self, timeout_ms: int = 2000) -> bool:
+        """
+        Bounded force termination helper used during application shutdown or synchronous teardown.
+        Kills worker, waits boundedly up to timeout_ms, cleans temp files, and ensures state recovery.
+        Never waits indefinitely; never rewrites scientific state.
+        Returns True if process terminated within timeout, False otherwise.
+        """
+        if not self._process or not self._is_running:
+            self._cleanup_temp_file()
+            self._is_running = False
+            self._current_operation = None
+            return True
+
+        self._force_terminated = True
+        try:
+            self._process.kill()
+            finished = self._process.waitForFinished(timeout_ms)
+        except Exception:
+            finished = False
+
+        self._cleanup_temp_file()
+        self._is_running = False
+        self._current_operation = None
+        return finished
+
     def _on_ready_read_stdout(self) -> None:
         if not self._process:
             return

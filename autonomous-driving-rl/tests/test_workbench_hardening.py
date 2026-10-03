@@ -139,11 +139,13 @@ class TestWorkbenchHardeningSuite(unittest.TestCase):
         window.close()
 
     def test_05_worker_error_preserved_after_process_finished(self):
-        """MainWindow preserves worker error message after processFinished."""
+        """MainWindow preserves specific worker error message even when followed by workerDone(success=False)."""
         window = MainWindow()
-        window._on_worker_error({"message": "Critical simulation crash"})
+        window._on_worker_error({"message": "Critical simulation crash: divide by zero"})
+        window._on_worker_done({"operation": "RUN", "success": False})
         window._on_process_finished(1)
-        self.assertIn("Critical simulation crash", window.status_bar.currentMessage())
+        self.assertIn("Critical simulation crash: divide by zero", window.status_bar.currentMessage())
+        self.assertNotIn("Operation RUN failed", window.status_bar.currentMessage())
         window.close()
 
     def test_06_exit_0_without_worker_done_becomes_unexpected_exit(self):
@@ -311,10 +313,10 @@ class TestWorkbenchHardeningSuite(unittest.TestCase):
 
         event = QCloseEvent()
         with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Discard):
-            with patch.object(window._runner, "force_terminate") as mock_ft:
+            with patch.object(window._runner, "force_terminate_and_wait") as mock_ft_wait:
                 window.closeEvent(event)
                 self.assertTrue(event.isAccepted())
-                mock_ft.assert_called_once()
+                mock_ft_wait.assert_called_once_with(timeout_ms=2000)
         window._runner._is_running = False
         window.close()
 

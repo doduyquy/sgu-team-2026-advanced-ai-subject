@@ -228,7 +228,9 @@ class MainWindow(QMainWindow):
                     except Exception:
                         pass
         else:
-            self._terminal_semantic_status = f"Operation {op} failed."
+            # Preserve specific error message if already captured (e.g. from workerError or unexpectedWorkerExit)
+            if not self._terminal_semantic_status or "completed successfully" in self._terminal_semantic_status:
+                self._terminal_semantic_status = f"Operation {op} failed."
             self.status_bar.showMessage(self._terminal_semantic_status)
 
     def closeEvent(self, event: QCloseEvent) -> None:
@@ -248,7 +250,8 @@ class MainWindow(QMainWindow):
                 QMessageBox.StandardButton.Cancel,
             )
             if reply == QMessageBox.StandardButton.Discard:
-                self._runner.force_terminate()
+                # Bounded force termination on close
+                self._runner.force_terminate_and_wait(timeout_ms=2000)
                 event.accept()
             else:
                 event.ignore()
