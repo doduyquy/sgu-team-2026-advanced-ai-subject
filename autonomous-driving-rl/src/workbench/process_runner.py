@@ -164,9 +164,18 @@ class WorkbenchProcessRunner(QObject):
     def force_terminate_and_wait(self, timeout_ms: int = 2000) -> bool:
         """
         Bounded force termination helper used during application shutdown or synchronous teardown.
-        Kills worker, waits boundedly up to timeout_ms, cleans temp files, and ensures state recovery.
-        Never waits indefinitely; never rewrites scientific state.
-        Returns True if process terminated within timeout, False otherwise.
+
+        Kills the worker and waits boundedly up to timeout_ms. Termination is confirmed only
+        when the QProcess actually reports ProcessState.NotRunning.
+
+        - Confirmed termination: clears running state / active operation, cleans the temp
+          request file, and returns True.
+        - Unconfirmed termination (timeout or error): returns False and RETAINS running state,
+          active operation and temp request file so the GUI keeps managing the potentially
+          live process. If the process later emits finished, the normal _on_process_finished()
+          path performs terminal cleanup.
+
+        Never waits indefinitely; never rewrites or fabricates Gate-7 lifecycle state.
         """
         if not self._process or not self._is_running:
             self._cleanup_temp_file()
@@ -177,14 +186,28 @@ class WorkbenchProcessRunner(QObject):
         self._force_terminated = True
         try:
             self._process.kill()
-            finished = self._process.waitForFinished(timeout_ms)
+            self._process.waitForFinished(timeout_ms)
         except Exception:
-            finished = False
+            pass
+
+        if not self._is_process_confirmed_not_running():
+            # Termination NOT confirmed: do not falsely mark the runner stopped.
+            return False
 
         self._cleanup_temp_file()
         self._is_running = False
         self._current_operation = None
-        return finished
+        return True
+
+    def _is_process_confirmed_not_running(self) -> bool:
+        """True only when the managed QProcess positively reports NotRunning."""
+        proc = self._process
+        if proc is None:
+            return True
+        try:
+            return proc.state() == QProcess.ProcessState.NotRunning
+        except Exception:
+            return False
 
     def _on_ready_read_stdout(self) -> None:
         if not self._process:

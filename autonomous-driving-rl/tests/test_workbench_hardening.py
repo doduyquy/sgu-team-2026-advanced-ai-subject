@@ -327,23 +327,73 @@ class TestWorkbenchHardeningSuite(unittest.TestCase):
         window.close()
 
     def test_17b_close_running_worker_timeout_failure_aborts_close(self):
-        """If bounded termination fails/times out, window close is ignored and diagnostic is surfaced."""
+        """
+        Unconfirmed bounded termination (QProcess still Running after timeout) must:
+        - make the REAL force_terminate_and_wait() return False;
+        - ignore the close event and surface a diagnostic;
+        - retain runner running state, active operation and temp request file;
+        - keep the running-worker guard active so a second close cannot silently bypass it;
+        - defer terminal cleanup to the normal _on_process_finished() path when finished arrives later.
+        """
         from unittest.mock import patch
         from PySide6.QtGui import QCloseEvent
         window = MainWindow()
-        window._runner._is_running = True
+        runner = window._runner
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", render_mode="OFF")
+        unexpected_exits = []
+        finished_codes = []
+        runner.unexpectedWorkerExit.connect(lambda d: unexpected_exits.append(d))
+        runner.processFinished.connect(lambda c: finished_codes.append(c))
 
-        event = QCloseEvent()
-        with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Discard):
-            with patch.object(window._runner, "force_terminate_and_wait", return_value=False) as mock_ft_wait:
-                with patch.object(QMessageBox, "critical") as mock_crit:
-                    window.closeEvent(event)
-                    # Verified: close was aborted because worker could not be confirmed stopped
-                    self.assertFalse(event.isAccepted())
-                    mock_ft_wait.assert_called_once_with(timeout_ms=2000)
-                    mock_crit.assert_called_once()
-                    self.assertIn("Error: Bounded termination timed out", window.status_bar.currentMessage())
-        window._runner._is_running = False
+        with patch.object(QProcess, "start"), \
+             patch.object(QProcess, "kill") as mock_kill, \
+             patch.object(QProcess, "waitForFinished", return_value=False) as mock_wait, \
+             patch.object(QProcess, "state", return_value=QProcess.ProcessState.Running):
+            runner.start_operation("RUN", req)
+            temp_file = runner._temp_request_file
+            self.assertTrue(temp_file.exists())
+
+            # Direct runner contract: unconfirmed termination returns False and retains state
+            self.assertFalse(runner.force_terminate_and_wait(timeout_ms=50))
+            mock_kill.assert_called()
+            mock_wait.assert_called_with(50)
+            self.assertTrue(runner.is_running)
+            self.assertEqual(runner.current_operation, "RUN")
+            self.assertTrue(temp_file.exists())
+            self.assertTrue(runner.force_terminated)
+
+            # First close attempt: Discard -> bounded termination unconfirmed -> close aborted
+            event1 = QCloseEvent()
+            with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Discard) as mock_q1, \
+                 patch.object(QMessageBox, "critical") as mock_crit:
+                window.closeEvent(event1)
+                self.assertFalse(event1.isAccepted())
+                mock_q1.assert_called_once()
+                mock_crit.assert_called_once()
+                self.assertIn("Error: Bounded termination timed out", window.status_bar.currentMessage())
+            self.assertTrue(runner.is_running)
+            self.assertEqual(runner.current_operation, "RUN")
+            self.assertTrue(temp_file.exists())
+
+            # Second close attempt: guard must fire again (confirmation dialog shown again)
+            event2 = QCloseEvent()
+            with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Cancel) as mock_q2, \
+                 patch.object(QMessageBox, "critical") as mock_crit2:
+                window.closeEvent(event2)
+                self.assertFalse(event2.isAccepted())
+                mock_q2.assert_called_once()
+                mock_crit2.assert_not_called()
+            self.assertTrue(runner.is_running)
+            self.assertEqual(finished_codes, [])
+
+        # Process later emits finished: normal terminal path performs cleanup
+        runner._on_process_finished(-9)
+        self.assertFalse(runner.is_running)
+        self.assertIsNone(runner.current_operation)
+        self.assertFalse(temp_file.exists())
+        self.assertEqual(finished_codes, [-9])
+        # Force-terminated exit is not misclassified as UnexpectedWorkerExit
+        self.assertEqual(unexpected_exits, [])
         window.close()
 
     def test_18_new_operation_resets_old_force_termination_state(self):

@@ -14,6 +14,8 @@ Pass B3 is NOT a feature-development phase. Upon independent review and merge of
 - **Single Worker Invariant:** `WorkbenchProcessRunner` strictly permits at most 1 active worker subprocess. Rapid double-starts raise `RuntimeError`.
 - **Unexpected Worker Exit Handling:** Nonzero or zero process exit without structured `WORKER_DONE` emission is classified as `UnexpectedWorkerExit`. The GUI resets operation state deterministically without fabricating `COMPLETE` or `INTERRUPTED`.
 - **Force Termination Semantics:** Labeled non-graceful `FORCE TERMINATE`. Kills worker process and cleans temp files without modifying on-disk `run_state.json`.
+- **Bounded Termination Truthfulness:** `force_terminate_and_wait(timeout_ms)` kills the worker, waits boundedly, and reports success only when `QProcess.state()` positively reports `NotRunning`. Only then are running state, active operation and the temp request file cleared. If termination cannot be confirmed, it returns `False` and **retains** running state and active operation so the GUI keeps managing the potentially live process; a later `finished` signal is cleaned up by the normal `_on_process_finished()` path. No Gate-7 lifecycle state is ever fabricated.
+- **Window Close While Running:** Close requires explicit confirmation. If bounded termination is unconfirmed, a diagnostic is shown and the close event is ignored; because the runner still reports active, any subsequent close attempt re-enters the running-worker confirmation guard.
 - **Temp Request Lifecycle:** Temporary launch request JSON is unlinked on all terminal paths (success, blocked, error, unexpected exit, kill).
 
 ---
@@ -81,13 +83,15 @@ Pass B3 is NOT a feature-development phase. Upon independent review and merge of
 - **Total Suite:** **351 tests run, 350 passed, 1 skipped, 0 failures, 0 errors.**
 
 ### C. Machine-Derived Audit Smokes (`scripts/audit_workbench_hardening.py`)
-1. **Process Lifecycle (`process_lifecycle_smoke.json`):** Verified single worker max, unexpected exit classification, real FailedToStart, and temp file cleanup.
+Every boolean PASS field in the B3 artifacts is derived from an observed value in the audit run and asserted before the artifact is written; no required PASS field is a literal constant.
+
+1. **Process Lifecycle (`process_lifecycle_smoke.json`):** Verified single worker max, confirmed bounded termination of a real spawned worker (`force_term_confirmed_not_running`), unexpected exit classification, and temp file cleanup. `failed_to_start_real_executable_verified` is derived from the observed signals of a launch against a nonexistent executable (exactly one `workerError` with `error_type == FailedToStart`, exactly one `processFinished(-1)`, runner stopped, operation cleared, temp request removed) **before** any duplicate handler invocation; idempotence is checked only afterwards.
 2. **Operation State (`operation_state_smoke.json`):** Verified synchronous lock, late signal protection, state recovery, and stale Results autoload protection.
-3. **Protocol Resilience (`protocol_resilience_smoke.json`):** Verified buffering of split chunks, multiple messages per chunk, trailing sentinel without newline, and malformed input handling.
+3. **Protocol Resilience (`protocol_resilience_smoke.json`):** Split-chunk buffering, multiple messages per chunk, and trailing sentinel without newline observed through the real `WorkbenchProcessRunner._on_ready_read_stdout()` / `_on_process_finished()` paths; malformed input handling.
 4. **Filesystem Resilience (`filesystem_resilience_smoke.json`):** Verified path containment, disappearing run handling, discovery error surfacing, and incomplete artifact handling.
-5. **Resource Bounds (`resource_bounds_smoke.json`):** Verified document log bounded to 5000 blocks and chart line cleanup across episodes.
-6. **Performance Smoke (`performance_smoke.json`):** 100 synthetic runs discovered in ~26ms and populated in ~369ms; 1000-row episode table populated in ~414ms without unmanaged background polling.
-7. **Scientific Boundary (`scientific_boundary_regression.json`):** Verified canonical benchmark isolation.
+5. **Resource Bounds (`resource_bounds_smoke.json`):** Verified document log bounded to 5000 blocks and observed chart line cleanup across episodes.
+6. **Performance Smoke (`performance_smoke.json`):** 100 synthetic run directories and a 1000-row episode table are populated without exception; the episode table is observed read-only. Timings are **informational and non-gating**, vary on every run, and are intentionally not reproduced in this document — `performance_smoke.json` is the sole machine-derived source of measured values.
+7. **Scientific Boundary (`scientific_boundary_regression.json`):** TEST + fixture run observed blocked by preflight (`agent_benchmark_eligibility`, `WORKER_DONE.blocked == True`) with no `LAUNCHER_EVENT` / `EXECUTION_REPORT` emitted.
 8. **Real Sandbox Smoke (`real_sandbox_smoke.json`):** Verified real MetaDrive execution, 7/7 artifacts, and VERIFIED integrity.
 9. **Artifact Privacy Scan:** Verified 0 private machine paths or secrets across all 10 B3 artifacts.
 
