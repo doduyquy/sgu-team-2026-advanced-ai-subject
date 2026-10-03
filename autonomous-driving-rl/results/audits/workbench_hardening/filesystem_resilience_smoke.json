@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "traversal_rejected": true,
+  "missing_run_returns_none": true,
+  "incomplete_root_artifacts_rejected": true
+}

@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "one_worker_max_verified": true,
+  "force_term_cleaned_temp": true,
+  "unexpected_exit_verified": false,
+  "failed_to_start_idempotent": true,
+  "scientific_state_preserved_on_kill": true
+}

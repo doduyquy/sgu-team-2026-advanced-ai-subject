@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "plain_stdout_ignored": true,
+  "embedded_sentinel_rejected": true,
+  "malformed_json_rejected": true,
+  "unsupported_version_rejected": true,
+  "valid_message_parsed": true
+}

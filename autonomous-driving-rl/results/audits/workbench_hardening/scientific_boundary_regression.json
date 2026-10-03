@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "fixtures_benchmark_ineligible": true,
+  "canonical_test_blocked_by_preflight": true,
+  "simulator_execution_bypassed": true
+}

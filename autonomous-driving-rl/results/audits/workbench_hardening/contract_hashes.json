@@ -1,0 +1,19 @@
+{
+  "baseline_main_merge_sha": "9c5d1fabe07e0c4cc24c28d0b5b2857f5496652d",
+  "gate5_benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+  "gate6_agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+  "gate6_platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
+  "gate7_logging_contract_sha256": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+  "gate7_platform_observability_contract_sha256": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+  "launcher_contract_sha256": "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
+  "platform_execution_contract_sha256": "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
+  "canonical_agent_registry_sha256": "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
+  "workbench_contract_sha256": "e5711485e6571a04c336739ebc6f285213a1d9631fa29820a89707b37875a82b",
+  "platform_workbench_contract_sha256": "36f3a0891a9153df12a8b53b01f2064afbf848eafda462149a768ec989199e47",
+  "workbench_results_contract_sha256": "21c2c541a891967d9206e2dc86781f1bfc62b794c13e7e1ee1c3732676e38429",
+  "platform_workbench_results_contract_sha256": "a241e2890b65290e28d717714123625bc2809100fe3287f2fb3e14dba8d6e433",
+  "workbench_hardening_contract_sha256": "adb11f5c205e0ee6651f1544f76deee36416fc49070a52a513cc5c786ceecdab",
+  "platform_workbench_hardening_contract_sha256": "b476749713e8a7afa2eafe50a5a89775550afe051a16b203a07d846c41f6972c",
+  "pyside6_pinned_version": "6.11.2",
+  "workbench_protocol_version": "WORKBENCH_PROTOCOL_V1"
+}

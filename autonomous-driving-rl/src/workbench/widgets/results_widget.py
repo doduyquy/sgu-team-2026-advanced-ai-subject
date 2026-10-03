@@ -101,6 +101,11 @@ class ResultsWidget(QWidget):
         self.lbl_current_root.setStyleSheet("color: gray; font-size: 11px;")
         left_layout.addWidget(self.lbl_current_root)
 
+        # Discovery error notice (Specification Section 28)
+        self.lbl_discovery_error = QLabel("")
+        self.lbl_discovery_error.setVisible(False)
+        left_layout.addWidget(self.lbl_discovery_error)
+
         # Runs table (8 required columns)
         self.table_runs = QTableWidget(0, 8)
         self.table_runs.setHorizontalHeaderLabels([
@@ -324,6 +329,16 @@ class ResultsWidget(QWidget):
     def refresh_runs_list(self) -> None:
         """Discovers run directories and populates the left runs table."""
         run_ids = self._repo.discover_run_ids()
+        disc_err = self._repo.last_discovery_error
+
+        if disc_err:
+            self.lbl_discovery_error.setVisible(True)
+            self.lbl_discovery_error.setStyleSheet("color: red; font-size: 11px; padding: 2px;")
+            self.lbl_discovery_error.setText(f"Discovery Warning: {disc_err}")
+        else:
+            self.lbl_discovery_error.setVisible(False)
+            self.lbl_discovery_error.setText("")
+
         self.table_runs.setRowCount(len(run_ids))
 
         for row, rid in enumerate(run_ids):

@@ -107,22 +107,37 @@ class RunArtifactRepository:
 
     def __init__(self, runs_root: Path):
         self._runs_root = Path(runs_root).resolve()
+        self._last_discovery_error: Optional[str] = None
 
     @property
     def runs_root(self) -> Path:
         return self._runs_root
 
+    @property
+    def last_discovery_error(self) -> Optional[str]:
+        return self._last_discovery_error
+
     def discover_run_ids(self) -> List[str]:
         """Discovers candidate run subdirectories within runs_root."""
+        self._last_discovery_error = None
         if not self._runs_root.exists() or not self._runs_root.is_dir():
+            self._last_discovery_error = f"Directory not found: {self._runs_root}"
             return []
 
         candidates = []
-        for entry in self._runs_root.iterdir():
-            if entry.is_dir():
-                # A candidate run directory must have run_state.json or run_manifest.json
-                if (entry / "run_state.json").exists() or (entry / "run_manifest.json").exists():
-                    candidates.append(entry.name)
+        try:
+            for entry in self._runs_root.iterdir():
+                try:
+                    if entry.is_dir():
+                        # A candidate run directory must have run_state.json or run_manifest.json
+                        if (entry / "run_state.json").exists() or (entry / "run_manifest.json").exists():
+                            candidates.append(entry.name)
+                except (PermissionError, OSError) as pe:
+                    # Individual entry permission/IO issue
+                    pass
+        except (PermissionError, OSError) as e:
+            self._last_discovery_error = f"Filesystem read error scanning {self._runs_root}: {e}"
+            return []
 
         return sorted(candidates)
 

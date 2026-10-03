@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "synthetic_run_count": 100,
+  "discovery_elapsed_ms": 24.68,
+  "list_population_elapsed_ms": 311.24,
+  "verdict": "COMPLETED_WITHOUT_EXCEPTION"
+}
