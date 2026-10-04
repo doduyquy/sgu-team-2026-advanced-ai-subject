@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "fixtures_benchmark_ineligible": true,
+  "test_worker_exit_code": 1,
+  "test_preflight_failed_check_ids": [
+    "agent_benchmark_eligibility"
+  ],
+  "test_observed_message_types": [
+    "WORKER_READY",
+    "PLAN_RESOLVED",
+    "PREFLIGHT_REPORT",
+    "WORKER_DONE"
+  ],
+  "canonical_test_blocked_by_preflight": true,
+  "simulator_execution_bypassed": true
+}

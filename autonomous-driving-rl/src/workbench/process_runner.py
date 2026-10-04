@@ -1,14 +1,20 @@
 """
-Workbench Process Runner (Gate 7.5B).
+Workbench Process Runner (Gate 7.5B Pass B3 Hardened).
 
 Manages QProcess execution for the isolated Workbench worker:
 - Uses sys.executable to launch src/workbench/worker.py in the active environment.
+- Enforces maximum one active worker process.
 - Feeds LaunchRequestV1 safely through stdin / temporary JSON.
 - Parses stdout sentinel lines via parse_sentinel_line().
-- Exposes Qt signals for structured protocol messages and lifecycle events.
-- Provides labeled FORCE TERMINATE action (non-graceful, explicit warning).
+- Tracks semantic completion (WORKER_DONE received) and distinguishes:
+  - normal semantic completion (success or blocked);
+  - unexpected worker termination (crash, os._exit, signal kill);
+  - FailedToStart (idempotent, single clean transition);
+  - user FORCE TERMINATE.
+- Guarantees temporary launch request JSON cleanup on all terminal paths.
 """
 
+from enum import Enum
 import json
 from pathlib import Path
 import sys
@@ -24,6 +30,14 @@ from src.workbench.protocol import (
     parse_sentinel_line,
     serialize_launch_request,
 )
+
+
+class WorkerTerminalReason(str, Enum):
+    """Internal semantic classification of worker process termination."""
+    WORKER_DONE = "WORKER_DONE"
+    UNEXPECTED_EXIT = "UNEXPECTED_EXIT"
+    FAILED_TO_START = "FAILED_TO_START"
+    FORCE_TERMINATED = "FORCE_TERMINATED"
 
 
 class WorkbenchProcessRunner(QObject):
@@ -45,6 +59,7 @@ class WorkbenchProcessRunner(QObject):
     rawOutputReceived = Signal(str)
     processStarted = Signal()
     processFinished = Signal(int)  # exit code
+    unexpectedWorkerExit = Signal(dict)  # {"exit_code": int, "operation": str}
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -53,6 +68,9 @@ class WorkbenchProcessRunner(QObject):
         self._is_running: bool = False
         self._current_operation: Optional[str] = None
         self._stdout_buffer: str = ""
+        self._worker_done_received: bool = False
+        self._force_terminated: bool = False
+        self._failed_to_start: bool = False
 
     @property
     def is_running(self) -> bool:
@@ -61,6 +79,10 @@ class WorkbenchProcessRunner(QObject):
     @property
     def current_operation(self) -> Optional[str]:
         return self._current_operation
+
+    @property
+    def force_terminated(self) -> bool:
+        return self._force_terminated
 
     def start_operation(self, operation: str, request: LaunchRequestV1) -> None:
         """Starts worker subprocess for PLAN or RUN operation."""
@@ -73,6 +95,9 @@ class WorkbenchProcessRunner(QObject):
         self._current_operation = operation
         self._is_running = True
         self._stdout_buffer = ""
+        self._worker_done_received = False
+        self._force_terminated = False
+        self._failed_to_start = False
 
         # Write request payload to a temporary file
         serialized_req = serialize_launch_request(request)
@@ -107,9 +132,12 @@ class WorkbenchProcessRunner(QObject):
 
     def _on_process_error(self, error: QProcess.ProcessError) -> None:
         if error == QProcess.ProcessError.FailedToStart:
-            self._cleanup_temp_file()
+            if self._failed_to_start:
+                return  # Idempotent terminal guard
+            self._failed_to_start = True
             self._is_running = False
             self._current_operation = None
+            self._cleanup_temp_file()
             err_msg = "Worker process failed to start (executable not found or permission denied)."
             self.workerError.emit({"message": err_msg, "error_type": "FailedToStart"})
             self.rawOutputReceived.emit(f"[ERROR] {err_msg}")
@@ -130,7 +158,56 @@ class WorkbenchProcessRunner(QObject):
         Does not rewrite local run_state or claim INTERRUPTED unless Gate 7 persisted it.
         """
         if self._process and self._is_running:
+            self._force_terminated = True
             self._process.kill()
+
+    def force_terminate_and_wait(self, timeout_ms: int = 2000) -> bool:
+        """
+        Bounded force termination helper used during application shutdown or synchronous teardown.
+
+        Kills the worker and waits boundedly up to timeout_ms. Termination is confirmed only
+        when the QProcess actually reports ProcessState.NotRunning.
+
+        - Confirmed termination: clears running state / active operation, cleans the temp
+          request file, and returns True.
+        - Unconfirmed termination (timeout or error): returns False and RETAINS running state,
+          active operation and temp request file so the GUI keeps managing the potentially
+          live process. If the process later emits finished, the normal _on_process_finished()
+          path performs terminal cleanup.
+
+        Never waits indefinitely; never rewrites or fabricates Gate-7 lifecycle state.
+        """
+        if not self._process or not self._is_running:
+            self._cleanup_temp_file()
+            self._is_running = False
+            self._current_operation = None
+            return True
+
+        self._force_terminated = True
+        try:
+            self._process.kill()
+            self._process.waitForFinished(timeout_ms)
+        except Exception:
+            pass
+
+        if not self._is_process_confirmed_not_running():
+            # Termination NOT confirmed: do not falsely mark the runner stopped.
+            return False
+
+        self._cleanup_temp_file()
+        self._is_running = False
+        self._current_operation = None
+        return True
+
+    def _is_process_confirmed_not_running(self) -> bool:
+        """True only when the managed QProcess positively reports NotRunning."""
+        proc = self._process
+        if proc is None:
+            return True
+        try:
+            return proc.state() == QProcess.ProcessState.NotRunning
+        except Exception:
+            return False
 
     def _on_ready_read_stdout(self) -> None:
         if not self._process:
@@ -173,10 +250,14 @@ class WorkbenchProcessRunner(QObject):
         elif mtype == WorkbenchMessageType.WORKER_ERROR:
             self.workerError.emit(payload)
         elif mtype == WorkbenchMessageType.WORKER_DONE:
+            self._worker_done_received = True
             self.workerDone.emit(payload)
 
     def _on_process_finished(self, exit_code: int) -> None:
-        # Flush remaining stdout buffer
+        if self._failed_to_start:
+            return  # FailedToStart already executed terminal cleanup
+
+        # Flush remaining stdout buffer (handles trailing sentinel without newline)
         if self._stdout_buffer.strip():
             msg = parse_sentinel_line(self._stdout_buffer)
             if msg is not None:
@@ -184,6 +265,20 @@ class WorkbenchProcessRunner(QObject):
             else:
                 self.rawOutputReceived.emit(self._stdout_buffer.strip())
             self._stdout_buffer = ""
+
+        # Semantic completion check (Specification Section 8 & 10)
+        # If the process terminates without emitting WORKER_DONE, classify as unexpected exit
+        if not self._worker_done_received and not self._force_terminated:
+            err_data = {
+                "operation": self._current_operation or "UNKNOWN",
+                "exit_code": exit_code,
+                "reason": "Process exited unexpectedly before emitting WORKER_DONE",
+            }
+            self.unexpectedWorkerExit.emit(err_data)
+            self.workerError.emit({
+                "message": f"Worker terminated unexpectedly (exit code {exit_code}) without completing protocol.",
+                "error_type": "UnexpectedWorkerExit",
+            })
 
         self._is_running = False
         self._current_operation = None

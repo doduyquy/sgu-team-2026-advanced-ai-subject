@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "contract_name": "WorkbenchHardeningContractV1",
+    "spec_version": "1.0.0",
+    "status": "AUDIT-CANDIDATE",
+    "gate": "Gate 7.5B Pass B3 (Final Workbench Hardening & Platform Handoff)"
+  },
+  "baseline_provenance": {
+    "baseline_merge_sha": "9c5d1fabe07e0c4cc24c28d0b5b2857f5496652d",
+    "baseline_workbench_contract_sha256": "e5711485e6571a04c336739ebc6f285213a1d9631fa29820a89707b37875a82b",
+    "baseline_platform_workbench_contract_sha256": "36f3a0891a9153df12a8b53b01f2064afbf848eafda462149a768ec989199e47",
+    "baseline_workbench_results_contract_sha256": "21c2c541a891967d9206e2dc86781f1bfc62b794c13e7e1ee1c3732676e38429",
+    "baseline_platform_workbench_results_contract_sha256": "a241e2890b65290e28d717714123625bc2809100fe3287f2fb3e14dba8d6e433"
+  },
+  "gui_technology": {
+    "framework": "PySide6",
+    "pinned_version": "6.11.2",
+    "protocol_version": "WORKBENCH_PROTOCOL_V1"
+  },
+  "process_policy": {
+    "max_active_workers": 1,
+    "unexpected_exit_semantics": "NONZERO_OR_ZERO_EXIT_WITHOUT_WORKER_DONE_CLASSIFIED_AS_UNEXPECTED_EXIT",
+    "force_termination_rule": "NON_GRACEFUL_PROCESS_KILL_NO_SCIENTIFIC_LIFECYCLE_FABRICATION",
+    "temp_request_cleanup_rule": "ALL_TERMINAL_OUTCOMES_CLEAN_TEMP_REQUEST_JSON",
+    "close_while_running_policy": "EXPLICIT_CONFIRMATION_DIALOG_DEFAULT_CANCEL_NO_SILENT_KILL"
+  },
+  "operation_policy": {
+    "single_operation_invariant": "SYNCHRONOUS_UI_LOCK_PREVENTS_OVERLAPPING_PLAN_OR_RUN",
+    "stale_preflight_invalidation": "REQUEST_EDITS_INVALIDATE_STORED_VERDICT_LATE_SIGNALS_REJECTED",
+    "results_autoload_rule": "AUTOLOAD_ONLY_ON_SUCCESSFUL_RUN_PLAN_AND_FAILED_RUN_DO_NOT_AUTOLOAD_STALE"
+  },
+  "resource_policy": {
+    "max_event_log_blocks": 5000,
+    "chart_memory_policy": "CURRENT_EPISODE_RESET_PREVENTS_UNBOUNDED_ARTIST_GROWTH",
+    "no_polling_rule": "NO_CONTINUOUS_BACKGROUND_FILESYSTEM_POLLING_MANUAL_REFRESH_ONLY"
+  },
+  "results_policy": {
+    "integrity_trust_rule": "ONLY_INTEGRITY_VERIFIED_COMPLETE_RUNS_MAY_BE_LABELED_AUTHORITATIVE",
+    "untrusted_states_policy": "FAILED_UNVERIFIED_NOT_FINAL_SUPPRESS_AUTHORITATIVE_CLAIMS",
+    "single_source_episode_schema": "DIRECT_REFERENCE_TO_GATE7_EPISODE_CSV_COLUMNS",
+    "single_source_timing_schema": "DIRECT_REFERENCE_TO_EPISODE_TIMING_RECORD_FIELDS",
+    "execution_report_labeling": "EXECUTION_REPORTED_PROVISIONAL_UNTIL_RESULTS_VERIFIED",
+    "no_fabricated_zero_rates": "MISSING_OUTCOME_RATES_OMITTED_NOT_REPRESENTED_AS_ZERO"
+  },
+  "closure_rule": "Gate 7.5B Pass B3 is the final workbench hardening pass. Upon independent review and explicit merge, Gate 7.5B is CLOSED. There is no Gate 7.5B Pass B4. The immediate next research milestone is Stage 0 Random Baseline."
+}

@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
         self._core_adapter = core_adapter or CoreAdapter()
         self._runner = WorkbenchProcessRunner(self)
         self._last_completed_run_dir: Optional[Path] = None
+        self._terminal_semantic_status: Optional[str] = None
 
         self._init_ui()
         self._connect_signals()
@@ -108,12 +109,14 @@ class MainWindow(QMainWindow):
         self._runner.executionReport.connect(self._on_execution_report)
         self._runner.workerError.connect(self._on_worker_error)
         self._runner.workerDone.connect(self._on_worker_done)
+        self._runner.unexpectedWorkerExit.connect(self._on_unexpected_worker_exit)
 
     def _on_request_changed(self) -> None:
         self.plan_preflight_widget.clear()
         self.status_bar.showMessage("Request parameters changed. Plan & Preflight invalidated.")
 
     def _on_resolve_requested(self, request: LaunchRequestV1) -> None:
+        self._terminal_semantic_status = None
         self.setup_widget.set_operation_active(True)
         self.tab_widget.setCurrentIndex(1)  # Switch to Plan & Preflight tab
         self.status_bar.showMessage(f"Resolving plan & running preflight for mode {request.mode.value}...")
@@ -121,9 +124,12 @@ class MainWindow(QMainWindow):
             self._runner.start_operation("PLAN", request)
         except Exception as e:
             self.setup_widget.set_operation_active(False)
-            self.status_bar.showMessage(f"Failed to start PLAN: {e}")
+            self._terminal_semantic_status = f"Failed to start PLAN: {e}"
+            self.status_bar.showMessage(self._terminal_semantic_status)
 
     def _on_run_requested(self, request: LaunchRequestV1) -> None:
+        self._terminal_semantic_status = None
+        self._last_completed_run_dir = None  # Reset pending run-dir on start of every RUN
         self.setup_widget.set_operation_active(True)
         self.tab_widget.setCurrentIndex(2)  # Switch to Run Monitor tab
         self.run_monitor_widget.reset_monitor()
@@ -132,7 +138,8 @@ class MainWindow(QMainWindow):
             self._runner.start_operation("RUN", request)
         except Exception as e:
             self.setup_widget.set_operation_active(False)
-            self.status_bar.showMessage(f"Failed to start RUN: {e}")
+            self._terminal_semantic_status = f"Failed to start RUN: {e}"
+            self.status_bar.showMessage(self._terminal_semantic_status)
 
     def _on_terminate_requested(self) -> None:
         warning_msg = (
@@ -149,15 +156,20 @@ class MainWindow(QMainWindow):
             QMessageBox.StandardButton.No,
         )
         if reply == QMessageBox.StandardButton.Yes:
+            self._terminal_semantic_status = "Worker process terminated forcefully (non-graceful)."
             self._runner.force_terminate()
-            self.status_bar.showMessage("Worker process terminated forcefully.")
+            self.status_bar.showMessage(self._terminal_semantic_status)
 
     def _on_process_started(self) -> None:
         self.setup_widget.set_worker_running(True)
 
     def _on_process_finished(self, exit_code: int) -> None:
         self.setup_widget.set_worker_running(False)
-        self.status_bar.showMessage(f"Worker process finished with exit code {exit_code}.")
+        # Preserve semantic status emitted by WORKER_DONE, WORKER_ERROR, or FORCE TERMINATE
+        if self._terminal_semantic_status:
+            self.status_bar.showMessage(f"{self._terminal_semantic_status} (exit code {exit_code})")
+        else:
+            self.status_bar.showMessage(f"Worker process finished with exit code {exit_code}.")
 
     def _on_plan_resolved(self, payload: dict) -> None:
         self.plan_preflight_widget.display_plan(payload)
@@ -179,34 +191,47 @@ class MainWindow(QMainWindow):
 
     def _on_worker_error(self, payload: dict) -> None:
         err_msg = payload.get("message", "Unknown error")
-        self.status_bar.showMessage(f"Worker Error: {err_msg}")
+        self._terminal_semantic_status = f"Worker Error: {err_msg}"
+        self.status_bar.showMessage(self._terminal_semantic_status)
+
+    def _on_unexpected_worker_exit(self, payload: dict) -> None:
+        op = payload.get("operation", "UNKNOWN")
+        code = payload.get("exit_code", -1)
+        self._terminal_semantic_status = f"Abnormal worker exit during {op}: process terminated unexpectedly without WORKER_DONE."
+        self.status_bar.showMessage(self._terminal_semantic_status)
 
     def _on_worker_done(self, payload: dict) -> None:
         op = payload.get("operation")
         success = payload.get("success", False)
         blocked = payload.get("blocked", False)
         if blocked:
-            self.status_bar.showMessage(f"Operation {op} blocked by preflight safety check.")
+            self._terminal_semantic_status = f"Operation {op} blocked by preflight safety check."
+            self.status_bar.showMessage(self._terminal_semantic_status)
         elif success:
-            self.status_bar.showMessage(f"Operation {op} completed successfully.")
+            self._terminal_semantic_status = f"Operation {op} completed successfully."
+            self.status_bar.showMessage(self._terminal_semantic_status)
             # Pass B2: Auto-refresh and select completed run in Results tab
-            # If a custom runs_root was used, update ResultsWidget repository root to parent(run_dir)
-            run_id = payload.get("run_id")
-            if self._last_completed_run_dir and self._last_completed_run_dir.exists():
-                try:
-                    parent_root = self._last_completed_run_dir.parent
-                    if self.results_widget.runs_root != parent_root:
-                        self.results_widget.set_runs_root(parent_root)
-                except Exception:
-                    pass
+            # Applied strictly on successful RUN operations (Specification Section 20)
+            if op == "RUN":
+                run_id = payload.get("run_id")
+                if self._last_completed_run_dir and self._last_completed_run_dir.exists():
+                    try:
+                        parent_root = self._last_completed_run_dir.parent
+                        if self.results_widget.runs_root != parent_root:
+                            self.results_widget.set_runs_root(parent_root)
+                    except Exception:
+                        pass
 
-            if run_id:
-                try:
-                    self.results_widget.select_run_by_id(run_id)
-                except Exception:
-                    pass
+                if run_id:
+                    try:
+                        self.results_widget.select_run_by_id(run_id)
+                    except Exception:
+                        pass
         else:
-            self.status_bar.showMessage(f"Operation {op} failed.")
+            # Preserve specific error message if already captured (e.g. from workerError or unexpectedWorkerExit)
+            if not self._terminal_semantic_status or "completed successfully" in self._terminal_semantic_status:
+                self._terminal_semantic_status = f"Operation {op} failed."
+            self.status_bar.showMessage(self._terminal_semantic_status)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Window close behavior (Specification Section 22)."""
@@ -225,8 +250,21 @@ class MainWindow(QMainWindow):
                 QMessageBox.StandardButton.Cancel,
             )
             if reply == QMessageBox.StandardButton.Discard:
-                self._runner.force_terminate()
-                event.accept()
+                # Bounded force termination on close (Specification Correction 2)
+                terminated = self._runner.force_terminate_and_wait(timeout_ms=2000)
+                if terminated:
+                    event.accept()
+                else:
+                    # Bounded termination failed: surface diagnostic, do not silently close while worker may still be alive
+                    self.status_bar.showMessage("Error: Bounded termination timed out. Worker process could not be confirmed stopped.")
+                    QMessageBox.critical(
+                        self,
+                        "Termination Timeout",
+                        "Failed to terminate worker process within the 2000ms timeout.\n"
+                        "To prevent orphaned simulation processes or corrupted state, window close was aborted.\n"
+                        "Please retry FORCE TERMINATE or inspect system processes.",
+                    )
+                    event.ignore()
             else:
                 event.ignore()
         else:

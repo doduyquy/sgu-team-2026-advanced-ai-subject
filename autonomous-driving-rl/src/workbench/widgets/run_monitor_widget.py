@@ -31,6 +31,9 @@ from PySide6.QtWidgets import (
 from src.workbench.live_telemetry import LiveTelemetryBufferV1
 
 
+MAX_EVENT_LOG_BLOCKS = 5000
+
+
 class RunMonitorWidget(QWidget):
     """Real-time monitoring panel driven strictly by LauncherEventV1 telemetry."""
 
@@ -91,16 +94,17 @@ class RunMonitorWidget(QWidget):
         # Log & Results Splitter
         lower_splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Event log
+        # Event log with bounded document block count (Specification Section 30)
         log_group = QGroupBox("Chronological Telemetry Log (LauncherEventV1)")
         log_layout = QVBoxLayout(log_group)
         self.text_event_log = QTextEdit()
         self.text_event_log.setReadOnly(True)
+        self.text_event_log.document().setMaximumBlockCount(MAX_EVENT_LOG_BLOCKS)
         log_layout.addWidget(self.text_event_log)
         lower_splitter.addWidget(log_group)
 
         # Execution results overview
-        results_group = QGroupBox("Execution Results Summary")
+        results_group = QGroupBox("Execution-Reported Overview (Provisional / Non-Authoritative)")
         results_layout = QVBoxLayout(results_group)
         self.text_results = QTextEdit()
         self.text_results.setReadOnly(True)
@@ -221,16 +225,19 @@ class RunMonitorWidget(QWidget):
         summary = report.get("summary_payload") or {}
 
         lines = [
-            f"=== EXPERIMENT EXECUTION REPORT ===",
+            f"=== EXECUTION-REPORTED SUMMARY (Provisional / Not Integrity-Verified) ===",
+            f"Notice: Stored values below are emitted directly from ExperimentExecutor.",
+            f"They are provisional until local Gate-7 artifacts are loaded and integrity is VERIFIED in the Results tab.",
+            f"",
             f"Run ID:             {run_id}",
-            f"Final Status:       {status}",
+            f"Execution Status:   {status}",
             f"Run Directory:      {run_dir}",
             f"Completed Episodes: {completed_episodes} / {total_cases}",
         ]
 
         if summary:
             lines.append("")
-            lines.append("--- Overall Benchmark Metrics (summary.json) ---")
+            lines.append("--- Execution-Reported Metrics (Provisional) ---")
             overall = summary.get("overall_metrics", {})
             clean_success = overall.get("clean_success_rate")
             safety_fail = overall.get("safety_failure_rate")

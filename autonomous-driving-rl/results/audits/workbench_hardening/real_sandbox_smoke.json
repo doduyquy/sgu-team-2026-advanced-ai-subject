@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "run_id": "b3_sandbox_smoke_run",
+  "lifecycle_status": "COMPLETE",
+  "integrity_status": "VERIFIED",
+  "artifacts_present": [
+    "episodes.csv",
+    "run_integrity.json",
+    "run_manifest.json",
+    "run_state.json",
+    "summary.json",
+    "timing.csv",
+    "wandb_sync.json"
+  ],
+  "episodes_completed": 1
+}

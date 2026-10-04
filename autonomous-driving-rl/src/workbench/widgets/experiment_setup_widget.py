@@ -271,6 +271,8 @@ class ExperimentSetupWidget(QWidget):
         )
 
     def _on_resolve_clicked(self) -> None:
+        if self._operation_active:
+            return
         try:
             req = self.build_launch_request()
             self.resolveRequested.emit(req)
@@ -279,6 +281,8 @@ class ExperimentSetupWidget(QWidget):
             pass
 
     def _on_run_clicked(self) -> None:
+        if self._operation_active or not self._can_run:
+            return
         try:
             req = self.build_launch_request()
             self.runRequested.emit(req)
