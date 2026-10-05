@@ -23,14 +23,14 @@ MapSuite V1 is derived deterministically from existing, frozen Platform V1 audit
 ```powershell
 # In autonomous-driving-rl/
 # Inspect candidate metrics (240 geometry rows)
-head -n 5 results/audits/mapsuite/candidate_metrics.csv
+Get-Content results/audits/mapsuite/candidate_metrics.csv -TotalCount 5
 
 # Inspect canonical geometry partition (180 TRAIN / 48 VAL / 12 TEST)
-head -n 5 results/audits/evaluation_protocol/geometry_split_manifest.csv
+Get-Content results/audits/evaluation_protocol/geometry_split_manifest.csv -TotalCount 5
 
 # Inspect canonical evaluation suites (96 validation cases, 60 test cases)
-head -n 5 results/audits/evaluation_protocol/validation_case_manifest.csv
-head -n 5 results/audits/evaluation_protocol/test_case_manifest.csv
+Get-Content results/audits/evaluation_protocol/validation_case_manifest.csv -TotalCount 5
+Get-Content results/audits/evaluation_protocol/test_case_manifest.csv -TotalCount 5
 ```
 
 ---

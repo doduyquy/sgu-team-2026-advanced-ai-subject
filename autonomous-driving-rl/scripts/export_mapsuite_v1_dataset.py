@@ -203,7 +203,12 @@ def load_source_artifacts(project_root: Path) -> Dict[str, Any]:
         {"repo_relative_path": "results/audits/evaluation_protocol/validation_case_manifest.csv", "sha256": compute_file_sha256(vm_path)},
         {"repo_relative_path": "results/audits/evaluation_protocol/test_case_manifest.csv", "sha256": compute_file_sha256(tm_path)},
     ]
+    source_preview_entries = [
+        {"repo_relative_path": f"results/audits/mapsuite/previews/{p.name}", "sha256": compute_file_sha256(p)}
+        for p in previews
+    ]
     artifacts["source_manifest_entries"] = source_manifest_entries
+    artifacts["source_preview_entries"] = source_preview_entries
 
     return artifacts
 
@@ -389,7 +394,11 @@ def build_generation_config() -> Dict[str, Any]:
     }
 
 
-def build_dataset_manifest(source_manifest_entries: List[Dict[str, str]], geometries: List[Dict[str, Any]]) -> Dict[str, Any]:
+def build_dataset_manifest(
+    source_manifest_entries: List[Dict[str, str]],
+    source_preview_entries: List[Dict[str, str]],
+    geometries: List[Dict[str, Any]],
+) -> Dict[str, Any]:
     """Constructs dataset_manifest.json with counts and source provenance."""
     train_count = sum(1 for g in geometries if g["split"] == "TRAIN")
     val_count = sum(1 for g in geometries if g["split"] == "VALIDATION")
@@ -423,6 +432,7 @@ def build_dataset_manifest(source_manifest_entries: List[Dict[str, str]], geomet
             "commit": PINNED_METADRIVE_COMMIT,
         },
         "source_artifacts": source_manifest_entries,
+        "source_previews": source_preview_entries,
     }
 
 
@@ -471,7 +481,11 @@ def export_dataset(project_root: Path, output_dir: Path) -> None:
 
     # 5. Build generation config & dataset manifest
     gen_config = build_generation_config()
-    manifest = build_dataset_manifest(artifacts["source_manifest_entries"], geometries)
+    manifest = build_dataset_manifest(
+        artifacts["source_manifest_entries"],
+        artifacts["source_preview_entries"],
+        geometries,
+    )
 
     # 6. Ensure target directory structure
     splits_dir = output_dir / "splits"

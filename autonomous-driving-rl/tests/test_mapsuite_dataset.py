@@ -239,5 +239,128 @@ class TestMapSuiteV1Dataset(unittest.TestCase):
                     )
 
 
+    def _create_temp_package_copy(self, tmp_dir: str) -> Path:
+        target = Path(tmp_dir) / "mapsuite_v1"
+        shutil.copytree(self.dataset_dir, target)
+        return target
+
+    def test_15_mutation_fails_on_changed_test_environment_seed(self):
+        """Verifier must fail if a test case environment_seed is altered."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            pkg = self._create_temp_package_copy(tmp_dir)
+            tc_path = pkg / "evaluation_cases" / "test_cases.csv"
+            with open(tc_path, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                header = reader.fieldnames or []
+                rows = list(reader)
+            # Mutate environment_seed in first row
+            rows[0]["environment_seed"] = "9999"
+            with open(tc_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=header, lineterminator="\n")
+                writer.writeheader()
+                writer.writerows(rows)
+            self.assertFalse(verify_dataset(pkg, self.project_root))
+
+    def test_16_mutation_fails_on_changed_test_horizon_steps(self):
+        """Verifier must fail if a test case horizon_steps is altered."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            pkg = self._create_temp_package_copy(tmp_dir)
+            tc_path = pkg / "evaluation_cases" / "test_cases.csv"
+            with open(tc_path, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                header = reader.fieldnames or []
+                rows = list(reader)
+            rows[0]["horizon_steps"] = "9999"
+            with open(tc_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=header, lineterminator="\n")
+                writer.writeheader()
+                writer.writerows(rows)
+            self.assertFalse(verify_dataset(pkg, self.project_root))
+
+    def test_17_mutation_fails_on_changed_test_protocol_order_index(self):
+        """Verifier must fail if a test case protocol_order_index is altered."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            pkg = self._create_temp_package_copy(tmp_dir)
+            tc_path = pkg / "evaluation_cases" / "test_cases.csv"
+            with open(tc_path, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                header = reader.fieldnames or []
+                rows = list(reader)
+            rows[0]["protocol_order_index"] = "60"
+            with open(tc_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=header, lineterminator="\n")
+                writer.writeheader()
+                writer.writerows(rows)
+            self.assertFalse(verify_dataset(pkg, self.project_root))
+
+    def test_18_mutation_fails_on_changed_case_id(self):
+        """Verifier must fail if a test case case_id is altered."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            pkg = self._create_temp_package_copy(tmp_dir)
+            tc_path = pkg / "evaluation_cases" / "test_cases.csv"
+            with open(tc_path, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                header = reader.fieldnames or []
+                rows = list(reader)
+            rows[0]["case_id"] = "test/Fake/FakeSeq/geom-0/env-9101"
+            with open(tc_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=header, lineterminator="\n")
+                writer.writeheader()
+                writer.writerows(rows)
+            self.assertFalse(verify_dataset(pkg, self.project_root))
+
+    def test_19_mutation_fails_on_changed_packaged_geometry_sha256(self):
+        """Verifier must fail if a packaged geometry_sha256 is altered."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            pkg = self._create_temp_package_copy(tmp_dir)
+            g_path = pkg / "geometries.csv"
+            with open(g_path, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                header = reader.fieldnames or []
+                rows = list(reader)
+            rows[0]["geometry_sha256"] = "0000000000000000000000000000000000000000000000000000000000000000"
+            with open(g_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=header, lineterminator="\n")
+                writer.writeheader()
+                writer.writerows(rows)
+            self.assertFalse(verify_dataset(pkg, self.project_root))
+
+    def test_20_mutation_fails_on_changed_packaged_route_length_or_metadata(self):
+        """Verifier must fail if route_length_m or another metadata field in geometries.csv is altered."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            pkg = self._create_temp_package_copy(tmp_dir)
+            g_path = pkg / "geometries.csv"
+            with open(g_path, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                header = reader.fieldnames or []
+                rows = list(reader)
+            rows[0]["route_length_m"] = "9999.99"
+            with open(g_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=header, lineterminator="\n")
+                writer.writeheader()
+                writer.writerows(rows)
+            self.assertFalse(verify_dataset(pkg, self.project_root))
+
+    def test_21_mutation_fails_on_changed_packaged_preview_bytes(self):
+        """Verifier must fail if a packaged preview image is corrupted or altered."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            pkg = self._create_temp_package_copy(tmp_dir)
+            prev_file = pkg / "previews" / "easy_rank1_SCS_seed11.png"
+            prev_file.write_bytes(b"corrupted_png_bytes_mutation_test")
+            self.assertFalse(verify_dataset(pkg, self.project_root))
+
+    def test_22_mutation_fails_on_changed_declared_source_preview_sha(self):
+        """Verifier must fail if declared source-preview SHA in manifest does not match source on disk."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            pkg = self._create_temp_package_copy(tmp_dir)
+            mf_path = pkg / "dataset_manifest.json"
+            with open(mf_path, encoding="utf-8") as f:
+                data = json.load(f)
+            data["source_previews"][0]["sha256"] = "bad0000000000000000000000000000000000000000000000000000000000000"
+            with open(mf_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            self.assertFalse(verify_dataset(pkg, self.project_root))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -120,8 +120,8 @@ def verify_dataset(dataset_dir: Path, project_root: Path) -> bool:
         return False
     print("  [OK] All required files and directories exist.")
 
-    # 2. Geometries Master Table Verification
-    print("\n--- 2. Geometries Master Table (geometries.csv) ---")
+    # 2. Geometries Master Table Verification & Source Parity
+    print("\n--- 2. Geometries Master Table & Source Parity (geometries.csv) ---")
     geoms_path = dataset_dir / "geometries.csv"
     with open(geoms_path, newline="", encoding="utf-8") as f:
         geoms_rows = list(csv.DictReader(f))
@@ -140,6 +140,77 @@ def verify_dataset(dataset_dir: Path, project_root: Path) -> bool:
         errors.append("Duplicate (tier, sequence, geometry_generation_seed) tuples found in geometries.csv.")
     else:
         print(f"  [OK] Zero duplicate (tier, sequence, seed) keys.")
+
+    # Source Parity: Reconstruct expected geometries from frozen audit artifacts
+    cm_path = project_root / "results" / "audits" / "mapsuite" / "candidate_metrics.csv"
+    sm_path = project_root / "results" / "audits" / "evaluation_protocol" / "geometry_split_manifest.csv"
+    if not cm_path.is_file() or not sm_path.is_file():
+        errors.append("Missing source audit files required for geometry source parity check.")
+    else:
+        with open(cm_path, newline="", encoding="utf-8") as f:
+            src_cm_rows = list(csv.DictReader(f))
+        with open(sm_path, newline="", encoding="utf-8") as f:
+            src_sm_rows = list(csv.DictReader(f))
+
+        src_cm_map = {(r["difficulty_tier"], r["sequence"], int(r["scenario_seed"])): r for r in src_cm_rows}
+        src_sm_map = {(r["tier"], r["sequence"], int(r["geometry_generation_seed"])): r for r in src_sm_rows}
+
+        if len(src_cm_map) != 240 or len(src_sm_map) != 240:
+            errors.append(f"Source files row count invalid: cm={len(src_cm_map)}, sm={len(src_sm_map)}")
+
+        # Verify every packaged geometry row against source artifacts
+        mismatch_count = 0
+        for i, pkg_r in enumerate(geoms_rows):
+            key = (pkg_r["tier"], pkg_r["sequence"], int(pkg_r["geometry_generation_seed"]))
+            if key not in src_cm_map or key not in src_sm_map:
+                errors.append(f"Packaged geometry row {i} with key {key} not found in source artifacts.")
+                mismatch_count += 1
+                continue
+            scm = src_cm_map[key]
+            ssm = src_sm_map[key]
+
+            # Field-by-field verification across all exported attributes
+            checks = [
+                ("geometry_id", pkg_r["geometry_id"], ssm["geometry_id"]),
+                ("split", pkg_r["split"], ssm["split"]),
+                ("tier", pkg_r["tier"], ssm["tier"]),
+                ("sequence", pkg_r["sequence"], ssm["sequence"]),
+                ("geometry_generation_seed", pkg_r["geometry_generation_seed"], ssm["geometry_generation_seed"]),
+                ("candidate_role", pkg_r["candidate_role"], ssm["candidate_role"]),
+                ("geometry_sha256", pkg_r["geometry_sha256"], ssm["geometry_sha256"]),
+                ("geometry_hash_source", pkg_r["geometry_hash_source"], ssm["geometry_hash_source"]),
+                ("generation_success", pkg_r["generation_success"].lower(), scm["generation_success"].lower()),
+                ("block_ids", pkg_r["block_ids"], ssm["block_ids"]),
+                ("block_count", pkg_r["block_count"], scm["block_count"]),
+                ("route_length_m", float(pkg_r["route_length_m"]), float(ssm["route_length_m"])),
+                ("bbox_width_m", float(pkg_r["bbox_width_m"]), float(scm["bbox_width_m"])),
+                ("bbox_height_m", float(pkg_r["bbox_height_m"]), float(scm["bbox_height_m"])),
+                ("lane_width_m", float(pkg_r["lane_width_m"]), float(scm["lane_width"])),
+                ("base_lane_num", int(pkg_r["base_lane_num"]), int(scm["base_lane_num"])),
+                ("straight_count", int(pkg_r["straight_count"]), int(scm["straight_count"])),
+                ("curve_count", int(pkg_r["curve_count"]), int(scm["curve_count"])),
+                ("intersection_count", int(pkg_r["intersection_count"]), int(scm["intersection_count"])),
+                ("t_intersection_count", int(pkg_r["t_intersection_count"]), int(scm["t_intersection_count"])),
+                ("roundabout_count", int(pkg_r["roundabout_count"]), int(scm["roundabout_count"])),
+                ("ramp_count", int(pkg_r["ramp_count"]), int(scm["ramp_count"])),
+                ("merge_split_count", int(pkg_r["merge_split_count"]), int(scm["merge_split_count"])),
+                ("decision_block_count", int(pkg_r["decision_block_count"]), int(scm["decision_block_count"])),
+                ("branching_choice_score", int(pkg_r["branching_choice_score"]), int(scm["branching_choice_score"])),
+                ("traffic_density", float(pkg_r["traffic_density"]), float(ssm["traffic_density"])),
+                ("planned_traffic_vehicle_count", int(pkg_r["planned_traffic_vehicle_count"]), int(scm["planned_traffic_vehicle_count"])),
+                ("episode_budget_seconds", float(pkg_r["episode_budget_seconds"]), float(scm["episode_budget_seconds"])),
+                ("required_avg_speed_kmh_for_horizon_1000", float(pkg_r["required_avg_speed_kmh_for_horizon_1000"]), float(scm["required_avg_speed_kmh_for_horizon_1000"])),
+            ]
+            for col, val_pkg, val_src in checks:
+                if val_pkg != val_src:
+                    errors.append(f"Source parity mismatch for {pkg_r['geometry_id']} column '{col}': pkg={val_pkg} vs src={val_src}")
+                    mismatch_count += 1
+                    if mismatch_count > 10:
+                        break
+            if mismatch_count > 10:
+                break
+        if mismatch_count == 0:
+            print("  [OK] Exact source parity verified for geometries.csv across all 240 rows and all columns.")
 
     # Family counts and membership
     family_counts: Dict[Tuple[str, str], int] = {}
@@ -217,15 +288,19 @@ def verify_dataset(dataset_dir: Path, project_root: Path) -> bool:
     else:
         print("  [OK] Strict split partitioning verified: 180 TRAIN / 48 VALIDATION / 12 TEST disjoint, union = 240.")
 
-    # 4. Evaluation Cases Verification
-    print("\n--- 4. Evaluation Cases (evaluation_cases/) ---")
+    # 4. Evaluation Cases Verification & Source Parity
+    print("\n--- 4. Evaluation Cases & Source Parity (evaluation_cases/) ---")
     val_cases_path = dataset_dir / "evaluation_cases" / "validation_cases.csv"
     test_cases_path = dataset_dir / "evaluation_cases" / "test_cases.csv"
 
     with open(val_cases_path, newline="", encoding="utf-8") as f:
-        val_cases = list(csv.DictReader(f))
+        val_reader = csv.DictReader(f)
+        val_header = val_reader.fieldnames or []
+        val_cases = list(val_reader)
     with open(test_cases_path, newline="", encoding="utf-8") as f:
-        test_cases = list(csv.DictReader(f))
+        test_reader = csv.DictReader(f)
+        test_header = test_reader.fieldnames or []
+        test_cases = list(test_reader)
 
     if len(val_cases) != 96:
         errors.append(f"validation_cases.csv has {len(val_cases)} cases, expected 96.")
@@ -252,8 +327,50 @@ def verify_dataset(dataset_dir: Path, project_root: Path) -> bool:
             errors.append(f"Test case {tc['case_id']} references non-TEST geometry: {key}")
     print("  [OK] Evaluation cases reference strictly their designated split geometries.")
 
+    # Source Parity for Evaluation Cases: Compare against frozen manifests
+    src_val_manifest = project_root / "results" / "audits" / "evaluation_protocol" / "validation_case_manifest.csv"
+    src_test_manifest = project_root / "results" / "audits" / "evaluation_protocol" / "test_case_manifest.csv"
+
+    if not src_val_manifest.is_file() or not src_test_manifest.is_file():
+        errors.append("Missing source validation/test case manifests for evaluation parity check.")
+    else:
+        with open(src_val_manifest, newline="", encoding="utf-8") as f:
+            src_val_reader = csv.DictReader(f)
+            src_val_header = src_val_reader.fieldnames or []
+            src_val_cases = list(src_val_reader)
+        with open(src_test_manifest, newline="", encoding="utf-8") as f:
+            src_test_reader = csv.DictReader(f)
+            src_test_header = src_test_reader.fieldnames or []
+            src_test_cases = list(src_test_reader)
+
+        # Validation cases exact parity
+        if val_header != src_val_header:
+            errors.append(f"validation_cases.csv header mismatch: pkg={val_header} vs src={src_val_header}")
+        if len(val_cases) != len(src_val_cases):
+            errors.append(f"validation_cases.csv row count mismatch: pkg={len(val_cases)} vs src={len(src_val_cases)}")
+        else:
+            for idx, (p_row, s_row) in enumerate(zip(val_cases, src_val_cases)):
+                if p_row != s_row:
+                    errors.append(f"Validation case row {idx} mismatch: pkg={p_row} vs src={s_row}")
+                    break
+            else:
+                print("  [OK] Exact source parity verified for validation_cases.csv (96/96 rows identical).")
+
+        # Test cases exact parity
+        if test_header != src_test_header:
+            errors.append(f"test_cases.csv header mismatch: pkg={test_header} vs src={src_test_header}")
+        if len(test_cases) != len(src_test_cases):
+            errors.append(f"test_cases.csv row count mismatch: pkg={len(test_cases)} vs src={len(src_test_cases)}")
+        else:
+            for idx, (p_row, s_row) in enumerate(zip(test_cases, src_test_cases)):
+                if p_row != s_row:
+                    errors.append(f"Test case row {idx} mismatch: pkg={p_row} vs src={s_row}")
+                    break
+            else:
+                print("  [OK] Exact source parity verified for test_cases.csv (60/60 rows identical).")
+
     # 5. Source Artifact Provenance & Dataset Manifest
-    print("\n--- 5. Source Artifact Provenance ---")
+    print("\n--- 5. Source Artifact & Preview Provenance ---")
     manifest_path = dataset_dir / "dataset_manifest.json"
     with open(manifest_path, encoding="utf-8") as f:
         manifest_data = json.load(f)
@@ -278,8 +395,32 @@ def verify_dataset(dataset_dir: Path, project_root: Path) -> bool:
             else:
                 print(f"  [OK] Source artifact verified: {rel_p}")
 
-    # 6. Simulator Version & Commit Verification
-    print("\n--- 6. Simulator Metadata ---")
+    # Preview provenance verification
+    source_previews = manifest_data.get("source_previews", [])
+    if len(source_previews) != 12:
+        errors.append(f"Expected exactly 12 source_previews entries in manifest, found {len(source_previews)}")
+    else:
+        for sp in source_previews:
+            rel_p = sp.get("repo_relative_path", "")
+            declared_h = sp.get("sha256", "")
+            src_img_path = project_root / rel_p
+            if not src_img_path.is_file():
+                errors.append(f"Source preview declared in manifest not found on disk: {rel_p}")
+            else:
+                actual_h = compute_file_sha256(src_img_path)
+                if actual_h != declared_h:
+                    errors.append(f"Source preview hash mismatch for {rel_p}: declared={declared_h} vs disk={actual_h}")
+                # Verify that packaged preview is byte-identical to source preview
+                pkg_img_path = dataset_dir / "previews" / src_img_path.name
+                if not pkg_img_path.is_file():
+                    errors.append(f"Packaged preview missing: {pkg_img_path}")
+                elif pkg_img_path.read_bytes() != src_img_path.read_bytes():
+                    errors.append(f"Packaged preview {pkg_img_path.name} does not match source preview bytes")
+        if not any("preview" in e.lower() for e in errors):
+            print("  [OK] All 12 source previews verified and byte-identical to packaged previews.")
+
+    # 6. Simulator & Generation Config Verification
+    print("\n--- 6. Simulator Metadata & Generation Config ---")
     sim_info = manifest_data.get("simulator", {})
     if sim_info.get("version") != EXPECTED_METADRIVE_VERSION:
         errors.append(f"Simulator version mismatch in manifest: {sim_info.get('version')} vs {EXPECTED_METADRIVE_VERSION}")
@@ -294,7 +435,27 @@ def verify_dataset(dataset_dir: Path, project_root: Path) -> bool:
         errors.append(f"Simulator version mismatch in generation_config: {gsim.get('version')}")
     if gsim.get("pinned_commit") != EXPECTED_METADRIVE_COMMIT:
         errors.append(f"Simulator commit mismatch in generation_config: {gsim.get('pinned_commit')}")
-    print("  [OK] MetaDrive 0.4.3 / commit 85e5dadc verified across manifest and generation config.")
+
+    # Harden generation config assertions from frozen dataset/source artifacts
+    lane_cfg = gen_config.get("lane_configuration", {})
+    if lane_cfg.get("lane_width_m") != 3.5 or lane_cfg.get("base_lane_num") != 2:
+        errors.append(f"generation_config lane configuration invalid: {lane_cfg}")
+
+    seeds_cfg = gen_config.get("seeds", {})
+    if seeds_cfg.get("geometry_seed_min") != 0 or seeds_cfg.get("geometry_seed_max") != 19 or seeds_cfg.get("geometry_seeds_per_family") != 20:
+        errors.append(f"generation_config seeds configuration invalid: {seeds_cfg}")
+
+    traffic_cfg = gen_config.get("traffic_density_policy", {})
+    expected_density = {"Easy": 0.0, "Medium": 0.08, "Hard": 0.15, "Extreme": 0.25}
+    for t, expected_val in expected_density.items():
+        if traffic_cfg.get(t) != expected_val:
+            errors.append(f"generation_config traffic density mismatch for tier {t}: {traffic_cfg.get(t)} vs {expected_val}")
+
+    g_fams = gen_config.get("scenario_families", [])
+    if len(g_fams) != 12:
+        errors.append(f"generation_config scenario_families count mismatch: {len(g_fams)} vs 12")
+
+    print("  [OK] MetaDrive 0.4.3 / commit 85e5dadc and generation parameters strictly verified.")
 
     # 7. Package Checksums (CHECKSUMS.sha256)
     print("\n--- 7. Package Checksums (CHECKSUMS.sha256) ---")

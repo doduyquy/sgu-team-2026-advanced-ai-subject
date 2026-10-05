@@ -28,9 +28,9 @@ The master catalog contains exactly 240 rows, each describing one unique procedu
 | `tier` | String | `Easy`, `Medium`, `Hard`, `Extreme` | Intrinsic difficulty tier of the scenario. |
 | `sequence` | String | `SCXCS` | MetaDrive block sequence string defining the sequence of road blocks. |
 | `geometry_generation_seed` | Integer | `11` | Procedural generation seed ($0 \dots 19$) used to initialize MetaDrive's `BIG` algorithm. |
-| `candidate_role` | String | `primary_canonical`, `alternate_canonical`, `standard_pool` | Scientific role: Gate-2 human-reviewed canonical benchmark geometries vs. standard training/validation pool. |
+| `candidate_role` | String | `primary_canonical`, `alternate_canonical`, `pool_candidate` | Scientific benchmark role: `primary_canonical` (Gate-2 primary canonical benchmark geometry, 1 per tier), `alternate_canonical` (Gate-2 alternate canonical geometry, 2 per tier), or `pool_candidate` (standard geometry in the training/validation pool). |
 | `geometry_sha256` | String | `5999ad11...` | Cryptographic SHA-256 fingerprint of the road network and route checkpoints. |
-| `geometry_hash_source` | String | `checkpoint_route_network_v1` | Method name used to compute the geometry fingerprint. |
+| `geometry_hash_source` | String | `gate2_stored_exact`, `pinned_regeneration` | Method/origin of the geometry hash: `gate2_stored_exact` (exact hash verified from Gate-2 canonical audit) or `pinned_regeneration` (hash derived from pinned procedural regeneration in Gate 5). |
 | `generation_success` | Boolean | `True` | Whether MetaDrive's `BIG` algorithm constructed the map without unresolvable physical collision. |
 | `block_ids` | String | `ISCXCS` | Full ordered block string, including the implicit initial spawn straight block `I`. |
 | `block_count` | Integer | `6` | Total count of road blocks in the corridor. |
@@ -92,8 +92,8 @@ Contains the concrete paired evaluation cases evaluated by research agents durin
 
 | Column | Type | Example | Description |
 |---|---|---|---|
-| `case_index` | Integer | `0` | 0-based sequential row index within the manifest. |
-| `case_id` | String | `test_extreme_CrXROSTR_seed6_env9101` | Unique evaluation case identifier. |
+| `case_index` | Integer | `53` | Deterministic 1-based index assigned during initial grid construction (in tier/sequence/geom_seed/env_seed sorted order) prior to protocol shuffling. |
+| `case_id` | String | `test/Extreme/CrXROSTR/geom-6/env-9101` | Unique evaluation case identifier formatted as `<split>/<tier>/<sequence>/geom-<seed>/env-<seed>`. |
 | `tier` | String | `Extreme` | Difficulty tier of the evaluated geometry. |
 | `sequence` | String | `CrXROSTR` | Scenario family sequence string. |
 | `candidate_role` | String | `primary_canonical` | Role of the underlying geometry (`primary_canonical` or `alternate_canonical`). |
@@ -102,7 +102,7 @@ Contains the concrete paired evaluation cases evaluated by research agents durin
 | `environment_seed` | Integer | `9101` | Seed used to initialize dynamic traffic positions and initial conditions. |
 | `traffic_density` | Float | `0.25` | Traffic density active during this case. |
 | `horizon_steps` | Integer | `1224` | Route-aware calibrated step horizon limit for this case. |
-| `protocol_order_index` | Integer | `1` | 1-based evaluation order index deterministically shuffled via `protocol_order_seed = 424242`. |
+| `protocol_order_index` | Integer | `1` | Deterministic 1-based execution order index assigned after shuffling the evaluation grid with `protocol_order_seed = 424242`. All algorithms evaluate cases in this exact sequence. |
 
 ---
 
