@@ -1,0 +1,149 @@
+{
+  "dataset_id": "mapsuite_v1",
+  "dataset_version": "1.0.0",
+  "simulator": {
+    "name": "MetaDrive",
+    "version": "0.4.3",
+    "pinned_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "upstream_repository": "https://github.com/metadriverse/metadrive"
+  },
+  "generation_method": "MetaDrive BIG (Block-Intersection Generator)",
+  "generator_source_references": [
+    "metadrive/component/map/pg_map.py",
+    "metadrive/component/algorithm/BIG.py",
+    "metadrive/component/algorithm/blocks_prob_dist.py",
+    "metadrive/component/pg_space.py"
+  ],
+  "lane_configuration": {
+    "lane_width_m": 3.5,
+    "base_lane_num": 2,
+    "random_lane_width": false,
+    "random_lane_num": false
+  },
+  "block_parameter_bounds": {
+    "straight_length_range_m": [
+      40.0,
+      80.0
+    ],
+    "curve_radius_range_m": [
+      25.0,
+      60.0
+    ],
+    "curve_angle_range_deg": [
+      45.0,
+      135.0
+    ],
+    "max_block_generation_trials": 5
+  },
+  "seeds": {
+    "geometry_seed_min": 0,
+    "geometry_seed_max": 19,
+    "geometry_seeds_per_family": 20,
+    "total_geometries": 240
+  },
+  "traffic_density_policy": {
+    "Easy": 0.0,
+    "Medium": 0.08,
+    "Hard": 0.15,
+    "Extreme": 0.25,
+    "traffic_mode": "Trigger"
+  },
+  "scenario_families": [
+    {
+      "tier": "Easy",
+      "sequence": "SCS",
+      "family_rank_within_tier": 1,
+      "block_count": 4,
+      "first_block_id": "I",
+      "sequence_block_ids": "SCS"
+    },
+    {
+      "tier": "Easy",
+      "sequence": "SCSS",
+      "family_rank_within_tier": 2,
+      "block_count": 5,
+      "first_block_id": "I",
+      "sequence_block_ids": "SCSS"
+    },
+    {
+      "tier": "Easy",
+      "sequence": "SCCS",
+      "family_rank_within_tier": 3,
+      "block_count": 5,
+      "first_block_id": "I",
+      "sequence_block_ids": "SCCS"
+    },
+    {
+      "tier": "Medium",
+      "sequence": "SCXCS",
+      "family_rank_within_tier": 1,
+      "block_count": 6,
+      "first_block_id": "I",
+      "sequence_block_ids": "SCXCS"
+    },
+    {
+      "tier": "Medium",
+      "sequence": "SCTCS",
+      "family_rank_within_tier": 2,
+      "block_count": 6,
+      "first_block_id": "I",
+      "sequence_block_ids": "SCTCS"
+    },
+    {
+      "tier": "Medium",
+      "sequence": "SCXCCS",
+      "family_rank_within_tier": 3,
+      "block_count": 7,
+      "first_block_id": "I",
+      "sequence_block_ids": "SCXCCS"
+    },
+    {
+      "tier": "Hard",
+      "sequence": "SCXOCS",
+      "family_rank_within_tier": 1,
+      "block_count": 7,
+      "first_block_id": "I",
+      "sequence_block_ids": "SCXOCS"
+    },
+    {
+      "tier": "Hard",
+      "sequence": "SCTXrCS",
+      "family_rank_within_tier": 2,
+      "block_count": 8,
+      "first_block_id": "I",
+      "sequence_block_ids": "SCTXrCS"
+    },
+    {
+      "tier": "Hard",
+      "sequence": "XTOCS",
+      "family_rank_within_tier": 3,
+      "block_count": 6,
+      "first_block_id": "I",
+      "sequence_block_ids": "XTOCS"
+    },
+    {
+      "tier": "Extreme",
+      "sequence": "CrXROSTR",
+      "family_rank_within_tier": 1,
+      "block_count": 9,
+      "first_block_id": "I",
+      "sequence_block_ids": "CrXROSTR"
+    },
+    {
+      "tier": "Extreme",
+      "sequence": "SCXOCrTYCS",
+      "family_rank_within_tier": 2,
+      "block_count": 11,
+      "first_block_id": "I",
+      "sequence_block_ids": "SCXOCrTYCS"
+    },
+    {
+      "tier": "Extreme",
+      "sequence": "SCTXORyCCS",
+      "family_rank_within_tier": 3,
+      "block_count": 11,
+      "first_block_id": "I",
+      "sequence_block_ids": "SCTXORyCCS"
+    }
+  ]
+}

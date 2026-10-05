@@ -12,6 +12,7 @@ Read these when joining or developing the project:
 - [`AGENT_DEVELOPMENT_GUIDE.md`](AGENT_DEVELOPMENT_GUIDE.md) — how to implement and register agents.
 - [`STAGE_ROADMAP.md`](STAGE_ROADMAP.md) — Stage 0–7 research map and expected integration boundaries.
 - [`WORKBENCH_GUIDE.md`](WORKBENCH_GUIDE.md) — practical Research Workbench usage.
+- [`../datasets/mapsuite_v1/README.md`](../datasets/mapsuite_v1/README.md) — dataset card for the packaged MetaDrive MapSuite V1 procedural benchmark.
 
 ## 2. Detailed technical evidence
 

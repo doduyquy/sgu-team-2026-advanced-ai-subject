@@ -1,0 +1,100 @@
+{
+  "dataset_id": "mapsuite_v1",
+  "dataset_name": "MetaDrive MapSuite V1",
+  "dataset_version": "1.0.0",
+  "dataset_type": "procedural_scenario_benchmark",
+  "scientific_status": "DERIVED_FROM_FROZEN_PLATFORM_V1_BENCHMARK",
+  "description": "Fixed, reproducible 240-geometry procedural benchmark dataset for autonomous driving research on MetaDrive 0.4.3.",
+  "counts": {
+    "scenario_families": 12,
+    "geometries": 240,
+    "train_geometries": 180,
+    "validation_geometries": 48,
+    "test_geometries": 12,
+    "validation_cases": 96,
+    "test_cases": 60,
+    "representative_previews": 12
+  },
+  "split_summary": {
+    "TRAIN": 180,
+    "VALIDATION": 48,
+    "TEST": 12
+  },
+  "simulator": {
+    "name": "MetaDrive",
+    "version": "0.4.3",
+    "commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db"
+  },
+  "source_artifacts": [
+    {
+      "repo_relative_path": "results/audits/mapsuite/candidate_metrics.csv",
+      "sha256": "4fa9ba39ef5312401c2a2efadfead3e1badde349b0229da1b752239c887a93f4"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/canonical_candidates.json",
+      "sha256": "8a1b4e1ae01c174f7f74437a5d5fd6346e2306ae7ff86d8ce474077457879d5a"
+    },
+    {
+      "repo_relative_path": "results/audits/evaluation_protocol/geometry_split_manifest.csv",
+      "sha256": "ec1099eb93252f445d7afa95fd19270e72d5a8f37282701d6935e283a0997134"
+    },
+    {
+      "repo_relative_path": "results/audits/evaluation_protocol/validation_case_manifest.csv",
+      "sha256": "dc5d2574f588829be5cf65739739654b72e8754b575e18a6813e82791b937fad"
+    },
+    {
+      "repo_relative_path": "results/audits/evaluation_protocol/test_case_manifest.csv",
+      "sha256": "3e55a55b77887423413f612f50ba213d8329e1aa941364488160ba8b72463370"
+    }
+  ],
+  "source_previews": [
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/easy_rank1_SCS_seed11.png",
+      "sha256": "eb80eeee662d53fcd183e9739222da9c719df467777388633795ed4fb5da300c"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/easy_rank2_SCSS_seed9.png",
+      "sha256": "caab2fa48bd287e093307c1a17ff5155ce2ee8f702a15d787780c531999e453a"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/easy_rank3_SCCS_seed9.png",
+      "sha256": "711dd2c6d471bb6d70f6714834c780c9fa254bedc97d79f6b91e149f1bf96a16"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/extreme_rank1_CrXROSTR_seed6.png",
+      "sha256": "fe2f7d7a3d9b86514da8f19164817b26802379aa427311284c58562911dd3aa3"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/extreme_rank2_SCXOCrTYCS_seed16.png",
+      "sha256": "4be83f869fc0bf81e8b7dcbb668d9d688ae68e0d8501952b4bce919868888af4"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/extreme_rank3_SCTXORyCCS_seed4.png",
+      "sha256": "551a6d2c37b1fc74e8c856e43fb4e766f53f81b0312dc91f12e479e661301f5d"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/hard_rank1_SCXOCS_seed2.png",
+      "sha256": "d39bdf9d0f7ac43df95e4fee69691495266a5043ca9beef695b000ff78da6b76"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/hard_rank2_SCTXrCS_seed1.png",
+      "sha256": "dca32896d01b3f4a3ee482a1a2df5d2824428011ae768bcb2ae4c3c96b51605d"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/hard_rank3_XTOCS_seed19.png",
+      "sha256": "e43486313ce1c4d525d44fa1ddc459a1d236d7d6475027d2a323d200d302d18b"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/medium_rank1_SCXCS_seed11.png",
+      "sha256": "324dba824a93a42f82ea3f627213d4bc239914f590f9d4eb1389636ab64b1726"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/medium_rank2_SCTCS_seed0.png",
+      "sha256": "cacc84a74d6d278a1df7ed03a9ea0dc4822280f75f49c0a97b2420888571e673"
+    },
+    {
+      "repo_relative_path": "results/audits/mapsuite/previews/medium_rank3_SCXCCS_seed13.png",
+      "sha256": "313285619d00f3e2f6bf051d4815ae7e10ddb0bc628c219b734f57538ab5325b"
+    }
+  ]
+}

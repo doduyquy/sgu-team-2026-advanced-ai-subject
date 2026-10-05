@@ -50,6 +50,8 @@ The geometry universe is deterministically split into:
 
 The canonical evaluation manifests expand these to **96 validation cases** and **60 test cases** through fixed environment seeds.
 
+The scenario suite, split manifests, and evaluation cases are packaged as the [`MapSuite V1 dataset`](../datasets/mapsuite_v1/README.md) under `datasets/mapsuite_v1/`.
+
 The key research rule is that the benchmark is fixed before comparing agents. A poor algorithm result is not a reason to replace TEST maps.
 
 ## 3. Information available to an agent
