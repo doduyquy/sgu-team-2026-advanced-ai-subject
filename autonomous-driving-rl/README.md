@@ -14,6 +14,7 @@ The repository currently contains several fixture agents used to test the platfo
 
 - **MetaDrive pin:** version `0.4.3`, commit `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`.
 - **Scenario suite:** 12 scenario families × 20 geometry seeds = **240 geometries**, grouped into Easy / Medium / Hard / Extreme.
+- **Packaged benchmark dataset:** [`datasets/mapsuite_v1/`](datasets/mapsuite_v1/) packages the frozen 240-geometry procedural benchmark, split definitions, and canonical evaluation suites.
 - **Fixed split:** 180 TRAIN, 48 VALIDATION geometries, 12 TEST geometries. Canonical suites contain **96 validation cases** and **60 test cases**.
 - **Common agent input:** 259D core MetaDrive observation (9 ego + 10 navigation + 240 LiDAR), plus structured traffic context and route/task context.
 - **Common actuator contract:** `[steering, throttle_brake]` in `[-1, 1]^2`, nominally at **10 Hz**. Certified continuous and discrete adapters are available.
@@ -35,6 +36,7 @@ If this is your first time working on the project, read these in order:
 4. [`docs/AGENT_DEVELOPMENT_GUIDE.md`](docs/AGENT_DEVELOPMENT_GUIDE.md) — implement a new agent without bypassing the platform.
 5. [`docs/STAGE_ROADMAP.md`](docs/STAGE_ROADMAP.md) — see how Stage 0 through Stage 7 fit on the same platform.
 6. [`docs/WORKBENCH_GUIDE.md`](docs/WORKBENCH_GUIDE.md) — use the desktop Research Workbench.
+7. [`datasets/mapsuite_v1/`](datasets/mapsuite_v1/) — explore the packaged procedural benchmark dataset.
 
 Detailed platform audit reports remain under [`docs/environment/`](docs/environment/) for anyone who needs implementation-level evidence.
 
@@ -66,6 +68,7 @@ Trying to use the fixture agents for `VALIDATION` or `TEST` is expected to be bl
 ```text
 autonomous-driving-rl/
 ├── configs/platform/       # Versioned scientific contracts and benchmark configuration
+├── datasets/               # Packaged research datasets (e.g. MapSuite V1 procedural benchmark)
 ├── docs/                   # Human-facing guides + detailed audit/reference documents
 ├── experiments/            # Future experiment/training definitions and orchestration notes
 ├── results/audits/         # Committed machine-derived platform audit evidence

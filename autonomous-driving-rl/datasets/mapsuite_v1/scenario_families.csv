@@ -1,0 +1,13 @@
+tier,family_rank_within_tier,sequence,geometry_seed_count,geometry_seed_min,geometry_seed_max,traffic_density,representative_geometry_seed,representative_preview
+Easy,1,SCS,20,0,19,0.0,11,previews/easy_rank1_SCS_seed11.png
+Easy,2,SCSS,20,0,19,0.0,9,previews/easy_rank2_SCSS_seed9.png
+Easy,3,SCCS,20,0,19,0.0,9,previews/easy_rank3_SCCS_seed9.png
+Medium,1,SCXCS,20,0,19,0.08,11,previews/medium_rank1_SCXCS_seed11.png
+Medium,2,SCTCS,20,0,19,0.08,0,previews/medium_rank2_SCTCS_seed0.png
+Medium,3,SCXCCS,20,0,19,0.08,13,previews/medium_rank3_SCXCCS_seed13.png
+Hard,1,SCXOCS,20,0,19,0.15,2,previews/hard_rank1_SCXOCS_seed2.png
+Hard,2,SCTXrCS,20,0,19,0.15,1,previews/hard_rank2_SCTXrCS_seed1.png
+Hard,3,XTOCS,20,0,19,0.15,19,previews/hard_rank3_XTOCS_seed19.png
+Extreme,1,CrXROSTR,20,0,19,0.25,6,previews/extreme_rank1_CrXROSTR_seed6.png
+Extreme,2,SCXOCrTYCS,20,0,19,0.25,16,previews/extreme_rank2_SCXOCrTYCS_seed16.png
+Extreme,3,SCTXORyCCS,20,0,19,0.25,4,previews/extreme_rank3_SCTXORyCCS_seed4.png
