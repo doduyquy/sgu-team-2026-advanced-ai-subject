@@ -1,135 +1,88 @@
-# Autonomous Driving Subproject (MetaDrive)
+# Autonomous Driving Research Platform (MetaDrive)
 
-This subproject focuses on research and development of decision-making, planning, and learning algorithms for autonomous driving using the [MetaDrive](https://github.com/metadriverse/metadrive) simulator.
+This directory is the autonomous-driving research subproject for the SGU Advanced AI course. MetaDrive is used as the simulation engine; the team has built a reproducible **Research Platform V1** on top of it so different agent families can be developed and compared under the same environment, information rights, benchmark cases, episode rules, metrics, and logging pipeline.
 
----
+## Current status
 
-## 1. Project Purpose & Scope
+**Platform foundation: complete.** The environment, benchmark protocol, agent interface, logging/provenance, launcher/preflight layer, and Research Workbench are implemented and hardened.
 
-The objective of this research track within the SGU Advanced AI course is to systematically investigate autonomous driving agents across an 8-stage progression:
-- **Stage 0**: Random / Sanity-check Baseline
-- **Stage 1**: Rule-Based / Heuristic
-- **Stage 2**: Planning / Search
-- **Stage 3**: Simulation-Based Planning
-- **Stage 4**: Learning from Data (Imitation Learning / Behavior Cloning)
-- **Stage 5**: Model-Free Reinforcement Learning
-- **Stage 6**: Search + Learning (AlphaZero-inspired planning + value/policy networks)
-- **Stage 7**: Model-Based Reinforcement Learning (Learned world models / MuZero)
+**Next research milestone: Stage 0 — Random / Naive Baseline Agent.**
 
-### Current Implementation Status: Stopped at Exploratory Stage 0
+The repository currently contains several fixture agents used to test the platform. They are intentionally **not benchmark agents** and are blocked from canonical VALIDATION/TEST runs. The old `CourseEnvV1` + `src/evaluation/evaluate_random.py` path is retained only as a legacy prototype/compatibility path; it is not the current scientific benchmark.
 
-> ⚠️ **Important Note**:
-> The subproject is **strictly at Stage 0 (Baseline / Exploratory Prototype)**.
-> **No Stage 1 (Rule-Based) or later agents are implemented.**
-> The immediate next steps are literature review, requirement analysis, and architectural design discussions, **NOT** jumping straight into coding Stage 1 agents.
+## What Platform V1 provides
 
----
+- **MetaDrive pin:** version `0.4.3`, commit `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`.
+- **Scenario suite:** 12 scenario families × 20 geometry seeds = **240 geometries**, grouped into Easy / Medium / Hard / Extreme.
+- **Fixed split:** 180 TRAIN, 48 VALIDATION geometries, 12 TEST geometries. Canonical suites contain **96 validation cases** and **60 test cases**.
+- **Common agent input:** 259D core MetaDrive observation (9 ego + 10 navigation + 240 LiDAR), plus structured traffic context and route/task context.
+- **Common actuator contract:** `[steering, throttle_brake]` in `[-1, 1]^2`, nominally at **10 Hz**. Certified continuous and discrete adapters are available.
+- **Episode semantics:** clean success, safety failures, timeout, safety-first outcome precedence, and route-aware horizons.
+- **Reward:** route progress + time cost + terminal outcome; reward is a training signal, not a benchmark ranking score.
+- **Primary evaluation:** clean success rate, safety failure rate, mean/median final route completion, and mean time to clean success.
+- **Reproducibility:** explicit geometry/environment/agent seed separation, fixed manifests, holdout protection, provenance, and run integrity checks.
+- **Local-first logging:** local artifacts are authoritative; W&B is optional downstream tracking/visualization.
+- **Launcher + preflight:** resolves an experiment plan and blocks invalid or scientifically inconsistent runs before simulation.
+- **Research Workbench:** GUI for experiment setup, preflight, live monitoring, case/agent browsing, and verified result inspection.
 
-## 2. Directory Layout & MetaDrive Dependency
+## Start here
 
-To keep the repository lightweight and prevent Python module shadowing conflicts, MetaDrive source code is hosted as an **external sibling repository**:
+If this is your first time working on the project, read these in order:
+
+1. [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) — install and verify the project on a new machine.
+2. [`docs/PLATFORM_V1_OVERVIEW.md`](docs/PLATFORM_V1_OVERVIEW.md) — understand the environment and scientific contracts already built.
+3. [`docs/EXPERIMENT_WORKFLOW.md`](docs/EXPERIMENT_WORKFLOW.md) — learn SANDBOX / VALIDATION / TEST and how agents are compared.
+4. [`docs/AGENT_DEVELOPMENT_GUIDE.md`](docs/AGENT_DEVELOPMENT_GUIDE.md) — implement a new agent without bypassing the platform.
+5. [`docs/STAGE_ROADMAP.md`](docs/STAGE_ROADMAP.md) — see how Stage 0 through Stage 7 fit on the same platform.
+6. [`docs/WORKBENCH_GUIDE.md`](docs/WORKBENCH_GUIDE.md) — use the desktop Research Workbench.
+
+Detailed platform audit reports remain under [`docs/environment/`](docs/environment/) for anyone who needs implementation-level evidence.
+
+## Quick start after installation
+
+From `autonomous-driving-rl/`:
+
+```powershell
+# Inspect registered agents
+python -m src.launcher.cli agents
+
+# Inspect training cases
+python -m src.launcher.cli cases --split TRAIN --tier Easy --limit 5
+
+# Resolve a safe single-case sandbox plan without running the simulator
+python -m src.launcher.cli plan --mode SANDBOX --agent fixture_seeded_random --tier Easy --agent-seed 101
+
+# Run one sandbox episode (fixture only, not a benchmark result)
+python -m src.launcher.cli run --mode SANDBOX --agent fixture_seeded_random --tier Easy --agent-seed 101 --render NATIVE
+
+# Launch Research Workbench
+python -m src.workbench.app
+```
+
+Trying to use the fixture agents for `VALIDATION` or `TEST` is expected to be blocked by preflight. That is a safety feature, not an error.
+
+## Repository map
 
 ```text
-D:\SGU\CNTT\TTNTNC\
-├── sgu-team-2026-advanced-ai-subject\          # Main course repository
-│   └── autonomous-driving-rl\                 # This subproject directory
-│       ├── README.md                          # Subproject documentation
-│       ├── configs/                           # Experiment configs and schema templates
-│       ├── docs/                              # Environment guides, survey notes, ADRs
-│       ├── experiments/                       # Experiment execution scripts
-│       ├── results/                           # Curated benchmark results
-│       ├── runs/                              # Transient execution logs (git-ignored)
-│       ├── scripts/                           # Utility diagnostic scripts
-│       ├── src/                               # Python packages: environments, agents, logging
-│       │   ├── agents/                        # Agent implementations (Stage 0 only)
-│       │   ├── environments/                  # Environment wrappers (CourseEnvV1)
-│       │   ├── evaluation/                    # Evaluation harness (evaluate_random.py)
-│       │   └── logging/                       # Lightweight logging scaffold
-│       ├── inspect_metadrive.py               # Exploratory inspection script
-│       ├── inspect_observation.py             # Vehicle state inspection
-│       ├── inspect_observation_parts.py       # Decomposition inspection (Ego, Nav, LiDAR)
-│       ├── inspect_dynamic_observation.py     # Stepping & dynamic sensor inspection
-│       ├── inspect_reward_config.py           # MetaDrive default reward inspection
-│       └── test_course_env.py                 # CourseEnvV1 test runner
-└── metadrive-src\                              # External MetaDrive repository (0.4.3)
+autonomous-driving-rl/
+├── configs/platform/       # Versioned scientific contracts and benchmark configuration
+├── docs/                   # Human-facing guides + detailed audit/reference documents
+├── experiments/            # Future experiment/training definitions and orchestration notes
+├── results/audits/         # Committed machine-derived platform audit evidence
+├── runs/                   # Local experiment outputs (git-ignored except .gitkeep)
+├── scripts/                # Platform audit and diagnostic scripts
+├── src/
+│   ├── agents/             # Research agent implementations (Stage 0 onward)
+│   ├── environments/       # Legacy CourseEnvV1 compatibility wrapper
+│   ├── evaluation/         # Legacy exploratory evaluator; not the canonical benchmark path
+│   ├── launcher/           # Plan resolver, registry, preflight, executor, CLI
+│   ├── platform/           # Core scientific contracts: input/action/episode/reward/metrics/logging
+│   └── workbench/          # PySide6 Research Workbench
+└── tests/                  # Platform regression tests
 ```
 
-For complete installation steps and package shadowing guidance, see:
-👉 [docs/environment/METADRIVE_SETUP.md](docs/environment/METADRIVE_SETUP.md)
+## Project rule that matters most
 
----
+**Algorithms change; the benchmark must not be changed merely because an algorithm performs poorly.**
 
-## 3. Current Exploratory Environment Interface
-
-The initial exploratory environment wrapper (`CourseEnvV1` in `src/environments/course_env_v1.py`) wraps MetaDrive with an experimental compact observation and discrete action space.
-
-*Note: These interfaces are exploratory prototypes designed for initial pipeline validation, NOT finalized architectural commitments.*
-
-### Observation Space
-- **Raw MetaDrive observation**: `Box(..., (259,), float32)`
-  - **Ego vehicle state** (9D): Left/right boundary distances, heading difference, velocity, steering, previous steering, previous throttle/brake, yaw rate, lateral position.
-  - **Navigation checkpoints** (10D): Checkpoints forward/lateral projections, lane radius, curvature direction, lane angle.
-  - **LiDAR cloud** (240D): 240 laser detection rays normalized in `[0.0, 1.0]`.
-- **Experimental Course Observation** (35D):
-  - 19D (9 Ego + 10 Navigation)
-  - 16D compressed LiDAR sectors (taking the minimum distance across 16 equal partitions of the 240 rays).
-
-### Action Space
-- **Native MetaDrive action space**: Continuous `Box(-1.0, 1.0, (2,), float32)` representing `[steering, throttle_brake]`.
-- **Experimental Course Action Space**: `Discrete(5)`
-  - `0`: LEFT `[-0.35, 0.35]`
-  - `1`: STRAIGHT `[0.00, 0.40]`
-  - `2`: RIGHT `[0.35, 0.35]`
-  - `3`: ACCELERATE `[0.00, 0.80]`
-  - `4`: BRAKE `[0.00, -0.80]`
-
-### Reward Function
-- Native MetaDrive composite reward (forward driving progress + velocity bonuses − collision/out-of-road penalties).
-
----
-
-## 4. Stage 0 Random Baseline (Exploratory Findings)
-
-The random agent policy selects uniform random actions from `Discrete(5)`.
-
-In one exploratory 20-episode validation run with `traffic_density=0.0` and single-scenario configuration, observed outcomes were approximately:
-- **Episodes**: 20
-- **Success rate**: 0.0%
-- **Crash rate**: 0.0%
-- **Out-of-road rate**: ~65.0% (remaining ~35% terminated on horizon timeout)
-- **Mean route completion**: ~0.070
-- **Mean episode reward**: ~28.058
-- **Mean episode length**: ~624.8 steps
-
-> ⚠️ **Notice & Stochasticity**: The current exploratory evaluator does not establish a finalized deterministic benchmark protocol. Because action sampling is uniform random and currently unseeded, individual exploratory runs can produce different aggregate metrics. These figures describe **one illustrative exploratory run** intended solely to verify environment stepping, collision/boundary detection, and termination signals. They are **not** final scientific benchmark numbers.
-
----
-
-## 5. Running the Exploratory Scripts
-
-Activate the Conda environment:
-```powershell
-conda activate metadrive
-```
-
-Run headless inspection scripts:
-```powershell
-python inspect_metadrive.py
-python inspect_observation.py
-python inspect_observation_parts.py
-python inspect_reward_config.py
-```
-
-Run the Stage-0 random baseline evaluation (from the `autonomous-driving-rl` project root):
-```powershell
-python -m src.evaluation.evaluate_random
-```
-
----
-
-## 6. Known Limitations & Next Steps
-
-1. **Discrete Action Granularity**: The 5-action discrete mapping is rigid and lacks combined maneuvers (e.g. slight steering while coasting or hard braking while steering). Future revisions will evaluate discrete expansions (e.g., 9 actions) or continuous action controllers.
-2. **LiDAR Reduction**: Aggregating 240 rays into 16 min-pooled sectors loses fine angular resolution of narrow obstacles.
-3. **Reward Alignment**: The native reward was designed for dense model-free RL; reward shaping or multi-objective metrics may be required for planning algorithms.
-4. **Immediate Next Step**: Conduct a systematic literature survey covering autonomous-driving decision making, rule/heuristic baselines, planning/search, simulation-based planning, learning from data/imitation learning, model-free RL, search+learning, model-based RL, simulator/benchmark design, and evaluation methodology. The purpose of the survey is to decide the final project direction and architecture before Stage 1 implementation. (Methods such as IDM/MOBIL may serve as illustrative survey references, but are not pre-selected as the final architecture).
+TRAIN is for development, VALIDATION is for tuning/model selection, and TEST is the final holdout. If a future research stage truly requires a new information contract, action model, or benchmark capability, that change must be proposed and versioned explicitly instead of being introduced silently inside an agent.

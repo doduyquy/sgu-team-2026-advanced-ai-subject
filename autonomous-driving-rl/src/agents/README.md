@@ -1,9 +1,19 @@
-# Agents
+# Research Agents
 
-This directory contains autonomous driving agent policy implementations across the development line.
+This package is the intended home for real Stage 0+ agent implementations.
 
-## Development Status
+## Current state
 
-- **Current Stage**: Stage 0 — Baseline (Random Agent).
-- **Subsequent Stages**: Stage 1 (Rule-Based), Stage 2 (Planning/Search), Stage 3 (Simulation-Based Planning), Stage 4 (Learning from Data), Stage 5 (Model-Free RL), Stage 6 (Search + Learning), and Stage 7 (Model-Based RL).
-- **Notice**: Development beyond Stage 0 is intentionally paused pending formal literature review, architecture discussion, and baseline validation. No Stage 1 or later agent is implemented in this scaffold.
+Platform V1 is complete, but the **canonical Stage 0 Random / Naive research baseline is the next implementation milestone**. Existing `fixture_*` policies live in the platform verification layer and are not substitutes for scientific stage implementations.
+
+## Before adding an agent
+
+Read:
+
+- [`../../docs/AGENT_DEVELOPMENT_GUIDE.md`](../../docs/AGENT_DEVELOPMENT_GUIDE.md)
+- [`../../docs/STAGE_ROADMAP.md`](../../docs/STAGE_ROADMAP.md)
+- [`../../docs/EXPERIMENT_WORKFLOW.md`](../../docs/EXPERIMENT_WORKFLOW.md)
+
+New agents should implement the common `AgentPolicy` lifecycle, consume `AgentInputV1`, emit actions through a certified adapter, and be registered in `src/launcher/registry.py`.
+
+Do not implement private environment wrappers or read evaluator internals from an agent merely to simplify one method.
