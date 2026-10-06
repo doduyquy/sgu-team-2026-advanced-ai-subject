@@ -4,6 +4,7 @@
   "checks": [
     {
       "command": "python -m unittest tests.test_mapsuite_dataset -v",
+      "errors": 0,
       "failed": 0,
       "passed": 22,
       "skipped": 0,
@@ -11,25 +12,31 @@
     },
     {
       "command": "python -m unittest tests.test_mapsuite_preview_export -v",
+      "duration_seconds": 21.157,
+      "errors": 0,
       "failed": 0,
-      "passed": 20,
+      "passed": 27,
       "skipped": 0,
-      "tests": 20
+      "tests": 27
     },
     {
       "command": "python -m unittest discover -s tests -p \"test_*.py\"",
-      "detail": "MetaDrive imported before PySide6.QtWidgets during discovery; no completed test count.",
+      "completed_test_count": null,
+      "detail": "The recorded Windows MetaDrive-before-Qt native import-order crash persists.",
       "exit_code_hex": "0xC0000005",
+      "returncode": 3221225477,
       "status": "NATIVE_IMPORT_CRASH"
     },
     {
       "command": "python -X faulthandler -u -c \"from PySide6.QtCore import QProcess; from PySide6.QtWidgets import QApplication; import unittest; suite=unittest.defaultTestLoader.discover('tests',pattern='test_*.py'); result=unittest.TextTestRunner(verbosity=2).run(suite); raise SystemExit(not result.wasSuccessful())\"",
-      "duration_seconds": 58.837,
+      "duration_seconds": 81.48,
+      "errors": 0,
       "failed": 0,
-      "passed": 392,
+      "full_discovery_coverage": "393 prior tests plus all 7 new provenance tests; none excluded",
+      "passed": 399,
       "skip_reason": "Existing test_35_symlink_escape_rejected_when_supported: Windows symlink creation unsupported without privileges.",
       "skipped": 1,
-      "tests": 393
+      "tests": 400
     },
     {
       "checksummed_files": 24,
@@ -37,29 +44,77 @@
       "status": "PASS"
     },
     {
-      "command": "python scripts/export_mapsuite_v1_previews.py --output artifacts/verified_preview_export/mapsuite_v1_previews --zip",
+      "command": "python scripts/export_mapsuite_v1_previews.py --output artifacts/pr27_correction/verified_export/mapsuite_v1_previews --zip",
       "status": "PASS"
     },
     {
-      "command": "python scripts/export_mapsuite_v1_previews.py --verify artifacts/verified_preview_export/mapsuite_v1_previews",
+      "command": "python scripts/export_mapsuite_v1_previews.py --verify artifacts/pr27_correction/verified_export/mapsuite_v1_previews",
       "status": "PASS"
     }
   ],
+  "ci_verification_claimed": false,
+  "correction_commits": [
+    {
+      "sha": "d53f01665fa206e7ceadd7cb4445b4af8d646713",
+      "subject": "fix(mapsuite): verify preview provenance against recorded Git source"
+    },
+    {
+      "sha": "432a6e971ffbbfd10cce2c53e060fdfdc207ba10",
+      "subject": "docs(mapsuite): record lane metadata erratum and onboarding caveats"
+    }
+  ],
   "drive_upload_performed": false,
+  "encoding_artifacts_fixed": 25,
   "export": {
     "bundle_bytes": 4537606,
     "checksum_status": "VERIFIED",
-    "duration_seconds": 284.453,
+    "current_checkout_compatibility_status": "VERIFIED",
+    "duration_seconds": 233.717,
+    "exporter_sha256": "bf3c271d11b93f6a0999883aee9c14301dba73ce0139780f69e8a970f78377d8",
     "failures": 0,
-    "output_directory": "artifacts/verified_preview_export/mapsuite_v1_previews",
+    "internal_integrity_status": "VERIFIED",
+    "output_directory": "artifacts/pr27_correction/verified_export/mapsuite_v1_previews",
     "png_count": 240,
-    "source_git_sha": "de1eb236969b4d94175fbd3ff6bbf1e06aef81b3",
-    "zip_bytes": 3771796,
-    "zip_path": "artifacts/verified_preview_export/mapsuite_v1_previews_1.0.0_de1eb236969b.zip"
+    "recorded_source_git_provenance_status": "VERIFIED",
+    "source_git_sha": "432a6e971ffbbfd10cce2c53e060fdfdc207ba10",
+    "zip_bytes": 3771798,
+    "zip_path": "artifacts/pr27_correction/verified_export/mapsuite_v1_previews_1.0.0_432a6e971ffb.zip"
   },
-  "frozen_source_config_prior_evidence_git_diff": "NONE",
+  "frozen_source_config_prior_scientific_evidence_git_diff": "NONE",
   "generated_pngs_committed": false,
+  "git_provenance": {
+    "canonical_package_blob_sha256": {
+      "CHECKSUMS.sha256": "97b126ef3a0775b2a605608a514d1a8f967e070d76b9b31c01d62a54be09efdb",
+      "dataset_manifest.json": "00a84dd5f348508db6d5c504295f32f0903220a1ed00a19038f5676b9a18855b",
+      "generation_config.json": "aa66c99947f466149559d8455735a9e29ee3a811a50040fe569eed97957be315",
+      "geometries.csv": "1fec5020f3f04b7c02f7278a4a5bcb862ea4f719ffba25b59027cd9b28aef5dd"
+    },
+    "exact_commit_object_verified": true,
+    "exporter_blob_path": "autonomous-driving-rl/scripts/export_mapsuite_v1_previews.py",
+    "exporter_blob_sha256": "bf3c271d11b93f6a0999883aee9c14301dba73ce0139780f69e8a970f78377d8",
+    "exporter_version_from_recorded_blob": "1.0.1",
+    "independent_git_show_digest_comparison": "PASS",
+    "older_legitimate_real_archive_verification": "PASS (backward compatibility only; not final artifact)",
+    "source_git_sha": "432a6e971ffbbfd10cce2c53e060fdfdc207ba10",
+    "status": "VERIFIED"
+  },
+  "image_parity": {
+    "all_240_image_hashes_match_prior_frozen_geometry_renders": true,
+    "newly_rendered_png_count": 240,
+    "previous_package_reused_as_final_artifact": false
+  },
+  "lane_erratum": "docs/environment/MAPSUITE_V1_LANE_METADATA_ERRATUM.md",
+  "previous_audited_head_sha": "9b4fd4c4c9e17f6b40a72897cf258f624ae347cc",
   "privacy_portability_scan": "PASS",
+  "provenance_regressions_added": [
+    "nonexistent 40-hex commit rejected after local rechecksumming",
+    "wrong existing commit rejected against exporter blob",
+    "mutated exporter hash rejected after local rechecksumming",
+    "mutated canonical package source hash rejected after local rechecksumming",
+    "positive exact recorded commit/exporter blob verification",
+    "positive legitimate ancestor with older exporter version",
+    "existing blob object rejected as source commit"
+  ],
   "rendering": {
     "backend": "metadrive_native_top_down",
     "dataset_declared_base_lane_num": 2,
@@ -72,61 +127,13 @@
     "opencv_version": "5.0.0",
     "panda3d_version": "1.10.16",
     "pygame_version": "2.6.1",
-    "renderer_version": "1.0.0",
+    "renderer_version": "1.0.1",
     "semantic_map": true,
     "synthetic_test_only": false,
     "traffic_density": 0.0,
     "warnings": [
       "Dataset declares base_lane_num=2; pinned Gate 5 reconstruction uses 3. Frozen block-sequence hashes remain the geometry authority."
     ]
-  },
-  "repeatability": {
-    "byte_identical": true,
-    "matches_full_export": true,
-    "one_per_tier": true,
-    "records": [
-      {
-        "geometry_id": "geom_easy_SCS_seed0",
-        "image_sha256": "5f5ce24ec27b4af9447e5d44bf348e9f2fa6a97e507cc1d006c0a5a0c1d74fba",
-        "repeat": 0
-      },
-      {
-        "geometry_id": "geom_medium_SCXCS_seed0",
-        "image_sha256": "f53c2f90d13e5b274f7c8bdafc2be301431d5b764876c67a8f7320a3db72fba3",
-        "repeat": 0
-      },
-      {
-        "geometry_id": "geom_hard_SCXOCS_seed0",
-        "image_sha256": "3e78bcdad0c4c58ca1d2c2ca86ed1c64ebaf9088b9a2f6a192127c86ad83fbfd",
-        "repeat": 0
-      },
-      {
-        "geometry_id": "geom_extreme_CrXROSTR_seed0",
-        "image_sha256": "735e1bd731ca110e38a847d880efb25e965328d81a668d142f3e2413fe0d8411",
-        "repeat": 0
-      },
-      {
-        "geometry_id": "geom_easy_SCS_seed0",
-        "image_sha256": "5f5ce24ec27b4af9447e5d44bf348e9f2fa6a97e507cc1d006c0a5a0c1d74fba",
-        "repeat": 1
-      },
-      {
-        "geometry_id": "geom_medium_SCXCS_seed0",
-        "image_sha256": "f53c2f90d13e5b274f7c8bdafc2be301431d5b764876c67a8f7320a3db72fba3",
-        "repeat": 1
-      },
-      {
-        "geometry_id": "geom_hard_SCXOCS_seed0",
-        "image_sha256": "3e78bcdad0c4c58ca1d2c2ca86ed1c64ebaf9088b9a2f6a192127c86ad83fbfd",
-        "repeat": 1
-      },
-      {
-        "geometry_id": "geom_extreme_CrXROSTR_seed0",
-        "image_sha256": "735e1bd731ca110e38a847d880efb25e965328d81a668d142f3e2413fe0d8411",
-        "repeat": 1
-      }
-    ],
-    "sample_count": 4
   },
   "scientific_hash_comparison": {
     "agent_contract_sha256": {
@@ -216,6 +223,6 @@
     }
   },
   "stage_0_implemented": false,
-  "validated_implementation_sha": "34e1cfb724df779e410dea37046ffb7750375513",
+  "validated_implementation_sha": "432a6e971ffbbfd10cce2c53e060fdfdc207ba10",
   "verification_date": "2026-10-06"
 }

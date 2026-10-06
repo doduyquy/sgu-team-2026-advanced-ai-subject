@@ -1,61 +1,67 @@
 # Platform V1 MapSuite Level 1 preview export audit
 
-Measured on 2026-10-06 using Python 3.10.21, MetaDrive 0.4.3 at the clean pinned commit `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`. This verifies derived visualization infrastructure; no scientific algorithm milestone is implemented.
+Correction audit measured on 2026-10-06 using Python 3.10.21 and clean pinned MetaDrive 0.4.3 at `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`. This is local export/infrastructure evidence, not CI verification or a scientific agent milestone.
 
-Machine evidence: [`verification.json`](../../results/audits/mapsuite_previews/verification.json). Source package: [`datasets/mapsuite_v1/`](../../datasets/mapsuite_v1/). Export/distribution contract: [distribution policy](../MAP_ARTIFACT_DISTRIBUTION.md).
+Machine evidence: [`verification.json`](../../results/audits/mapsuite_previews/verification.json). Read the prominently linked [lane metadata erratum](MAPSUITE_V1_LANE_METADATA_ERRATUM.md), [distribution policy](../MAP_ARTIFACT_DISTRIBUTION.md) and [Windows onboarding workaround](../GETTING_STARTED.md#known-windows-native-import-order-issue).
 
-## Identity and measured full export
+## Source and regenerated real artifact
 
-- Baseline main: `00a34859fe6832695f90310b4af2026e13b83b4c` (PR #26).
-- Full export source: `de1eb236969b4d94175fbd3ff6bbf1e06aef81b3`.
-- Final code/test validation source: `34e1cfb724df779e410dea37046ffb7750375513`. Later changes add evidence/documentation and Git line-ending rules only. The full export used the earlier committed source; subsequent code adds output protection for Git metadata and additional fast regression tests, with no change to geometry reconstruction/rendering.
-- Output: `artifacts/verified_preview_export/mapsuite_v1_previews` (gitignored).
-- Images: **240/240**, each 1024 x 1024; **0 reconstruction failures**, 240 unique IDs and filenames, all non-empty.
+- Frozen main baseline: `00a34859fe6832695f90310b4af2026e13b83b4c` (PR #26).
+- Previous audited PR #27 HEAD: `9b4fd4c4c9e17f6b40a72897cf258f624ae347cc`.
+- Provenance correction commit: `d53f01665fa206e7ceadd7cb4445b4af8d646713`.
+- Documentation/export-source commit: `432a6e971ffbbfd10cce2c53e060fdfdc207ba10`; it contains the corrected exporter used for every newly rendered image. Later evidence-only changes record this measured run.
+- Exporter version: `1.0.1`; exact recorded Git blob SHA-256: `bf3c271d11b93f6a0999883aee9c14301dba73ce0139780f69e8a970f78377d8`.
+- Output: `artifacts/pr27_correction/verified_export/mapsuite_v1_previews` (gitignored).
+- **240/240** non-empty **1024 x 1024** PNGs; **zero reconstruction/hash failures**; 240 unique geometry IDs and filenames; both manifests have 240 rows.
 - Package size: **4,537,606 bytes**.
-- ZIP: `artifacts/verified_preview_export/mapsuite_v1_previews_1.0.0_de1eb236969b.zip`; **3,771,796 bytes**.
-- Full export duration: **284.453 seconds**.
-- All image digests and 244 package-member checksums verified. The ZIP's 245 members match the extracted package byte for byte.
-- One geometry per tier was rendered twice in fresh renderer lifecycles; all four pairs and their corresponding full-export images are byte-identical. This is same-environment evidence, not a claim about arbitrary platforms/library versions.
-- Easy and Extreme samples were visually inspected for complete geometry fit, margins and lack of traffic overlays.
+- ZIP: `artifacts/pr27_correction/verified_export/mapsuite_v1_previews_1.0.0_432a6e971ffb.zip`; **3,771,798 bytes**.
+- Duration: **233.717 seconds**.
+- All 244 package-member checksums and all 245 ZIP members verified. A separate CLI verification also passes.
+- Internal integrity, recorded-source Git provenance and current checkout compatibility each report **VERIFIED**.
+- All 240 newly rendered image hashes match the prior frozen-geometry previews. The previous package was not reused as the final artifact.
 
-## Export architecture and source boundary
+## Provenance blocker correction
 
-The exporter discovers all identities from the committed geometry table after the existing package verifier passes. It uses Gate 5's pinned procedural generation path, geometry seeds from the table, no stochastic traffic and no driving steps. Every serialized block sequence must match its frozen geometry hash before MetaDrive's native top-down road renderer writes a PNG. Environments close on success/failure. A staging directory becomes the final package only after complete verification. Existing output and ZIP paths are rejected.
+The old verifier could accept coherent local mutations to source SHA/exporter hash fields. The correction requires `source_git_sha` to be an exact existing commit object in this repository. Tree/blob/tag objects and arbitrary valid-looking nonexistent hashes are rejected. It retrieves the exporter from **that recorded commit** using Git plumbing and hashes the exact blob bytes. The recorded exporter SHA-256 must match; its version must match the literal assignment parsed from that blob without executing historical code.
 
-Names: `<geometry_id>__<tier>__<sequence>__gseed-<NN>.png`, for example `geom_easy_SCS_seed0__Easy__SCS__gseed-00.png`. Unsafe characters are reversibly escaped. Both manifests, SOURCE_REF, sorted raw checksums and deterministic ZIP metadata keep the package self-describing. Synthetic tests are explicitly marked and rejected by the real verifier.
+It also compares the four recorded canonical package hashes (geometries, generation config, dataset manifest and checksum file) to the corresponding exact blobs at the recorded commit. Git blobs, not EOL-converted checkout bytes, define those provenance digests. Independently using `git cat-file -e <sha>^{commit}` and `git show <sha>:<path>` confirmed the commit, exporter digest and all four package digests for this real export.
 
-## Verification commands and observed counts
+Current checkout compatibility remains separate: the current canonical package and frozen sources must pass the dataset verifier, package metadata and image rows must agree with the current geometry table, and current package bytes must agree with the recorded canonical digests. Internal package integrity still checks PNG hashes/dimensions, exact member coverage, matching CSV/JSON manifests, SOURCE_REF and package checksums.
 
-Run from `autonomous-driving-rl/` in the pinned project environment:
+An older legitimate export need not use current HEAD or today's exporter version. The verifier checks its recorded commit/blob/version and current dataset compatibility. The previous real archive passes the stronger verifier as a backward-compatibility probe; it is not the final reviewed artifact. Consistency with Git objects is not a signed attestation of who performed execution.
+
+## Commands and observed regression results
+
+From `autonomous-driving-rl/` in the pinned environment:
 
 ```powershell
 python -m unittest tests.test_mapsuite_dataset -v
 python -m unittest tests.test_mapsuite_preview_export -v
-python -m unittest discover -s tests -p "test_*.py"
 python scripts/verify_mapsuite_v1_dataset.py
-python scripts/export_mapsuite_v1_previews.py --output artifacts/verified_preview_export/mapsuite_v1_previews --zip
-python scripts/export_mapsuite_v1_previews.py --verify artifacts/verified_preview_export/mapsuite_v1_previews
+python -m unittest discover -s tests -p "test_*.py"
 ```
 
-MapSuite tests: **22 passed**. Preview tests: **20 passed**, including synthetic complete export, checksums/ZIP, provenance/identity mutation, source immutability, path protection, native reconstruction settings and pre-write geometry hash rejection.
+Dataset tests: **22 passed**. Preview tests: **27 passed**, including seven new provenance regressions. Tests mutate source commit/exporter/source-package hashes and regenerate SOURCE_REF plus package checksums, then require Git-backed rejection. Positive cases verify the real recorded commit/blob and an older legitimate exporter version. A blob object used as a commit is rejected.
 
-The plain discovery command hit a native Windows access violation (`0xC0000005`) importing QtWidgets after MetaDrive, before completing tests. It also occurs when importing the existing launcher tests before Qt; preview-module import alone does not cause it. Importing Qt first allows the same entire suite to run:
+Ordinary full discovery still exits with **0xC0000005** when MetaDrive is imported before Qt on this Windows environment, before completing the suite. The crash-dialog suppression used when recording its exit code does not change test selection or import order. The documented Qt-preloaded command discovers the same full pattern:
 
 ```powershell
 python -X faulthandler -u -c "from PySide6.QtCore import QProcess; from PySide6.QtWidgets import QApplication; import unittest; suite=unittest.defaultTestLoader.discover('tests',pattern='test_*.py'); result=unittest.TextTestRunner(verbosity=2).run(suite); raise SystemExit(not result.wasSuccessful())"
 ```
 
-Observed: **393 tests, 392 passed, 0 failed, 1 skipped**, **58.837 seconds**. The skip is the existing Windows symlink escape test; symlink creation requires privileges unavailable to the test process. Tests are not removed, mocked out or weakened by the import-order workaround. Raw local logs remain under gitignored `artifacts/` and are not committed because they contain local paths.
+Observed: **400 discovered, 399 passed, 0 failures, 0 errors, 1 existing Windows symlink-related skip**, **81.480 seconds**. Coverage is the original 393 tests plus all seven new tests; none are excluded. The prior audit's 393/392/0/1 result remains historical onboarding context, not the current count. No Launcher/Workbench redesign or frozen source fix is made for the native environment issue.
 
-## Scientific integrity
+```powershell
+python scripts/export_mapsuite_v1_previews.py --output artifacts/pr27_correction/verified_export/mapsuite_v1_previews --zip
+python scripts/export_mapsuite_v1_previews.py --verify artifacts/pr27_correction/verified_export/mapsuite_v1_previews
+```
 
-All **17** recomputed contract/registry/manifest hashes equal their baseline values; exact before/after values are in machine evidence and the [contract index](../PLATFORM_V1_CONTRACT_INDEX.md). Frozen code, configs, prior evidence and canonical dataset Git contents have no diff. All 24 canonical package-member checksums pass unchanged. No geometry, family, seed, split, evaluation case, action, observation, reward, metric, lifecycle, information right, preflight, logging, trust or TEST policy is changed. Stage 0 is not implemented and no fixture is promoted.
+Both real export and separate verification pass. Raw local logs remain in ignored `artifacts/pr27_correction/` because they contain local paths.
 
-Git attributes address a pre-existing checkout-byte issue without changing canonical blobs or checksums: packaged text uses its recorded LF bytes; the five raw-provenance source inputs use their recorded CRLF bytes on all operating systems. This avoids Windows package-checksum failure and LF-only source-provenance failure. Values were checked against Git blobs and recorded digests before selecting those attributes.
+## Lane erratum and scientific integrity
 
-## Human review items
+`declared_base_lane_num = 2` and `effective_base_lane_num = 3` remain distinct. The generated manifest records the historical declaration as `dataset_declared_base_lane_num = 2`, effective runtime value 3 and an explicit warning. Gate 2's shorthand environment creation did not apply the intended two-lane override; its descriptive writers recorded 2 regardless. All 240 actual serialized geometry hashes match the effective three-lane path. See the [dedicated erratum](MAPSUITE_V1_LANE_METADATA_ERRATUM.md) for affected fields, source evidence and requirements for a future versioned correction.
 
-1. **Historical lane metadata discrepancy:** packaged `generation_config.json` and geometry descriptive metadata declare two base lanes; the pinned Gate 5 reconstruction defaults to three. All 240 frozen block-sequence hashes match the three-lane reconstruction. This branch preserves those geometries and records both declared/effective values plus a warning in the generated manifest. Any correction to the frozen descriptive metadata requires a separate reviewed change; the exporter does not alter the source package.
-2. **Windows native import order:** the ordinary discovery command needs environment follow-up for Qt after MetaDrive. The full suite passes with Qt imported first as recorded above. No frozen launcher/Workbench source is patched here.
+PR #27 does not rewrite canonical geometry/config/checksum files, Gate 2 evidence or Gate 5 manifests. All **17/17 scientific/registry/manifest hashes** were recomputed unchanged; exact before/after values are in machine evidence. All 24 canonical package checksums pass unchanged. The baseline comparison `git diff 00a34859fe6832695f90310b4af2026e13b83b4c -- autonomous-driving-rl/datasets/mapsuite_v1` is empty. Frozen source/config and prior scientific audit evidence are unchanged.
 
-The generated ZIP is local and ready for distribution. No Drive destination was supplied; no upload was performed. GitHub MapSuite V1 remains authoritative. No 240-image set is committed. Review and merge remain human actions; this branch must not be merged by the exporter task.
+No split, seed, action, observation, reward, metric, lifecycle, input right, holdout, preflight, logging or trust semantics change. Stage 0 is not implemented; no fixture is promoted. PNGs/ZIPs are not committed or uploaded. GitHub remains authoritative. The 25 accidental question-mark punctuation artifacts were replaced with safe ASCII, and local-link/privacy/encoding scans pass. PR #27 remains for human review and must not be merged as part of this task.
