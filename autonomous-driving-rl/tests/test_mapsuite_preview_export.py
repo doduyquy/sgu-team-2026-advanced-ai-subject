@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import shutil
 import struct
+import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -280,6 +281,79 @@ class TestMapSuitePreviewExport(unittest.TestCase):
                 self.assertFalse(output.exists())
             finally:
                 renderer.close()
+
+    def mutate_source(self, package, mutate):
+        """Simulate a coherent re-signing of every local provenance/checksum file."""
+        manifest = previews.read_json(package / 'preview_manifest.json')
+        mutate(manifest['source'])
+        previews.write_json(package / 'preview_manifest.json', manifest)
+        (package / 'SOURCE_REF.txt').write_text(
+            previews.source_ref(manifest['source'], manifest['rendering']), encoding='utf-8', newline='\n')
+        previews.write_checksums(package)
+
+    def test_21_nonexistent_commit_rejected_after_package_rechecksumming(self):
+        with tempfile.TemporaryDirectory() as parent:
+            package = self.copied_package(parent)
+            self.mutate_source(package, lambda source: source.update(source_git_sha='0' * 40))
+            with self.assertRaisesRegex(ValueError, 'not an existing Git commit'):
+                self.verify(package)
+
+    def test_22_wrong_existing_commit_rejected_after_package_rechecksumming(self):
+        # This existing ancestor has a different exporter, but the same dataset.
+        wrong = 'de1eb236969b4d94175fbd3ff6bbf1e06aef81b3'
+        self.assertNotEqual(previews.git_source_identity(self.root, wrong)['exporter_sha256'],
+                            self.source['exporter_sha256'])
+        with tempfile.TemporaryDirectory() as parent:
+            package = self.copied_package(parent)
+            self.mutate_source(package, lambda source: source.update(source_git_sha=wrong))
+            with self.assertRaisesRegex(ValueError, 'exporter_sha256 mismatch against recorded commit'):
+                self.verify(package)
+
+    def test_23_exporter_hash_tampering_rejected_after_package_rechecksumming(self):
+        with tempfile.TemporaryDirectory() as parent:
+            package = self.copied_package(parent)
+            self.mutate_source(package, lambda source: source.update(exporter_sha256='0' * 64))
+            with self.assertRaisesRegex(ValueError, 'exporter_sha256 mismatch against recorded commit'):
+                self.verify(package)
+
+    def test_24_canonical_source_hash_tampering_rejected_after_package_rechecksumming(self):
+        with tempfile.TemporaryDirectory() as parent:
+            package = self.copied_package(parent)
+            def mutate(source):
+                source['source_package_sha256']['geometries.csv'] = '0' * 64
+            self.mutate_source(package, mutate)
+            with self.assertRaisesRegex(ValueError, 'source_package_sha256 mismatch against recorded commit'):
+                self.verify(package)
+
+    def test_25_positive_recorded_commit_and_exact_exporter_blob(self):
+        import hashlib
+        sha = self.source['source_git_sha']
+        blob = subprocess.check_output(['git', '-C', str(self.root), 'show', sha + ':' + previews.EXPORTER_PATH])
+        self.assertEqual(self.source['exporter_sha256'], hashlib.sha256(blob).hexdigest())
+        self.assertEqual(previews.verify_git_provenance(self.root, self.source)['source_git_sha'], sha)
+        result = self.verify(self.output)
+        self.assertEqual(result['recorded_source_git_provenance_status'], 'VERIFIED')
+        self.assertEqual(result['internal_integrity_status'], 'VERIFIED')
+        self.assertEqual(result['current_checkout_compatibility_status'], 'VERIFIED')
+
+    def test_26_legitimate_ancestor_export_with_older_exporter_version_passes(self):
+        # Bind metadata to the actual historical blob, not the current exporter.
+        ancestor = '9b4fd4c4c9e17f6b40a72897cf258f624ae347cc'
+        old = previews.git_source_identity(self.root, ancestor)
+        self.assertEqual(old['exporter_version'], '1.0.0')
+        with tempfile.TemporaryDirectory() as parent:
+            package = self.copied_package(parent)
+            self.mutate_source(package, lambda source: source.update(old))
+            self.assertEqual(self.verify(package)['source_git_sha'], ancestor)
+
+    def test_27_existing_blob_object_is_not_accepted_as_commit(self):
+        sha = subprocess.check_output(['git', '-C', str(self.root), 'rev-parse',
+                                       self.source['source_git_sha'] + ':' + previews.EXPORTER_PATH], text=True).strip()
+        with tempfile.TemporaryDirectory() as parent:
+            package = self.copied_package(parent)
+            self.mutate_source(package, lambda source: source.update(source_git_sha=sha))
+            with self.assertRaisesRegex(ValueError, 'not an existing Git commit'):
+                self.verify(package)
 
 
 if __name__ == '__main__':

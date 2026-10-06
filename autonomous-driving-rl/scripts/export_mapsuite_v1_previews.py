@@ -7,6 +7,7 @@ renderer. Pure packaging functions can use an explicitly labelled test renderer.
 from __future__ import annotations
 
 import argparse
+import ast
 from collections import Counter
 import csv
 import hashlib
@@ -32,11 +33,14 @@ from scripts.export_mapsuite_v1_dataset import (
 from scripts.verify_mapsuite_v1_dataset import verify_dataset
 from src.platform.protocol import canonical_json_sha256
 
-EXPORTER_VERSION = "1.0.0"
+EXPORTER_VERSION = "1.0.1"
 EXPORTER_PATH = "autonomous-driving-rl/scripts/export_mapsuite_v1_previews.py"
 REPOSITORY = "https://github.com/doduyquy/sgu-team-2026-advanced-ai-subject"
 AUTHORITY = ("GitHub MapSuite V1 is authoritative. "
              "This package contains derived visualization artifacts only.")
+SOURCE_PACKAGE_FILES = (
+    "geometries.csv", "generation_config.json", "dataset_manifest.json", "CHECKSUMS.sha256",
+)
 COLUMNS = [
     "preview_filename", "geometry_id", "sequence", "geometry_generation_seed",
     "difficulty_tier", "split", "geometry_sha256", "image_sha256",
@@ -98,29 +102,77 @@ def load_geometries(root: Path) -> tuple[list[dict[str, str]], dict, dict]:
     return rows, manifest, config
 
 
+def git_blob(root: Path, commit: str, repository_path: str) -> bytes:
+    """Read exact object bytes, unaffected by checkout EOL conversion."""
+    result = subprocess.run(
+        ["git", "-C", str(root), "cat-file", "blob", f"{commit}:{repository_path}"],
+        capture_output=True,
+    )
+    if result.returncode:
+        raise ValueError(f"Recorded-source Git provenance: missing blob {repository_path} at {commit}")
+    return result.stdout
+
+
+def blob_exporter_version(blob: bytes) -> str:
+    # Inspect a literal assignment, never execute code from a recorded commit.
+    for node in ast.parse(blob.decode("utf-8")).body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "EXPORTER_VERSION" for target in node.targets
+        ):
+            if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                return node.value.value
+    raise ValueError("Recorded-source Git provenance: exporter version literal is missing")
+
+
+def git_source_identity(root: Path, commit: str) -> dict[str, Any]:
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ValueError("Recorded-source Git provenance: invalid Git source SHA")
+    # Requiring the exact object to be a commit excludes tree/blob/tag IDs.
+    result = subprocess.run(["git", "-C", str(root), "cat-file", "-t", commit], capture_output=True)
+    if result.returncode or result.stdout.strip() != b"commit":
+        raise ValueError("Recorded-source Git provenance: source_git_sha is not an existing Git commit")
+    exporter = git_blob(root, commit, EXPORTER_PATH)
+    return {
+        "source_git_sha": commit,
+        "exporter_sha256": hashlib.sha256(exporter).hexdigest(),
+        "exporter_version": blob_exporter_version(exporter),
+        "source_package_sha256": {
+            name: hashlib.sha256(git_blob(root, commit, "autonomous-driving-rl/datasets/mapsuite_v1/" + name)).hexdigest()
+            for name in SOURCE_PACKAGE_FILES
+        },
+    }
+
+
+def verify_git_provenance(root: Path, source: dict[str, Any]) -> dict[str, Any]:
+    """Verify the recorded commit and its blobs, including legitimate ancestors."""
+    if source.get("exporter_path") != EXPORTER_PATH:
+        raise ValueError("Recorded-source Git provenance: exporter_path mismatch")
+    identity = git_source_identity(root, source.get("source_git_sha"))
+    for key in ("exporter_sha256", "exporter_version", "source_package_sha256"):
+        if source.get(key) != identity[key]:
+            raise ValueError(f"Recorded-source Git provenance: {key} mismatch against recorded commit blobs")
+    return identity
+
+
 def source_metadata(root: Path, *, require_clean: bool = True) -> dict[str, Any]:
     def git(*args: str) -> str:
         return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
     sha = git("rev-parse", "HEAD")
     dirty = bool(git("status", "--porcelain", "--untracked-files=no"))
-    script = root.parent / EXPORTER_PATH
     if require_clean:
         if dirty:
             raise ValueError("Commit tracked source changes before exporting")
         git("ls-files", "--error-unmatch", "scripts/export_mapsuite_v1_previews.py")
-    dataset = root / "datasets/mapsuite_v1"
+    identity = git_source_identity(root, sha)
     return {
         "repository": REPOSITORY, "source_git_sha": sha,
         "source_tracked_tree_clean": not dirty,
         "dataset_id": DATASET_ID, "dataset_version": DATASET_VERSION,
         "metadrive_version": PINNED_METADRIVE_VERSION,
         "metadrive_commit": PINNED_METADRIVE_COMMIT,
-        "exporter_path": EXPORTER_PATH, "exporter_version": EXPORTER_VERSION,
-        "exporter_sha256": compute_file_sha256(script),
-        "source_package_sha256": {
-            name: compute_file_sha256(dataset / name) for name in
-            ["geometries.csv", "generation_config.json", "dataset_manifest.json", "CHECKSUMS.sha256"]
-        },
+        "exporter_path": EXPORTER_PATH, "exporter_version": identity["exporter_version"],
+        "exporter_sha256": identity["exporter_sha256"],
+        "source_package_sha256": identity["source_package_sha256"],
         "authority": AUTHORITY,
     }
 
@@ -264,13 +316,16 @@ def verify_package(root: Path, directory: Path, *, allow_synthetic: bool = False
     source = manifest["source"]
     if manifest["rendering"]["synthetic_test_only"] and not allow_synthetic:
         raise ValueError("Synthetic test package is not a real geometry preview export")
+    git_identity = verify_git_provenance(root, source)
     expected_source = source_metadata(root, require_clean=False)
     for key in ("repository", "dataset_id", "dataset_version", "metadrive_version",
-                "metadrive_commit", "exporter_path", "exporter_version", "authority", "source_package_sha256"):
+                "metadrive_commit", "exporter_path", "authority"):
         if source[key] != expected_source[key]:
             raise ValueError(f"Source metadata mismatch: {key}")
-    if not re.fullmatch(r"[0-9a-f]{40}", source["source_git_sha"]):
-        raise ValueError("Invalid Git source SHA")
+    checkout_hashes = {name: compute_file_sha256(root / "datasets/mapsuite_v1" / name)
+                       for name in SOURCE_PACKAGE_FILES}
+    if source["source_package_sha256"] != checkout_hashes:
+        raise ValueError("Current checkout compatibility: canonical package differs from recorded Git source")
     if not source["source_tracked_tree_clean"] and not allow_synthetic:
         raise ValueError("Export source was dirty")
     rows = manifest["previews"]
@@ -319,6 +374,10 @@ def verify_package(root: Path, directory: Path, *, allow_synthetic: bool = False
         raise ValueError("Checksum digest/coverage mismatch")
     return {"png_count": len(rows), "failures": 0, "checksum_status": "VERIFIED",
             "source_git_sha": source["source_git_sha"],
+            "internal_integrity_status": "VERIFIED",
+            "recorded_source_git_provenance_status": "VERIFIED",
+            "current_checkout_compatibility_status": "VERIFIED",
+            "exporter_sha256": git_identity["exporter_sha256"],
             "bundle_bytes": sum(p.stat().st_size for p in directory.rglob("*") if p.is_file())}
 
 
