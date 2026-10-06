@@ -172,12 +172,17 @@ class MetaDriveRenderer:
             self.env = self.env_type(dict(
                 use_render=False, num_scenarios=20, start_seed=0,
                 map=row["sequence"], traffic_density=0.0,
-                map_config={"lane_width": lanes["lane_width_m"], "lane_num": lanes["base_lane_num"]},
                 random_lane_width=lanes["random_lane_width"],
                 random_lane_num=lanes["random_lane_num"],
                 log_level=50,
             ))
             self.family = family
+            # MetaDrive forbids using its easy `map` shorthand together with a
+            # customized map_config. Follow the exact Gate 5 shorthand path,
+            # then check its pinned defaults against the packaged lane config.
+            actual = self.env.config["map_config"]
+            if actual["lane_width"] != lanes["lane_width_m"] or actual["lane_num"] != lanes["base_lane_num"]:
+                raise ValueError("Pinned MetaDrive lane defaults disagree with frozen package")
         self.env.reset(seed=int(row["geometry_generation_seed"]))
         road_map = self.env.current_map
         blocks = self.make_jsonable(road_map.get_meta_data()["block_sequence"])
