@@ -39,7 +39,7 @@ To systematically study decision-making and learning methods, we propose an incr
 - **Stage 6 — Search + Learning**: Combining learned policy/value functions with search/planning, inspired conceptually by systems such as AlphaZero. *(Note: This conceptual connection does not claim autonomous driving employs literal self-play).*
 - **Stage 7 — Model-Based Reinforcement Learning**: Utilizing known or learned dynamics / world models for trajectory prediction and planning, conceptually related to model-based RL, MuZero, and world-model architectures.
 
-> **Status Notice**: This 8-stage line represents a **proposed research/development framework**, not a finalized implementation plan. The project is currently **stopped at exploratory Stage 0 (Random Baseline)** until comprehensive literature survey and team design discussions are concluded.
+> **Status Notice**: This 8-stage line represents a **proposed research/development framework**, not a finalized implementation plan. **Platform V1 is complete, MapSuite V1 is packaged, and Workbench is hardened.** The canonical Stage 0 Random / Naive scientific agent is not implemented yet. The practical course path is Platform V1 ? Stage 0 ? Stage 1 ? Stage 5 ? controlled comparison; the other stages remain optional research directions. See the [build record](autonomous-driving-rl/docs/PLATFORM_V1_BUILD_RECORD.md) and [course scope](autonomous-driving-rl/docs/COURSE_RESEARCH_SCOPE.md).
 
 ---
 
@@ -47,7 +47,7 @@ To systematically study decision-making and learning methods, we propose an incr
 
 The `autonomous-driving-rl/` subproject explores closed-loop driving control in urban and highway environments using the **MetaDrive** simulator.
 
-For complete subproject documentation, observation/action specifications, and exploratory baseline findings, see:
+For complete subproject documentation, observation/action specifications, and Platform V1 contracts, verified evidence, and research scope, see:
 👉 [autonomous-driving-rl/README.md](autonomous-driving-rl/README.md)
 
 ### Recommended Local Workspace Layout
@@ -64,14 +64,14 @@ TTNTNC/
 
 1. **Clone repositories side-by-side**:
    ```powershell
-   cd D:\SGU\CNTT\TTNTNC
+   cd <workspace>
    git clone https://github.com/doduyquy/sgu-team-2026-advanced-ai-subject.git
    git clone https://github.com/metadriverse/metadrive.git metadrive-src
    ```
 
 2. **Pin verified MetaDrive commit** (for reproducibility):
    ```powershell
-   cd D:\SGU\CNTT\TTNTNC\metadrive-src
+   cd <workspace>\metadrive-src
    git checkout 85e5dadc6c7436d324348f6e3d8f8e680c06b4db
    ```
 
@@ -80,15 +80,15 @@ TTNTNC/
    conda create -n metadrive python=3.10 -y
    conda activate metadrive
    python -m pip install --upgrade pip setuptools wheel
-   python -m pip install -e D:\SGU\CNTT\TTNTNC\metadrive-src
+   python -m pip install -e <workspace>\metadrive-src
    ```
 
 4. **Verify installation**:
    ```powershell
-   cd D:\SGU\CNTT\TTNTNC\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+   cd <workspace>\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
    python -c "import metadrive; print(metadrive.__file__); from metadrive import MetaDriveEnv; print('MetaDriveEnv import OK')"
    ```
-   The printed path should point to `D:\SGU\CNTT\TTNTNC\metadrive-src\metadrive\__init__.py`.
+   The printed path should point to `<workspace>\metadrive-src\metadrive\__init__.py`.
 
 For detailed troubleshooting and technical notes, refer to:
 👉 [autonomous-driving-rl/docs/environment/METADRIVE_SETUP.md](autonomous-driving-rl/docs/environment/METADRIVE_SETUP.md)

@@ -38,6 +38,8 @@ If this is your first time working on the project, read these in order:
 6. [`docs/WORKBENCH_GUIDE.md`](docs/WORKBENCH_GUIDE.md) — use the desktop Research Workbench.
 7. [`datasets/mapsuite_v1/`](datasets/mapsuite_v1/) — explore the packaged procedural benchmark dataset.
 
+For the verified history, hash registry, evidence matrix and boundaries, continue with the [Platform V1 knowledge guide](docs/README.md#platform-v1-knowledge-and-derived-artifacts). The [preview distribution guide](docs/MAP_ARTIFACT_DISTRIBUTION.md) explains the derived 240-map PNG export.
+
 Detailed platform audit reports remain under [`docs/environment/`](docs/environment/) for anyone who needs implementation-level evidence.
 
 ## Quick start after installation

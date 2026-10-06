@@ -31,3 +31,12 @@ The audit sequence covers:
 - Workbench, results browser, and final hardening.
 
 [`survey/`](survey/) contains literature-survey material and course research references. It is not an authoritative source for Platform V1 runtime behavior.
+
+## Platform V1 knowledge and derived artifacts
+
+- [Build record](PLATFORM_V1_BUILD_RECORD.md) ? chronological gates, verified PRs/merges and dependencies.
+- [Contract index](PLATFORM_V1_CONTRACT_INDEX.md) ? hashes, producing modules and downstream locks.
+- [Evidence index](PLATFORM_V1_EVIDENCE_INDEX.md) ? implementation, audits, tests and committed machine evidence.
+- [Legacy and boundaries](LEGACY_AND_BOUNDARIES.md) ? prototypes, fixtures and result authority.
+- [Course research scope](COURSE_RESEARCH_SCOPE.md) ? conceptual stages and practical priorities.
+- [Map artifact distribution](MAP_ARTIFACT_DISTRIBUTION.md) ? reproducible Level 1 previews and mirror policy.
