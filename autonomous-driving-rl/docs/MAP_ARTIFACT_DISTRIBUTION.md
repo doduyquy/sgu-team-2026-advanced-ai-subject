@@ -2,6 +2,8 @@
 
 **GitHub MapSuite V1 remains the authoritative scientific source.** Google Drive or similar storage is a distribution mirror for derived human-facing assets. It must never silently redefine geometry identity, split, seed, test manifest, difficulty or benchmark semantics. No team Drive URL or upload destination is configured by this document.
 
+**Known descriptive defect:** read the [MapSuite V1 lane metadata erratum](environment/MAPSUITE_V1_LANE_METADATA_ERRATUM.md). Historical declarations of two base lanes do not override the effective three-lane geometries and their frozen hashes.
+
 ## Level 1 scope
 
 [`scripts/export_mapsuite_v1_previews.py`](../scripts/export_mapsuite_v1_previews.py) exports exactly one deterministic top-down road-geometry PNG for each of the 240 records in [`datasets/mapsuite_v1/geometries.csv`](../datasets/mapsuite_v1/geometries.csv). It verifies the committed dataset against its frozen sources, requires the clean MetaDrive 0.4.3 Git checkout at `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`, reconstructs using Gate 5 settings and checks every serialized block-sequence hash before rendering.
@@ -57,6 +59,10 @@ Both manifests record filename, geometry ID, sequence, generation seed, tier, sp
 Sorted raw-file checksums cover all images, both manifests, README and SOURCE_REF; the checksum file excludes itself. ZIP entries have sorted names, fixed timestamps and fixed permissions. The archive is named `mapsuite_v1_previews_1.0.0_<source-short-sha>.zip` beside the output directory. It contains the entire self-describing package. The source SHA refers to the committed exporter source used for that export, which may precede a later documentation-only evidence commit.
 
 Recipients can extract the ZIP and run `sha256sum -c CHECKSUMS.sha256` from its package directory, or use the repository verifier command above with the extracted directory. Checksum consistency alone is not proof of trusted origin; compare SOURCE_REF and source digests to the reviewed GitHub checkout. Do not replace canonical CSVs, splits, test cases or generation configs with mirror files.
+
+The repository verifier reports three distinct checks: package internal integrity, recorded-source Git provenance, and current checkout compatibility. It requires the exact recorded SHA to be an existing commit object; hashes the exporter blob at that commit; checks the recorded exporter version against its literal assignment; and checks all four recorded canonical package digests against that commit's blobs. It then verifies compatibility with the current canonical package and its frozen sources. Exporter/source digests are over exact Git blob bytes, unaffected by checkout EOL conversion. All local manifests/checksums being mutually consistent is insufficient if Git provenance fails.
+
+Older exports remain verifiable when their source commits/blobs are available and their canonical package is compatible. The recorded exporter may differ from today's exporter; the verifier does not require `source_git_sha == HEAD`. In a shallow clone, fetch the recorded source commit/history before verification; missing commit objects fail loudly. Git consistency does not certify who executed the exporter or provide a signed attestation of origin.
 
 ## Mirror layout and retention
 

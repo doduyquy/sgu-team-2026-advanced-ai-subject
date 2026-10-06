@@ -39,7 +39,7 @@ To systematically study decision-making and learning methods, we propose an incr
 - **Stage 6 — Search + Learning**: Combining learned policy/value functions with search/planning, inspired conceptually by systems such as AlphaZero. *(Note: This conceptual connection does not claim autonomous driving employs literal self-play).*
 - **Stage 7 — Model-Based Reinforcement Learning**: Utilizing known or learned dynamics / world models for trajectory prediction and planning, conceptually related to model-based RL, MuZero, and world-model architectures.
 
-> **Status Notice**: This 8-stage line represents a **proposed research/development framework**, not a finalized implementation plan. **Platform V1 is complete, MapSuite V1 is packaged, and Workbench is hardened.** The canonical Stage 0 Random / Naive scientific agent is not implemented yet. The practical course path is Platform V1 ? Stage 0 ? Stage 1 ? Stage 5 ? controlled comparison; the other stages remain optional research directions. See the [build record](autonomous-driving-rl/docs/PLATFORM_V1_BUILD_RECORD.md) and [course scope](autonomous-driving-rl/docs/COURSE_RESEARCH_SCOPE.md).
+> **Status Notice**: This 8-stage line represents a **proposed research/development framework**, not a finalized implementation plan. **Platform V1 is complete, MapSuite V1 is packaged, and Workbench is hardened.** The canonical Stage 0 Random / Naive scientific agent is not implemented yet. The practical course path is Platform V1 -> Stage 0 -> Stage 1 -> Stage 5 -> controlled comparison; the other stages remain optional research directions. See the [build record](autonomous-driving-rl/docs/PLATFORM_V1_BUILD_RECORD.md) and [course scope](autonomous-driving-rl/docs/COURSE_RESEARCH_SCOPE.md).
 
 ---
 

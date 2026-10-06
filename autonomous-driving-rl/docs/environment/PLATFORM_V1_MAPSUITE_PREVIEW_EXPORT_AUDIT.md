@@ -10,7 +10,7 @@ Machine evidence: [`verification.json`](../../results/audits/mapsuite_previews/v
 - Full export source: `de1eb236969b4d94175fbd3ff6bbf1e06aef81b3`.
 - Final code/test validation source: `34e1cfb724df779e410dea37046ffb7750375513`. Later changes add evidence/documentation and Git line-ending rules only. The full export used the earlier committed source; subsequent code adds output protection for Git metadata and additional fast regression tests, with no change to geometry reconstruction/rendering.
 - Output: `artifacts/verified_preview_export/mapsuite_v1_previews` (gitignored).
-- Images: **240/240**, each 1024 ? 1024; **0 reconstruction failures**, 240 unique IDs and filenames, all non-empty.
+- Images: **240/240**, each 1024 x 1024; **0 reconstruction failures**, 240 unique IDs and filenames, all non-empty.
 - Package size: **4,537,606 bytes**.
 - ZIP: `artifacts/verified_preview_export/mapsuite_v1_previews_1.0.0_de1eb236969b.zip`; **3,771,796 bytes**.
 - Full export duration: **284.453 seconds**.
