@@ -1,0 +1,11 @@
+# Keep checksummed package bytes identical to the committed LF Git blobs.
+autonomous-driving-rl/datasets/mapsuite_v1/** text eol=lf
+autonomous-driving-rl/datasets/mapsuite_v1/**/*.png -text
+
+# The frozen package records raw CRLF digests for these five source inputs.
+# Preserve those recorded bytes on every OS without changing any Git blob/hash.
+autonomous-driving-rl/results/audits/mapsuite/candidate_metrics.csv text eol=crlf
+autonomous-driving-rl/results/audits/mapsuite/canonical_candidates.json text eol=crlf
+autonomous-driving-rl/results/audits/evaluation_protocol/geometry_split_manifest.csv text eol=crlf
+autonomous-driving-rl/results/audits/evaluation_protocol/validation_case_manifest.csv text eol=crlf
+autonomous-driving-rl/results/audits/evaluation_protocol/test_case_manifest.csv text eol=crlf

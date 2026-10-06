@@ -1,0 +1,228 @@
+{
+  "baseline_main_sha": "00a34859fe6832695f90310b4af2026e13b83b4c",
+  "canonical_dataset_git_diff": "NONE",
+  "checks": [
+    {
+      "command": "python -m unittest tests.test_mapsuite_dataset -v",
+      "errors": 0,
+      "failed": 0,
+      "passed": 22,
+      "skipped": 0,
+      "tests": 22
+    },
+    {
+      "command": "python -m unittest tests.test_mapsuite_preview_export -v",
+      "duration_seconds": 21.157,
+      "errors": 0,
+      "failed": 0,
+      "passed": 27,
+      "skipped": 0,
+      "tests": 27
+    },
+    {
+      "command": "python -m unittest discover -s tests -p \"test_*.py\"",
+      "completed_test_count": null,
+      "detail": "The recorded Windows MetaDrive-before-Qt native import-order crash persists.",
+      "exit_code_hex": "0xC0000005",
+      "returncode": 3221225477,
+      "status": "NATIVE_IMPORT_CRASH"
+    },
+    {
+      "command": "python -X faulthandler -u -c \"from PySide6.QtCore import QProcess; from PySide6.QtWidgets import QApplication; import unittest; suite=unittest.defaultTestLoader.discover('tests',pattern='test_*.py'); result=unittest.TextTestRunner(verbosity=2).run(suite); raise SystemExit(not result.wasSuccessful())\"",
+      "duration_seconds": 81.48,
+      "errors": 0,
+      "failed": 0,
+      "full_discovery_coverage": "393 prior tests plus all 7 new provenance tests; none excluded",
+      "passed": 399,
+      "skip_reason": "Existing test_35_symlink_escape_rejected_when_supported: Windows symlink creation unsupported without privileges.",
+      "skipped": 1,
+      "tests": 400
+    },
+    {
+      "checksummed_files": 24,
+      "command": "python scripts/verify_mapsuite_v1_dataset.py",
+      "status": "PASS"
+    },
+    {
+      "command": "python scripts/export_mapsuite_v1_previews.py --output artifacts/pr27_correction/verified_export/mapsuite_v1_previews --zip",
+      "status": "PASS"
+    },
+    {
+      "command": "python scripts/export_mapsuite_v1_previews.py --verify artifacts/pr27_correction/verified_export/mapsuite_v1_previews",
+      "status": "PASS"
+    }
+  ],
+  "ci_verification_claimed": false,
+  "correction_commits": [
+    {
+      "sha": "d53f01665fa206e7ceadd7cb4445b4af8d646713",
+      "subject": "fix(mapsuite): verify preview provenance against recorded Git source"
+    },
+    {
+      "sha": "432a6e971ffbbfd10cce2c53e060fdfdc207ba10",
+      "subject": "docs(mapsuite): record lane metadata erratum and onboarding caveats"
+    }
+  ],
+  "drive_upload_performed": false,
+  "encoding_artifacts_fixed": 25,
+  "export": {
+    "bundle_bytes": 4537606,
+    "checksum_status": "VERIFIED",
+    "current_checkout_compatibility_status": "VERIFIED",
+    "duration_seconds": 233.717,
+    "exporter_sha256": "bf3c271d11b93f6a0999883aee9c14301dba73ce0139780f69e8a970f78377d8",
+    "failures": 0,
+    "internal_integrity_status": "VERIFIED",
+    "output_directory": "artifacts/pr27_correction/verified_export/mapsuite_v1_previews",
+    "png_count": 240,
+    "recorded_source_git_provenance_status": "VERIFIED",
+    "source_git_sha": "432a6e971ffbbfd10cce2c53e060fdfdc207ba10",
+    "zip_bytes": 3771798,
+    "zip_path": "artifacts/pr27_correction/verified_export/mapsuite_v1_previews_1.0.0_432a6e971ffb.zip"
+  },
+  "frozen_source_config_prior_scientific_evidence_git_diff": "NONE",
+  "generated_pngs_committed": false,
+  "git_provenance": {
+    "canonical_package_blob_sha256": {
+      "CHECKSUMS.sha256": "97b126ef3a0775b2a605608a514d1a8f967e070d76b9b31c01d62a54be09efdb",
+      "dataset_manifest.json": "00a84dd5f348508db6d5c504295f32f0903220a1ed00a19038f5676b9a18855b",
+      "generation_config.json": "aa66c99947f466149559d8455735a9e29ee3a811a50040fe569eed97957be315",
+      "geometries.csv": "1fec5020f3f04b7c02f7278a4a5bcb862ea4f719ffba25b59027cd9b28aef5dd"
+    },
+    "exact_commit_object_verified": true,
+    "exporter_blob_path": "autonomous-driving-rl/scripts/export_mapsuite_v1_previews.py",
+    "exporter_blob_sha256": "bf3c271d11b93f6a0999883aee9c14301dba73ce0139780f69e8a970f78377d8",
+    "exporter_version_from_recorded_blob": "1.0.1",
+    "independent_git_show_digest_comparison": "PASS",
+    "older_legitimate_real_archive_verification": "PASS (backward compatibility only; not final artifact)",
+    "source_git_sha": "432a6e971ffbbfd10cce2c53e060fdfdc207ba10",
+    "status": "VERIFIED"
+  },
+  "image_parity": {
+    "all_240_image_hashes_match_prior_frozen_geometry_renders": true,
+    "newly_rendered_png_count": 240,
+    "previous_package_reused_as_final_artifact": false
+  },
+  "lane_erratum": "docs/environment/MAPSUITE_V1_LANE_METADATA_ERRATUM.md",
+  "previous_audited_head_sha": "9b4fd4c4c9e17f6b40a72897cf258f624ae347cc",
+  "privacy_portability_scan": "PASS",
+  "provenance_regressions_added": [
+    "nonexistent 40-hex commit rejected after local rechecksumming",
+    "wrong existing commit rejected against exporter blob",
+    "mutated exporter hash rejected after local rechecksumming",
+    "mutated canonical package source hash rejected after local rechecksumming",
+    "positive exact recorded commit/exporter blob verification",
+    "positive legitimate ancestor with older exporter version",
+    "existing blob object rejected as source commit"
+  ],
+  "rendering": {
+    "backend": "metadrive_native_top_down",
+    "dataset_declared_base_lane_num": 2,
+    "effective_base_lane_num": 3,
+    "effective_lane_width_m": 3.5,
+    "environment_steps": 0,
+    "image_size_px": 1024,
+    "margin_fraction": 0.05,
+    "numpy_version": "2.2.6",
+    "opencv_version": "5.0.0",
+    "panda3d_version": "1.10.16",
+    "pygame_version": "2.6.1",
+    "renderer_version": "1.0.1",
+    "semantic_map": true,
+    "synthetic_test_only": false,
+    "traffic_density": 0.0,
+    "warnings": [
+      "Dataset declares base_lane_num=2; pinned Gate 5 reconstruction uses 3. Frozen block-sequence hashes remain the geometry authority."
+    ]
+  },
+  "scientific_hash_comparison": {
+    "agent_contract_sha256": {
+      "after": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+      "before": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+      "unchanged": true
+    },
+    "benchmark_contract_sha256": {
+      "after": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+      "before": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+      "unchanged": true
+    },
+    "canonical_agent_registry_sha256": {
+      "after": "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
+      "before": "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
+      "unchanged": true
+    },
+    "geometry_split_manifest_sha256": {
+      "after": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481",
+      "before": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481",
+      "unchanged": true
+    },
+    "launcher_contract_sha256": {
+      "after": "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
+      "before": "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
+      "unchanged": true
+    },
+    "logging_contract_sha256": {
+      "after": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+      "before": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+      "unchanged": true
+    },
+    "platform_execution_contract_sha256": {
+      "after": "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
+      "before": "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
+      "unchanged": true
+    },
+    "platform_observability_contract_sha256": {
+      "after": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+      "before": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+      "unchanged": true
+    },
+    "platform_runtime_contract_sha256": {
+      "after": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
+      "before": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
+      "unchanged": true
+    },
+    "platform_workbench_contract_sha256": {
+      "after": "36f3a0891a9153df12a8b53b01f2064afbf848eafda462149a768ec989199e47",
+      "before": "36f3a0891a9153df12a8b53b01f2064afbf848eafda462149a768ec989199e47",
+      "unchanged": true
+    },
+    "platform_workbench_hardening_contract_sha256": {
+      "after": "b476749713e8a7afa2eafe50a5a89775550afe051a16b203a07d846c41f6972c",
+      "before": "b476749713e8a7afa2eafe50a5a89775550afe051a16b203a07d846c41f6972c",
+      "unchanged": true
+    },
+    "platform_workbench_results_contract_sha256": {
+      "after": "a241e2890b65290e28d717714123625bc2809100fe3287f2fb3e14dba8d6e433",
+      "before": "a241e2890b65290e28d717714123625bc2809100fe3287f2fb3e14dba8d6e433",
+      "unchanged": true
+    },
+    "test_manifest_sha256": {
+      "after": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77",
+      "before": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77",
+      "unchanged": true
+    },
+    "validation_case_manifest_sha256": {
+      "after": "10afc2afcfd1c3e8e6f201448bdeb79ee5b07b3c0ec92e8e6e1adb7c10f42ac1",
+      "before": "10afc2afcfd1c3e8e6f201448bdeb79ee5b07b3c0ec92e8e6e1adb7c10f42ac1",
+      "unchanged": true
+    },
+    "workbench_contract_sha256": {
+      "after": "e5711485e6571a04c336739ebc6f285213a1d9631fa29820a89707b37875a82b",
+      "before": "e5711485e6571a04c336739ebc6f285213a1d9631fa29820a89707b37875a82b",
+      "unchanged": true
+    },
+    "workbench_hardening_contract_sha256": {
+      "after": "adb11f5c205e0ee6651f1544f76deee36416fc49070a52a513cc5c786ceecdab",
+      "before": "adb11f5c205e0ee6651f1544f76deee36416fc49070a52a513cc5c786ceecdab",
+      "unchanged": true
+    },
+    "workbench_results_contract_sha256": {
+      "after": "21c2c541a891967d9206e2dc86781f1bfc62b794c13e7e1ee1c3732676e38429",
+      "before": "21c2c541a891967d9206e2dc86781f1bfc62b794c13e7e1ee1c3732676e38429",
+      "unchanged": true
+    }
+  },
+  "stage_0_implemented": false,
+  "validated_implementation_sha": "432a6e971ffbbfd10cce2c53e060fdfdc207ba10",
+  "verification_date": "2026-10-06"
+}

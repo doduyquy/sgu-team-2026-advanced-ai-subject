@@ -8,6 +8,8 @@ This directory is the autonomous-driving research subproject for the SGU Advance
 
 **Next research milestone: Stage 0 — Random / Naive Baseline Agent.**
 
+**Known MapSuite V1 metadata erratum:** `declared_base_lane_num = 2`, but `effective_base_lane_num = 3` for the frozen geometry. See the [dedicated erratum](docs/environment/MAPSUITE_V1_LANE_METADATA_ERRATUM.md); do not apply a two-lane override based on the historical description.
+
 The repository currently contains several fixture agents used to test the platform. They are intentionally **not benchmark agents** and are blocked from canonical VALIDATION/TEST runs. The old `CourseEnvV1` + `src/evaluation/evaluate_random.py` path is retained only as a legacy prototype/compatibility path; it is not the current scientific benchmark.
 
 ## What Platform V1 provides
@@ -37,6 +39,8 @@ If this is your first time working on the project, read these in order:
 5. [`docs/STAGE_ROADMAP.md`](docs/STAGE_ROADMAP.md) — see how Stage 0 through Stage 7 fit on the same platform.
 6. [`docs/WORKBENCH_GUIDE.md`](docs/WORKBENCH_GUIDE.md) — use the desktop Research Workbench.
 7. [`datasets/mapsuite_v1/`](datasets/mapsuite_v1/) — explore the packaged procedural benchmark dataset.
+
+For the verified history, hash registry, evidence matrix and boundaries, continue with the [Platform V1 knowledge guide](docs/README.md#platform-v1-knowledge-and-derived-artifacts). The [preview distribution guide](docs/MAP_ARTIFACT_DISTRIBUTION.md) explains the derived 240-map PNG export.
 
 Detailed platform audit reports remain under [`docs/environment/`](docs/environment/) for anyone who needs implementation-level evidence.
 

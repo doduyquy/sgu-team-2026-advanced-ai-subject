@@ -40,3 +40,6 @@ wandb/
 .env
 .env.*
 !.env.example
+
+# Derived MapSuite preview bundles and local verification logs
+autonomous-driving-rl/artifacts/
