@@ -1,0 +1,4 @@
+# Keep checksummed package bytes identical to the committed LF Git blobs.
+# Frozen audit source artifacts retain their existing checkout conventions.
+autonomous-driving-rl/datasets/mapsuite_v1/** text eol=lf
+autonomous-driving-rl/datasets/mapsuite_v1/**/*.png -text
