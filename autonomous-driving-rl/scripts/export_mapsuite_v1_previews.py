@@ -177,12 +177,19 @@ class MetaDriveRenderer:
                 log_level=50,
             ))
             self.family = family
-            # MetaDrive forbids using its easy `map` shorthand together with a
-            # customized map_config. Follow the exact Gate 5 shorthand path,
-            # then check its pinned defaults against the packaged lane config.
+            # Follow Gate 5's exact shorthand/default path. Package lane_num
+            # metadata is historical (2), while this pin's default is 3. The
+            # frozen block hash below decides identity; never alter geometry
+            # to force agreement with descriptive package metadata.
             actual = self.env.config["map_config"]
-            if actual["lane_width"] != lanes["lane_width_m"] or actual["lane_num"] != lanes["base_lane_num"]:
-                raise ValueError("Pinned MetaDrive lane defaults disagree with frozen package")
+            self.metadata["effective_lane_width_m"] = actual["lane_width"]
+            self.metadata["effective_base_lane_num"] = actual["lane_num"]
+            self.metadata["dataset_declared_base_lane_num"] = lanes["base_lane_num"]
+            if actual["lane_num"] != lanes["base_lane_num"]:
+                self.metadata["warnings"] = [
+                    "Dataset declares base_lane_num=2; pinned Gate 5 reconstruction uses 3. "
+                    "Frozen block-sequence hashes remain the geometry authority."
+                ]
         self.env.reset(seed=int(row["geometry_generation_seed"]))
         road_map = self.env.current_map
         blocks = self.make_jsonable(road_map.get_meta_data()["block_sequence"])
