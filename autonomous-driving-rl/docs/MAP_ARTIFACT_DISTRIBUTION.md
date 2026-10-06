@@ -22,6 +22,10 @@ python scripts/export_mapsuite_v1_previews.py --verify artifacts/mapsuite_v1_pre
 
 Export requires a clean tracked source tree and refuses existing output/ZIP paths. For another export choose a fresh directory. Failure leaves an explicitly incomplete staging directory for diagnosis, never a successful package. No failed geometry is skipped. The default image size is 1024 × 1024; renderer version/configuration is recorded in the JSON manifest. Bitwise reproducibility is checked for repeated exports in the same pinned environment; cross-platform renderer/library differences may affect image hashes without changing geometry hashes.
 
+Repository Git attributes preserve the package's recorded LF bytes and its five frozen source inputs' recorded CRLF bytes on every OS. Existing checkouts may need `git add --renormalize datasets/mapsuite_v1 results/audits/mapsuite results/audits/evaluation_protocol` to refresh Git's line-ending cache; this must produce no staged scientific content change. Do not regenerate checksums to hide a line-ending mismatch.
+
+The package describes two base lanes, while the pinned Gate 5 generation path uses MetaDrive's three-lane default. The exporter preserves that existing generation path and requires all 240 frozen block hashes to match; it records the discrepancy as a warning. It does not reinterpret geometry to match the descriptive lane field. See the [measured export audit](environment/PLATFORM_V1_MAPSUITE_PREVIEW_EXPORT_AUDIT.md) for the evidence and review boundary.
+
 Fast tests do not initialize MetaDrive:
 
 ```powershell

@@ -1,0 +1,221 @@
+{
+  "baseline_main_sha": "00a34859fe6832695f90310b4af2026e13b83b4c",
+  "canonical_dataset_git_diff": "NONE",
+  "checks": [
+    {
+      "command": "python -m unittest tests.test_mapsuite_dataset -v",
+      "failed": 0,
+      "passed": 22,
+      "skipped": 0,
+      "tests": 22
+    },
+    {
+      "command": "python -m unittest tests.test_mapsuite_preview_export -v",
+      "failed": 0,
+      "passed": 20,
+      "skipped": 0,
+      "tests": 20
+    },
+    {
+      "command": "python -m unittest discover -s tests -p \"test_*.py\"",
+      "detail": "MetaDrive imported before PySide6.QtWidgets during discovery; no completed test count.",
+      "exit_code_hex": "0xC0000005",
+      "status": "NATIVE_IMPORT_CRASH"
+    },
+    {
+      "command": "python -X faulthandler -u -c \"from PySide6.QtCore import QProcess; from PySide6.QtWidgets import QApplication; import unittest; suite=unittest.defaultTestLoader.discover('tests',pattern='test_*.py'); result=unittest.TextTestRunner(verbosity=2).run(suite); raise SystemExit(not result.wasSuccessful())\"",
+      "duration_seconds": 58.837,
+      "failed": 0,
+      "passed": 392,
+      "skip_reason": "Existing test_35_symlink_escape_rejected_when_supported: Windows symlink creation unsupported without privileges.",
+      "skipped": 1,
+      "tests": 393
+    },
+    {
+      "checksummed_files": 24,
+      "command": "python scripts/verify_mapsuite_v1_dataset.py",
+      "status": "PASS"
+    },
+    {
+      "command": "python scripts/export_mapsuite_v1_previews.py --output artifacts/verified_preview_export/mapsuite_v1_previews --zip",
+      "status": "PASS"
+    },
+    {
+      "command": "python scripts/export_mapsuite_v1_previews.py --verify artifacts/verified_preview_export/mapsuite_v1_previews",
+      "status": "PASS"
+    }
+  ],
+  "drive_upload_performed": false,
+  "export": {
+    "bundle_bytes": 4537606,
+    "checksum_status": "VERIFIED",
+    "duration_seconds": 284.453,
+    "failures": 0,
+    "output_directory": "artifacts/verified_preview_export/mapsuite_v1_previews",
+    "png_count": 240,
+    "source_git_sha": "de1eb236969b4d94175fbd3ff6bbf1e06aef81b3",
+    "zip_bytes": 3771796,
+    "zip_path": "artifacts/verified_preview_export/mapsuite_v1_previews_1.0.0_de1eb236969b.zip"
+  },
+  "frozen_source_config_prior_evidence_git_diff": "NONE",
+  "generated_pngs_committed": false,
+  "privacy_portability_scan": "PASS",
+  "rendering": {
+    "backend": "metadrive_native_top_down",
+    "dataset_declared_base_lane_num": 2,
+    "effective_base_lane_num": 3,
+    "effective_lane_width_m": 3.5,
+    "environment_steps": 0,
+    "image_size_px": 1024,
+    "margin_fraction": 0.05,
+    "numpy_version": "2.2.6",
+    "opencv_version": "5.0.0",
+    "panda3d_version": "1.10.16",
+    "pygame_version": "2.6.1",
+    "renderer_version": "1.0.0",
+    "semantic_map": true,
+    "synthetic_test_only": false,
+    "traffic_density": 0.0,
+    "warnings": [
+      "Dataset declares base_lane_num=2; pinned Gate 5 reconstruction uses 3. Frozen block-sequence hashes remain the geometry authority."
+    ]
+  },
+  "repeatability": {
+    "byte_identical": true,
+    "matches_full_export": true,
+    "one_per_tier": true,
+    "records": [
+      {
+        "geometry_id": "geom_easy_SCS_seed0",
+        "image_sha256": "5f5ce24ec27b4af9447e5d44bf348e9f2fa6a97e507cc1d006c0a5a0c1d74fba",
+        "repeat": 0
+      },
+      {
+        "geometry_id": "geom_medium_SCXCS_seed0",
+        "image_sha256": "f53c2f90d13e5b274f7c8bdafc2be301431d5b764876c67a8f7320a3db72fba3",
+        "repeat": 0
+      },
+      {
+        "geometry_id": "geom_hard_SCXOCS_seed0",
+        "image_sha256": "3e78bcdad0c4c58ca1d2c2ca86ed1c64ebaf9088b9a2f6a192127c86ad83fbfd",
+        "repeat": 0
+      },
+      {
+        "geometry_id": "geom_extreme_CrXROSTR_seed0",
+        "image_sha256": "735e1bd731ca110e38a847d880efb25e965328d81a668d142f3e2413fe0d8411",
+        "repeat": 0
+      },
+      {
+        "geometry_id": "geom_easy_SCS_seed0",
+        "image_sha256": "5f5ce24ec27b4af9447e5d44bf348e9f2fa6a97e507cc1d006c0a5a0c1d74fba",
+        "repeat": 1
+      },
+      {
+        "geometry_id": "geom_medium_SCXCS_seed0",
+        "image_sha256": "f53c2f90d13e5b274f7c8bdafc2be301431d5b764876c67a8f7320a3db72fba3",
+        "repeat": 1
+      },
+      {
+        "geometry_id": "geom_hard_SCXOCS_seed0",
+        "image_sha256": "3e78bcdad0c4c58ca1d2c2ca86ed1c64ebaf9088b9a2f6a192127c86ad83fbfd",
+        "repeat": 1
+      },
+      {
+        "geometry_id": "geom_extreme_CrXROSTR_seed0",
+        "image_sha256": "735e1bd731ca110e38a847d880efb25e965328d81a668d142f3e2413fe0d8411",
+        "repeat": 1
+      }
+    ],
+    "sample_count": 4
+  },
+  "scientific_hash_comparison": {
+    "agent_contract_sha256": {
+      "after": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+      "before": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+      "unchanged": true
+    },
+    "benchmark_contract_sha256": {
+      "after": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+      "before": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+      "unchanged": true
+    },
+    "canonical_agent_registry_sha256": {
+      "after": "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
+      "before": "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
+      "unchanged": true
+    },
+    "geometry_split_manifest_sha256": {
+      "after": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481",
+      "before": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481",
+      "unchanged": true
+    },
+    "launcher_contract_sha256": {
+      "after": "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
+      "before": "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
+      "unchanged": true
+    },
+    "logging_contract_sha256": {
+      "after": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+      "before": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+      "unchanged": true
+    },
+    "platform_execution_contract_sha256": {
+      "after": "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
+      "before": "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
+      "unchanged": true
+    },
+    "platform_observability_contract_sha256": {
+      "after": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+      "before": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+      "unchanged": true
+    },
+    "platform_runtime_contract_sha256": {
+      "after": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
+      "before": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
+      "unchanged": true
+    },
+    "platform_workbench_contract_sha256": {
+      "after": "36f3a0891a9153df12a8b53b01f2064afbf848eafda462149a768ec989199e47",
+      "before": "36f3a0891a9153df12a8b53b01f2064afbf848eafda462149a768ec989199e47",
+      "unchanged": true
+    },
+    "platform_workbench_hardening_contract_sha256": {
+      "after": "b476749713e8a7afa2eafe50a5a89775550afe051a16b203a07d846c41f6972c",
+      "before": "b476749713e8a7afa2eafe50a5a89775550afe051a16b203a07d846c41f6972c",
+      "unchanged": true
+    },
+    "platform_workbench_results_contract_sha256": {
+      "after": "a241e2890b65290e28d717714123625bc2809100fe3287f2fb3e14dba8d6e433",
+      "before": "a241e2890b65290e28d717714123625bc2809100fe3287f2fb3e14dba8d6e433",
+      "unchanged": true
+    },
+    "test_manifest_sha256": {
+      "after": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77",
+      "before": "0832c38e2e8a0a3bb0c6cafbb2ba63cfcd1dcbbf84b4c7d6b31b9eaf5dc8ec77",
+      "unchanged": true
+    },
+    "validation_case_manifest_sha256": {
+      "after": "10afc2afcfd1c3e8e6f201448bdeb79ee5b07b3c0ec92e8e6e1adb7c10f42ac1",
+      "before": "10afc2afcfd1c3e8e6f201448bdeb79ee5b07b3c0ec92e8e6e1adb7c10f42ac1",
+      "unchanged": true
+    },
+    "workbench_contract_sha256": {
+      "after": "e5711485e6571a04c336739ebc6f285213a1d9631fa29820a89707b37875a82b",
+      "before": "e5711485e6571a04c336739ebc6f285213a1d9631fa29820a89707b37875a82b",
+      "unchanged": true
+    },
+    "workbench_hardening_contract_sha256": {
+      "after": "adb11f5c205e0ee6651f1544f76deee36416fc49070a52a513cc5c786ceecdab",
+      "before": "adb11f5c205e0ee6651f1544f76deee36416fc49070a52a513cc5c786ceecdab",
+      "unchanged": true
+    },
+    "workbench_results_contract_sha256": {
+      "after": "21c2c541a891967d9206e2dc86781f1bfc62b794c13e7e1ee1c3732676e38429",
+      "before": "21c2c541a891967d9206e2dc86781f1bfc62b794c13e7e1ee1c3732676e38429",
+      "unchanged": true
+    }
+  },
+  "stage_0_implemented": false,
+  "validated_implementation_sha": "34e1cfb724df779e410dea37046ffb7750375513",
+  "verification_date": "2026-10-06"
+}
