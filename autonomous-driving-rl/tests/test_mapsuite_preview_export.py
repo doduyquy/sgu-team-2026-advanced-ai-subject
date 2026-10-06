@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import struct
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import zipfile
@@ -124,7 +125,7 @@ class TestMapSuitePreviewExport(unittest.TestCase):
         self.assertEqual(self.renderer.calls, self.rows)
 
     def test_08_protect_canonical_paths_and_overwrites(self):
-        for protected in ['datasets/mapsuite_v1/previews/new', 'results/audits/new', 'src/new', '.', '..']:
+        for protected in ['datasets/mapsuite_v1/previews/new', 'results/audits/new', 'src/new', '../.git/new', '.', '..']:
             with self.subTest(protected=protected), self.assertRaises(ValueError):
                 previews.validate_output(self.root, self.root / protected)
         with self.assertRaises(FileExistsError):
@@ -216,6 +217,69 @@ class TestMapSuitePreviewExport(unittest.TestCase):
             for path in self.output.rglob('*'):
                 if path.is_file():
                     self.assertEqual(path.read_bytes(), (output / path.relative_to(self.output)).read_bytes())
+
+    def fake_native_renderer(self):
+        # Check real renderer orchestration with a small in-memory road map.
+        # The geometry hash check, reset seed, generation config and rendering
+        # path remain production code; only the native engine is substituted.
+        import numpy as np
+        renderer = previews.MetaDriveRenderer.__new__(previews.MetaDriveRenderer)
+        renderer.config, renderer.size = self.config, 8
+        renderer.family = renderer.env = None
+        renderer.metadata = {}
+        renderer.np = np
+        renderer.make_jsonable = lambda value: value
+        blocks = [{"id": c} for c in self.rows[0]['block_ids']]
+        road_map = SimpleNamespace(
+            get_meta_data=lambda: {"block_sequence": blocks},
+            blocks=[SimpleNamespace(ID=c) for c in self.rows[0]['block_ids']],
+            road_network=SimpleNamespace(get_bounding_box=lambda: (0, 200, -50, 100)),
+        )
+        settings, seeds = {}, []
+        fake_env = SimpleNamespace(config={"map_config": {"lane_width": 3.5, "lane_num": 3}},
+                                   current_map=road_map, reset=lambda seed: seeds.append(seed),
+                                   close=lambda: None)
+        def factory(config):
+            settings.update(config)
+            return fake_env
+        renderer.env_type = factory
+        image = np.zeros((8, 8, 3), dtype=np.uint8)
+        image[0, 0] = 255
+        renderer.draw = lambda *args, **kwargs: image
+        def imwrite(path, image, config):
+            Path(path).write_bytes(tiny_png())
+            return True
+        renderer.cv2 = SimpleNamespace(imwrite=imwrite, IMWRITE_PNG_COMPRESSION=16)
+        row = {**self.rows[0], "geometry_sha256": previews.canonical_json_sha256(blocks)}
+        return renderer, row, settings, seeds
+
+    def test_19_native_reconstruction_uses_gate5_path_and_frozen_hash(self):
+        renderer, row, settings, seeds = self.fake_native_renderer()
+        with tempfile.TemporaryDirectory() as parent:
+            output = Path(parent) / 'road.png'
+            try:
+                renderer(row, output)
+                self.assertEqual(previews.png_dimensions(output), (8, 8))
+                self.assertEqual(settings['map'], row['sequence'])
+                self.assertNotIn('map_config', settings)
+                self.assertEqual(settings['traffic_density'], 0.0)
+                self.assertEqual(seeds, [int(row['geometry_generation_seed'])])
+                self.assertEqual(renderer.metadata['effective_base_lane_num'], 3)
+                self.assertIn('Frozen block-sequence hashes', renderer.metadata['warnings'][0])
+            finally:
+                renderer.close()
+
+    def test_20_native_hash_mismatch_fails_before_image_write(self):
+        renderer, row, _, _ = self.fake_native_renderer()
+        row['geometry_sha256'] = '0' * 64
+        with tempfile.TemporaryDirectory() as parent:
+            output = Path(parent) / 'wrong.png'
+            try:
+                with self.assertRaisesRegex(ValueError, 'geometry hash mismatch'):
+                    renderer(row, output)
+                self.assertFalse(output.exists())
+            finally:
+                renderer.close()
 
 
 if __name__ == '__main__':

@@ -332,7 +332,7 @@ def source_ref(source: dict, rendering: dict) -> str:
 def validate_output(root: Path, output: Path) -> Path:
     output = output.resolve()
     # Never write inside/above authoritative source, even through a symlink.
-    for protected in (root / "datasets", root / "results", root / "configs", root / "src",
+    for protected in (root.parent / ".git", root / "datasets", root / "results", root / "configs", root / "src",
                       root / "scripts", root / "tests", root / "docs"):
         protected = protected.resolve()
         if output == protected or output in protected.parents or protected in output.parents:
