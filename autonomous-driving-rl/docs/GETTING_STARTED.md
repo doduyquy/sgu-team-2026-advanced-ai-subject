@@ -19,11 +19,12 @@ The project pins MetaDrive to:
 
 ## 2. Clone the course repository
 
-Use any workspace path. Example:
+Use any workspace path. Portable PowerShell example:
 
 ```powershell
-mkdir D:\work\sgu-ai
-cd D:\work\sgu-ai
+$workspaceRoot = Join-Path $HOME 'sgu-ai-workspace'
+New-Item -ItemType Directory -Force -Path $workspaceRoot
+cd $workspaceRoot
 git clone https://github.com/doduyquy/sgu-team-2026-advanced-ai-subject.git
 ```
 
@@ -34,7 +35,7 @@ The project does not require a hard-coded drive or username.
 ```powershell
 conda create -n metadrive python=3.10 -y
 conda activate metadrive
-cd D:\work\sgu-ai\sgu-team-2026-advanced-ai-subject
+cd "$workspaceRoot\sgu-team-2026-advanced-ai-subject"
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -r requirements.txt
 ```
@@ -46,7 +47,7 @@ The repository-level `requirements.txt` contains the team dependencies such as N
 Keep MetaDrive outside the course repository so its package directory cannot shadow the installed module.
 
 ```powershell
-cd D:\work\sgu-ai
+cd $workspaceRoot
 git clone https://github.com/metadriverse/metadrive.git metadrive-src
 cd metadrive-src
 git checkout 85e5dadc6c7436d324348f6e3d8f8e680c06b4db
@@ -67,7 +68,7 @@ Do not clone MetaDrive as a folder named `metadrive` inside the project working 
 ## 5. Verify the simulator import
 
 ```powershell
-cd D:\work\sgu-ai\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+cd "$workspaceRoot\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl"
 python -c "import metadrive; print(metadrive.__version__ if hasattr(metadrive,'__version__') else 'MetaDrive import OK'); print(metadrive.__file__)"
 ```
 
@@ -121,6 +122,18 @@ python -m unittest discover -s tests -p "test_*.py"
 ```
 
 The final Platform V1 hardening baseline had 351 tests discovered, with one Windows symlink test conditionally skipped on non-admin machines. Exact counts may grow after Stage 0 and later agents are added; the important condition is zero unexpected failures/errors.
+
+### Known Windows native import-order issue
+
+Try the ordinary discovery command above first. On the audited Windows Python 3.10 / MetaDrive / PySide6 environment, importing MetaDrive before Qt during discovery caused a native access violation (`0xC0000005`) while importing `PySide6.QtWidgets`, before the suite could complete. If that symptom occurs, preload Qt and discover the same full suite:
+
+```powershell
+python -X faulthandler -u -c "from PySide6.QtCore import QProcess; from PySide6.QtWidgets import QApplication; import unittest; suite=unittest.defaultTestLoader.discover('tests',pattern='test_*.py'); result=unittest.TextTestRunner(verbosity=2).run(suite); raise SystemExit(not result.wasSuccessful())"
+```
+
+This is an environment/test-harness workaround. It is not permission to exclude tests or change Launcher/Workbench behavior. Keep `discover('tests', pattern='test_*.py')` and require zero failures/errors across the complete suite.
+
+The original PR #27 audit recorded **393 discovered, 392 passed, 0 failed, 1 existing Windows symlink-related skip** using this preload. That is a historical local audit, not CI verification or a fixed future test count. See the [current preview export audit](environment/PLATFORM_V1_MAPSUITE_PREVIEW_EXPORT_AUDIT.md) for the correction run and expanded regression coverage.
 
 ## 10. What to read before coding an agent
 
