@@ -5,6 +5,7 @@ by the original notebooks.  It intentionally keeps the same small public API.
 """
 
 from collections import deque
+from collections import Counter
 import heapq
 import itertools
 import random as _random
@@ -163,53 +164,139 @@ def best_first_search(maze, strategy="BFS", debug=False, vis=False, W=1):
 
 
 def DFS(maze, vis=False, max_tries=100000, debug_reached=False,
-        check_cycle=True, limit=None, frontier_option=2):
-    """Depth-first tree search with optional depth limit and ancestor checking."""
-    del debug_reached
+        check_cycle=True, limit=None, frontier_option=2, animation=False):
+    """Depth-first search with the three frontier policies used in Lab 02.
+
+    ``frontier_option=3`` checks only the current root-to-node path.
+    ``frontier_option=2`` also refuses duplicate states already in the stack.
+    ``frontier_option=1`` moves an existing duplicate to the stack top.
+    """
+    del debug_reached, vis
+    if frontier_option not in {1, 2, 3}:
+        raise ValueError("frontier_option must be 1, 2 or 3")
     start = mh.find_pos(maze, "S")
     goal = mh.find_pos(maze, "G")
     root = _Node(start)
     stack = [root]
+    frontier_counts = Counter({start: 1})
+    frontier_nodes = {start: root}
     reached = {start: root}
     expanded = 0
     generated = 1
     max_frontier = 1
+    iterations = 0
+    repeated_pops = 0
+    duplicate_encounters = 0
+    cycle_skips = 0
+    popped_counts = Counter()
+    maze_anim = []
     # For depth-limited search, remembering the shallowest occurrence of a
     # state is safe: arriving deeper can never leave more search budget.
     use_depth_reached = limit is not None and frontier_option == 2
     best_depth = {start: 0}
 
-    while stack and expanded < max_tries:
+    def record_frame(current=None):
+        if not animation:
+            return
+        frame = np.copy(maze)
+        for state in reached:
+            if frame[state] == " ":
+                frame[state] = "."
+        for state in frontier_counts:
+            if frontier_counts[state] and frame[state] == " ":
+                frame[state] = "F"
+        if current is not None:
+            cursor = current
+            while cursor is not None:
+                if frame[cursor.state] not in {"S", "G"}:
+                    frame[cursor.state] = "P"
+                cursor = cursor.parent
+        maze_anim.append(frame)
+
+    record_frame(root)
+    while stack and iterations < max_tries:
         node = stack.pop()
+        iterations += 1
+        frontier_counts[node.state] -= 1
+        if frontier_counts[node.state] <= 0:
+            del frontier_counts[node.state]
+        if frontier_nodes.get(node.state) is node:
+            frontier_nodes.pop(node.state, None)
+
+        if popped_counts[node.state]:
+            repeated_pops += 1
+        popped_counts[node.state] += 1
+
+        # A state already on its own ancestor path closes a cycle.
+        ancestor_states = set()
+        cursor = node.parent
+        while cursor is not None:
+            ancestor_states.add(cursor.state)
+            cursor = cursor.parent
+        if check_cycle and node.state in ancestor_states:
+            cycle_skips += 1
+            record_frame(node.parent)
+            continue
+
         if node.state == goal:
-            return _result(node, reached, expanded, generated, max_frontier)
+            answer = _result(node, reached, expanded, generated, max_frontier, maze_anim)
+            answer.update({
+                "status": "FOUND", "iterations": iterations,
+                "unique_popped": len(popped_counts),
+                "repeated_pops": repeated_pops,
+                "duplicate_encounters": duplicate_encounters,
+                "cycle_skips": cycle_skips,
+                "final_frontier": len(stack),
+            })
+            return answer
         if limit is not None and node.depth >= limit:
+            record_frame(node)
             continue
         expanded += 1
-        ancestors = set()
-        if check_cycle:
-            cursor = node
-            while cursor is not None:
-                ancestors.add(cursor.state)
-                cursor = cursor.parent
         children = []
+        reprioritized = []
         for action, state in _successors(maze, node.state):
-            if check_cycle and state in ancestors:
-                continue
             child = _Node(state, node, action, node.cost + 1)
             if (use_depth_reached
                     and child.depth >= best_depth.get(state, float("inf"))):
                 continue
             if use_depth_reached:
                 best_depth[state] = child.depth
+            if frontier_counts.get(state, 0):
+                duplicate_encounters += 1
+                if frontier_option == 2:
+                    continue
+                if frontier_option == 1:
+                    existing = frontier_nodes[state]
+                    stack.remove(existing)
+                    reprioritized.append(existing)
+                    continue
             children.append(child)
             reached[state] = child
             generated += 1
         # A stack reverses insertion order; reverse here so the configured first
         # direction is explored first.
-        stack.extend(reversed(children))
+        for child in reversed(children):
+            stack.append(child)
+            frontier_counts[child.state] += 1
+            frontier_nodes[child.state] = child
+        # These states were already waiting in the stack.  Place them last so
+        # they are genuinely the next entries popped by LIFO DFS.
+        stack.extend(reprioritized)
         max_frontier = max(max_frontier, len(stack))
-    return _result(None, reached, expanded, generated, max_frontier)
+        record_frame(node)
+
+    answer = _result(None, reached, expanded, generated, max_frontier, maze_anim)
+    answer.update({
+        "status": "LIMIT" if iterations >= max_tries else "FAILURE",
+        "iterations": iterations,
+        "unique_popped": len(popped_counts),
+        "repeated_pops": repeated_pops,
+        "duplicate_encounters": duplicate_encounters,
+        "cycle_skips": cycle_skips,
+        "final_frontier": len(stack),
+    })
+    return answer
 
 
 def IDS(maze, frontier_option=2, max_tries=100000, vis=False):
@@ -268,6 +355,7 @@ def show_path(maze, result):
 
 
 show_maze = mh.show_maze
+animate_maze = mh.animate_maze
 
 
 def min_index(values):
