@@ -11,6 +11,7 @@ This module implements AgentRegistryV1:
 from typing import Any, Callable, Dict, List, Optional
 
 from src.launcher.models import AgentRegistrationV1
+from src.agents import Stage0RandomNaiveAgent
 from src.platform import (
     AgentPolicy,
     DeterministicConstantFixtureAgent,
@@ -102,6 +103,8 @@ def _factory_fixture_stateful_counter() -> StatefulCounterFixtureAgent:
 def _factory_fixture_discrete() -> DiscreteFixtureAgent:
     return DiscreteFixtureAgent()
 
+def _factory_stage0_random_naive() -> Stage0RandomNaiveAgent:
+    return Stage0RandomNaiveAgent()
 
 def build_canonical_agent_registry() -> AgentRegistryV1:
     """
@@ -198,6 +201,37 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             description="Audit fixture emitting constant discrete action index 12 (stay still / idle)."
         ),
         factory=_factory_fixture_discrete
+    )
+
+    registry.register(
+        registration=AgentRegistrationV1(
+            agent_id="stage0_random_naive",
+            agent_version="0.1.0",
+            stage_label="STAGE_0",
+            method_family="RANDOM",
+            purpose="RESEARCH_BASELINE",
+            implementation_ref=(
+                f"{Stage0RandomNaiveAgent.__module__}:"
+                f"{Stage0RandomNaiveAgent.__qualname__}"
+            ),
+            input_profile_id="STATE_DECISION_V1",
+            action_adapter_id="discrete9_lowbranch_v1",
+            inference_stochasticity="stochastic",
+            stateful_within_episode=True,
+
+            # Chỉ phát triển trong SANDBOX/AUDIT trước.
+            benchmark_eligible=False,
+            sandbox_eligible=True,
+            audit_eligible=True,
+            requires_checkpoint=False,
+
+            description=(
+                "Stage 0 Random / Naive research baseline. "
+                "Randomly selects direction and throttle/brake behavior"
+                "without learning."
+            ),
+        ),
+        factory=_factory_stage0_random_naive
     )
 
     return registry
