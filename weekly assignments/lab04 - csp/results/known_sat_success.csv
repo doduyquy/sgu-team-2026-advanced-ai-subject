@@ -1,0 +1,37 @@
+﻿n,colors,algorithm,confirmed_sat_runs,success_on_sat_pct
+10,3,BT + FC,1,100.0
+10,3,BT + MRV,1,100.0
+10,3,BT + MRV + LCV,1,100.0
+10,3,BT + MRV + LCV + FC,1,100.0
+10,3,BT gốc,1,100.0
+10,3,Min-Conflicts,1,100.0
+10,4,BT + FC,5,100.0
+10,4,BT + MRV,5,100.0
+10,4,BT + MRV + LCV,5,100.0
+10,4,BT + MRV + LCV + FC,5,100.0
+10,4,BT gốc,5,100.0
+10,4,Min-Conflicts,5,100.0
+20,4,BT + FC,5,100.0
+20,4,BT + MRV,5,100.0
+20,4,BT + MRV + LCV,5,100.0
+20,4,BT + MRV + LCV + FC,5,100.0
+20,4,BT gốc,5,100.0
+20,4,Min-Conflicts,5,100.0
+40,4,BT + FC,5,100.0
+40,4,BT + MRV,5,100.0
+40,4,BT + MRV + LCV,5,100.0
+40,4,BT + MRV + LCV + FC,5,100.0
+40,4,BT gốc,5,100.0
+40,4,Min-Conflicts,5,100.0
+80,4,BT + FC,5,100.0
+80,4,BT + MRV,5,100.0
+80,4,BT + MRV + LCV,5,100.0
+80,4,BT + MRV + LCV + FC,5,100.0
+80,4,BT gốc,5,100.0
+80,4,Min-Conflicts,5,100.0
+160,4,BT + FC,5,100.0
+160,4,BT + MRV,5,100.0
+160,4,BT + MRV + LCV,5,100.0
+160,4,BT + MRV + LCV + FC,5,100.0
+160,4,BT gốc,5,80.0
+160,4,Min-Conflicts,5,80.0

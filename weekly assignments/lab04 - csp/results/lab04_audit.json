@@ -1,0 +1,29 @@
+{
+  "CSP_graph_coloring_example": {
+    "executed_code_cells": 16,
+    "embedded_figures": 5,
+    "errors": 0,
+    "notebook_sha256": "02bcc2d8039c82129465ec335f1c6504a535a8faa39f1d51711dbde6a1fb85e6"
+  },
+  "n_queens": {
+    "executed_code_cells": 13,
+    "embedded_figures": 7,
+    "errors": 0,
+    "notebook_sha256": "f0891c95a54c68f51cdee01132e8c9021efddb29aa5b4eea92688d7adab204ee"
+  },
+  "dataset": {
+    "main_graph_runs": 300,
+    "large_graph_runs": 12,
+    "queen_comparison_runs": 1600,
+    "queen_scaling_runs": 1000,
+    "queen_operator_runs": 1000,
+    "combined_rows": 76
+  },
+  "additional_independent_checks": {
+    "graph_domain_oracle_cases": 200,
+    "min_conflicts_histories": 10,
+    "queen_objectives": 400
+  },
+  "statistics_and_artifacts": "passed",
+  "pdf_sha256": "a60c84bd05f92b8dc9aa7c6840590086c86189e0558af50f459302e2e4511895"
+}
