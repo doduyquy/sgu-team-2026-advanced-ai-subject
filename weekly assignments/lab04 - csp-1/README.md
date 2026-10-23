@@ -7,6 +7,7 @@ Bài giải đủ **8 bài trong PDF**: 4 bài tô màu trong ảnh và 4 bài n
 - [Tô màu: notebook đầy đủ](CSP_graph_coloring_example.ipynb) và [HTML đã chạy](CSP_graph_coloring_example.html).
 - [n-Queens: notebook đầy đủ](n_queens.ipynb) và [HTML đã chạy](n_queens.html).
 - [Báo cáo tổng hợp](BAO_CAO_LAB04.md), [bảng chung hai bài toán](results/lab04_combined_summary.csv).
+- Báo cáo chi tiết hoàn chỉnh: [Word](BAO_CAO_LAB04_HOAN_CHINH.docx) và [PDF](BAO_CAO_LAB04_HOAN_CHINH.pdf), gồm 34 trang, 28 bảng và 17 hình; Times New Roman, nội dung 12 pt, tiêu đề 14–16 pt, chữ đen.
 - [Số liệu thực nghiệm và cấu hình chạy](results/).
 - [Đối chiếu từng yêu cầu PDF và kết quả kiểm tra lại](DOI_CHIEU_YEU_CAU_LAB04.md).
 
