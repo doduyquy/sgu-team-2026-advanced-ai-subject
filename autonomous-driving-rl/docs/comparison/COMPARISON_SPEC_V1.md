@@ -65,7 +65,7 @@ To guarantee reproducibility across headless CLI runs, automated CI, and interac
 1. **`summary.json` is the sole authority for run-level aggregate metrics.** No consumer (CLI, script, or Qt GUI) may recalculate or alter these figures.
 2. **`episodes.csv` is the sole authority for episode-level observations.** All statistical distributions and post-hoc analyses must trace directly to these rows.
 3. **`timing.csv` is the sole authority for agent decision latencies.** Timings strictly isolate `agent.act()` execution from environment simulation and I/O.
-4. **`run_integrity.json` is the cryptographic gate.** If any artifact digest mismatches the recorded hash, the entire run is marked `FAILED / UNTRUSTED`.
+4. **`run_integrity.json` provides the cryptographic content fingerprints.** The verification of integrity is computed dynamically by consumer tools (such as `RunArtifactRepository._evaluate_integrity()` in `src/workbench/results_repository.py`), yielding an explicit `IntegrityDisplayStatus` (`VERIFIED`, `NOT_FINAL`, `UNVERIFIED`, `FAILED`).
 5. **W&B is a downstream mirror, not a primary data source.** Network drops or W&B API outages do not invalidate a verified local run; conversely, a W&B dashboard cannot authenticate a run whose local artifacts failed verification.
 
 ### 2.2 Invariant on Consumer Applications
@@ -92,8 +92,10 @@ Where:
 - $\mathcal{S}_{\text{safety}} = \{\text{CRASH\_HUMAN}, \text{CRASH\_VEHICLE}, \text{CRASH\_OBJECT}, \text{CRASH\_BUILDING}, \text{CRASH\_SIDEWALK}, \text{OUT\_OF\_ROAD}\}$.
 
 ### 3.1 Crucial Distinction: `safety_failure_rate` vs `raw_any_safety_event_rate`
-- **`safety_failure_rate`** follows mutually exclusive primary outcome classification (`primary_terminal_reason`). An episode has exactly one primary terminal reason. If an agent runs out of time while brushing a curb, `primary_terminal_reason` may be `TIMEOUT`, not a safety failure.
-- **`raw_any_safety_event_rate`** is a secondary diagnostic that records whether *any* physical collision or road departure flag was asserted during the episode, even if the episode ultimately terminated due to timeout or arrival.
+- **Precedence Policy in Code:** In `src/launcher/executor.py`, raw simulator flags accumulate into `env_flags`. In `src/platform/episode.py:classify_episode_outcome()`, the precedence policy `SAFETY_FIRST_PRECEDENCE` gives safety-critical violations absolute priority over destination arrival (`SUCCESS`) and step truncation (`TIMEOUT`). If any safety flag (`crash_human`, `crash_vehicle`, `crash_object`, `crash_building`, `crash_sidewalk`, `out_of_road`) is asserted, the episode is classified as that specific safety terminal reason; it cannot be dismissed or overridden by timeout or arrival.
+- **`safety_failure_rate`** measures the proportion of episodes whose mutually exclusive **primary terminal reason** was a safety violation. Every episode has exactly one primary terminal reason.
+- **Individual Raw Safety Event Rates** (`raw_crash_vehicle_rate`, `raw_crash_sidewalk_rate`, etc.) capture specific physical collision modes and can overlap within the same episode (e.g., an agent colliding with a vehicle and subsequently leaving the road); hence their sum across categories can exceed 1.0.
+- **`raw_any_safety_event_rate`** is a secondary diagnostic recording the fraction of episodes with at least one safety event flag asserted. Under Platform V1 precedence, any safety violation triggers safety termination; the metrics are partitioned in the schema to maintain clean separation between single-cause primary outcome attribution and multi-flag raw sensor telemetry.
 - **Rule:** Never confuse or conflate these two metrics. Benchmark scorecards require `safety_failure_rate`.
 
 ### 3.2 Conditioning Semantics of `mean_time_to_clean_success_s`
@@ -130,10 +132,10 @@ macro_completion = sum(tier_scorecards[t].mean_final_route_completion for t in t
   3. `macro_mean_final_route_completion`
 - **Equal-Tier Weighting:** Each of the 4 tiers is assigned an exact weight of $0.25$.
 - **All 4 Tiers Required:** If any tier is missing, `compute_macro_metrics()` raises `ValueError`. In partial or custom runs, `macro_metrics` is set to `None`.
-- **Prohibitions:**
-  - *No Macro Median:* There is no `macro_median_final_route_completion` (medians cannot be averaged linearly).
-  - *No Macro Time:* There is no `macro_mean_time_to_clean_success_s` (averaging conditioned times with unequal denominators is mathematically invalid).
-  - *No Geometric-Mean Mega-Score:* The field `"geometric_mean_success_score"` is explicitly hardcoded to `None` per platform policy.
+- **Prohibitions & Scope:**
+  - *No Macro Median:* There is no `macro_median_final_route_completion`. While averaging tier medians is arithmetic, it does not yield the true pooled median completion of the joint distribution and is not implemented in `compute_macro_metrics()`.
+  - *No Macro Time:* There is no `macro_mean_time_to_clean_success_s`. Averaging conditional success times across tiers with unequal success counts distorts mathematical conditioning, which is why Platform V1 deliberately omits a macro time-to-success metric.
+  - *No Geometric-Mean Mega-Score:* The field `"geometric_mean_success_score"` is explicitly hardcoded to `None` per platform policy. Mega-scores that collapse safety and task performance into a single scalar are prohibited.
 
 ---
 
@@ -247,22 +249,24 @@ Before comparing Run A and Run B, an automated or manual evaluator must evaluate
 
 ### 8.1 Layer A: Trustworthy Evidence (Integrity Gating)
 A run is valid for benchmark comparison **only if all of the following hold**:
-1. Directory contains all required artifacts (`run_manifest.json`, `run_state.json`, `episodes.csv`, `timing.csv`, `summary.json`, `run_integrity.json`).
-2. `run_state.json` status is `COMPLETE`.
-3. `run_integrity.json` verification status is `VERIFIED` (every artifact SHA-256 matches its disk content).
-4. `canonical_run == True` (clean working tree, verified MetaDrive commit `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`, pinned version `0.4.3`).
-5. Recorded episode count equals expected count ($N=60$ for TEST, $N=96$ for VALIDATION).
-6. Zero unresolved technical failures (`technical_failure_count == 0` or verified benign).
-*Failure at Layer A results in state `REJECTED_UNTRUSTED`.*
+1. **Artifact Completeness:** Directory contains all 7 required Gate-7 artifacts: `run_manifest.json`, `run_state.json`, `episodes.csv`, `timing.csv`, `summary.json`, `wandb_sync.json`, and `run_integrity.json` (plus `technical_failures.jsonl` if technical failures occurred).
+2. **Lifecycle Completion:** `run_state.json` status is `COMPLETE`. Runs with status `INITIALIZING`, `RUNNING`, `INTERRUPTED`, or `FAILED` are `NOT_FINAL` and have zero benchmark authority.
+3. **Cryptographic Integrity:** Dynamic verification against `run_integrity.json` (evaluated via `RunArtifactRepository._evaluate_integrity()`) yields `IntegrityDisplayStatus.VERIFIED` (all 7 artifact hashes match computed semantic digests).
+4. **Canonical Provenance:** `canonical_run == True` in `run_state.json` (clean git worktree with `dirty_override == False`, verified MetaDrive commit `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`, pinned version `0.4.3`, `environment_verification_status == "VERIFIED"`, and `unverified_env_override == False`).
+5. **Trusted Agent Eligibility:** Agent is verified as benchmark-eligible in canonical registry (`benchmark_eligible == True`), not an infrastructure fixture stub (e.g., `fixture_constant_continuous`).
+6. **Case Coverage & Integrity:** Recorded episode count equals expected count ($N=60$ for TEST, $N=96$ for VALIDATION); exact manifest `case_id` sequence is present with zero duplicate `case_id` or `episode_index` entries; geometry and environment seeds match the locked manifest.
+7. **Zero Technical Failures:** `technical_failure_count == 0` in `summary.json`. Platform V1 defines no "benign" exception path in canonical evaluation; any unhandled technical exception invalidates canonical benchmark eligibility.
+*Failure of any Layer A condition results in state `REJECTED_UNTRUSTED`.*
 
 ### 8.2 Layer B: Scientific Comparability (Fair Comparison Gating)
 Two verified runs (Run A and Run B) can be compared **only under strict compatibility**:
-1. **Mode and Split Match:** Both runs must be on the same split (TEST vs TEST, or VALIDATION vs VALIDATION). Comparing a VALIDATION run to a TEST run is strictly prohibited (`INCOMPATIBLE`).
-2. **Case Manifest and Hash Match:** Both runs must evaluate identical `case_id` manifests and hashes (`0832c38e...` for TEST).
-3. **Input Profile Alignment:** Both agents must share identical observation rights (e.g., both use `CORE_V1`). If Agent A uses `CORE_V1` (kinematics + lidar) and Agent B uses `FULL_V1` (oracle traffic context), they cannot be compared as an algorithmic benchmark (`INCOMPATIBLE` for algorithm comparison; reportable only as an informational information-ablation study).
-4. **Action Adapter Alignment:**
-   - *Same Action Adapter:* (e.g., both use `CONTINUOUS_BOX2`) $\rightarrow$ **`STRICTLY_COMPARABLE`** (direct algorithmic comparison).
-   - *Different Action Adapter:* (e.g., Agent A uses `CONTINUOUS_BOX2`, Agent B uses `DISCRETE_25`) $\rightarrow$ **`QUALIFIED_COMPARISON`**. May be compared as end-to-end autonomous driving systems, but **NOT** as an isolated proof of algorithm superiority. The action discretization itself introduces structural control limitations.
+1. **Mode and Split Match:** Both runs must evaluate the same split (`TEST` vs `TEST`, or `VALIDATION` vs `VALIDATION`). Comparing a VALIDATION run to a TEST run is strictly prohibited (`INCOMPATIBLE`).
+2. **Case Manifest and Hash Match:** Both runs must evaluate identical `case_id` manifests and hashes (`0832c38e...` for TEST, `10afc2af...` for VALIDATION). If two completed runs each have 60 episodes, but their case ID sets or seeds differ, they are individually valid but pairwise **`INCOMPATIBLE`**.
+3. **Input Profile Alignment:** Both agents must share identical observation rights. Certified profiles from `src/platform/agent_input.py` are `STATE_DECISION_V1` (main benchmark profile: Core 259D + structured traffic context + task context) and `CORE_ONLY_V1` (ablation profile with masked traffic/task context). Both operate strictly within legal agent rights without ground-truth evaluator leaks. If Agent A uses `STATE_DECISION_V1` and Agent B uses `CORE_ONLY_V1`, they cannot be compared as an algorithmic benchmark (`INCOMPATIBLE` for algorithm comparison; reportable only as an information-ablation study).
+4. **Action Adapter Alignment:** Certified adapters from `src/platform/action_adapter.py` are `continuous_box2_v1`, `discrete25_native_v1`, and `discrete9_lowbranch_v1`.
+   - *Same Action Adapter:* (e.g., both use `continuous_box2_v1`) $\rightarrow$ **`STRICTLY_COMPARABLE`** (direct algorithmic comparison).
+   - *Different Action Adapter:* (e.g., Agent A uses `continuous_box2_v1`, Agent B uses `discrete25_native_v1`) $\rightarrow$ **`QUALIFIED_COMPARISON`**. May be compared as end-to-end autonomous driving systems, but **NOT** as an isolated proof of algorithm superiority. The action discretization itself introduces structural control limitations.
+5. **Hardware Execution & Latency Scope:** Mismatched hardware or synchronization policies (`latency_sync_policy`) qualify decision latency conclusions (`timing.csv`), but do not disqualify task performance metrics (`clean_success_rate`, `safety_failure_rate`, route completion) under deterministic headless simulation. The comparison verdict for latency is `QUALIFIED_COMPARISON`, while task performance remains `STRICTLY_COMPARABLE`.
 *Failure at Layer B results in state `INCOMPATIBLE` or `QUALIFIED_COMPARISON`.*
 
 ### 8.3 Layer C: Evidence Strength and Scientific Interpretation
@@ -276,9 +280,11 @@ When interpreting comparable runs:
 
 ## 9. Downstream System Alignment
 
-### 9.1 Research Workbench GUI V2 Consumption
+### 9.1 Research Workbench GUI V2 Consumption (Proposed Comparison Module)
+- Note: The current Research Workbench (Gate 7.5B Pass B2) implements single-run inspection and cryptographic verification via `RunArtifactRepository`. It intentionally enforces `NO_LEADERBOARDS_NO_MULTI_RUN_RANKING`.
+- For future comparison features (GUI V2), the rules defined in Layers A, B, and C serve as the normative design specification.
 - GUI V2 must consume `summary.json` directly via `RunArtifactRepository`.
-- GUI V2 must display integrity status (`VERIFIED`, `NOT_FINAL`, `UNVERIFIED`, `FAILED`) prominently.
+- GUI V2 must display integrity status (`VERIFIED`, `NOT_FINAL`, `UNVERIFIED`, `FAILED`) computed dynamically.
 - When comparing runs, GUI V2 must enforce Layer A and Layer B checks before rendering comparative visualizations, displaying explicit warnings if comparison is `QUALIFIED` or `INCOMPATIBLE`.
 - GUI V2 must present `mean_time_to_clean_success_s` as `"N/A — no clean-success samples"` whenever clean successes equal zero.
 

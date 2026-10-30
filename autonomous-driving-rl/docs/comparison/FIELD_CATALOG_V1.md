@@ -162,26 +162,33 @@ Governed by `src/platform/experiment_logging.py:EpisodeTimingRecord`.
 
 ## 7. Provenance, Metadata, and Integrity Fields
 
-Recorded in `run_manifest.json`, `run_state.json`, and `run_integrity.json`.
+Recorded across `run_manifest.json`, `run_state.json`, `summary.json`, and `run_integrity.json`.
 
 | Field Name | Location | Type | Semantic Description |
 |---|---|---|---|
-| `run_id` | All artifacts | `str` | Deterministic unique run folder name (e.g., `run_test_ppo_001`) |
-| `run_kind` | `run_manifest.json`, `run_state.json` | `str` | Enum: `TRAINING`, `VALIDATION_EVALUATION`, `TEST_EVALUATION`, `AUDIT` |
+| `run_id` | All artifacts | `str` | Unique run directory name (generated via `run_<uuid[:12]>` or custom run ID) |
+| `run_kind` | `run_manifest.json`, `summary.json` | `str` | Enum: `TRAINING`, `VALIDATION_EVALUATION`, `TEST_EVALUATION`, `AUDIT` (Note: not in `run_state.json`) |
 | `status` | `run_state.json` | `str` | Lifecycle: `INITIALIZING`, `RUNNING`, `COMPLETE`, `FAILED`, `INTERRUPTED` |
 | `canonical_run` | `run_state.json` | `bool` | True only if run had clean worktree, verified pin, and locked contracts |
+| `dirty_override` | `run_state.json` | `bool` | True if run was forced on a dirty git worktree |
+| `unverified_env_override` | `run_state.json` | `bool` | True if run was forced with an unverified MetaDrive environment |
 | `git_commit_sha` | `run_manifest.json:git_provenance` | `str` | Git SHA of repository at launch |
 | `git_worktree_dirty` | `run_manifest.json:git_provenance` | `bool` | True if untracked/modified files existed at launch |
 | `metadrive_pinned_commit` | `run_manifest.json:environment_provenance` | `str` | Locked pin: `85e5dadc6c7436d324348f6e3d8f8e680c06b4db` |
 | `metadrive_pinned_version`| `run_manifest.json:environment_provenance` | `str` | Locked version: `0.4.3` |
-| `environment_verification_status`| `run_state.json` | `str` | Verification verdict: `VERIFIED`, `UNVERIFIED_OVERRIDE`, `MISMATCH` |
+| `environment_verification_status`| `run_state.json`, `run_manifest.json` | `str` | Actual environment verification status: `"UNKNOWN"`, `"MISMATCHED"`, `"VERIFIED"` |
 | `benchmark_contract_sha256` | `run_manifest.json:platform_contracts` | `str` | Locked Gate 5 hash: `9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77` |
 | `agent_contract_sha256` | `run_manifest.json:platform_contracts` | `str` | Locked Gate 6 hash: `53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb` |
 | `logging_contract_sha256`| `run_manifest.json:platform_contracts` | `str` | Locked Gate 7 hash: `0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2` |
 | `recorded_episode_count` | `run_state.json` | `int` | Number of completed episodes committed to disk |
-| `expected_episode_count` | `run_state.json` | `int` | Predeclared expected episodes ($60$ for TEST, $96$ for VALIDATION) |
+| `expected_episode_count` | `run_state.json` | `int` or `None` | Predeclared expected episodes ($60$ for TEST, $96$ for VALIDATION) |
+| `technical_failure_count`| `summary.json` | `int` | Count of unhandled technical exceptions logged in `technical_failures.jsonl` |
 | `episodes_sha256` | `run_integrity.json` | `str` | Cryptographic canonical CSV hash of `episodes.csv` |
 | `summary_sha256` | `run_integrity.json` | `str` | Cryptographic canonical JSON hash of `summary.json` |
+| `timing_sha256` | `run_integrity.json` | `str` | Cryptographic canonical CSV hash of `timing.csv` |
+| `run_state_sha256` | `run_integrity.json` | `str` | Cryptographic canonical JSON hash of `run_state.json` |
+| `wandb_sync_sha256` | `run_integrity.json` | `str` or `None` | Cryptographic canonical JSON hash of `wandb_sync.json` |
+| `IntegrityDisplayStatus` | Computed dynamically (GUI / Repository) | `str` | Enum: `VERIFIED`, `NOT_FINAL`, `UNVERIFIED`, `FAILED`. Computed by `RunArtifactRepository._evaluate_integrity()` against `run_integrity.json` hashes (not persisted as a string in `run_integrity.json`) |
 
 ---
 
