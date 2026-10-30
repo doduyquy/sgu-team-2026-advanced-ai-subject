@@ -6,7 +6,7 @@
 - **Status:** `DRAFT / TEAM REVIEW REQUIRED` — Not an approved scientific lock
 - **Subproject Root:** `autonomous-driving-rl/`
 - **Baseline Git Commit:** `dcd653306a0e072a2c6bee66eaeadf388101d679`
-- **Target Audience:** SGU Autonomous Driving Research Team (Q, Khoa, Phúc, Trí), Stage 5 RL Engineers, GUI V2 Implementers
+- **Target Audience:** SGU Autonomous Driving Research Team (Q, Khoa, Phúc, Hữu Tri), Stage 5 RL Engineers, GUI V2 Implementers
 
 ---
 

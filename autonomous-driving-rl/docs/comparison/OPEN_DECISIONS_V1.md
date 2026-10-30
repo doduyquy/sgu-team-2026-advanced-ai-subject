@@ -17,7 +17,7 @@ This document records unresolved methodological decisions, statistical options, 
 | Role / Focus Area | Researcher | Scope / Responsibility | Review Status | Date |
 |---|---|---|---|---|
 | **Stages 0 / 1 / 4** | Đặng Khoa | Random Baseline, Rule-Based Agent, Imitation Learning | `PENDING INDEPENDENT REVIEW` | — |
-| **Stage 5 + GUI** | Nguyễn Hữu Trí | Model-Free RL, Replicate Training, Workbench GUI Extension | `PENDING INDEPENDENT REVIEW` | — |
+| **Stage 5 + GUI** | Hữu Tri | Model-Free RL, Replicate Training, Workbench GUI Extension | `PENDING INDEPENDENT REVIEW` | — |
 | **Stages 2 / 6** | Lư Hồng Phúc | Planning / Search, Search + Learned Baselines, Discrete Controls | `PENDING INDEPENDENT REVIEW` | — |
 | **Stages 3 / 7** | Đỗ Duy Quý (`doduyquy`) | Simulation-Based Planning, World Models / Model-Based RL | `PENDING INDEPENDENT REVIEW` | — |
 
@@ -39,7 +39,7 @@ This document records unresolved methodological decisions, statistical options, 
   - **Option A (3x1 Fixed Evaluation):** Standard practice in deep RL benchmarks (e.g., SB3, CleanRL). Train 3 models; evaluate each deterministically (argmax action) on the 60 TEST cases. Total: 180 episodes.
   - **Option B (3x3 Factorial Design):** Train 3 models; evaluate each stochastically with 3 seeds (`101, 202, 303`). Total: 540 episodes. Requires nested variance decomposition (training variance vs action sampling variance).
 - **Recommendation:** **Option A (Recommended)** for primary benchmark reporting, reserving stochastic evaluation for exploration ablations.
-- **Proposed Owner:** Nguyễn Hữu Trí (Stage 5) [PROPOSED / AWAITING TEAM AGREEMENT]
+- **Proposed Owner:** Hữu Tri (Stage 5) [PROPOSED / AWAITING TEAM AGREEMENT]
 - **Target Resolution:** Gate C2 / Prior to Stage 5 RL training.
 
 ---
@@ -53,7 +53,7 @@ This document records unresolved methodological decisions, statistical options, 
   - **Option B (Paired Permutation / Randomization Test):** Permute paired case outcomes across models, blocking by training run identity.
   - **Option C (Stratified Bootstrap with Model-Level Resampling):** Resample models with replacement, then resample cases within models. (Requires acknowledging wide confidence intervals with $R=3$).
 - **Recommendation:** **Option A (Recommended)** as the primary reporting standard, augmented with Option B for exploratory paired differences.
-- **Proposed Owner:** Nguyễn Hữu Trí (Stage 5) & Lư Hồng Phúc (Stages 2/6) [PROPOSED / AWAITING TEAM AGREEMENT]
+- **Proposed Owner:** Hữu Tri (Stage 5) & Lư Hồng Phúc (Stages 2/6) [PROPOSED / AWAITING TEAM AGREEMENT]
 - **Target Resolution:** Prior to final benchmark report synthesis.
 
 ---
@@ -66,7 +66,7 @@ This document records unresolved methodological decisions, statistical options, 
   - **Option A:** Formalize an `ADR-Stage5-Training-Contract` introducing `training_manifest.json` and `training_metrics.jsonl` matching Gate 7 conventions.
   - **Option B:** Allow training to log freely to W&B, requiring only that the final selected model checkpoint is packaged with its SHA-256 digest before evaluation.
 - **Recommendation:** **Option A (Recommended)** to preserve local-first cryptographic reproducibility.
-- **Proposed Owner:** Nguyễn Hữu Trí (Stage 5) & Đỗ Duy Quý (Stages 3/7) [PROPOSED / AWAITING TEAM AGREEMENT]
+- **Proposed Owner:** Hữu Tri (Stage 5) & Đỗ Duy Quý (Stages 3/7) [PROPOSED / AWAITING TEAM AGREEMENT]
 - **Target Resolution:** Gate Stage 5 Kickoff.
 
 ---
@@ -79,7 +79,7 @@ This document records unresolved methodological decisions, statistical options, 
   - **Option A (Unified System Track with Mandatory Qualification):** A single benchmark table where discrete agents are marked with a mandatory `[QUALIFIED: discrete25_native_v1]` tag.
   - **Option B (Partitioned Benchmark Tracks):** Two official tracks: Track 1 (Continuous Actuation) and Track 2 (Discrete Actuation), with cross-track comparison permitted only as an end-to-end ablation.
 - **Recommendation:** **Option B (Recommended)** for clarity and fairness.
-- **Proposed Owner:** Đặng Khoa (Stages 0/1/4) & Nguyễn Hữu Trí (Stage 5) [PROPOSED / AWAITING TEAM AGREEMENT]
+- **Proposed Owner:** Đặng Khoa (Stages 0/1/4) & Hữu Tri (Stage 5) [PROPOSED / AWAITING TEAM AGREEMENT]
 - **Target Resolution:** Prior to Stage 1 vs Stage 5 joint comparison.
 
 ---
@@ -92,7 +92,7 @@ This document records unresolved methodological decisions, statistical options, 
   - **Option A (Pure In-Memory Presentation):** GUI V2 adds a 7th tab (`ComparisonWidget`) that loads two or more verified snapshots via `RunArtifactRepository`, validates Layers A and B in-memory, and displays side-by-side scorecards without writing any new files.
   - **Option B (Persisted Comparison Sessions):** GUI V2 allows exporting comparison session definitions to a `comparisons/` directory with its own schema.
 - **Recommendation:** **Option A (Recommended)** to prevent file proliferation and maintain simple read-only semantics.
-- **Proposed Owner:** Nguyễn Hữu Trí (Stage 5 + GUI) & Đỗ Duy Quý (Stages 3/7) [PROPOSED / AWAITING TEAM AGREEMENT]
+- **Proposed Owner:** Hữu Tri (Stage 5 + GUI) & Đỗ Duy Quý (Stages 3/7) [PROPOSED / AWAITING TEAM AGREEMENT]
 - **Target Resolution:** GUI V2 Design Gate.
 
 ---
