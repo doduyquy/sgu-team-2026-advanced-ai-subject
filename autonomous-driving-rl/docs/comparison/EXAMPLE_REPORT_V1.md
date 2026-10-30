@@ -220,7 +220,7 @@ $$\text{Safety Failure Rate: } \mathbf{18.89\% \pm 4.19\text{ percentage points}
 
 #### Correct Reporting Procedure
 1. **Single Evaluation Run:** The agent evaluates the 60 canonical TEST cases exactly once.
-2. **Deterministic Reproducibility:** Because the code and environment are deterministic, rerunning the suite with agent seeds `101`, `202`, and `303` would yield bit-identical trajectories.
+2. **Absence of Agent-Side Stochasticity:** Under a fixed software environment and deterministic configuration, the non-learned controller has no agent-side stochasticity (no learned weights, random sampling, or exploratory noise). Rerunning the exact same canonical suite on the same platform produces identical action sequences. However, bit-level numerical identity across differing hardware platforms or library versions is not guaranteed without empirical state-parity verification.
 3. **Prohibited Practice:** Fabricating 3 identical runs and reporting $\bar{m} \pm 0.0\%$ to mimic RL replicate tables is scientifically dishonest.
 4. **Mandatory Reporting Format:**
    $$\text{Clean Success Rate: } \mathbf{68.3\%} \ (41/60 \text{ cases; single deterministic evaluation run})$$

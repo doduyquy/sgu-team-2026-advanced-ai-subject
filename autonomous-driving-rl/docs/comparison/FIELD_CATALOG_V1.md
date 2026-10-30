@@ -166,7 +166,7 @@ Recorded across `run_manifest.json`, `run_state.json`, `summary.json`, and `run_
 
 | Field Name | Location | Type | Semantic Description |
 |---|---|---|---|
-| `run_id` | `run_manifest.json`, `run_state.json`, `summary.json`, `run_integrity.json`, `wandb_sync.json` | `str` | Unique run directory name (generated via `run_<uuid[:12]>` or custom). Note: `episodes.csv` and `timing.csv` schemas do NOT contain a `run_id` column (per `EPISODE_CSV_COLUMNS` and `EpisodeTimingRecord`); their association with a run is established strictly by their containing directory path `runs/<run_id>/` |
+| `run_id` | `run_manifest.json`, `run_state.json`, `summary.json`, `run_integrity.json` | `str` | Unique local run directory identifier (defaults to `run_<uuid[:12]>` or custom run ID). Persisted explicitly in the four core JSON records above. Note: `wandb_sync.json` records `wandb_run_id` (a remote tracking service identifier), which must not be conflated with the local experiment `run_id`. Furthermore, `episodes.csv` and `timing.csv` schemas do NOT contain a `run_id` column (per `EPISODE_CSV_COLUMNS` and `EpisodeTimingRecord`); their association with the experiment run is inherited strictly from their containing parent directory `runs/<run_id>/` |
 | `run_kind` | `run_manifest.json`, `summary.json` | `str` | Enum: `TRAINING`, `VALIDATION_EVALUATION`, `TEST_EVALUATION`, `AUDIT` (Note: not in `run_state.json`) |
 | `status` | `run_state.json` | `str` | Lifecycle: `INITIALIZING`, `RUNNING`, `COMPLETE`, `FAILED`, `INTERRUPTED` |
 | `canonical_run` | `run_state.json` | `bool` | True only if run had clean worktree, verified pin, and locked contracts |
