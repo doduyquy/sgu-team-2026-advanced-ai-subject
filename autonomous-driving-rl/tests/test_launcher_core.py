@@ -128,13 +128,26 @@ class TestAgentRegistry(unittest.TestCase):
     def test_initial_fixture_agents_registered(self):
         agents = self.registry.list_all()
         agent_ids = [a.agent_id for a in agents]
-        expected = [
+        expected_fixtures = [
             "fixture_constant_continuous",
             "fixture_discrete",
             "fixture_seeded_random",
             "fixture_stateful_counter"
         ]
-        self.assertEqual(sorted(agent_ids), sorted(expected))
+        for fid in expected_fixtures:
+            self.assertIn(fid, agent_ids)
+        self.assertIn("stage0_random_naive", agent_ids)
+        self.assertEqual(len(agent_ids), 5)
+
+        # Verify historical 4-fixture baseline parity and locked Gate 7.5A fingerprint
+        from src.launcher.registry import (
+            HISTORICAL_FIXTURE_REGISTRY_SHA256,
+            build_historical_fixture_registry,
+            compute_canonical_registry_sha256,
+        )
+        hist_reg = build_historical_fixture_registry()
+        self.assertEqual(sorted([a.agent_id for a in hist_reg.list_all()]), sorted(expected_fixtures))
+        self.assertEqual(compute_canonical_registry_sha256(hist_reg), HISTORICAL_FIXTURE_REGISTRY_SHA256)
 
     def test_fixtures_not_benchmark_eligible(self):
         for a in self.registry.list_all():

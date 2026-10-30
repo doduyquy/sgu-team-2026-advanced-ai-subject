@@ -48,7 +48,11 @@ from src.launcher.preflight import (
 )
 from src.launcher.registry import (
     AgentRegistryV1,
+    HISTORICAL_FIXTURE_REGISTRY_SHA256,
+    build_canonical_agent_registry,
     build_default_agent_registry,
+    build_historical_fixture_registry,
+    compute_canonical_registry_sha256,
 )
 from src.launcher.resolver import (
     resolve_experiment_plan,
@@ -60,6 +64,7 @@ __all__ = [
     "EventCallback",
     "ExecutionReportV1",
     "ExperimentExecutor",
+    "HISTORICAL_FIXTURE_REGISTRY_SHA256",
     "LaunchRequestV1",
     "LauncherEventType",
     "LauncherEventV1",
@@ -69,10 +74,12 @@ __all__ = [
     "PreflightReportV1",
     "ResolvedCaseV1",
     "ResolvedExperimentPlanV1",
+    "build_canonical_agent_registry",
     "build_default_agent_registry",
+    "build_historical_fixture_registry",
     "build_launcher_contract_core",
     "build_metadrive_case_config",
-    "compute_launcher_contract_sha256",
+    "compute_canonical_registry_sha256",
     "compute_platform_execution_contract_sha256",
     "compute_resolved_plan_sha256",
     "compute_step_route_progress_and_reward",

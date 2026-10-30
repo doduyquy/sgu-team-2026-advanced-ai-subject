@@ -339,7 +339,14 @@ class TestWorkbenchSuite(unittest.TestCase):
     def test_14_workbench_imports_do_not_modify_launcher_registry_or_contracts(self):
         """Importing Workbench does not alter Gate 7.5A registry or contract hashes."""
         reg = build_canonical_agent_registry()
-        self.assertEqual(len(reg.list_all()), 4)
+        self.assertEqual(len(reg.list_all()), 5)
+        self.assertTrue(reg.has_agent("stage0_random_naive"))
+        from src.launcher.registry import (
+            HISTORICAL_FIXTURE_REGISTRY_SHA256,
+            build_historical_fixture_registry,
+        )
+        hist_reg = build_historical_fixture_registry()
+        self.assertEqual(len(hist_reg.list_all()), 4)
         launcher_core = build_launcher_contract_core()
         launcher_hash = compute_launcher_contract_sha256(launcher_core)
         self.assertEqual(launcher_hash, GATE7_5A_LAUNCHER_CONTRACT_HASH)
@@ -354,11 +361,23 @@ class TestWorkbenchSuite(unittest.TestCase):
         # Gate 7
         self.assertEqual(GATE7_LOCKED_LOGGING_HASH, "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2")
         self.assertEqual(GATE7_LOCKED_OBSERVABILITY_HASH, "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581")
-        # Gate 7.5A
+        # Gate 7.5A Historical Fixture Registry Baseline
+        from src.launcher.registry import (
+            HISTORICAL_FIXTURE_REGISTRY_SHA256,
+            build_historical_fixture_registry,
+        )
         self.assertEqual(
-            compute_canonical_registry_sha256(build_canonical_agent_registry()),
+            compute_canonical_registry_sha256(build_historical_fixture_registry()),
+            HISTORICAL_FIXTURE_REGISTRY_SHA256,
+        )
+        self.assertEqual(
+            HISTORICAL_FIXTURE_REGISTRY_SHA256,
             "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
         )
+        # Current Canonical Registry with Stage 0
+        canonical_sha = compute_canonical_registry_sha256(build_canonical_agent_registry())
+        self.assertEqual(canonical_sha, compute_canonical_registry_sha256(build_canonical_agent_registry()))
+        self.assertNotEqual(canonical_sha, HISTORICAL_FIXTURE_REGISTRY_SHA256)
         self.assertEqual(
             compute_launcher_contract_sha256(build_launcher_contract_core()),
             "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",

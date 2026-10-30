@@ -44,7 +44,11 @@ from src.launcher.contracts import (
     compute_launcher_contract_sha256,
     compute_platform_execution_contract_sha256,
 )
-from src.launcher.registry import build_canonical_agent_registry, compute_canonical_registry_sha256
+from src.launcher.registry import (
+    build_canonical_agent_registry,
+    build_historical_fixture_registry,
+    compute_canonical_registry_sha256,
+)
 from src.launcher.resolver import (
     GATE5_LOCKED_BENCHMARK_HASH,
     GATE6_LOCKED_AGENT_HASH,
@@ -104,8 +108,9 @@ def run_b2_audit() -> None:
     launcher_core = build_launcher_contract_core()
     l_hash = compute_launcher_contract_sha256(launcher_core)
     p_exec_hash = compute_platform_execution_contract_sha256(l_hash)
+    hist_reg = build_historical_fixture_registry()
+    hist_reg_hash = compute_canonical_registry_sha256(hist_reg)
     canon_reg = build_canonical_agent_registry()
-    canon_reg_hash = compute_canonical_registry_sha256(canon_reg)
 
     wb_core = build_workbench_contract_core()
     wb_hash = compute_workbench_contract_sha256(wb_core)
@@ -118,7 +123,7 @@ def run_b2_audit() -> None:
     assert GATE7_LOCKED_OBSERVABILITY_HASH == "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581"
     assert l_hash == GATE7_5A_LAUNCHER_CONTRACT_HASH
     assert p_exec_hash == GATE7_5A_PLATFORM_EXECUTION_CONTRACT_HASH
-    assert canon_reg_hash == "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f"
+    assert hist_reg_hash == "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f"
     assert wb_hash == GATE7_5B_B1_WORKBENCH_CONTRACT_HASH
     assert p_wb_hash == GATE7_5B_B1_PLATFORM_WORKBENCH_CONTRACT_HASH
 
@@ -142,7 +147,7 @@ def run_b2_audit() -> None:
         "gate7_platform_observability_contract_sha256": GATE7_LOCKED_OBSERVABILITY_HASH,
         "launcher_contract_sha256": l_hash,
         "platform_execution_contract_sha256": p_exec_hash,
-        "canonical_agent_registry_sha256": canon_reg_hash,
+        "canonical_agent_registry_sha256": hist_reg_hash,
         "workbench_contract_sha256": wb_hash,
         "platform_workbench_contract_sha256": p_wb_hash,
         "workbench_results_contract_sha256": wb_results_hash,

@@ -106,12 +106,14 @@ def _factory_fixture_discrete() -> DiscreteFixtureAgent:
 def _factory_stage0_random_naive() -> Stage0RandomNaiveAgent:
     return Stage0RandomNaiveAgent()
 
-def build_canonical_agent_registry() -> AgentRegistryV1:
+
+HISTORICAL_FIXTURE_REGISTRY_SHA256 = "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f"
+
+
+def build_historical_fixture_registry() -> AgentRegistryV1:
     """
-    Initializes and populates canonical AgentRegistryV1 with committed Gate-6 fixture agents.
-    This function represents the single authoritative source of truth for Platform V1 agents.
-    NOTE: All fixture agents are explicitly flagged with benchmark_eligible = False.
-    Stage 0 Random benchmark agent will be registered in a subsequent task.
+    Initializes and populates AgentRegistryV1 with the four historical Gate-7.5A audit/development fixture agents.
+    Preserved as the locked historical fixture baseline for Gate 7.5A integrity verification.
     """
     registry = AgentRegistryV1()
 
@@ -202,6 +204,18 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
         ),
         factory=_factory_fixture_discrete
     )
+
+    return registry
+
+
+def build_canonical_agent_registry() -> AgentRegistryV1:
+    """
+    Initializes and populates canonical AgentRegistryV1 with the four historical Gate-6 fixture agents
+    plus the active Stage 0 Random/Naive baseline agent.
+    This function represents the authoritative registry for Platform V1 launcher execution.
+    NOTE: All fixture agents and Stage 0 are explicitly flagged with benchmark_eligible = False.
+    """
+    registry = build_historical_fixture_registry()
 
     registry.register(
         registration=AgentRegistrationV1(
