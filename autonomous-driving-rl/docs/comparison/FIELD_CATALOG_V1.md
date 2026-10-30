@@ -166,7 +166,7 @@ Recorded across `run_manifest.json`, `run_state.json`, `summary.json`, and `run_
 
 | Field Name | Location | Type | Semantic Description |
 |---|---|---|---|
-| `run_id` | All artifacts | `str` | Unique run directory name (generated via `run_<uuid[:12]>` or custom run ID) |
+| `run_id` | `run_manifest.json`, `run_state.json`, `summary.json`, `run_integrity.json`, `wandb_sync.json` | `str` | Unique run directory name (generated via `run_<uuid[:12]>` or custom). Note: `episodes.csv` and `timing.csv` schemas do NOT contain a `run_id` column (per `EPISODE_CSV_COLUMNS` and `EpisodeTimingRecord`); their association with a run is established strictly by their containing directory path `runs/<run_id>/` |
 | `run_kind` | `run_manifest.json`, `summary.json` | `str` | Enum: `TRAINING`, `VALIDATION_EVALUATION`, `TEST_EVALUATION`, `AUDIT` (Note: not in `run_state.json`) |
 | `status` | `run_state.json` | `str` | Lifecycle: `INITIALIZING`, `RUNNING`, `COMPLETE`, `FAILED`, `INTERRUPTED` |
 | `canonical_run` | `run_state.json` | `bool` | True only if run had clean worktree, verified pin, and locked contracts |
@@ -183,12 +183,15 @@ Recorded across `run_manifest.json`, `run_state.json`, `summary.json`, and `run_
 | `recorded_episode_count` | `run_state.json` | `int` | Number of completed episodes committed to disk |
 | `expected_episode_count` | `run_state.json` | `int` or `None` | Predeclared expected episodes ($60$ for TEST, $96$ for VALIDATION) |
 | `technical_failure_count`| `summary.json` | `int` | Count of unhandled technical exceptions logged in `technical_failures.jsonl` |
-| `episodes_sha256` | `run_integrity.json` | `str` | Cryptographic canonical CSV hash of `episodes.csv` |
-| `summary_sha256` | `run_integrity.json` | `str` | Cryptographic canonical JSON hash of `summary.json` |
-| `timing_sha256` | `run_integrity.json` | `str` | Cryptographic canonical CSV hash of `timing.csv` |
-| `run_state_sha256` | `run_integrity.json` | `str` | Cryptographic canonical JSON hash of `run_state.json` |
-| `wandb_sync_sha256` | `run_integrity.json` | `str` or `None` | Cryptographic canonical JSON hash of `wandb_sync.json` |
-| `IntegrityDisplayStatus` | Computed dynamically (GUI / Repository) | `str` | Enum: `VERIFIED`, `NOT_FINAL`, `UNVERIFIED`, `FAILED`. Computed by `RunArtifactRepository._evaluate_integrity()` against `run_integrity.json` hashes (not persisted as a string in `run_integrity.json`) |
+| `experiment_config_sha256` | `run_integrity.json`, `run_manifest.json` | `str` | Cryptographic canonical JSON hash of resolved `ExperimentRunConfig` |
+| `run_manifest_sha256` | `run_integrity.json` | `str` | Cryptographic canonical JSON hash of `run_manifest.json` (core digest target 1/6) |
+| `episodes_sha256` | `run_integrity.json` | `str` | Cryptographic canonical CSV hash of `episodes.csv` (core digest target 2/6) |
+| `summary_sha256` | `run_integrity.json` | `str` | Cryptographic canonical JSON hash of `summary.json` (core digest target 3/6) |
+| `timing_sha256` | `run_integrity.json` | `str` | Cryptographic canonical CSV hash of `timing.csv` (core digest target 4/6) |
+| `run_state_sha256` | `run_integrity.json` | `str` | Cryptographic canonical JSON hash of `run_state.json` (core digest target 5/6) |
+| `wandb_sync_sha256` | `run_integrity.json` | `str` | Cryptographic canonical JSON hash of `wandb_sync.json` (core digest target 6/6) |
+| `technical_failures_sha256` | `run_integrity.json` | `str` or `None` | Cryptographic raw-byte SHA-256 hash of `technical_failures.jsonl` (optional target) |
+| `IntegrityDisplayStatus` | Computed dynamically (GUI / Repository) | `str` | Enum: `VERIFIED`, `NOT_FINAL`, `UNVERIFIED`, `FAILED`. Computed dynamically by `RunArtifactRepository._evaluate_integrity()` by checking run_id, experiment_config, and the 6 core target digests (plus optional technical failures). Note: `run_integrity.json` records these target digests and does not hash itself. |
 
 ---
 

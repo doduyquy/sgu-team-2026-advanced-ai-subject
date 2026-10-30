@@ -96,24 +96,38 @@ Every scientific comparison report produced on Platform V1 must structure its di
 
 ---
 
-### Case 4: Unmatched Case Manifests (Subsetting Anti-Pattern)
+### Case 4: Unmatched Manifests vs Cross-Split Incompatibility (Layer A vs Layer B)
 
-**Context:**
-- Researcher A runs canonical TEST mode: 60 cases (Test Manifest SHA `0832c38e...`).
-- Researcher B runs a custom script that executes only the 15 `Easy` cases of TEST.
-- Researcher B attempts to compare their $80.0\%$ success rate against Researcher A's $65.0\%$ overall success rate.
+**Context:** Demonstrating the strict boundary between Layer A per-run canonical rejection and Layer B pairwise scientific incompatibility.
 
-#### Evaluator Audit Verdict
+#### Scenario 4A — Non-Canonical Subsetting (Fails Layer A $\rightarrow$ `REJECTED_UNTRUSTED`)
+- Researcher A runs canonical TEST mode: full 60-case suite (`test_case_manifest.csv`, SHA-256: `0832c38e...`).
+- Researcher B runs an unverified custom script that executes only the 15 `Easy` cases of TEST.
+- Researcher B attempts to compare their 15-case subset run against Researcher A's 60-case canonical benchmark run.
+
 ```
-[COMPATIBILITY AUDIT ENGINE]
-  Run A Manifest: test_case_manifest.csv (60 cases, SHA256: 0832c38e...)
-  Run B Manifest: custom_easy_subset.csv  (15 cases, SHA256: e3b0c442...)
-  Check Result:   FAIL — Case set mismatch (Layer B)
-  VERDICT:        INCOMPATIBLE
+[PREFLIGHT & LAYER A TRUST AUDIT]
+  Target Run:     Run B (15 cases, custom Easy subset)
+  Manifest Check: Expected canonical 60 cases from test_case_manifest.csv (SHA-256: 0832c38e...); observed 15 cases.
+  Check Result:   FAIL — Canonical manifest and coverage mismatch (Layer A)
+  VERDICT:        REJECTED_UNTRUSTED
 ```
-#### Critical Protocol Validations
-1. **Enforcement:** Comparing runs across different case sets is strictly forbidden. Subsetting is blocked by the launcher preflight in benchmark modes (`resolve_experiment_plan()` raises `ValueError` if tier or seed filters are supplied in `TEST` or `VALIDATION`).
-2. **Action:** Run B must be discarded or evaluated on the full 60-case canonical manifest.
+*Critical Protocol Validation:* Subsetting or filtering canonical suites in benchmark modes is strictly forbidden (blocked by launcher preflight). Run B is individually non-canonical (`canonical_run == False`) and fails Layer A immediately. It cannot be presented as benchmark evidence or compared against any run.
+
+#### Scenario 4B — Cross-Split Incompatibility (Passes Layer A, Fails Layer B $\rightarrow$ `INCOMPATIBLE`)
+- Researcher A evaluates an agent on the canonical TEST suite ($N=60$, `test_case_manifest.csv`, SHA-256: `0832c38e...`).
+- Researcher B evaluates an agent on the canonical VALIDATION suite ($N=96$, `validation_case_manifest.csv`, SHA-256: `10afc2af...`).
+- Both runs are individually valid, clean, and verified at Layer A (`canonical_run == True`, status `COMPLETE`, `IntegrityDisplayStatus.VERIFIED`).
+- However, when paired at Layer B:
+
+```
+[SCIENTIFIC COMPARABILITY AUDIT (LAYER B)]
+  Run A Manifest: Canonical TEST suite (60 cases, 12 geometries x 5 test seeds, SHA-256: 0832c38e...)
+  Run B Manifest: Canonical VALIDATION suite (96 cases, 48 geometries x 2 val seeds, SHA-256: 10afc2af...)
+  Check Result:   FAIL — Dataset split and scenario distribution mismatch (TEST vs VALIDATION)
+  VERDICT:        overall: INCOMPATIBLE | task: INCOMPATIBLE | latency: INCOMPATIBLE
+```
+*Critical Protocol Validation:* Cross-split comparisons (VALIDATION vs TEST) are strictly blocked at Layer B, because VALIDATION is an open model-selection suite while TEST is a held-out final benchmark suite.
 
 ---
 
@@ -121,24 +135,24 @@ Every scientific comparison report produced on Platform V1 must structure its di
 
 **Context:**
 - **Run A:** A valid candidate evaluated on TEST, `run_state.json` status is `COMPLETE`, `_evaluate_integrity()` yields `IntegrityDisplayStatus.VERIFIED`.
-- **Run B:** An engineer tested `fixture_constant_continuous` in TEST mode using an unverified dirty worktree override, or manually edited `summary.json` to change the success rate.
+- **Run B:** An engineer tested `fixture_constant_continuous` in TEST mode using an unverified dirty worktree override, or manually edited `summary.json` to change the recorded success rate.
 
 #### Evaluator Audit Verdict
 ```
 [INTEGRITY AUDIT ENGINE]
   Run B Target: runs/run_fixture_test_001/
   - Artifact run_integrity.json verification:
-      episodes.csv computed SHA-256 mismatch!
-      Recorded in run_integrity.json: a1b2c3...
-      Observed on disk:               f9e8d7...
+      summary.json computed canonical SHA-256 mismatch!
+      Recorded in run_integrity.json: SYNTHETIC_EXPECTED_SUMMARY_HASH...
+      Observed on disk:               SYNTHETIC_TAMPERED_SUMMARY_HASH...
       Status:                         IntegrityDisplayStatus.FAILED
   - Canonical provenance check:
       canonical_run == False (dirty_override == True, unverified fixture agent)
   Check Result: FAIL — Cryptographic mismatch and non-canonical origin (Layer A)
-  VERDICT:      REJECTED_UNTRUSTED
+  VERDICT:      overall: REJECTED_UNTRUSTED | task: REJECTED_UNTRUSTED | latency: REJECTED_UNTRUSTED
 ```
 #### Critical Protocol Validations
-- **Zero Scientific Standing:** Run B is immediately rejected. It cannot appear in any comparative report, plot, or table.
+- **Zero Scientific Standing:** Run B is immediately rejected at Layer A. It cannot appear in any comparative report, plot, or table.
 
 ---
 
@@ -185,11 +199,12 @@ $$\text{Safety Failure Rate: } \mathbf{18.89\% \pm 4.19\text{ percentage points}
 
 #### Evaluator Audit Verdict
 ```
-[ACTION ADAPTER AUDIT]
+[ACTION ADAPTER AUDIT (LAYER B)]
   Agent A Adapter: continuous_box2_v1
   Agent B Adapter: discrete25_native_v1
-  Check Result:    Disparate control action spaces (Layer B)
-  VERDICT:         QUALIFIED_COMPARISON
+  Check Result:    Disparate control action spaces on identical split and hardware
+  VERDICT:         overall: QUALIFIED_COMPARISON | task: QUALIFIED_COMPARISON | latency: STRICTLY_COMPARABLE
+  FLAGS:           [ACTION_ADAPTER_DISPARITY]
 ```
 
 #### Mandatory Disclosure Text in Final Report

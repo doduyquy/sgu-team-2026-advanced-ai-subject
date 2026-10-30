@@ -247,27 +247,37 @@ Before comparing Run A and Run B, an automated or manual evaluator must evaluate
 +-----------------------------------------------------------------------------------+
 ```
 
-### 8.1 Layer A: Trustworthy Evidence (Integrity Gating)
-A run is valid for benchmark comparison **only if all of the following hold**:
+### 8.1 Layer A: Trustworthy Evidence (Per-Run Integrity & Canonical Gating)
+Layer A is evaluated individually for each run. A run is valid for benchmark comparison **only if all of the following hold**:
 1. **Artifact Completeness:** Directory contains all 7 required Gate-7 artifacts: `run_manifest.json`, `run_state.json`, `episodes.csv`, `timing.csv`, `summary.json`, `wandb_sync.json`, and `run_integrity.json` (plus `technical_failures.jsonl` if technical failures occurred).
 2. **Lifecycle Completion:** `run_state.json` status is `COMPLETE`. Runs with status `INITIALIZING`, `RUNNING`, `INTERRUPTED`, or `FAILED` are `NOT_FINAL` and have zero benchmark authority.
-3. **Cryptographic Integrity:** Dynamic verification against `run_integrity.json` (evaluated via `RunArtifactRepository._evaluate_integrity()`) yields `IntegrityDisplayStatus.VERIFIED` (all 7 artifact hashes match computed semantic digests).
+3. **Cryptographic Integrity:** Dynamic verification against `run_integrity.json` (evaluated via `RunArtifactRepository._evaluate_integrity()`) yields `IntegrityDisplayStatus.VERIFIED`. Specifically, this checks: (i) `run_id` parity, (ii) `experiment_config_sha256` identity match against `run_manifest.json`, (iii) semantic content hash matches for the 6 core target artifacts (`run_manifest.json`, `episodes.csv`, `summary.json`, `timing.csv`, `run_state.json`, `wandb_sync.json`), and (iv) raw-file hash match for `technical_failures.jsonl` if present. Note: `run_integrity.json` records these target digests; it does not hash itself.
 4. **Canonical Provenance:** `canonical_run == True` in `run_state.json` (clean git worktree with `dirty_override == False`, verified MetaDrive commit `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`, pinned version `0.4.3`, `environment_verification_status == "VERIFIED"`, and `unverified_env_override == False`).
 5. **Trusted Agent Eligibility:** Agent is verified as benchmark-eligible in canonical registry (`benchmark_eligible == True`), not an infrastructure fixture stub (e.g., `fixture_constant_continuous`).
-6. **Case Coverage & Integrity:** Recorded episode count equals expected count ($N=60$ for TEST, $N=96$ for VALIDATION); exact manifest `case_id` sequence is present with zero duplicate `case_id` or `episode_index` entries; geometry and environment seeds match the locked manifest.
+6. **Canonical Mode & Complete Manifest Coverage:** The run must be executed in a canonical benchmark mode (`TEST_EVALUATION` with the full 60-case canonical test manifest `0832c38e...`, or `VALIDATION_EVALUATION` with the full 96-case canonical validation manifest `10afc2af...`). Recorded episode count must equal expected count ($N=60$ for TEST, $N=96$ for VALIDATION); exact manifest `case_id` sequence must be present with zero duplicate `case_id` or `episode_index` entries; geometry and environment seeds must match the locked manifest. Presenting a non-canonical run (`SANDBOX` mode, `AUDIT` mode, or any filtered/partial subset such as 15 Easy cases) as a benchmark result FAILS Layer A immediately.
 7. **Zero Technical Failures:** `technical_failure_count == 0` in `summary.json`. Platform V1 defines no "benign" exception path in canonical evaluation; any unhandled technical exception invalidates canonical benchmark eligibility.
-*Failure of any Layer A condition results in state `REJECTED_UNTRUSTED`.*
 
-### 8.2 Layer B: Scientific Comparability (Fair Comparison Gating)
-Two verified runs (Run A and Run B) can be compared **only under strict compatibility**:
-1. **Mode and Split Match:** Both runs must evaluate the same split (`TEST` vs `TEST`, or `VALIDATION` vs `VALIDATION`). Comparing a VALIDATION run to a TEST run is strictly prohibited (`INCOMPATIBLE`).
-2. **Case Manifest and Hash Match:** Both runs must evaluate identical `case_id` manifests and hashes (`0832c38e...` for TEST, `10afc2af...` for VALIDATION). If two completed runs each have 60 episodes, but their case ID sets or seeds differ, they are individually valid but pairwise **`INCOMPATIBLE`**.
-3. **Input Profile Alignment:** Both agents must share identical observation rights. Certified profiles from `src/platform/agent_input.py` are `STATE_DECISION_V1` (main benchmark profile: Core 259D + structured traffic context + task context) and `CORE_ONLY_V1` (ablation profile with masked traffic/task context). Both operate strictly within legal agent rights without ground-truth evaluator leaks. If Agent A uses `STATE_DECISION_V1` and Agent B uses `CORE_ONLY_V1`, they cannot be compared as an algorithmic benchmark (`INCOMPATIBLE` for algorithm comparison; reportable only as an information-ablation study).
-4. **Action Adapter Alignment:** Certified adapters from `src/platform/action_adapter.py` are `continuous_box2_v1`, `discrete25_native_v1`, and `discrete9_lowbranch_v1`.
-   - *Same Action Adapter:* (e.g., both use `continuous_box2_v1`) $\rightarrow$ **`STRICTLY_COMPARABLE`** (direct algorithmic comparison).
-   - *Different Action Adapter:* (e.g., Agent A uses `continuous_box2_v1`, Agent B uses `discrete25_native_v1`) $\rightarrow$ **`QUALIFIED_COMPARISON`**. May be compared as end-to-end autonomous driving systems, but **NOT** as an isolated proof of algorithm superiority. The action discretization itself introduces structural control limitations.
-5. **Hardware Execution & Latency Scope:** Mismatched hardware or synchronization policies (`latency_sync_policy`) qualify decision latency conclusions (`timing.csv`), but do not disqualify task performance metrics (`clean_success_rate`, `safety_failure_rate`, route completion) under deterministic headless simulation. The comparison verdict for latency is `QUALIFIED_COMPARISON`, while task performance remains `STRICTLY_COMPARABLE`.
-*Failure at Layer B results in state `INCOMPATIBLE` or `QUALIFIED_COMPARISON`.*
+**Precedence Rule:** If *either* Run A or Run B fails Layer A, the pairwise comparison is halted immediately with verdict **`REJECTED_UNTRUSTED`**. Non-canonical runs, corrupted runs, fixture runs, unverified simulator pins, and filtered/subset runs never reach Layer B.
+
+### 8.2 Layer B: Scientific Comparability (Pairwise Compatibility Gating)
+Layer B applies ONLY when *both* Run A and Run B have individually passed Layer A. It evaluates whether two trustworthy runs share compatible scientific boundaries.
+
+To avoid contradictory single-state claims when task driving performance and decision latency dimensions diverge, the proposed comparison specification defines a **Structured Pairwise Verdict Model**:
+- `overall_verdict`: Umbrella pairwise status (`REJECTED_UNTRUSTED`, `INCOMPATIBLE`, `QUALIFIED_COMPARISON`, `STRICTLY_COMPARABLE`).
+- `task_comparability`: Scoped verdict for the five primary driving benchmark metrics (`clean_success_rate`, `safety_failure_rate`, route completion, etc.).
+- `latency_comparability`: Scoped verdict for agent decision latency (`timing.csv`).
+- `qualification_flags`: Machine-readable flags (e.g., `ACTION_ADAPTER_DISPARITY`, `HARDWARE_LATENCY_UNVERIFIED`).
+
+#### Deterministic Precedence Rules for Layer B:
+1. **Mode and Split Match:** Both runs must evaluate the same split (`TEST` vs `TEST`, or `VALIDATION` vs `VALIDATION`). If Run A is a valid canonical VALIDATION run ($N=96$) and Run B is a valid canonical TEST run ($N=60$), both passed Layer A individually, but comparing across splits is scientifically invalid $\rightarrow$ `overall_verdict = INCOMPATIBLE` (`task_comparability = INCOMPATIBLE`, `latency_comparability = INCOMPATIBLE`).
+2. **Benchmark Version / Manifest Match:** Both runs must evaluate the exact same canonical benchmark contract and manifest (`0832c38e...` for TEST). Two individually valid runs evaluated against different canonical benchmark versions or manifests are pairwise $\rightarrow$ `overall_verdict = INCOMPATIBLE`.
+3. **Input Profile Alignment:** Both agents must share identical observation rights. Certified profiles from `src/platform/agent_input.py` are `STATE_DECISION_V1` (main benchmark profile: Core 259D + structured traffic context + task context) and `CORE_ONLY_V1` (ablation profile with masked traffic/task context). Both operate strictly within legal agent rights without ground-truth evaluator leaks. If Agent A uses `STATE_DECISION_V1` and Agent B uses `CORE_ONLY_V1`, they cannot be compared as an algorithmic benchmark $\rightarrow$ `overall_verdict = INCOMPATIBLE` (reportable only as an information-ablation study).
+4. **Action Adapter & Hardware Resolution:**
+   Certified adapters from `src/platform/action_adapter.py` are `continuous_box2_v1`, `discrete25_native_v1`, and `discrete9_lowbranch_v1`.
+   - *Case 1 (Adapter Differs, Hardware Differs):* `overall_verdict = QUALIFIED_COMPARISON` (flags: `ACTION_ADAPTER_DISPARITY`, `HARDWARE_LATENCY_UNVERIFIED`). `task_comparability = QUALIFIED_COMPARISON` (action discretization affects vehicle control dynamics) and `latency_comparability = QUALIFIED_COMPARISON` (hardware timing is non-comparable).
+   - *Case 2 (Adapter Differs, Hardware Identical):* `overall_verdict = QUALIFIED_COMPARISON` (flag: `ACTION_ADAPTER_DISPARITY`). `task_comparability = QUALIFIED_COMPARISON` and `latency_comparability = STRICTLY_COMPARABLE`.
+   - *Case 3 (Adapter Identical, Hardware Differs):* `overall_verdict = QUALIFIED_COMPARISON` (flag: `HARDWARE_LATENCY_UNVERIFIED`). Under deterministic headless simulation, vehicle physics and task outcomes are hardware-invariant; therefore `task_comparability = STRICTLY_COMPARABLE`, while `latency_comparability = QUALIFIED_COMPARISON` (inference latencies are hardware-dependent).
+   - *Case 4 (All Identical):* Same adapter, same hardware/sync policy, same canonical protocol $\rightarrow$ `overall_verdict = STRICTLY_COMPARABLE` (`task_comparability = STRICTLY_COMPARABLE`, `latency_comparability = STRICTLY_COMPARABLE`).
 
 ### 8.3 Layer C: Evidence Strength and Scientific Interpretation
 When interpreting comparable runs:
