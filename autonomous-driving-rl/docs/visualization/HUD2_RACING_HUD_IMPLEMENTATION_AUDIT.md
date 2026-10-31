@@ -18,22 +18,24 @@ Gate HUD-2 implements the six procedural 2D situational awareness widgets on Pan
 ### Key Deliverables:
 1. **Immutable Telemetry Snapshot Model (`src/visualization/telemetry_model.py`):**
    - Implemented `HudTelemetrySnapshotV1`, a frozen dataclass capturing step index, simulation time, world position, heading, speed, route completion, steering, throttle/brake, and episode status.
-   - Implemented `create_telemetry_snapshot(...)` factory with defensive sanitization: converts NaN, Inf, and non-numeric values to `None`, preserving legitimate zeros (`0.0`).
+   - Implemented `create_telemetry_snapshot(...)` factory with defensive sanitization: converts NaN, Inf, negative speeds, and non-numeric values to `None`, preserves legitimate zeros (`0.0`), and strictly enforces boolean typing on `is_clean_success`.
 2. **Transparent Racing HUD (`src/visualization/racing_hud.py`):**
    - **Route Progress Bar:** Anchored to top-center (`a2dTopCenter`), spanning ~35% of 16:9 width ($W = 1.244, H = 0.024$), with cyan fill and percentage text (`0%`..`100%`, or `"---"`).
    - **Digital Speedometer & Arc:** Anchored to bottom-right (`a2dBottomRight`), with prominent 3-digit bold readout (`"000"`..`"999"`, or `"---"`), unit label `"km/h"`, and a $240^\circ$ circular arc gauge filling proportionally up to $100\,\text{km/h}$ (saturates visually without truncating digits).
    - **Left & Right Turn Indicators:** Anchored to bottom-left (`a2dBottomLeft`), featuring vector chevrons glowing bright amber (`#FFD600`) when steering exceeds $\pm 0.15$ threshold, dimming to muted slate-blue (`#37474F`) when neutral, and dimming to disabled gray when steering is `None`.
    - **Brake & Throttle Meters:** Anchored to bottom-right left of the speedometer, featuring two vertical bars (`#FF1744` red for brake, `#00E676` green for throttle). Displays active illuminated frames with 0% fill during neutral coasting (`0.0`), and dims to disabled state when command is `None`.
+   - **Resting Reset State:** `reset()` resets all widgets to the unavailable/missing telemetry state (`"---"`, disabled indicators, disabled pedal frames) without fabricating `"000"`, ready to accurately display the first valid step update.
 3. **Public Visualization Exports (`src/visualization/__init__.py`):**
    - Cleanly exports `RacingHud`, `HudTelemetrySnapshotV1`, and `create_telemetry_snapshot` without eager imports or headless side effects.
 4. **Standalone Sandbox Demo (`scripts/demo_racing_hud_native.py`):**
-   - Implemented a standalone demo runner confined strictly to TRAIN/SANDBOX scenarios, demonstrating all seven components simultaneously across a 4-phase scripted maneuver (acceleration, left steer, right steer, strong brake).
+   - Implemented a standalone demo runner confined strictly to TRAIN/SANDBOX scenarios, demonstrating all seven components simultaneously across a 4-phase scripted maneuver (acceleration, left steer, right steer, and combined left steer + brake).
+   - Extracts simulator telemetry directly without fabricating synthetic default fallbacks (`0.0`, `(0.0, 0.0)`), and handles missing position defensively without subscription errors.
 5. **Committed Visual Evidence (`docs/visualization/evidence/*.png`):**
    - `hud2_racing_hud_overview.png`: Real native desktop screenshot showing all widgets active during acceleration.
-   - `hud2_racing_hud_braking_and_turning.png`: Real native desktop screenshot showing turn indicators, red brake meter fill, and extended minimap trail.
+   - `hud2_racing_hud_braking_and_turning.png`: Real native desktop screenshot showing turn indicators glowing amber AND red brake meter filling simultaneously during combined steering + braking phase.
 6. **Comprehensive Unit Test Suite (`tests/test_racing_hud.py`):**
-   - 22 dedicated test cases verifying data immutability, missing-data policies, numerical formatting, arc normalization, steering thresholds, pedal polarity, responsive aspect ratio invariance, and clean node disposal.
-   - Full repository regression suite passes at **470 tests (469 passed, 1 skipped informational, 0 failures, 0 errors — 100% OK)**.
+   - 24 dedicated test cases verifying data immutability, missing-data policies, numerical formatting, arc normalization, steering thresholds, pedal polarity, simultaneous steering + braking, responsive aspect ratio invariance, and clean node disposal.
+   - Full repository regression suite passes at **472 tests (471 passed, 1 skipped informational, 0 failures, 0 errors — 100% OK)**.
 7. **Complete Scientific Isolation:**
    - Production `src/launcher/executor.py` is **100% untouched** (production integration reserved for HUD-3).
    - Zero modifications to `configs/platform/`, `datasets/mapsuite_v1/`, or locked `results/audits/`.
@@ -129,18 +131,20 @@ Two native screenshots captured directly from live simulation sessions are commi
    - Top-left: Minimap with live road loops and ego marker.
    - Bottom-right: Digital speedometer displaying active speed (`"008" km/h`), cyan circular arc advancing, green throttle meter filling at 60%.
    - Bottom-left: Left and right turn indicators in neutral idle state.
-2. **Turning & Braking State (`docs/visualization/evidence/hud2_racing_hud_braking_and_turning.png`, 1,288,098 bytes):**
-   - Active braking: Bright red vertical brake fill bar responding to deceleration command (`-0.80`), throttle meter at 0%.
-   - Turn indicator activation and accumulated trajectory polyline visible on minimap.
+2. **Turning & Braking State (`docs/visualization/evidence/hud2_racing_hud_braking_and_turning.png`, 1,320,176 bytes):**
+   - Captured during Step 75 (scripted combined maneuver: steering `-0.30` and braking `-0.75`).
+   - Active braking: Bright red vertical brake fill bar responding to deceleration command (`-0.75`), throttle meter at 0%.
+   - Left turn indicator glowing bright amber (`#FFD600`) simultaneously with active braking.
+   - Minimap shows accumulated trajectory polyline without jitter.
 
 ---
 
 ## 5. Unit Test Suite Results
 
 ### 5.1 Dedicated HUD-2 Test Suite (`tests/test_racing_hud.py`)
-All 22 unit tests passed in 0.090s:
+All 24 unit tests passed in 0.112s:
 1. `test_01_telemetry_snapshot_immutable_and_serializable`: **PASS**
-2. `test_02_telemetry_nan_and_inf_normalized_to_none`: **PASS**
+2. `test_02_telemetry_nan_and_inf_normalized_to_none`: **PASS** (Verifies NaN/Inf, negative speeds -> None, strict boolean for is_clean_success).
 3. `test_03_speed_format_valid_zero_vs_missing_vs_positive`: **PASS**
 4. `test_04_speedometer_arc_normalization_and_saturation`: **PASS**
 5. `test_05_route_progress_percentage_formatting`: **PASS**
@@ -156,16 +160,18 @@ All 22 unit tests passed in 0.090s:
 15. `test_15_circular_arc_geometry_points_in_bounds`: **PASS**
 16. `test_16_zero_interference_with_minimap_and_render`: **PASS**
 17. `test_17_no_unbounded_node_allocations_on_repeated_updates`: **PASS**
-18. `test_18_reset_restores_default_visual_state`: **PASS**
+18. `test_18_reset_restores_default_visual_state`: **PASS** (Verifies reset restores '---', disabled indicators/pedals, and subsequent valid snapshot re-illuminates accurately).
 19. `test_19_destroy_idempotency_and_clean_cleanup`: **PASS**
 20. `test_20_partial_initialization_exception_safe_rollback`: **PASS**
 21. `test_21_no_background_taskmgr_tasks_spawned`: **PASS**
 22. `test_22_scientific_contracts_and_hashes_unmutated`: **PASS**
+23. `test_23_demo_telemetry_extraction_and_safe_none_position`: **PASS** (Verifies safe extraction when world_position is None).
+24. `test_24_combined_steering_and_braking_simultaneous_active`: **PASS** (Verifies simultaneous left turn amber chevron and red brake fill).
 
 ### 5.2 Full Repository Regression Test Pass
 Ran all 17 test modules in active conda `metadrive` environment:
-- Total Tests: **470**
-- Passed: **469**
+- Total Tests: **472**
+- Passed: **471**
 - Skipped: **1** (`test_44_100_runs_discovery_performance_informational_only` in `test_workbench_hardening` — informational benchmark test)
 - Failures: **0**
 - Errors: **0**

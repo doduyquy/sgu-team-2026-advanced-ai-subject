@@ -91,7 +91,7 @@ class TestRacingHudUnitSuite(unittest.TestCase):
         self.assertEqual(d["world_position"], (12.5, 34.2))
 
     def test_02_telemetry_nan_and_inf_normalized_to_none(self):
-        """2. Telemetry factory converts NaN, Inf, and non-numeric values to None."""
+        """2. Telemetry factory converts NaN, Inf, negative speeds, and non-numeric values to None."""
         snap = create_telemetry_snapshot(
             speed_kmh=float("nan"),
             route_completion=float("inf"),
@@ -99,6 +99,7 @@ class TestRacingHudUnitSuite(unittest.TestCase):
             canonical_throttle_brake="invalid",
             world_position=(float("nan"), 10.0),
             heading_theta_rad=float("nan"),
+            is_clean_success="not_a_bool",
         )
         self.assertIsNone(snap.speed_kmh)
         self.assertIsNone(snap.route_completion)
@@ -106,6 +107,19 @@ class TestRacingHudUnitSuite(unittest.TestCase):
         self.assertIsNone(snap.canonical_throttle_brake)
         self.assertIsNone(snap.world_position)
         self.assertIsNone(snap.heading_theta_rad)
+        self.assertIsNone(snap.is_clean_success)
+
+        # Negative speeds must be normalized to None (not coerced to 0.0)
+        snap_neg = create_telemetry_snapshot(speed_kmh=-15.0)
+        self.assertIsNone(snap_neg.speed_kmh)
+
+        # Strict boolean validation for is_clean_success
+        snap_int_bool = create_telemetry_snapshot(is_clean_success=1)
+        self.assertIsNone(snap_int_bool.is_clean_success)
+        snap_true = create_telemetry_snapshot(is_clean_success=True)
+        self.assertIs(snap_true.is_clean_success, True)
+        snap_false = create_telemetry_snapshot(is_clean_success=False)
+        self.assertIs(snap_false.is_clean_success, False)
 
     def test_03_speed_format_valid_zero_vs_missing_vs_positive(self):
         """3. Speedometer formats: 0.0 -> '000', None -> '---', 48.0 -> '048'."""
@@ -390,20 +404,38 @@ class TestRacingHudUnitSuite(unittest.TestCase):
             hud.destroy()
 
     def test_18_reset_restores_default_visual_state(self):
-        """18. reset() restores widgets to resting state ('000', '---', idle indicators) without destroying nodes."""
+        """18. reset() restores all widgets to unavailable/missing state ('---', disabled indicators/pedals)."""
         engine = _create_mock_racing_engine()
         hud = RacingHud(engine)
         try:
+            # First, update with active telemetry
             hud.update(create_telemetry_snapshot(speed_kmh=75.0, route_completion=0.8, canonical_steering=-0.4, canonical_throttle_brake=0.8))
             self.assertEqual(hud.speed_text_node.getText(), "075")
+            self.assertEqual(hud.progress_text_node.getText(), "80%")
 
+            # Now reset
             hud.reset()
-            self.assertEqual(hud.speed_text_node.getText(), "000")
+            # Speed must be '---' (never '000' before actual telemetry)
+            self.assertEqual(hud.speed_text_node.getText(), "---")
+            self.assertEqual(hud.speed_text_node.getTextColor(), COLOR_TEXT_DIM)
             self.assertEqual(hud.progress_text_node.getText(), "---")
             self.assertTrue(hud.progress_fill.isHidden())
-            self.assert_color_almost_equal(hud.indicator_left_np.getColor(), COLOR_INDICATOR_IDLE)
+            self.assert_color_almost_equal(hud.indicator_left_np.getColor(), COLOR_INDICATOR_DISABLED)
+            self.assert_color_almost_equal(hud.indicator_right_np.getColor(), COLOR_INDICATOR_DISABLED)
+            self.assert_color_almost_equal(hud.brake_bg.getColor(), COLOR_INDICATOR_DISABLED)
+            self.assert_color_almost_equal(hud.throttle_bg.getColor(), COLOR_INDICATOR_DISABLED)
             self.assertTrue(hud.brake_fill.isHidden())
             self.assertTrue(hud.throttle_fill.isHidden())
+
+            # First subsequent valid snapshot must re-illuminate and update accurately
+            hud.update(create_telemetry_snapshot(speed_kmh=0.0, route_completion=0.0, canonical_steering=0.0, canonical_throttle_brake=0.0))
+            self.assertEqual(hud.speed_text_node.getText(), "000")
+            self.assertEqual(hud.speed_text_node.getTextColor(), COLOR_TEXT_PRIMARY)
+            self.assertEqual(hud.progress_text_node.getText(), "0%")
+            self.assert_color_almost_equal(hud.indicator_left_np.getColor(), COLOR_INDICATOR_IDLE)
+            self.assert_color_almost_equal(hud.indicator_right_np.getColor(), COLOR_INDICATOR_IDLE)
+            self.assert_color_almost_equal(hud.brake_bg.getColor(), COLOR_BG_GLASS)
+            self.assert_color_almost_equal(hud.throttle_bg.getColor(), COLOR_BG_GLASS)
         finally:
             hud.destroy()
 
@@ -463,6 +495,42 @@ class TestRacingHudUnitSuite(unittest.TestCase):
         self.assertEqual(DEFAULT_LAUNCHER_CONTRACT_HASH, "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04")
         self.assertEqual(DEFAULT_PLATFORM_EXECUTION_HASH, "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d")
         self.assertEqual(HISTORICAL_FIXTURE_REGISTRY_SHA256, "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f")
+
+    def test_23_demo_telemetry_extraction_and_safe_none_position(self):
+        """23. Missing world_position is handled without indexing NoneType, passing safely to visualizers."""
+        snap = create_telemetry_snapshot(world_position=None, speed_kmh=None, route_completion=None)
+        self.assertIsNone(snap.world_position)
+        # Safe extraction pattern verified
+        wx = snap.world_position[0] if snap.world_position is not None else None
+        wy = snap.world_position[1] if snap.world_position is not None else None
+        self.assertIsNone(wx)
+        self.assertIsNone(wy)
+
+    def test_24_combined_steering_and_braking_simultaneous_active(self):
+        """24. Combined steering + braking activates both turn indicator and red brake meter simultaneously."""
+        engine = _create_mock_racing_engine()
+        hud = RacingHud(engine)
+        try:
+            # Scripted maneuver: Steer Left (-0.30) AND Brake (-0.75)
+            snap = create_telemetry_snapshot(
+                speed_kmh=25.0,
+                canonical_steering=-0.30,
+                canonical_throttle_brake=-0.75,
+            )
+            hud.update(snap)
+
+            # Left turn indicator is active (amber)
+            self.assert_color_almost_equal(hud.indicator_left_np.getColor(), COLOR_INDICATOR_ACTIVE)
+            self.assert_color_almost_equal(hud.indicator_right_np.getColor(), COLOR_INDICATOR_IDLE)
+
+            # Red brake meter is active at 75%
+            self.assertFalse(hud.brake_fill.isHidden())
+            self.assertAlmostEqual(hud.brake_fill.getScale().z, 0.75, places=3)
+
+            # Throttle meter is inactive (0 fill)
+            self.assertTrue(hud.throttle_fill.isHidden())
+        finally:
+            hud.destroy()
 
 
 if __name__ == "__main__":

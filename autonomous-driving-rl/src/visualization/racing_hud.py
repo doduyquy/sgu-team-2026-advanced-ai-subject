@@ -479,26 +479,43 @@ class RacingHud:
                 self.throttle_fill.hide()
 
     def reset(self) -> None:
-        """Resets all widgets to their default resting state without destroying nodes."""
+        """
+        Resets all widgets to their default unavailable/missing-data resting state.
+        Does not fabricate zero values ('000') prior to receiving actual telemetry.
+        """
         if self._is_destroyed:
             return
 
+        # 1. Route progress: reset to missing
         if self.progress_fill is not None:
             self.progress_fill.hide()
         if self.progress_text_node is not None:
             self.progress_text_node.setText("---")
             self.progress_text_node.setTextColor(COLOR_TEXT_DIM)
 
+        # 2. Speedometer: reset to missing ('---'), empty arc
         if self.speed_text_node is not None:
-            self.speed_text_node.setText("000")
-            self.speed_text_node.setTextColor(COLOR_TEXT_PRIMARY)
+            self.speed_text_node.setText("---")
+            self.speed_text_node.setTextColor(COLOR_TEXT_DIM)
+        if self.speed_unit_node is not None:
+            self.speed_unit_node.setTextColor(COLOR_TEXT_DIM)
         self._update_speedometer_arc(0.0)
 
+        # 3. Turn indicators: reset to disabled
         if self.indicator_left_np is not None:
-            self.indicator_left_np.setColor(COLOR_INDICATOR_IDLE)
+            self.indicator_left_np.setColor(COLOR_INDICATOR_DISABLED)
         if self.indicator_right_np is not None:
-            self.indicator_right_np.setColor(COLOR_INDICATOR_IDLE)
+            self.indicator_right_np.setColor(COLOR_INDICATOR_DISABLED)
 
+        # 4. Pedal meters: reset to disabled frames with hidden fills
+        if self.brake_bg is not None:
+            self.brake_bg.setColor(COLOR_INDICATOR_DISABLED)
+        if self.throttle_bg is not None:
+            self.throttle_bg.setColor(COLOR_INDICATOR_DISABLED)
+        if self.brake_border is not None:
+            self.brake_border.setColor(COLOR_FRAME_DISABLED)
+        if self.throttle_border is not None:
+            self.throttle_border.setColor(COLOR_FRAME_DISABLED)
         if self.brake_fill is not None:
             self.brake_fill.hide()
         if self.throttle_fill is not None:

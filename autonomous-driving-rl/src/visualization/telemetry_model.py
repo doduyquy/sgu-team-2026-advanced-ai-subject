@@ -110,9 +110,9 @@ def create_telemetry_snapshot(
     # 4. Heading
     sanitized_heading = _sanitize_finite_float(heading_theta_rad)
 
-    # 5. Speed
+    # 5. Speed: non-negative finite float; negative speeds are invalid in pinned MetaDrive API
     raw_spd = _sanitize_finite_float(speed_kmh)
-    sanitized_spd = max(0.0, raw_spd) if raw_spd is not None else None
+    sanitized_spd = raw_spd if (raw_spd is not None and raw_spd >= 0.0) else None
 
     # 6. Route completion
     sanitized_route = _sanitize_finite_float(route_completion)
@@ -123,10 +123,10 @@ def create_telemetry_snapshot(
     # 8. Throttle/brake
     sanitized_tb = _sanitize_finite_float(canonical_throttle_brake)
 
-    # 9. Clean success
+    # 9. Clean success: strictly boolean (True/False); do not coerce non-boolean types
     clean_succ: Optional[bool] = None
-    if is_clean_success is not None:
-        clean_succ = bool(is_clean_success)
+    if type(is_clean_success) is bool:
+        clean_succ = is_clean_success
 
     return HudTelemetrySnapshotV1(
         step_index=idx,
