@@ -6,23 +6,19 @@ Defines the lightweight, composition-friendly runtime boundary between
 Research Platform V1 and all agent families (Stages 0 to 7).
 """
 
-from abc import ABC, abstractmethod
 import copy
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
 import math
-from typing import Any, Dict, List, Optional, Protocol, Tuple, Union, runtime_checkable
+from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
 
 import numpy as np
 
 from src.platform.action_adapter import (
     ActionAdapter,
-    CanonicalActionV1,
-    ContinuousBox2Adapter,
     Discrete9Adapter,
     Discrete25Adapter,
     InvalidActionError,
-    get_action_adapter,
 )
 from src.platform.agent_input import (
     AgentInputV1,
@@ -341,7 +337,7 @@ class InvalidOutputFixtureAgent:
 def build_agent_contract_core(
     pinned_commit: str = "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
     pinned_version: str = "0.4.3",
-    status: str = "LOCKED-FOR-PLATFORM-V1",
+    status: str = "SANDBOX-EXTENSION-PENDING-AUDIT",
     custom_rules: Optional[Dict[str, Any]] = None,
     custom_adapter_grids: Optional[Dict[str, Any]] = None,
     custom_latency_boundary: Optional[Dict[str, Any]] = None,
@@ -447,6 +443,14 @@ def build_agent_contract_core(
             "validity_mask_dtype": "bool",
             "active_count_semantics": "number of valid selected actors in [0, capacity]",
             "overflow_count_semantics": "number of additional in-radius actors omitted because capacity was exceeded",
+            "motion_paths": {
+                "python_type": "tuple[ActorPathV1]", "max_per_actor": 8,
+                "source_semantics": "Map-match observed actor pose/heading against road geometry; enumerate possible connected lane branches within 50 m ego radius and 50 m from actor; never reads actor lane/navigation/policy or its actual future route",
+                "point_fields": ["distance_from_actor_m", "relative_x", "relative_y", "relative_heading"],
+                "actor_slot_semantics": "Association within current snapshot only, not a persistent ID",
+                "overflow_semantics": "Discarded or unresolved road alternatives due to capacity/depth bound; conservative admission guard",
+                "masked_in_core_only": True,
+            },
             "padding_semantics": "invalid slots zero-valued and validity_mask=False",
             "coordinate_frame": "ego-centric (forward +x, left +y)",
             "ordering": "Euclidean distance ascending with deterministic tie-breaking (distance, x_rel, y_rel)"
@@ -474,7 +478,37 @@ def build_agent_contract_core(
                 "python_type": "bool",
                 "source_semantics": "Boolean flag indicating whether reference route terminates within lookahead window (NOT episode termination)"
             },
+            "decision_point": {
+                "python_type": "Optional[RoadDecisionPointV1]",
+                "source_semantics": "Nearest local road fork from the ego lane within lookahead_range_m, independent of designated route; None for single-exit curves, dead ends, or masked CORE_ONLY_V1 context",
+                "point_id": "Stable local road-node string identifying the fork approach",
+                "distance_m": "Non-negative distance along the approach to the fork",
+                "available_turns": "Immutable tuple of at least two distinct left/straight/right directions; excludes U-turns and deduplicates parallel lanes",
+            },
+            "route_passage": {
+                "python_type": "Optional[RoutePassageV1]",
+                "source_semantics": "Local designated-route intersection or roundabout merge/fork section from lane surface types and graph connectivity; no legal priority or stop-line inferred",
+                "entry_distance_m": "Signed route distance to connector entry; negative inside",
+                "exit_distance_m": "Signed local route distance to exit; None until within lookahead_range_m",
+                "branch_id": "Stable selected connector lane indices; local identity only, no seed/tier/progress",
+                "yield_distance_m": "Geometric yield boundary; roundabout approach may intersect other lane envelopes upstream of connector entry; not a legal stop line",
+                "conflict_exit_distance_m": "End of the local conflict section; roundabout admission checks the inlet merge plus clearance, branch locking lasts through the circulation fork",
+                "masked_in_core_only": True,
+            },
+            "lane_context": {
+                "python_type": "Optional[LaneContextV1]",
+                "source_semantics": "Current same-direction PG edge and immediate neighbors only; rendered shared boundary ownership follows pinned PGBlock (neighbor left side owns shared right boundary); no simulator handles or global pose",
+                "max_lanes": 3,
+                "max_points_per_lane": 28,
+                "signed_distance_range_m": [-15, 50],
+                "point_fields": ["signed_distance_m", "relative_x", "relative_y", "relative_heading"],
+                "boundaries": ["BROKEN_WHITE", "SOLID_WHITE", "SOLID_YELLOW", "EDGE", "UNKNOWN"],
+                "route_compatible": "Endpoint gap <=0.3 m and heading gap <0.35 rad to next designated checkpoint edge, evaluated only within 50 m; None if unresolved",
+                "masked_in_core_only": True,
+            },
             "coordinate_frame": "ego-centric relative waypoints (lookahead_distance_m, relative_x, relative_y, relative_heading)",
+            "waypoint_source_semantics": "Anchored to navigation.current_lane; subsequent route lanes minimize endpoint/heading discontinuity; gaps larger than 0.3 m are not exported",
+            "waypoint_validity_semantics": "Invalid samples beyond a missing/disconnected connector do not imply route end; route_end_within_lookahead is true only when the actual final route edge is reached",
             "waypoints_tuple_length": 20,
             "waypoint_fields": ["lookahead_distance_m", "relative_x", "relative_y", "relative_heading"],
             "waypoints_array_shape": [20, 3],
@@ -482,6 +516,12 @@ def build_agent_contract_core(
             "validity_mask_shape": [20],
             "validity_mask_dtype": "bool",
             "evaluator_progress_metrics_excluded": True
+        },
+        "ego_motion": {
+            "python_type": "Optional[EgoMotionV1]",
+            "coordinate_frame": "current ego frame, forward +x, left +y",
+            "source_semantics": "Local displacement and signed heading change since previous control step, local ego velocity and full signed current-lane heading error; no global position or heading",
+            "masked_in_core_only": True,
         }
     }
     input_schema = dict(default_input_schema)
@@ -493,7 +533,7 @@ def build_agent_contract_core(
     return {
         "metadata": {
             "contract_name": "AgentContractV1",
-            "spec_version": "1.0.0",
+            "spec_version": "1.3.0",
             "status": status,
             "gate": "Gate 6 (Research Platform V1)",
             "pinned_metadrive_commit": pinned_commit,
@@ -509,12 +549,18 @@ def build_agent_contract_core(
             "serialized_surface": "Produces JSON-safe nested dictionaries via to_dict(); redundant array views are omitted from serialization to maintain clean data payloads."
         },
         "runtime_dataclass_schemas": {
-            "AgentInputV1": ["profile_id", "core_observation", "traffic_context", "task_context", "step_index"],
+            "AgentInputV1": ["profile_id", "core_observation", "traffic_context", "task_context", "step_index", "ego_motion"],
             "CoreObservationV1": ["features"],
             "TrafficActorV1": ["relative_position_x", "relative_position_y", "relative_velocity_x", "relative_velocity_y", "relative_heading", "length", "width"],
-            "TrafficContextV1": ["capacity", "radius_m", "actors", "actors_array", "validity_mask", "active_count", "overflow_count"],
+            "TrafficContextV1": ["capacity", "radius_m", "actors", "actors_array", "validity_mask", "active_count", "overflow_count", "motion_paths", "motion_paths_overflow_count"],
+            "ActorPathV1": ["actor_slot", "branch_id", "points"],
             "RouteWaypointV1": ["lookahead_distance_m", "relative_x", "relative_y", "relative_heading"],
-            "TaskContextV1": ["lookahead_count", "lookahead_spacing_m", "lookahead_range_m", "current_lane_width", "navigation_goal_direction", "waypoints", "waypoints_array", "validity_mask", "route_end_within_lookahead"],
+            "TaskContextV1": ["lookahead_count", "lookahead_spacing_m", "lookahead_range_m", "current_lane_width", "navigation_goal_direction", "waypoints", "waypoints_array", "validity_mask", "route_end_within_lookahead", "decision_point", "route_passage", "lane_context"],
+            "LaneContextV1": ["lanes", "required_side"],
+            "LaneGeometryV1": ["lane_id", "side", "width_m", "remaining_m", "left_boundary", "right_boundary", "route_compatible", "points"],
+            "RoadDecisionPointV1": ["point_id", "distance_m", "available_turns"],
+            "EgoMotionV1": ["displacement_x_m", "displacement_y_m", "heading_delta_rad", "velocity_x_mps", "velocity_y_mps", "lane_heading_error_rad"],
+            "RoutePassageV1": ["passage_id", "branch_id", "kind", "entry_distance_m", "exit_distance_m", "maneuver", "yield_distance_m", "conflict_exit_distance_m"],
             "AgentPublicEpisodeContext": ["control_frequency_hz", "control_dt_s", "horizon_steps", "input_profile_id", "action_adapter_id", "mode"],
             "AgentDescriptor": ["agent_id", "agent_version", "input_profile_id", "action_adapter_id", "inference_stochasticity", "stateful_within_episode", "method_family"],
             "AgentDecision": ["action_payload", "diagnostics"]
