@@ -1,0 +1,52 @@
+{
+  "removed": [
+    "inspect_dynamic_observation.py",
+    "inspect_metadrive.py",
+    "inspect_observation.py",
+    "inspect_observation_parts.py",
+    "inspect_reward_config.py",
+    "scripts\\audit_rule_based_agent.py",
+    "test_course_env.py"
+  ],
+  "added": [
+    "scripts\\run_tests.py"
+  ],
+  "modified": [
+    "src\\agents\\__init__.py",
+    "src\\agents\\rule_based_agent.py",
+    "src\\agents\\rule_based_lane_change.py",
+    "src\\evaluation\\evaluate_random.py",
+    "src\\launcher\\cases.py",
+    "src\\launcher\\contracts.py",
+    "src\\launcher\\events.py",
+    "src\\launcher\\executor.py",
+    "src\\launcher\\preflight.py",
+    "src\\launcher\\registry.py",
+    "src\\launcher\\resolver.py",
+    "src\\platform\\agent.py",
+    "src\\platform\\agent_input.py",
+    "src\\platform\\episode.py",
+    "src\\platform\\experiment_logging.py",
+    "src\\platform\\metrics.py",
+    "src\\platform\\protocol.py",
+    "src\\platform\\specs.py",
+    "src\\platform\\wandb_backend.py",
+    "src\\visualization\\finish_floating_hologram.py",
+    "src\\workbench\\app.py",
+    "src\\workbench\\contracts.py",
+    "src\\workbench\\hardening_contracts.py",
+    "src\\workbench\\live_telemetry.py",
+    "src\\workbench\\main_window.py",
+    "src\\workbench\\process_runner.py",
+    "src\\workbench\\protocol.py",
+    "src\\workbench\\results_contracts.py",
+    "src\\workbench\\results_repository.py",
+    "src\\workbench\\widgets\\agent_explorer_widget.py",
+    "src\\workbench\\widgets\\case_explorer_widget.py",
+    "src\\workbench\\widgets\\experiment_setup_widget.py",
+    "src\\workbench\\widgets\\plan_preflight_widget.py",
+    "src\\workbench\\widgets\\results_widget.py",
+    "src\\workbench\\widgets\\run_monitor_widget.py",
+    "src\\workbench\\worker.py"
+  ]
+}

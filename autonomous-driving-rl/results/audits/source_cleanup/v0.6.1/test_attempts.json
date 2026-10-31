@@ -1,0 +1,47 @@
+[
+  {
+    "attempt": "checks_01",
+    "state": {
+      "status": "FAILED",
+      "started_at_utc": "2026-10-30T18:01:44.357632+00:00",
+      "exit_code": 3221225477,
+      "finished_at_utc": "2026-10-30T18:02:01.459134+00:00"
+    }
+  },
+  {
+    "attempt": "checks_02",
+    "state": {
+      "status": "FAILED",
+      "started_at_utc": "2026-10-30T18:05:55.523421+00:00",
+      "exit_code": 3221225477,
+      "finished_at_utc": "2026-10-30T18:06:08.041403+00:00"
+    }
+  },
+  {
+    "attempt": "checks_03_backend",
+    "state": {
+      "status": "PASSED",
+      "started_at_utc": "2026-10-30T18:08:15.988582+00:00",
+      "exit_code": 0,
+      "finished_at_utc": "2026-10-30T18:09:26.183979+00:00"
+    }
+  },
+  {
+    "attempt": "checks_04_gui",
+    "state": {
+      "status": "FAILED",
+      "started_at_utc": "2026-10-30T18:08:27.464512+00:00",
+      "exit_code": 1,
+      "finished_at_utc": "2026-10-30T18:09:45.687306+00:00"
+    }
+  },
+  {
+    "attempt": "checks_05_gui",
+    "state": {
+      "status": "PASSED",
+      "started_at_utc": "2026-10-30T18:14:17.674932+00:00",
+      "exit_code": 0,
+      "finished_at_utc": "2026-10-30T18:15:51.736296+00:00"
+    }
+  }
+]

@@ -1,0 +1,83 @@
+{
+  "status": "COMPLETED",
+  "finished_at_utc": "2026-10-30T18:18:06.6255019Z",
+  "removed_cache_directories": 10,
+  "removed_textures": 3,
+  "removed_bytes": 890334,
+  "targets": [
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\__pycache__",
+      "kind": "REGENERABLE_CACHE",
+      "bytes": 265
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\agents\\__pycache__",
+      "kind": "REGENERABLE_CACHE",
+      "bytes": 61964
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\launcher\\__pycache__",
+      "kind": "REGENERABLE_CACHE",
+      "bytes": 103264
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\logging\\__pycache__",
+      "kind": "REGENERABLE_CACHE",
+      "bytes": 4091
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\platform\\__pycache__",
+      "kind": "REGENERABLE_CACHE",
+      "bytes": 187273
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\visualization\\__pycache__",
+      "kind": "REGENERABLE_CACHE",
+      "bytes": 27774
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\workbench\\__pycache__",
+      "kind": "REGENERABLE_CACHE",
+      "bytes": 50520
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\workbench\\widgets\\__pycache__",
+      "kind": "REGENERABLE_CACHE",
+      "bytes": 58310
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\scripts\\__pycache__",
+      "kind": "REGENERABLE_CACHE",
+      "bytes": 78846
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\tests\\__pycache__",
+      "kind": "REGENERABLE_CACHE",
+      "bytes": 241017
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\visualization\\assets\\finish_ground_laser.png",
+      "kind": "GENERATED_TEXTURE",
+      "bytes": 4296,
+      "sha256": "9c5e7a4ef370d2deec763faa88c4a12dfeeeaa97f572127f60aa1166f1210ed9",
+      "regenerated_path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\runs\\.cache\\finish_visual\\finish_ground_laser.png",
+      "regenerated_sha256": "9c5e7a4ef370d2deec763faa88c4a12dfeeeaa97f572127f60aa1166f1210ed9"
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\visualization\\assets\\finish_holo_finish_only_v2_a7267f61d6ec.png",
+      "kind": "GENERATED_TEXTURE",
+      "bytes": 38766,
+      "sha256": "119a3cd729e84e86a62b60155b1c7f7a213720ec2042f7e06775acfb703ce280",
+      "regenerated_path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\runs\\.cache\\finish_visual\\finish_holo_finish_only_v2_a7267f61d6ec.png",
+      "regenerated_sha256": "119a3cd729e84e86a62b60155b1c7f7a213720ec2042f7e06775acfb703ce280"
+    },
+    {
+      "path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\visualization\\assets\\finish_holo_finish_only_v2_a7af3706a5e8.png",
+      "kind": "GENERATED_TEXTURE",
+      "bytes": 33948,
+      "sha256": "4b0f6f3b677b19e25df6937d1f2874c856b799234054f10c7fc20e8f6e45824c",
+      "regenerated_path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\runs\\.cache\\finish_visual\\finish_holo_finish_only_v2_a7af3706a5e8.png",
+      "regenerated_sha256": "4b0f6f3b677b19e25df6937d1f2874c856b799234054f10c7fc20e8f6e45824c"
+    }
+  ]
+}
