@@ -107,9 +107,9 @@ class ExperimentSetupWidget(QWidget):
         # W&B Mode
         self.combo_wandb = QComboBox()
         self.combo_wandb.addItem("AUTO (Mode Default)", userData=None)
-        self.combo_wandb.addItem("DISABLED", userData=WandbMode.DISABLED)
-        self.combo_wandb.addItem("OFFLINE", userData=WandbMode.OFFLINE)
-        self.combo_wandb.addItem("ONLINE", userData=WandbMode.ONLINE)
+        self.combo_wandb.addItem("DISABLED", userData=WandbMode.DISABLED.value)
+        self.combo_wandb.addItem("OFFLINE", userData=WandbMode.OFFLINE.value)
+        self.combo_wandb.addItem("ONLINE", userData=WandbMode.ONLINE.value)
         form_layout.addRow(QLabel("W&B Mode:"), self.combo_wandb)
 
         # Custom Runs Root
@@ -248,7 +248,9 @@ class ExperimentSetupWidget(QWidget):
         agent_seed = int(agent_text) if agent_text else None
 
         render_mode = str(self.combo_render.currentData())
-        wandb_mode = self.combo_wandb.currentData()
+        # Qt item data carries primitive strings; restore the request's enum type.
+        wandb_mode_raw = self.combo_wandb.currentData()
+        wandb_mode = WandbMode(wandb_mode_raw) if wandb_mode_raw is not None else None
 
         runs_root_text = self.edit_runs_root.text().strip()
         runs_root = Path(runs_root_text) if runs_root_text else None

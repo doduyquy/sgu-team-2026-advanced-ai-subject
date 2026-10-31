@@ -166,19 +166,24 @@ class RunMonitorWidget(QWidget):
 
         self.lbl_event_type.setText(f"Latest Event: {event_type}")
 
-        if ep_idx is not None and total_eps is not None:
-            self.lbl_episode.setText(f"Episode: {ep_idx + 1} / {total_eps}")
+        is_episode_event = event_type in ("EPISODE_STARTED", "EPISODE_PROGRESS", "EPISODE_FINISHED")
+        if is_episode_event and ep_idx is not None and total_eps is not None:
+            # Executor uses one-based episode indices. Accept legacy zero for the first episode.
+            episode_number = max(1, ep_idx)
+            self.lbl_episode.setText(f"Episode: {episode_number} / {total_eps}")
             if total_eps > 0:
-                pct = int(((ep_idx + (route or 0.0)) / total_eps) * 100)
+                completed = episode_number if event_type == "EPISODE_FINISHED" else episode_number - 1 + (route or 0.0)
+                pct = int((completed / total_eps) * 100)
                 self.progress_bar.setValue(min(100, max(0, pct)))
 
-        if step_idx is not None:
+        has_progress = event_type in ("EPISODE_PROGRESS", "EPISODE_FINISHED")
+        if has_progress and step_idx is not None:
             self.lbl_step.setText(f"Step: {step_idx}")
 
-        if route is not None:
+        if has_progress and route is not None:
             self.lbl_route.setText(f"Route Completion: {route * 100:.1f}%")
 
-        if speed is not None:
+        if event_type == "EPISODE_PROGRESS" and speed is not None:
             self.lbl_speed.setText(f"Speed: {speed:.1f} km/h")
 
         if event_type == "RUN_STARTED":

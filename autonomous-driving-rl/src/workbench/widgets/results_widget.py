@@ -16,6 +16,7 @@ Provides comprehensive read-only browsing of Gate-7 experiment runs:
 """
 
 import dataclasses
+import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -635,6 +636,18 @@ class ResultsWidget(QWidget):
         ]
         for ck, cv in snap.platform_contracts.items():
             lines.append(f"  {ck}: {cv}")
+
+        # Optional trained-agent provenance without changing the frozen snapshot schema.
+        try:
+            manifest = json.loads((Path(snap.run_dir) / "run_manifest.json").read_text(encoding="utf-8"))
+            config = manifest.get("config", {})
+            checkpoint = config.get("algorithm_hyperparameters", {}).get("checkpoint")
+            if checkpoint:
+                lines.extend(["", "--- Trained Heuristic (stored manifest) ---",
+                              f"Training Seed: {config.get('training_run_seed')}"])
+                lines.extend(f"  {key}: {value}" for key, value in checkpoint.items())
+        except (OSError, ValueError, TypeError, AttributeError):
+            pass
 
         lines.append("")
         lines.append("--- Local Artifact Presence ---")
