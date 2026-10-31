@@ -10,6 +10,8 @@ from collections import deque
 import math
 from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
+
 
 def calculate_map_bounds(
     map_features: Optional[Dict[Any, Dict[str, Any]]] = None,
@@ -28,17 +30,17 @@ def calculate_map_bounds(
             if not isinstance(feature, dict):
                 continue
             polyline = feature.get("polyline")
-            if polyline is None:
+            if not isinstance(polyline, (list, tuple, np.ndarray)):
                 continue
 
             for pt in polyline:
-                if len(pt) >= 2:
+                if isinstance(pt, (list, tuple, np.ndarray)) and len(pt) >= 2:
                     try:
                         x = float(pt[0])
                         y = float(pt[1])
                         if math.isfinite(x) and math.isfinite(y):
                             valid_points.append((x, y))
-                    except (ValueError, TypeError):
+                    except (ValueError, TypeError, IndexError):
                         continue
 
     if not valid_points:

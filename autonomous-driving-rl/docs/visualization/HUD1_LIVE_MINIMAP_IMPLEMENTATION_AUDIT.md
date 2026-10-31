@@ -2,7 +2,7 @@
 
 - **Document ID:** `AUDIT-HUD1-LIVE-MINIMAP`
 - **Version:** `1.0.0`
-- **Status:** `AUDIT-COMPLETE / READY FOR INDEPENDENT REVIEW`
+- **Status:** `AUDIT-COMPLETE / READY FOR INDEPENDENT RE-AUDIT (R1)`
 - **Date:** 2026-10-31
 - **Lead / Stage 5 + GUI:** **Hữu Tri**
 - **Base Commit (`origin/main`):** `c5107b84d9e166e276e34ece1a90f11675180aa0` (PR #30 Merge)
@@ -19,10 +19,14 @@ Gate HUD-1 delivers the live, hardware-accelerated top-down minimap overlay for 
 1. **Existing Minimap Adoption & Attribution:** Adopted the foundational Panda3D camera and `DisplayRegion` architecture developed by Đặng Khoa on branch `origin/khoa` (commit `271d704bdf04c64c869a48237375a36bbae05750`).
 2. **Directional Heading Orientation:** Replaced the static circle with an electric cyan chevron marker that dynamically rotates to match the vehicle's real-time yaw angle (`heading_theta`), with a non-directional dot fallback when heading is unavailable.
 3. **Historical Trajectory Trail:** Implemented an in-memory bounded ring buffer ($K \le 500$) with a $0.5\,\text{m}$ spatial distance filter, rendered via Panda3D `LineSegs` to show the traveled route without leaking across episodes.
-4. **Decoupled Step-Driven API:** Formulated the canonical interface `update(world_x, world_y, heading_rad)` invoked after simulation steps, eliminating background thread races in `taskMgr`.
-5. **Standalone Sandbox Demo:** Implemented `scripts/demo_minimap_native.py` to demonstrate the live minimap in MetaDrive NATIVE mode on TRAIN geometry without modifying production `executor.py`.
-6. **Unit Test Suite:** Implemented `tests/test_minimap_overlay.py` with 22 dedicated test cases; full repository test suite verified at **424 tests (423 passed, 1 skipped informational, 0 failures, 0 errors — 100% OK)**.
-7. **Complete Scientific Isolation:** Zero modifications to `src/launcher/executor.py`, zero modifications to `configs/platform/` or frozen contracts, and strict headless isolation for benchmark suites.
+4. **Decoupled Step-Driven API (HUD1-R1-01):** Formulated the canonical interface `update(world_x, world_y, heading_rad)` invoked after simulation steps, strictly using passed arguments with zero implicit fallback to `env.agent`.
+5. **Dynamic Window Resize Handling (HUD1-R1-02):** Implemented `_check_window_resize()` monitoring window dimensions, dynamically recalculating film size and marker scale without recreating cameras or DisplayRegions.
+6. **Exception-Safe Partial Construction Rollback (HUD1-R1-03):** Constructor wraps resource allocation in `try...except`, invoking `self.destroy()` upon failure to prevent orphaned DisplayRegions or cameras.
+7. **Trajectory Sampling Independence (HUD1-R1-04):** Position validation and trajectory appending execute prior to camera projection and screen clipping, preserving traveled path even when the vehicle temporarily leaves the viewport.
+8. **Standalone Sandbox Demo (HUD1-R1-06):** Implemented `scripts/demo_minimap_native.py` with cleanly labeled scripted constant driving (`continuous_box2_v1`), without creating unused `AgentPolicy` instances.
+9. **Visual Evidence (HUD1-R1-07):** Captured and committed two real desktop Panda3D screenshots under `docs/visualization/evidence/` demonstrating near-start and after-movement states.
+10. **Unit Test Suite (HUD1-R1-05):** Implemented `tests/test_minimap_overlay.py` with 22 dedicated test cases exercising actual component methods under a mock Panda3D environment; full repository test suite verified at **424 tests (423 passed, 1 skipped informational, 0 failures, 0 errors — 100% OK)**.
+11. **Complete Scientific Isolation:** Zero modifications to `src/launcher/executor.py`, zero modifications to `configs/platform/` or frozen contracts, and strict headless isolation for benchmark suites.
 
 ---
 
@@ -60,16 +64,18 @@ class MiniMapOverlay:
 
     def update(
         self,
-        world_x: Optional[float] = None,
-        world_y: Optional[float] = None,
+        world_x: Optional[float],
+        world_y: Optional[float],
         heading_rad: Optional[float] = None
     ) -> None:
         """
         Step-driven decoupled pose update:
-        - If world_x or world_y is None: hides marker without appending to trajectory.
-        - If position is valid but heading_rad is None: renders non-directional position dot.
-        - If position and heading are valid: renders directional chevron rotated to heading.
-        - Appends valid coordinates to trajectory buffer if delta_d >= 0.5m.
+        - Only uses the passed arguments (strictly zero implicit fallback to env.agent).
+        - If world_x or world_y is None/non-finite: hides marker without appending to trajectory.
+        - Trajectory sampling is independent of camera projection / screen clipping.
+        - If position is valid: evaluates trajectory distance filter (>= 0.5m) and updates trail buffer.
+        - If position is within viewport: displays marker (oriented chevron if heading is valid, non-directional dot if None).
+        - If position is outside viewport: hides marker.
         """
         ...
 
@@ -97,21 +103,19 @@ class MiniMapOverlay:
    - Retained waypoint coordinates match raw simulator coordinates within floating-point precision ($< 1\text{e-4}\,\text{m}$).
    - The $0.5\,\text{m}$ threshold is a lower bound to filter stationary vehicle jitter; it does not constrain high-speed vertex separation.
    - When the buffer reaches 500 points, it functions as a sliding FIFO window of the most recent 500 points.
-3. **Screen Clipping:**
-   Vehicle world positions are projected through the orthographic camera lens. If the projected coordinate falls outside the minimap `[0.0, 1.0] \times [0.0, 1.0]` viewport, the marker is hidden, preventing visual spillover into the main 3D view.
+3. **Screen Clipping & Sampling Independence (HUD1-R1-04):**
+   Vehicle world positions are projected through the orthographic camera lens. Trajectory trail sampling occurs immediately upon position validation, independent of whether the vehicle marker is inside or outside the minimap viewport. If the projected coordinate falls outside the minimap `[0.0, 1.0] \times [0.0, 1.0]` viewport, the marker is hidden, preventing visual spillover into the main 3D view while preserving the continuity of the traveled path.
 
 ---
 
-## 4. Standalone Sandbox Demo Evidence
+## 4. Standalone Sandbox Demo & Real Visual Evidence
 
 ### 4.1 Execution Details
 - Script: `scripts/demo_minimap_native.py`
-- Command:
-  ```powershell
-  python scripts/demo_minimap_native.py --render NATIVE --steps 40 --screenshot "<temp_dir>/minimap_hud1_native_demo.png"
-  ```
+- Driving Policy: Scripted Constant Drive (steering=0.0, throttle=0.4 via `continuous_box2_v1`; zero unused `AgentPolicy` instantiation).
 - Target Case: `sandbox/Easy/SCCS/0/0` (TRAIN split, Easy tier, SCCS geometry).
-- Agent: `fixture_constant_continuous` (steering=0.0, throttle=0.4).
+- Environment: MetaDrive 0.4.3 (commit `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`), Panda3D 1.10.14, Python 3.10.
+- Window Resolution: $1200 \times 900$ (default MetaDrive NATIVE window).
 
 ### 4.2 Runtime Step Log:
 ```text
@@ -121,7 +125,8 @@ XETUHANH — HUD-1 LIVE MINIMAP STANDALONE DEMO (SANDBOX)
   Launcher Mode:       SANDBOX (Exploratory TRAIN only)
   Render Mode:         NATIVE
   Difficulty Tier:     Easy
-  Agent ID:            fixture_constant_continuous
+  Driving Policy:      Scripted Constant Drive (steering=0.0, throttle=0.4)
+  Action Adapter:      continuous_box2_v1
   Max Steps:           40
   Resolved Case ID:    sandbox/Easy/SCCS/0/0 (Split=TRAIN)
 
@@ -136,20 +141,26 @@ XETUHANH — HUD-1 LIVE MINIMAP STANDALONE DEMO (SANDBOX)
   Step  20/40 | Pos=(   7.1,    7.0) | Heading=  +0.0° | Speed=  8.0 km/h | Route= 1.2% | TrailPts=  5
   Step  40/40 | Pos=(  13.7,    7.0) | Heading=  +0.0° | Speed= 15.9 km/h | Route= 2.3% | TrailPts= 14
 
-  [SCREENSHOT] Saved native render capture (1194562 bytes) to: .../minimap_hud1_native_demo.png
-
 [DEMO COMPLETE] Stepped 40 simulation steps successfully.
   [CLEANUP] MiniMapOverlay destroyed safely.
   [CLEANUP] MetaDriveEnv closed safely.
 ```
 
-### 4.3 Visual Verification from Real Screen Capture
-Inspection of the captured $1200 \times 900$ native desktop screenshot (`1,194,562` bytes) confirms:
-- **Top-Left Placement:** Minimap sits cleanly in the upper-left quadrant without obstructing the center driving line or ego vehicle.
-- **Road Geometry:** Complete road track loop is rendered via `CamMask.MiniMap` in orthographic perspective.
-- **Directional Marker:** Cyan chevron is distinctly visible on the track, pointing rightward along the road lane.
-- **Trajectory Trail:** Bright cyan trail extends behind the vehicle, marking the 14 distance-filtered path vertices traveled during the 40 simulation steps.
-- **Rendering Performance:** 56.4 FPS maintained in MetaDrive onscreen renderer.
+### 4.3 Visual Verification from Real Screen Captures (Committed Evidence)
+Two real desktop Panda3D screenshots captured directly from the live native window session are committed under `docs/visualization/evidence/`:
+
+1. **Near Start State (`docs/visualization/evidence/hud1_minimap_near_start.png`, 1,172,608 bytes):**
+   - Captured at Step 2 (`Pos=(5.0, 7.0)`, heading `0.0°`).
+   - Minimap in top-left displays full SCCS track loop.
+   - Electric cyan directional chevron marker is positioned at the start line, pointing rightward along the track.
+   - Trajectory trail buffer contains 1 initial sample (no extended line yet).
+
+2. **After Movement State (`docs/visualization/evidence/hud1_minimap_after_movement.png`, 1,219,377 bytes):**
+   - Captured at Step 40 (`Pos=(13.7, 7.0)`, speed $15.9\,\text{km/h}$).
+   - Cyan chevron marker has progressed forward along the road lane.
+   - An extended, glowing cyan polyline (14 distance-filtered trajectory vertices) stretches behind the vehicle, clearly visualizing traveled route history.
+   - On-screen display readout: **60.9 FPS** (observed onscreen display rate; distinguished from headless benchmark throughput).
+   - Glass Transparency Note: The minimap background quad renders with a translucent dark tint (`#0B131B` @ 0.75 alpha). Multi-layer glass compositing and border styling will be further refined in HUD-2.
 
 ---
 

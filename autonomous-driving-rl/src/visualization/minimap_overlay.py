@@ -62,6 +62,7 @@ class MiniMapOverlay:
     def __init__(self, env: Any, padding_m: float = 12.0) -> None:
         self.env = env
         self.engine = getattr(env, "engine", None)
+        self.padding_m = float(padding_m)
         self.camera = None
         self.display_region = None
         self.background = None
@@ -71,6 +72,10 @@ class MiniMapOverlay:
         self.trail_root = None
         self.trail_np = None
         self._trail_buffer = TrajectoryTrailBuffer(max_capacity=500)
+        self._last_win_size = (1.0, 1.0)
+        self._initial_win_size = (1.0, 1.0)
+        self.film_width = 100.0
+        self.film_height = 100.0
 
         if self.engine is None:
             raise RuntimeError(
@@ -84,20 +89,26 @@ class MiniMapOverlay:
                 "MiniMapOverlay requires render_mode='NATIVE' (use_render=True)."
             )
 
-        # Extract map bounds and configure camera
-        map_features = getattr(env.current_map, "get_map_features", lambda interval: {})(interval=2.0)
-        default_pos = (0.0, 0.0)
-        if hasattr(env, "agent") and hasattr(env.agent, "position") and env.agent.position is not None:
-            try:
-                default_pos = (float(env.agent.position[0]), float(env.agent.position[1]))
-            except (IndexError, TypeError, ValueError):
-                pass
+        # Wrap resource creation in exception-safe rollback
+        try:
+            # Extract map bounds and configure camera
+            map_features = getattr(env.current_map, "get_map_features", lambda interval: {})(interval=2.0)
+            default_pos = (0.0, 0.0)
+            if hasattr(env, "agent") and hasattr(env.agent, "position") and env.agent.position is not None:
+                try:
+                    default_pos = (float(env.agent.position[0]), float(env.agent.position[1]))
+                except (IndexError, TypeError, ValueError):
+                    pass
 
-        self.bounds = calculate_map_bounds(map_features, default_center=default_pos, padding_m=padding_m)
-        self._create_camera(self.bounds, padding_m)
-        self._create_background()
-        self._create_markers()
-        self._create_trail_root()
+            self.bounds = calculate_map_bounds(map_features, default_center=default_pos, padding_m=self.padding_m)
+            self._create_camera(self.bounds, self.padding_m)
+            self._create_background()
+            self._create_markers()
+            self._create_trail_root()
+        except Exception:
+            # Exception-safe rollback: tear down any allocated resources on failure
+            self.destroy()
+            raise
 
     def _create_camera(
         self,
@@ -111,6 +122,9 @@ class MiniMapOverlay:
         left, right, bottom, top = self.REGION
         win_w = max(float(self.engine.win.getXSize()), 1.0)
         win_h = max(float(self.engine.win.getYSize()), 1.0)
+        self._initial_win_size = (win_w, win_h)
+        self._last_win_size = (win_w, win_h)
+
         region_w = (right - left) * win_w
         region_h = (top - bottom) * win_h
         region_aspect = region_w / max(region_h, 1.0)
@@ -286,48 +300,93 @@ class MiniMapOverlay:
         geom_node = ls.create()
         self.trail_np = self.trail_root.attachNewNode(geom_node)
 
+    def _check_window_resize(self) -> None:
+        """
+        Detects window dimension changes and dynamically recalculates orthographic lens film size
+        and marker pixel scale to prevent geometric warping without recreating cameras or DisplayRegions.
+        """
+        if self.engine is None or getattr(self.engine, "win", None) is None:
+            return
+
+        try:
+            win_w = float(self.engine.win.getXSize())
+            win_h = float(self.engine.win.getYSize())
+        except Exception:
+            return
+
+        if win_w <= 0.0 or win_h <= 0.0:
+            return  # Minimized window or invalid dimensions
+
+        if (win_w, win_h) == self._last_win_size:
+            return  # Window dimensions unchanged
+
+        left, right, bottom, top = self.REGION
+        region_w = (right - left) * win_w
+        region_h = (top - bottom) * win_h
+        region_aspect = region_w / max(region_h, 1.0)
+
+        # Recalculate film size to preserve map aspect ratio
+        self.film_width, self.film_height = calculate_film_size(
+            self.bounds, region_aspect, padding_m=self.padding_m
+        )
+        if self.camera is not None and self.camera.node() is not None:
+            lens = self.camera.node().getLens()
+            if lens is not None:
+                lens.setFilmSize(self.film_width, self.film_height)
+
+        # Recalculate marker pixel scale in render2d
+        if self.marker_root is not None and self._initial_win_size[0] > 0 and self._initial_win_size[1] > 0:
+            scale_x = self._initial_win_size[0] / win_w
+            scale_z = self._initial_win_size[1] / win_h
+            self.marker_root.setScale(scale_x, 1.0, scale_z)
+
+        self._last_win_size = (win_w, win_h)
+
     def update(
         self,
-        world_x: Optional[float] = None,
-        world_y: Optional[float] = None,
+        world_x: Optional[float],
+        world_y: Optional[float],
         heading_rad: Optional[float] = None
     ) -> None:
         """
         Step-driven decoupled pose update:
-        - If world_x or world_y is omitted or None: falls back to env.agent position if available.
-        - If coordinates are missing/invalid: hides marker without appending to trajectory.
-        - If coordinates are valid but heading_rad is None: displays non-directional position dot.
-        - If coordinates and heading are valid: displays directional chevron rotated to heading.
-        - Appends valid coordinates to trajectory buffer under minimum distance filter (0.5m).
+        - Only uses the passed arguments (no implicit fallback to env.agent).
+        - If world_x or world_y is None/non-finite: hides marker without appending to trajectory.
+        - Trajectory sampling is independent of marker projection / screen clipping.
+        - If position is valid: evaluates trajectory distance filter and projects marker.
+        - If position is within minimap viewport: displays marker (oriented chevron if heading is valid,
+          non-directional dot if heading is None).
+        - If position is outside minimap viewport: hides marker cleanly.
         """
         if self.camera is None or self.marker_root is None:
             return
 
-        # Fallback to env.agent if position arguments not provided directly
+        # Check window resize dynamically
+        self._check_window_resize()
+
+        # Handle missing or non-finite position: strictly no implicit fallback to env.agent
         if world_x is None or world_y is None:
-            if self.env is not None and hasattr(self.env, "agent") and self.env.agent is not None:
-                pos = getattr(self.env.agent, "position", None)
-                if pos is not None:
-                    try:
-                        world_x, world_y = float(pos[0]), float(pos[1])
-                    except (IndexError, TypeError, ValueError):
-                        world_x, world_y = None, None
-
-                if heading_rad is None:
-                    h_val = getattr(self.env.agent, "heading_theta", None)
-                    if h_val is not None:
-                        try:
-                            heading_rad = float(h_val)
-                        except (TypeError, ValueError):
-                            heading_rad = None
-
-        # Handle missing or non-finite position
-        if world_x is None or world_y is None or not (math.isfinite(world_x) and math.isfinite(world_y)):
             self.marker_root.hide()
             return
 
-        # 1. Project world coordinate through minimap camera lens
-        world_pos = Point3(float(world_x), float(world_y), 0.0)
+        try:
+            fx = float(world_x)
+            fy = float(world_y)
+        except (ValueError, TypeError):
+            self.marker_root.hide()
+            return
+
+        if not (math.isfinite(fx) and math.isfinite(fy)):
+            self.marker_root.hide()
+            return
+
+        # 1. Update trajectory trail ring buffer (independent of camera projection / screen clipping)
+        retained = self._trail_buffer.add_sample(fx, fy, min_distance=0.5)
+        if retained and self.trail_root is not None:
+            self._rebuild_trail_geometry()
+
+        # 2. Project world coordinate through minimap camera lens for 2D screen marker
+        world_pos = Point3(fx, fy, 0.0)
         cam_pos = self.camera.getRelativePoint(self.engine.render, world_pos)
         projected = Point2()
 
@@ -353,20 +412,24 @@ class MiniMapOverlay:
         self.marker_root.show()
         self.marker_root.setPos(screen_x, 0.0, screen_z)
 
-        # 2. Update heading orientation
-        if heading_rad is not None and math.isfinite(heading_rad):
+        # 3. Update heading orientation: chevron if valid float, non-directional dot if None
+        valid_heading = None
+        if heading_rad is not None:
+            try:
+                fh = float(heading_rad)
+                if math.isfinite(fh):
+                    valid_heading = fh
+            except (ValueError, TypeError):
+                pass
+
+        if valid_heading is not None:
             self.marker_arrow.show()
             self.marker_dot.hide()
-            self.marker_root.setR(calculate_heading_rotation_deg(heading_rad))
+            self.marker_root.setR(calculate_heading_rotation_deg(valid_heading))
         else:
             self.marker_dot.show()
             self.marker_arrow.hide()
             self.marker_root.setR(0.0)
-
-        # 3. Update trajectory trail ring buffer
-        retained = self._trail_buffer.add_sample(world_x, world_y, min_distance=0.5)
-        if retained and self.trail_root is not None:
-            self._rebuild_trail_geometry()
 
     def reset(self) -> None:
         """
@@ -394,17 +457,26 @@ class MiniMapOverlay:
         self.reset()
 
         if self.trail_root is not None:
-            self.trail_root.removeNode()
+            try:
+                self.trail_root.removeNode()
+            except Exception:
+                pass
             self.trail_root = None
 
         if self.marker_root is not None:
-            self.marker_root.removeNode()
+            try:
+                self.marker_root.removeNode()
+            except Exception:
+                pass
             self.marker_root = None
             self.marker_arrow = None
             self.marker_dot = None
 
         if self.background is not None:
-            self.background.removeNode()
+            try:
+                self.background.removeNode()
+            except Exception:
+                pass
             self.background = None
 
         if self.display_region is not None:

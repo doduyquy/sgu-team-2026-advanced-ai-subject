@@ -1,16 +1,16 @@
 """
-Unit tests for Gate HUD-1: Live Minimap Implementation.
+Unit and Component Integration Tests for Gate HUD-1: Live Minimap Implementation.
 
-Tests minimap mathematical utilities, polyline bounding, aspect ratio preservation,
-cardinal heading rotations, trajectory distance filtering, FIFO ring buffer,
-screen clipping, lifecycle idempotency, and scientific isolation.
-Pure unit test suite runnable in headless environment without requiring an interactive desktop window.
+Tests minimap mathematical utilities, polyline bounding with robust error handling,
+actual MiniMapOverlay component lifecycle (update, heading orientation, missing data fallback,
+trajectory sampling independence, screen clipping, window resize, and exception-safe rollback).
+Runs in headless environment without requiring an interactive desktop display window.
 """
 
 import math
 from pathlib import Path
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import panda3d.core as p3d
@@ -21,10 +21,49 @@ from src.visualization.minimap_math import (
     calculate_heading_rotation_deg,
     calculate_map_bounds,
 )
+from src.visualization.minimap_overlay import MiniMapOverlay
+
+
+def _create_mock_minimap_env(win_w=1200, win_h=900):
+    """Creates a mock MetaDrive environment with valid Panda3D nodes for component testing."""
+    mock_env = MagicMock()
+    mock_engine = MagicMock()
+    mock_win = MagicMock()
+    mock_win.getXSize.return_value = win_w
+    mock_win.getYSize.return_value = win_h
+    mock_engine.win = mock_win
+
+    mock_render = p3d.NodePath("mock_render")
+    mock_render2d = p3d.NodePath("mock_render2d")
+    mock_engine.render = mock_render
+    mock_engine.render2d = mock_render2d
+    mock_engine.camList = []
+
+    # Mock camera node with real OrthographicLens
+    lens = p3d.OrthographicLens()
+    mock_cam_node = MagicMock()
+    mock_cam_node.getLens.return_value = lens
+    mock_display_region = MagicMock()
+    mock_cam_node.getDisplayRegion.return_value = mock_display_region
+
+    mock_cam_np = MagicMock()
+    mock_cam_np.node.return_value = mock_cam_node
+    # Default to center of camera (0, 0, 0)
+    mock_cam_np.getRelativePoint.return_value = p3d.Point3(0.0, 0.0, 0.0)
+
+    mock_engine.makeCamera.return_value = mock_cam_np
+    mock_env.engine = mock_engine
+
+    mock_env.current_map.get_map_features.return_value = {
+        "lane_1": {"polyline": [[0.0, 0.0], [50.0, 50.0]]}
+    }
+    mock_env.agent.position = [10.0, 10.0]
+    mock_env.agent.heading_theta = 0.0
+    return mock_env, lens
 
 
 class TestMinimapOverlayUnitSuite(unittest.TestCase):
-    """22 required unit and regression tests for Gate HUD-1 Live Minimap."""
+    """22 comprehensive unit and component tests for Gate HUD-1 Live Minimap."""
 
     def test_01_import_visualization_package_has_no_hologram_dependency(self):
         """1. Importing src.visualization does not import or depend on finish_floating_hologram."""
@@ -50,7 +89,7 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
         self.assertEqual(bounds, (-20.0, 100.0, -15.0, 20.0))
 
     def test_04_empty_and_malformed_features_fallback(self):
-        """4. Empty, None, or non-dict map features gracefully fall back to 100m x 100m box around center."""
+        """4. Empty, None, scalar, or non-iterable features fall back safely without TypeError."""
         # Empty dict
         bounds_empty = calculate_map_bounds({}, default_center=(10.0, 25.0))
         self.assertEqual(bounds_empty, (-40.0, 60.0, -25.0, 75.0))
@@ -59,8 +98,14 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
         bounds_none = calculate_map_bounds(None, default_center=(0.0, 0.0))
         self.assertEqual(bounds_none, (-50.0, 50.0, -50.0, 50.0))
 
-        # Malformed entries
-        malformed = {"bad_1": "not_a_dict", "bad_2": {"polyline": None}, "bad_3": {"polyline": []}}
+        # Malformed entries: scalar in polyline, non-iterables, None items
+        malformed = {
+            "bad_1": "not_a_dict",
+            "bad_2": {"polyline": None},
+            "bad_3": {"polyline": []},
+            "bad_4": {"polyline": [None, 123, "string", [1.0]]},
+            "bad_5": {"polyline": "not_a_list_of_points"},
+        }
         bounds_mal = calculate_map_bounds(malformed, default_center=(5.0, 5.0))
         self.assertEqual(bounds_mal, (-45.0, 55.0, -45.0, 55.0))
 
@@ -121,25 +166,40 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
         self.assertEqual(calculate_heading_rotation_deg(float("nan")), 0.0)
         self.assertEqual(calculate_heading_rotation_deg(float("inf")), 0.0)
 
-    def test_09_valid_position_with_missing_heading_renders_dot(self):
+    def test_09_actual_update_with_missing_heading_renders_dot_on_overlay(self):
         """9. Valid coordinates with heading_rad=None uses non-directional dot without fabricating North."""
-        buf = TrajectoryTrailBuffer(max_capacity=500)
-        retained = buf.add_sample(10.0, 20.0)
-        self.assertTrue(retained)
-        # Position is retained in buffer
-        self.assertEqual(buf.get_points(), [(10.0, 20.0)])
-        # When heading is None, calculate_heading_rotation_deg fallback is 0.0, but UI selects marker_dot
-        self.assertEqual(len(buf), 1)
+        env, _ = _create_mock_minimap_env()
+        overlay = MiniMapOverlay(env)
+        try:
+            overlay.update(world_x=10.0, world_y=10.0, heading_rad=None)
+            self.assertFalse(overlay.marker_root.isHidden())
+            self.assertTrue(overlay.marker_arrow.isHidden())
+            self.assertFalse(overlay.marker_dot.isHidden())
+            self.assertAlmostEqual(overlay.marker_root.getR(), 0.0)
+        finally:
+            overlay.destroy()
 
-    def test_10_missing_position_hides_marker(self):
-        """10. Missing position (x=None or y=None) rejects trajectory sample and returns False."""
-        buf = TrajectoryTrailBuffer(max_capacity=500)
-        self.assertFalse(buf.add_sample(None, 20.0))
-        self.assertFalse(buf.add_sample(10.0, None))
-        self.assertFalse(buf.add_sample(None, None))
-        self.assertFalse(buf.add_sample(float("nan"), 20.0))
-        self.assertFalse(buf.add_sample(10.0, float("inf")))
-        self.assertEqual(len(buf), 0)
+    def test_10_actual_update_missing_position_hides_marker_without_fallback(self):
+        """10. Missing position (None or non-finite) hides marker and does not append to buffer or fallback to env.agent."""
+        env, _ = _create_mock_minimap_env()
+        env.agent.position = [99.0, 99.0]  # If fallback occurred, this would be picked up!
+        overlay = MiniMapOverlay(env)
+        try:
+            # None position
+            overlay.update(world_x=None, world_y=10.0, heading_rad=0.0)
+            self.assertTrue(overlay.marker_root.isHidden())
+            self.assertEqual(len(overlay._trail_buffer), 0)
+
+            # Non-finite position
+            overlay.update(world_x=float("nan"), world_y=10.0, heading_rad=0.0)
+            self.assertTrue(overlay.marker_root.isHidden())
+            self.assertEqual(len(overlay._trail_buffer), 0)
+
+            overlay.update(world_x=10.0, world_y=float("inf"), heading_rad=0.0)
+            self.assertTrue(overlay.marker_root.isHidden())
+            self.assertEqual(len(overlay._trail_buffer), 0)
+        finally:
+            overlay.destroy()
 
     def test_11_first_trajectory_sample_appended(self):
         """11. First valid position sample is always accepted and retained in the trajectory buffer."""
@@ -205,94 +265,72 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
 
     def test_16_no_unbounded_panda3d_nodes_on_repeated_updates(self):
         """16. Rebuilding trail geometry replaces old GeomNode, maintaining single active trail NodePath."""
-        from metadrive.constants import CamMask
-        root = p3d.NodePath("mock_render")
-        trail_root = root.attachNewNode("trail_root")
-        trail_root.hide()
-        trail_root.showThrough(CamMask.MiniMap)
+        env, _ = _create_mock_minimap_env()
+        overlay = MiniMapOverlay(env)
+        try:
+            # Step vehicle along a line to add 10 trail samples
+            for step in range(10):
+                overlay.update(world_x=float(step * 2.0), world_y=float(step * 2.0), heading_rad=0.0)
 
-        active_trail_np = None
+            # trail_root must have at most 1 active child node (no memory/node leak)
+            self.assertIsNotNone(overlay.trail_root)
+            self.assertEqual(overlay.trail_root.getNumChildren(), 1)
+        finally:
+            overlay.destroy()
 
-        # Simulate 10 successive trail rebuilds
-        for step in range(10):
-            if active_trail_np is not None:
-                active_trail_np.removeNode()
+    def test_17_actual_clipping_hides_marker_when_projected_outside_viewport(self):
+        """17. Vehicle outside minimap projection hides marker, but trajectory buffer retains valid coordinates."""
+        env, _ = _create_mock_minimap_env()
+        # Mock projection returning point far outside viewport
+        env.engine.makeCamera.return_value.getRelativePoint.return_value = p3d.Point3(5000.0, 5000.0, 0.0)
+        overlay = MiniMapOverlay(env)
+        try:
+            # Vehicle position is valid, but projected out of bounds
+            overlay.update(world_x=5000.0, world_y=5000.0, heading_rad=0.0)
+            # Marker must be hidden because it is clipped outside minimap DisplayRegion
+            self.assertTrue(overlay.marker_root.isHidden())
+            # But trajectory sampling is independent of marker visibility: sample was retained!
+            self.assertEqual(len(overlay._trail_buffer), 1)
+            self.assertEqual(overlay._trail_buffer.get_points()[0], (5000.0, 5000.0))
+        finally:
+            overlay.destroy()
 
-            ls = p3d.LineSegs("trail")
-            ls.moveTo(0, 0, 0.5)
-            ls.drawTo(step * 2.0, step * 2.0, 0.5)
-            active_trail_np = trail_root.attachNewNode(ls.create())
+    def test_18_actual_window_resize_updates_lens_film_size_on_overlay(self):
+        """18. Window resize dynamically recalculates film size and calls lens.setFilmSize on overlay."""
+        env, lens = _create_mock_minimap_env(win_w=1200, win_h=900)
+        overlay = MiniMapOverlay(env)
+        try:
+            initial_film = (overlay.film_width, overlay.film_height)
+            # Simulate window resizing to 1600x900
+            env.engine.win.getXSize.return_value = 1600
+            env.engine.win.getYSize.return_value = 900
+            overlay.update(world_x=10.0, world_y=10.0, heading_rad=0.0)
 
-            # Number of children under trail_root must remain exactly 1
-            self.assertEqual(trail_root.getNumChildren(), 1)
-
-        # Cleanup
-        if active_trail_np is not None:
-            active_trail_np.removeNode()
-        trail_root.removeNode()
-        root.removeNode()
-
-    def test_17_renderer_screen_clipping_bounds_check(self):
-        """17. Normalized screen UV coordinates outside [0, 1] are detected as out-of-bounds."""
-        left, right, bottom, top = (0.015, 0.185, 0.745, 0.985)
-
-        def is_in_minimap(u, v):
-            return 0.0 <= u <= 1.0 and 0.0 <= v <= 1.0
-
-        self.assertTrue(is_in_minimap(0.5, 0.5))
-        self.assertTrue(is_in_minimap(0.0, 0.0))
-        self.assertTrue(is_in_minimap(1.0, 1.0))
-        self.assertFalse(is_in_minimap(-0.01, 0.5))
-        self.assertFalse(is_in_minimap(1.01, 0.5))
-        self.assertFalse(is_in_minimap(0.5, -0.01))
-        self.assertFalse(is_in_minimap(0.5, 1.01))
-
-    def test_18_window_resize_film_recalculation(self):
-        """18. Film size recalculates correctly when window dimensions change from 16:9 to 4:3."""
-        bounds = (0.0, 100.0, 0.0, 100.0)  # square map 124m x 124m
-        # 16:9 window region aspect
-        region_w_16_9 = (0.185 - 0.015) * 1920.0  # 326.4
-        region_h_16_9 = (0.985 - 0.745) * 1080.0  # 259.2
-        aspect_16_9 = region_w_16_9 / region_h_16_9  # ~1.26
-        fw1, fh1 = calculate_film_size(bounds, aspect_16_9)
-
-        # 4:3 window region aspect
-        region_w_4_3 = (0.185 - 0.015) * 1024.0  # 174.08
-        region_h_4_3 = (0.985 - 0.745) * 768.0   # 184.32
-        aspect_4_3 = region_w_4_3 / region_h_4_3  # ~0.944
-        fw2, fh2 = calculate_film_size(bounds, aspect_4_3)
-
-        self.assertNotEqual((fw1, fh1), (fw2, fh2))
-        self.assertAlmostEqual(fw1 / fh1, aspect_16_9)
-        self.assertAlmostEqual(fw2 / fh2, aspect_4_3)
+            updated_film = (overlay.film_width, overlay.film_height)
+            self.assertNotEqual(initial_film, updated_film)
+            # Verify lens film size matches updated dimensions (Panda3D C++ uses float32)
+            lens_size = lens.getFilmSize()
+            self.assertAlmostEqual(lens_size.x, overlay.film_width, places=4)
+            self.assertAlmostEqual(lens_size.y, overlay.film_height, places=4)
+        finally:
+            overlay.destroy()
 
     def test_19_destroy_idempotency_repeated_calls_safe(self):
-        """19. destroy() can be called repeatedly on a minimap mock without throwing exceptions."""
-        from src.visualization.minimap_overlay import MiniMapOverlay
-        # Create uninitialized instance
-        overlay = MiniMapOverlay.__new__(MiniMapOverlay)
-        overlay.camera = None
-        overlay.display_region = None
-        overlay.background = None
-        overlay.marker_root = None
-        overlay.marker_arrow = None
-        overlay.marker_dot = None
-        overlay.trail_root = None
-        overlay.trail_np = None
-        overlay._trail_buffer = TrajectoryTrailBuffer(max_capacity=500)
-        overlay.engine = None
-        overlay.env = None
-
-        # Call destroy 3 times
+        """19. destroy() can be called repeatedly on MiniMapOverlay without throwing exceptions."""
+        env, _ = _create_mock_minimap_env()
+        overlay = MiniMapOverlay(env)
+        # Call destroy 3 times sequentially
         overlay.destroy()
         overlay.destroy()
         overlay.destroy()
         self.assertIsNone(overlay.camera)
         self.assertIsNone(overlay.display_region)
+        self.assertIsNone(overlay.trail_root)
+        self.assertIsNone(overlay.marker_root)
 
-    def test_20_partial_initialization_cleanup_on_exception(self):
-        """20. Safe cleanup when engine or window is missing during initialization."""
-        from src.visualization.minimap_overlay import MiniMapOverlay
+    def test_20_partial_initialization_exception_safe_rollback(self):
+        """20. If resource creation fails mid-init, previously allocated resources are cleanly rolled back."""
+        # Test 20a: Missing engine or win
         mock_env_no_engine = MagicMock()
         mock_env_no_engine.engine = None
         with self.assertRaises(RuntimeError) as ctx1:
@@ -305,11 +343,24 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
             MiniMapOverlay(mock_env_no_win)
         self.assertIn("Render window not available", str(ctx2.exception))
 
-    def test_21_no_background_taskmgr_update_task_spawned(self):
-        """21. MiniMapOverlay operates strictly step-driven without adding tasks to engine.taskMgr."""
-        from src.visualization.minimap_overlay import MiniMapOverlay
-        overlay = MiniMapOverlay.__new__(MiniMapOverlay)
-        self.assertFalse(hasattr(overlay, "_marker_task_name"))
+        # Test 20b: Failure injection after camera creation (during _create_markers)
+        env_inject, _ = _create_mock_minimap_env()
+        with patch.object(MiniMapOverlay, "_create_markers", side_effect=RuntimeError("Simulated marker failure")):
+            with self.assertRaises(RuntimeError) as ctx3:
+                MiniMapOverlay(env_inject)
+            self.assertIn("Simulated marker failure", str(ctx3.exception))
+            # Verify that camera and display_region were cleanly removed during rollback
+            env_inject.engine.win.removeDisplayRegion.assert_called()
+
+    def test_21_constructor_spawns_no_background_taskmgr_tasks(self):
+        """21. MiniMapOverlay constructor operates purely step-driven without taskMgr.add() background tasks."""
+        env, _ = _create_mock_minimap_env()
+        overlay = MiniMapOverlay(env)
+        try:
+            self.assertFalse(hasattr(overlay, "_marker_task_name"))
+            env.engine.taskMgr.add.assert_not_called()
+        finally:
+            overlay.destroy()
 
     def test_22_scientific_contracts_and_hashes_unmutated(self):
         """22. Verifies that importing visualizer does not mutate any locked platform contract hashes."""

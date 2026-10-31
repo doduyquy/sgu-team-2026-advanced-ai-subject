@@ -38,11 +38,10 @@ def run_minimap_demo(
     steps: int = 80,
     render_mode: str = "NATIVE",
     tier: str = "Easy",
-    agent_id: str = "fixture_constant_continuous",
     capture_screenshot_path: Optional[str] = None,
 ) -> bool:
     """
-    Executes a standalone sandbox demo of the HUD-1 live minimap.
+    Executes a standalone sandbox demo of the HUD-1 live minimap using scripted constant drive.
     Returns True if completed successfully, False otherwise.
     """
     print("=" * 65)
@@ -51,13 +50,15 @@ def run_minimap_demo(
     print(f"  Launcher Mode:       SANDBOX (Exploratory TRAIN only)")
     print(f"  Render Mode:         {render_mode}")
     print(f"  Difficulty Tier:     {tier}")
-    print(f"  Agent ID:            {agent_id}")
+    print(f"  Driving Policy:      Scripted Constant Drive (steering=0.0, throttle=0.4)")
+    print(f"  Action Adapter:      continuous_box2_v1")
     print(f"  Max Steps:           {steps}")
 
     # 1. Resolve sandbox target case (strictly TRAIN split)
+    # Uses fixture_constant_continuous solely for deterministic plan resolution
     req = LaunchRequestV1(
         mode=LauncherMode.SANDBOX,
-        agent_id=agent_id,
+        agent_id="fixture_constant_continuous",
         tier=tier,
         render_mode=render_mode,
     )
@@ -71,11 +72,9 @@ def run_minimap_demo(
     # 3. Build locked MetaDrive environment config
     env_config = build_metadrive_case_config(case, blocks, render_mode=render_mode)
 
-    # 4. Instantiate registered agent and action adapter
-    registry = build_canonical_agent_registry()
-    agent_reg = registry.get(agent_id)
-    agent = registry.get_factory(agent_id)()
-    adapter = get_action_adapter(agent_reg.action_adapter_id)
+    # 4. Action adapter for canonical physical actuation
+    adapter = get_action_adapter("continuous_box2_v1")
+    canonical_act = adapter.to_canonical([0.0, 0.4])
 
     env = None
     minimap = None
@@ -99,11 +98,7 @@ def run_minimap_demo(
         truncated = False
 
         while not (terminated or truncated) and step_idx < steps:
-            # Generate scripted / fixture action
-            # For constant continuous fixture, default action is steering=0.0, throttle=0.4
-            canonical_act = adapter.to_canonical([0.0, 0.4])
-
-            # Simulation physics step
+            # Simulation physics step with constant forward actuation
             raw_obs, r_env, terminated, truncated, step_info = env.step(canonical_act.to_numpy())
             step_idx += 1
 
@@ -181,7 +176,6 @@ def main():
     parser.add_argument("--steps", type=int, default=80, help="Number of simulation steps (default: 80)")
     parser.add_argument("--render", type=str, default="NATIVE", choices=["NATIVE", "OFF", "native", "off"], help="Render mode")
     parser.add_argument("--tier", type=str, default="Easy", choices=["Easy", "Medium", "Hard", "Extreme"], help="Difficulty tier")
-    parser.add_argument("--agent", type=str, default="fixture_constant_continuous", help="Agent identifier")
     parser.add_argument("--screenshot", type=str, default=None, help="Optional output path for screenshot capture")
     args = parser.parse_args()
 
@@ -189,7 +183,6 @@ def main():
         steps=args.steps,
         render_mode=args.render.upper(),
         tier=args.tier,
-        agent_id=args.agent,
         capture_screenshot_path=args.screenshot,
     )
     sys.exit(0 if success else 1)
