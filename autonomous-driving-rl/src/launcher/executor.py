@@ -17,6 +17,7 @@ import math
 import os
 from pathlib import Path
 import time
+import warnings
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from metadrive.component.map.pg_map import MapGenerateMethod
@@ -61,6 +62,34 @@ from src.platform import (
     get_action_adapter,
     sanitize_error_message,
 )
+
+
+def create_native_minimap(env: Any) -> Optional[Any]:
+    """Load the optional native overlay without making it a headless dependency.
+
+    The built-in MetaDrive window still renders when this extra overlay is absent.
+    Errors in an installed overlay or its dependencies remain visible.
+    """
+    try:
+        from src.visualization.minimap_overlay import MiniMapOverlay
+    except ModuleNotFoundError as error:
+        if error.name not in ("src.visualization", "src.visualization.minimap_overlay"):
+            raise
+        warnings.warn(
+            "Optional minimap overlay is unavailable; using the MetaDrive native window.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return None
+    return MiniMapOverlay(env)
+
+
+def read_vehicle_speed_kmh(vehicle: Any) -> float:
+    """Read the pinned MetaDrive API in km/h; do not fabricate missing speed."""
+    speed = float(vehicle.speed_km_h)
+    if not math.isfinite(speed):
+        raise ValueError(f"MetaDrive returned a non-finite vehicle speed: {speed}")
+    return speed
 
 
 def compute_step_route_progress_and_reward(
@@ -218,6 +247,11 @@ class ExperimentExecutor:
             "protocol_scope": self.plan.protocol_scope
         }
 
+        checkpoint = getattr(self.plan, "checkpoint_binding", None)
+        algorithm_parameters = {"launcher": launcher_prov}
+        if checkpoint is not None:
+            algorithm_parameters["checkpoint"] = checkpoint.semantic_identity()
+
         # 2. Build Gate-7 ExperimentRunConfig
         run_config = ExperimentRunConfig(
             run_kind=self.plan.run_kind,
@@ -233,11 +267,12 @@ class ExperimentExecutor:
             inference_stochasticity=self.plan.agent_registration.inference_stochasticity,
             stateful_within_episode=self.plan.agent_registration.stateful_within_episode,
             agent_seed=self.plan.agent_seed,
+            training_run_seed=checkpoint.training_run_seed if checkpoint is not None else None,
             expected_episode_count=len(self.plan.resolved_cases),
             manifest_name=resolve_manifest_name_for_mode(self.plan.launcher_mode),
             allow_dirty_worktree_override=(not self.plan.canonical_run),
             wandb_mode=self.plan.wandb_mode,
-            algorithm_hyperparameters={"launcher": launcher_prov}
+            algorithm_hyperparameters=algorithm_parameters
         )
 
         # 3. Instantiate authoritative Gate-7 logger and downstream W&B mirror
@@ -279,6 +314,13 @@ class ExperimentExecutor:
 
             # 4. Instantiate agent policy ONCE per ExperimentRun (Section 9)
             agent = self.agent_factory()
+            if checkpoint is not None:
+                from src.launcher.checkpoints import validate_checkpoint_binding
+                checkpoint_path = validate_checkpoint_binding(checkpoint, self.project_root)
+                loader = getattr(agent, "load_checkpoint", None)
+                if loader is None:
+                    raise TypeError("Registered checkpoint-based agent has no checkpoint loader")
+                loader(checkpoint_path, checkpoint.model_sha256)
             if not hasattr(agent, "descriptor"):
                 raise TypeError(f"Agent instance of type '{type(agent).__name__}' lacks required 'descriptor' property.")
 
@@ -410,7 +452,7 @@ class ExperimentExecutor:
                         truncated = outcome.truncated
 
                         # 6. Gate-4 Step Reward Computation (Signed Delta, No Clamping)
-                        speed_kmh = float(env.agent.speed_kmh) if hasattr(env, "agent") and hasattr(env.agent, "speed_kmh") else 0.0
+                        speed_kmh = read_vehicle_speed_kmh(env.agent)
                         speeds_kmh.append(speed_kmh)
 
                         curr_route = float(step_info.get("route_completion", 0.0))
@@ -510,6 +552,7 @@ class ExperimentExecutor:
                     run_id=logger.run_id,
                     episode_index=case_idx,
                     total_episodes=total_cases,
+                    step_index=step_idx,
                     route_completion=float(last_route_completion),
                     speed_kmh=mean_spd,
                     status="SUCCESS" if clean_succ else "FAILURE",
