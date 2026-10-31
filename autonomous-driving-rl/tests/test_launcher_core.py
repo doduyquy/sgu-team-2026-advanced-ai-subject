@@ -137,7 +137,9 @@ class TestAgentRegistry(unittest.TestCase):
         for fid in expected_fixtures:
             self.assertIn(fid, agent_ids)
         self.assertIn("stage0_random_naive", agent_ids)
-        self.assertEqual(len(agent_ids), 5)
+        self.assertEqual(len(agent_ids), 7)
+        self.assertIn("stage2_astar", agent_ids)
+        self.assertIn("stage6_astar_learned", agent_ids)
 
         # Verify historical 4-fixture baseline parity and locked Gate 7.5A fingerprint
         from src.launcher.registry import (
@@ -1599,7 +1601,7 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
         self.assertEqual(src.launcher.compute_canonical_registry_sha256(hist_reg), src.launcher.HISTORICAL_FIXTURE_REGISTRY_SHA256)
 
         canon_reg = src.launcher.build_canonical_agent_registry()
-        self.assertEqual(len(canon_reg.list_all()), 5)
+        self.assertEqual(len(canon_reg.list_all()), 7)
         self.assertTrue(canon_reg.has_agent("stage0_random_naive"))
 
 
