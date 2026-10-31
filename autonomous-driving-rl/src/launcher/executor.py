@@ -377,6 +377,7 @@ class ExperimentExecutor:
                 ))
 
                 env = None
+                hud_manager = None
 
                 try:
                     # A. Reconstruct exact locked road blocks
@@ -388,7 +389,6 @@ class ExperimentExecutor:
                     raw_obs, info = env.reset(seed=case.environment_seed)
 
                     # Initialize HUD facade strictly for SANDBOX + NATIVE mode (Gate HUD-3)
-                    hud_manager = None
                     launcher_mode_str = (
                         self.plan.launcher_mode.value
                         if hasattr(self.plan.launcher_mode, "value")

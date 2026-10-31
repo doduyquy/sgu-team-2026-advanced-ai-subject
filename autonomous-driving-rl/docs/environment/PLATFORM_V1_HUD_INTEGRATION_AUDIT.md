@@ -44,8 +44,8 @@ Gate HUD-3 successfully integrates the complete 7-component Racing HUD experienc
 6. **Committed Visual Evidence (`docs/visualization/evidence/*.png`):**
    - `hud3_launcher_native_all_widgets.png`: Real desktop native capture from an official Launcher run showing all 7 widgets active during vehicle travel.
 7. **Comprehensive Integration Test Suite (`tests/test_hud_runtime_integration.py`):**
-   - 10 comprehensive tests covering lifecycle, isolation, timing exclusion, resource stability, and benchmark gating.
-   - Full repository regression test suite passes at **482 tests across 18 modules (481 passed, 1 skipped informational benchmark, 0 failures, 0 errors — 100% OK)**.
+   - 13 comprehensive tests covering lifecycle, isolation, timing exclusion, resource stability, benchmark gating, exception-safe simulator creation and reset rollback, and strictly ordered cleanup (`hud_manager.destroy()` before `env.close()`).
+   - Full repository regression test suite passes at **485 tests across 18 modules (484 passed, 1 skipped informational benchmark, 0 failures, 0 errors — 100% OK)**.
 
 ---
 
@@ -159,7 +159,7 @@ Committed under `docs/visualization/evidence/`:
 ## 6. Unit & Integration Test Suite Verification
 
 ### 6.1 Dedicated HUD-3 Test Suite (`tests/test_hud_runtime_integration.py`)
-All 10 integration tests passed in 0.075s:
+All 13 integration tests passed in 0.125s:
 1. `test_01_sandbox_native_initializes_and_updates_hud`: **PASS**
 2. `test_02_sandbox_off_allocates_zero_hud_resources`: **PASS**
 3. `test_03_validation_and_test_modes_strictly_block_native_hud`: **PASS**
@@ -170,11 +170,14 @@ All 10 integration tests passed in 0.075s:
 8. `test_08_hud_update_latency_empirical_benchmarks`: **PASS**
 9. `test_09_hud_manager_facade_standalone_interface`: **PASS**
 10. `test_10_scientific_contracts_and_hashes_unmutated`: **PASS**
+11. `test_11_executor_exception_during_env_init_preserves_error_without_unbound_local`: **PASS** (Verifies MetaDriveEnv() allocation failure preserves original error without UnboundLocalError).
+12. `test_12_executor_exception_during_env_reset_calls_close_and_preserves_error`: **PASS** (Verifies env.reset() failure invokes env.close() in finally block and preserves original error).
+13. `test_13_normal_execution_cleans_up_hud_before_env_close`: **PASS** (Verifies hud_manager.destroy() is called strictly before env.close()).
 
 ### 6.2 Full Repository Regression Pass
 Ran all 18 test modules across the platform under conda `metadrive`:
-- Total Tests: **482**
-- Passed: **481**
+- Total Tests: **485**
+- Passed: **484**
 - Skipped: **1** (`test_44_100_runs_discovery_performance_informational_only` in `test_workbench_hardening`)
 - Failures: **0**
 - Errors: **0**

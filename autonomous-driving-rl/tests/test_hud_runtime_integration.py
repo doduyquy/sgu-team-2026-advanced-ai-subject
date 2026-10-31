@@ -97,6 +97,7 @@ def _create_mock_metadrive_env(win_w=1200, win_h=900):
     mock_agent.position = [15.0, 25.0]
     mock_agent.heading_theta = 0.5
     mock_agent.speed_km_h = 36.0
+    mock_agent.navigation.current_lane.local_coordinates.return_value = (0.0, 0.0)
     mock_env.agent = mock_agent
     mock_env.engine = mock_engine
 
@@ -343,6 +344,64 @@ class TestHudRuntimeIntegration(unittest.TestCase):
         self.assertEqual(GATE7_LOCKED_OBSERVABILITY_HASH, "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581")
         self.assertEqual(DEFAULT_LAUNCHER_CONTRACT_HASH, "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04")
         self.assertEqual(DEFAULT_PLATFORM_EXECUTION_HASH, "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d")
+
+    def test_11_executor_exception_during_env_init_preserves_error_without_unbound_local(self):
+        """11. Exception during MetaDriveEnv() allocation preserves original error without UnboundLocalError."""
+        from pathlib import Path
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy", render_mode="NATIVE")
+        plan = resolve_experiment_plan(req)
+        executor = ExperimentExecutor(plan, project_root=Path(".").resolve())
+
+        with patch("src.launcher.executor.MetaDriveEnv", side_effect=RuntimeError("Simulated env creation failure")):
+            with self.assertRaises(RuntimeError) as ctx:
+                executor.execute()
+            self.assertIn("Simulated env creation failure", str(ctx.exception))
+            self.assertNotIn("UnboundLocalError", str(ctx.exception))
+
+    def test_12_executor_exception_during_env_reset_calls_close_and_preserves_error(self):
+        """12. Exception during env.reset() invokes env.close() in finally block and preserves original error."""
+        from pathlib import Path
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy", render_mode="NATIVE")
+        plan = resolve_experiment_plan(req)
+        executor = ExperimentExecutor(plan, project_root=Path(".").resolve())
+
+        mock_env = MagicMock()
+        mock_env.reset.side_effect = RuntimeError("Simulated env reset failure")
+
+        with patch("src.launcher.executor.MetaDriveEnv", return_value=mock_env):
+            with self.assertRaises(RuntimeError) as ctx:
+                executor.execute()
+            self.assertIn("Simulated env reset failure", str(ctx.exception))
+            self.assertNotIn("UnboundLocalError", str(ctx.exception))
+            # Verify env.close() was safely called to avoid simulator process leak
+            mock_env.close.assert_called_once()
+
+    def test_13_normal_execution_cleans_up_hud_before_env_close(self):
+        """13. In normal execution, hud_manager.destroy() is called strictly before env.close()."""
+        from pathlib import Path
+        req = LaunchRequestV1(mode=LauncherMode.SANDBOX, agent_id="fixture_constant_continuous", tier="Easy", render_mode="NATIVE")
+        plan = resolve_experiment_plan(req)
+        executor = ExperimentExecutor(plan, project_root=Path(".").resolve())
+
+        call_order = []
+
+        mock_env = _create_mock_metadrive_env()
+        mock_env.reset.return_value = (np.zeros(259, dtype=np.float32), {})
+        mock_env.step.return_value = (np.zeros(259, dtype=np.float32), 0.0, True, False, {"route_completion": 1.0})
+        mock_env.close = MagicMock(side_effect=lambda: call_order.append("env.close"))
+
+        mock_mgr = MagicMock()
+        mock_mgr.destroy = MagicMock(side_effect=lambda: call_order.append("hud.destroy"))
+
+        with patch("src.launcher.executor.MetaDriveEnv", return_value=mock_env):
+            with patch("src.launcher.executor.build_agent_input", return_value=MagicMock()):
+                with patch("src.visualization.hud_manager.RacingHudManager", return_value=mock_mgr):
+                    executor.execute()
+
+        # Assert destroy was called before close
+        self.assertIn("hud.destroy", call_order)
+        self.assertIn("env.close", call_order)
+        self.assertLess(call_order.index("hud.destroy"), call_order.index("env.close"))
 
 
 if __name__ == "__main__":
