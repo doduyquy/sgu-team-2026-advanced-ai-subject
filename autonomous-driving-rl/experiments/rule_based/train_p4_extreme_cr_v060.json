@@ -1,0 +1,5 @@
+{
+  "name": "rule_based_p4_extreme_cr", "purpose": "TRAIN P4 regression shard; not canonical benchmark",
+  "environment_seeds": [0],
+  "geometries": [{"tier": "Extreme", "sequence": "CrXROSTR", "geometry_seed": 0}]
+}
