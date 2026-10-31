@@ -6,7 +6,19 @@ This directory is the autonomous-driving research subproject for the SGU Advance
 
 **Platform foundation: complete.** The environment, benchmark protocol, agent interface, logging/provenance, launcher/preflight layer, and Research Workbench are implemented and hardened.
 
-**Next research milestone: Stage 0 — Random / Naive Baseline Agent.**
+**Active research agents: Stage 0 random/naive and Stage 1 rule-based (P4).**
+Stage 1 is maintained as v0.6.1 after source cleanup. Its frozen P4 driving
+evidence is v0.6.0; P5 and contract/benchmark audits remain pending.
+
+| CLI agent ID | Active entrypoint | Guide |
+|---|---|---|
+| `stage0_random_naive` | `src/agents/random_naive_agent.py` | [Stage 0](docs/STAGE0_RANDOM_NAIVE_AGENT.md) |
+| `stage1_rule_based` | `src/agents/rule_based_agent.py` | [Stage 1](docs/RULE_BASED_AGENT_GUIDE.md) |
+
+`rule_based_traffic`, `rule_based_memory`, `rule_based_junction` and
+`rule_based_lane_change` are helpers used by the single Stage 1 entrypoint.
+`experiments/rule_based/versions/` contains immutable experiment snapshots;
+the normal CLI runs the implementations in `src/agents/`.
 
 **Known MapSuite V1 metadata erratum:** `declared_base_lane_num = 2`, but `effective_base_lane_num = 3` for the frozen geometry. See the [dedicated erratum](docs/environment/MAPSUITE_V1_LANE_METADATA_ERRATUM.md); do not apply a two-lane override based on the historical description.
 
@@ -55,11 +67,14 @@ python -m src.launcher.cli agents
 # Inspect training cases
 python -m src.launcher.cli cases --split TRAIN --tier Easy --limit 5
 
-# Resolve a safe single-case sandbox plan without running the simulator
-python -m src.launcher.cli plan --mode SANDBOX --agent fixture_seeded_random --tier Easy --agent-seed 101
+# Resolve a single-case TRAIN plan without running the simulator
+python -X utf8 -m src.launcher.cli plan --mode SANDBOX --agent stage1_rule_based --tier Easy --agent-seed 42
 
-# Run one sandbox episode (fixture only, not a benchmark result)
-python -m src.launcher.cli run --mode SANDBOX --agent fixture_seeded_random --tier Easy --agent-seed 101 --render NATIVE
+# Run the rule-based agent, including traffic/junction/lane-change modules
+python -X utf8 -m src.launcher.cli run --mode SANDBOX --agent stage1_rule_based --tier Medium --sequence SCXCS --geom-seed 14 --env-seed 0 --agent-seed 42 --render NATIVE --wandb DISABLED --finish-visual hologram
+
+# Run the random/naive agent
+python -X utf8 -m src.launcher.cli run --mode SANDBOX --agent stage0_random_naive --tier Easy --agent-seed 42 --render NATIVE --wandb DISABLED
 
 # Launch Research Workbench
 python -m src.workbench.app
@@ -74,9 +89,9 @@ autonomous-driving-rl/
 ├── configs/platform/       # Versioned scientific contracts and benchmark configuration
 ├── datasets/               # Packaged research datasets (e.g. MapSuite V1 procedural benchmark)
 ├── docs/                   # Human-facing guides + detailed audit/reference documents
-├── experiments/            # Future experiment/training definitions and orchestration notes
+├── experiments/            # Reproducible definitions, frozen versions and retired source references
 ├── results/audits/         # Committed machine-derived platform audit evidence
-├── runs/                   # Local experiment outputs (git-ignored except .gitkeep)
+├── runs/                   # Local experiment outputs and generated caches (git-ignored)
 ├── scripts/                # Platform audit and diagnostic scripts
 ├── src/
 │   ├── agents/             # Research agent implementations (Stage 0 onward)
@@ -84,9 +99,16 @@ autonomous-driving-rl/
 │   ├── evaluation/         # Legacy exploratory evaluator; not the canonical benchmark path
 │   ├── launcher/           # Plan resolver, registry, preflight, executor, CLI
 │   ├── platform/           # Core scientific contracts: input/action/episode/reward/metrics/logging
+│   ├── logging/            # Agent source/configuration and per-step trace recording
+│   ├── visualization/      # Finish hologram/minimap code; generated textures live in runs/.cache/
 │   └── workbench/          # PySide6 Research Workbench
 └── tests/                  # Platform regression tests
 ```
+
+Source-maintenance record: [cleanup 0.6.1](docs/SOURCE_CLEANUP_V0_6_1.md).
+
+Run all regressions with `python -B -X utf8 scripts/run_tests.py`; this isolates
+backend and Qt tests in separate processes and records their commands/logs.
 
 ## Project rule that matters most
 
