@@ -84,6 +84,9 @@ class MiniMapOverlay:
         self._initial_film_size = (100.0, 100.0)
         self.film_width = 100.0
         self.film_height = 100.0
+        self.radius_px = 4.0
+        self._current_rx: float = 0.0
+        self._current_rz: float = 0.0
         self._last_marker_heading: Optional[float] = None
 
         if self.engine is None:
@@ -213,14 +216,14 @@ class MiniMapOverlay:
         """
         Creates 2D screen-space marker root in render2d with fixed pixel dimensions:
         - ScissorEffect hardware clipping restricts marker rendering to the exact minimap DisplayRegion.
-        - marker_arrow: Directional chevron pointing East (right) at rest (heading=0).
+        - marker_arrow: Directional chevron pointing towards heading in screen space.
         - marker_dot: Non-directional circular dot used when heading is None.
         """
         win_w = max(float(self.engine.win.getXSize()), 1.0)
         win_h = max(float(self.engine.win.getYSize()), 1.0)
-        radius_px = 4.0
-        rx = 2.0 * radius_px / win_w
-        rz = 2.0 * radius_px / win_h
+        self._current_rx = 2.0 * self.radius_px / win_w
+        self._current_rz = 2.0 * self.radius_px / win_h
+        self._last_marker_heading = 0.0
 
         self.marker_root = self.engine.render2d.attachNewNode("minimap_marker_root")
         self.marker_root.setLightOff()
@@ -233,26 +236,40 @@ class MiniMapOverlay:
         self.marker_root.setBin("fixed", 225)
 
         # Apply ScissorEffect: clips any marker geometry outside the minimap screen box
+        # Panda3D ScissorEffect.makeScreen takes normalized DisplayRegion coordinates [0.0, 1.0]
         left, right, bottom, top = self.REGION
-        screen_left = left * 2.0 - 1.0
-        screen_right = right * 2.0 - 1.0
-        screen_bottom = bottom * 2.0 - 1.0
-        screen_top = top * 2.0 - 1.0
-        scissor_box = Point4(screen_left, screen_right, screen_bottom, screen_top)
+        scissor_box = Point4(left, right, bottom, top)
         self.marker_root.setEffect(ScissorEffect.makeScreen(scissor_box))
 
         # 1. Directional Chevron (Tip points along +X at heading=0)
-        # Electric cyan accent color (#00E5FF)
+        arrow_geom = self._build_arrow_geom(self._current_rx, self._current_rz, 0.0)
+        node_arrow = GeomNode("marker_arrow_node")
+        node_arrow.addGeom(arrow_geom)
+        self.marker_arrow = self.marker_root.attachNewNode(node_arrow)
+
+        # 2. Non-directional Circular Dot (fallback when heading is None)
+        dot_geom = self._build_dot_geom(self._current_rx, self._current_rz)
+        node_dot = GeomNode("marker_dot_node")
+        node_dot.addGeom(dot_geom)
+        self.marker_dot = self.marker_root.attachNewNode(node_dot)
+        self.marker_dot.hide()
+
+        self.marker_root.hide()
+
+    def _build_arrow_geom(self, rx: float, rz: float, theta: float) -> Geom:
+        """
+        Builds unwarped directional arrow geometry directly rotated to heading angle theta in 2D pixel space.
+        Vertices offset by (rx * cos, rz * sin) guarantee constant Euclidean pixel radius across any angle.
+        """
         arrow_color = (0.0, 0.898, 1.0, 1.0)
         arrow_vdata = GeomVertexData("marker_arrow_vdata", GeomVertexFormat.getV3c4(), Geom.UHDynamic)
         av = GeomVertexWriter(arrow_vdata, "vertex")
         ac = GeomVertexWriter(arrow_vdata, "color")
 
-        # Vertices: tip (+X), left wing, right wing, center notch
-        tip = (1.8 * rx, 0.0, 0.0)
-        left_wing = (-1.2 * rx, 0.0, 1.2 * rz)
-        right_wing = (-1.2 * rx, 0.0, -1.2 * rz)
-        notch = (-0.4 * rx, 0.0, 0.0)
+        tip = (1.8 * rx * math.cos(theta), 0.0, 1.8 * rz * math.sin(theta))
+        left_wing = (1.2 * rx * math.cos(theta + 5.0 * math.pi / 6.0), 0.0, 1.2 * rz * math.sin(theta + 5.0 * math.pi / 6.0))
+        right_wing = (1.2 * rx * math.cos(theta - 5.0 * math.pi / 6.0), 0.0, 1.2 * rz * math.sin(theta - 5.0 * math.pi / 6.0))
+        notch = (0.4 * rx * math.cos(theta + math.pi), 0.0, 0.4 * rz * math.sin(theta + math.pi))
 
         for p in (tip, left_wing, notch, right_wing):
             av.addData3f(*p)
@@ -265,11 +282,11 @@ class MiniMapOverlay:
 
         g_arrow = Geom(arrow_vdata)
         g_arrow.addPrimitive(tri_arrow)
-        node_arrow = GeomNode("marker_arrow_node")
-        node_arrow.addGeom(g_arrow)
-        self.marker_arrow = self.marker_root.attachNewNode(node_arrow)
+        return g_arrow
 
-        # 2. Non-directional Circular Dot (fallback when heading is None)
+    def _build_dot_geom(self, rx: float, rz: float) -> Geom:
+        """Builds non-directional circular dot geometry scaled to current pixel dimensions."""
+        arrow_color = (0.0, 0.898, 1.0, 1.0)
         dot_vdata = GeomVertexData("marker_dot_vdata", GeomVertexFormat.getV3c4(), Geom.UHStatic)
         dv = GeomVertexWriter(dot_vdata, "vertex")
         dc = GeomVertexWriter(dot_vdata, "color")
@@ -289,12 +306,7 @@ class MiniMapOverlay:
 
         g_dot = Geom(dot_vdata)
         g_dot.addPrimitive(tri_dot)
-        node_dot = GeomNode("marker_dot_node")
-        node_dot.addGeom(g_dot)
-        self.marker_dot = self.marker_root.attachNewNode(node_dot)
-        self.marker_dot.hide()
-
-        self.marker_root.hide()
+        return g_dot
 
     def _create_trail_root(self) -> None:
         """Initializes trajectory trail root attached to engine.render with CamMask.MiniMap."""
@@ -371,6 +383,19 @@ class MiniMapOverlay:
             bg_scale_x = self.film_width / self._initial_film_size[0]
             bg_scale_y = self.film_height / self._initial_film_size[1]
             self.background.setScale(bg_scale_x, bg_scale_y, 1.0)
+
+        # 3. Update marker pixel dimensions in render2d
+        self._current_rx = 2.0 * self.radius_px / win_w
+        self._current_rz = 2.0 * self.radius_px / win_h
+
+        # Refresh dot geometry with updated pixel dimensions
+        if self.marker_dot is not None and hasattr(self.marker_dot, "node"):
+            dot_node = self.marker_dot.node()
+            if hasattr(dot_node, "setGeom") and hasattr(dot_node, "getNumGeoms") and dot_node.getNumGeoms() > 0:
+                dot_node.setGeom(0, self._build_dot_geom(self._current_rx, self._current_rz))
+
+        # Reset cached heading so arrow geometry refreshes with new pixel scale on next update
+        self._last_marker_heading = None
 
         self._last_win_size = (win_w, win_h)
 
@@ -457,11 +482,15 @@ class MiniMapOverlay:
         if valid_heading is not None:
             self.marker_arrow.show()
             self.marker_dot.hide()
-            self.marker_root.setR(calculate_heading_rotation_deg(valid_heading))
+            if self._last_marker_heading is None or abs(valid_heading - self._last_marker_heading) > 1e-4:
+                if self.marker_arrow is not None and hasattr(self.marker_arrow, "node"):
+                    arrow_node = self.marker_arrow.node()
+                    if hasattr(arrow_node, "setGeom") and hasattr(arrow_node, "getNumGeoms") and arrow_node.getNumGeoms() > 0:
+                        arrow_node.setGeom(0, self._build_arrow_geom(self._current_rx, self._current_rz, valid_heading))
+                self._last_marker_heading = valid_heading
         else:
             self.marker_dot.show()
             self.marker_arrow.hide()
-            self.marker_root.setR(0.0)
 
     def reset(self) -> None:
         """

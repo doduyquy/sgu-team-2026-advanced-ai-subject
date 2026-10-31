@@ -319,6 +319,19 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
             expected_scale_y = overlay.film_height / initial_film[1]
             self.assertAlmostEqual(bg_scale.x, expected_scale_x, places=4)
             self.assertAlmostEqual(bg_scale.y, expected_scale_y, places=4)
+
+            # Verify marker pixel radius is dynamically updated for new window dimensions (1600x900)
+            expected_rx = 2.0 * overlay.radius_px / 1600.0
+            expected_rz = 2.0 * overlay.radius_px / 900.0
+            self.assertAlmostEqual(overlay._current_rx, expected_rx, places=6)
+            self.assertAlmostEqual(overlay._current_rz, expected_rz, places=6)
+
+            # Verify tip pixel radius remains exactly 7.2px after resize
+            geom = overlay.marker_arrow.node().getGeom(0)
+            reader = p3d.GeomVertexReader(geom.getVertexData(), "vertex")
+            tip = reader.getData3f()
+            tip_px = math.sqrt((tip[0] * (1600.0 / 2.0)) ** 2 + (tip[2] * (900.0 / 2.0)) ** 2)
+            self.assertAlmostEqual(tip_px, 7.2, places=4)
         finally:
             overlay.destroy()
 
@@ -350,7 +363,25 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
             MiniMapOverlay(mock_env_no_win)
         self.assertIn("Render window not available", str(ctx2.exception))
 
-        # Test 20b: Failure injection after camera creation (during _create_background)
+        # Test 20b: Failure injection during _create_camera (setLens failure)
+        env_lens_fail, _ = _create_mock_minimap_env()
+        mock_cam_lens = env_lens_fail.engine.makeCamera.return_value
+        mock_cam_lens.node.return_value.setLens.side_effect = RuntimeError("Simulated lens allocation failure")
+        with self.assertRaises(RuntimeError) as ctx_lens:
+            MiniMapOverlay(env_lens_fail)
+        self.assertIn("Simulated lens allocation failure", str(ctx_lens.exception))
+        env_lens_fail.engine.win.removeDisplayRegion.assert_called()
+
+        # Test 20c: Failure injection during _create_camera (setCameraMask failure)
+        env_mask_fail, _ = _create_mock_minimap_env()
+        mock_cam_mask = env_mask_fail.engine.makeCamera.return_value
+        mock_cam_mask.node.return_value.setCameraMask.side_effect = RuntimeError("Simulated mask allocation failure")
+        with self.assertRaises(RuntimeError) as ctx_mask:
+            MiniMapOverlay(env_mask_fail)
+        self.assertIn("Simulated mask allocation failure", str(ctx_mask.exception))
+        env_mask_fail.engine.win.removeDisplayRegion.assert_called()
+
+        # Test 20d: Failure injection after camera creation (during _create_background)
         env_bg_fail, _ = _create_mock_minimap_env()
         with patch.object(MiniMapOverlay, "_create_background", side_effect=RuntimeError("Simulated background failure")):
             with self.assertRaises(RuntimeError) as ctx3:
@@ -359,7 +390,7 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
             # Verify camera and display_region were cleanly removed during rollback
             env_bg_fail.engine.win.removeDisplayRegion.assert_called()
 
-        # Test 20c: Failure injection after camera creation (during _create_markers)
+        # Test 20e: Failure injection after camera creation (during _create_markers)
         env_inject, _ = _create_mock_minimap_env()
         with patch.object(MiniMapOverlay, "_create_markers", side_effect=RuntimeError("Simulated marker failure")):
             with self.assertRaises(RuntimeError) as ctx4:
@@ -368,7 +399,15 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
             # Verify that camera and display_region were cleanly removed during rollback
             env_inject.engine.win.removeDisplayRegion.assert_called()
 
-        # Test 20d: Successive successful initialization after failure
+        # Test 20f: Failure injection during _create_trail_root
+        env_trail_fail, _ = _create_mock_minimap_env()
+        with patch.object(MiniMapOverlay, "_create_trail_root", side_effect=RuntimeError("Simulated trail failure")):
+            with self.assertRaises(RuntimeError) as ctx_trail:
+                MiniMapOverlay(env_trail_fail)
+            self.assertIn("Simulated trail failure", str(ctx_trail.exception))
+            env_trail_fail.engine.win.removeDisplayRegion.assert_called()
+
+        # Test 20g: Successive successful initialization after failure
         env_retry, _ = _create_mock_minimap_env()
         retry_overlay = MiniMapOverlay(env_retry)
         self.assertIsNotNone(retry_overlay.camera)
@@ -405,6 +444,76 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
         self.assertEqual(DEFAULT_LAUNCHER_CONTRACT_HASH, "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04")
         self.assertEqual(DEFAULT_PLATFORM_EXECUTION_HASH, "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d")
         self.assertEqual(HISTORICAL_FIXTURE_REGISTRY_SHA256, "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f")
+
+    def test_23_scissor_effect_uses_normalized_display_region_coordinates(self):
+        """23. ScissorEffect uses normalized DisplayRegion coordinates [0.0, 1.0] matching overlay.REGION."""
+        env, _ = _create_mock_minimap_env()
+        overlay = MiniMapOverlay(env)
+        try:
+            scissor_effect = overlay.marker_root.getEffect(p3d.ScissorEffect.getClassType())
+            self.assertIsNotNone(scissor_effect, "marker_root must have ScissorEffect attached")
+            frame = scissor_effect.getFrame()
+            left, right, bottom, top = overlay.REGION
+
+            # Assert scissor frame matches normalized DisplayRegion bounds exactly
+            self.assertAlmostEqual(frame.x, left, places=5)
+            self.assertAlmostEqual(frame.y, right, places=5)
+            self.assertAlmostEqual(frame.z, bottom, places=5)
+            self.assertAlmostEqual(frame.w, top, places=5)
+
+            # Assert all bounds are strictly within DisplayRegion [0.0, 1.0] coordinates
+            self.assertGreaterEqual(frame.x, 0.0)
+            self.assertLessEqual(frame.y, 1.0)
+            self.assertGreaterEqual(frame.z, 0.0)
+            self.assertLessEqual(frame.w, 1.0)
+        finally:
+            overlay.destroy()
+
+    def test_24_directional_chevron_pixel_radius_and_no_shear_across_headings(self):
+        """24. Directional chevron maintains constant Euclidean pixel radius (7.2px) across headings and aspect ratios without shear."""
+        env, _ = _create_mock_minimap_env(win_w=1200, win_h=900)
+        overlay = MiniMapOverlay(env)
+        try:
+            test_angles_deg = [0, 45, 90, 135, 180, 225, 270, 315]
+
+            # 1. Test 1200x900 window
+            for deg in test_angles_deg:
+                overlay.update(world_x=10.0, world_y=10.0, heading_rad=math.radians(deg))
+                geom = overlay.marker_arrow.node().getGeom(0)
+                reader = p3d.GeomVertexReader(geom.getVertexData(), "vertex")
+                tip = reader.getData3f()
+                x_px = tip[0] * (1200.0 / 2.0)
+                z_px = tip[2] * (900.0 / 2.0)
+                r_px = math.sqrt(x_px**2 + z_px**2)
+                self.assertAlmostEqual(r_px, 7.2, places=4, msg=f"Angle {deg} deg failed Euclidean radius check on 1200x900")
+
+            # 2. Test 1600x900 widescreen window
+            env.engine.win.getXSize.return_value = 1600
+            env.engine.win.getYSize.return_value = 900
+            for deg in test_angles_deg:
+                overlay.update(world_x=10.0, world_y=10.0, heading_rad=math.radians(deg))
+                geom = overlay.marker_arrow.node().getGeom(0)
+                reader = p3d.GeomVertexReader(geom.getVertexData(), "vertex")
+                tip = reader.getData3f()
+                x_px = tip[0] * (1600.0 / 2.0)
+                z_px = tip[2] * (900.0 / 2.0)
+                r_px = math.sqrt(x_px**2 + z_px**2)
+                self.assertAlmostEqual(r_px, 7.2, places=4, msg=f"Angle {deg} deg failed Euclidean radius check on 1600x900")
+
+            # 3. Test 1024x768 4:3 window
+            env.engine.win.getXSize.return_value = 1024
+            env.engine.win.getYSize.return_value = 768
+            for deg in test_angles_deg:
+                overlay.update(world_x=10.0, world_y=10.0, heading_rad=math.radians(deg))
+                geom = overlay.marker_arrow.node().getGeom(0)
+                reader = p3d.GeomVertexReader(geom.getVertexData(), "vertex")
+                tip = reader.getData3f()
+                x_px = tip[0] * (1024.0 / 2.0)
+                z_px = tip[2] * (768.0 / 2.0)
+                r_px = math.sqrt(x_px**2 + z_px**2)
+                self.assertAlmostEqual(r_px, 7.2, places=4, msg=f"Angle {deg} deg failed Euclidean radius check on 1024x768")
+        finally:
+            overlay.destroy()
 
 
 if __name__ == "__main__":
