@@ -21,7 +21,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from metadrive.component.map.pg_map import MapGenerateMethod
 from metadrive.envs.metadrive_env import MetaDriveEnv
-from src.visualization.minimap_overlay import MiniMapOverlay
 import numpy as np
 
 from src.launcher.cases import (
@@ -336,7 +335,6 @@ class ExperimentExecutor:
                 ))
 
                 env = None
-                minimap = None
 
                 try:
                     # A. Reconstruct exact locked road blocks
@@ -346,9 +344,6 @@ class ExperimentExecutor:
                     env_config = build_metadrive_case_config(case, blocks, render_mode=self.plan.render_mode)
                     env = MetaDriveEnv(env_config)
                     raw_obs, info = env.reset(seed=case.environment_seed)
-
-                    if self.plan.render_mode.upper() == "NATIVE":
-                        minimap = MiniMapOverlay(env)
 
                     # C. Reset agent with public context (Information Parity)
                     public_context = AgentPublicEpisodeContext(
@@ -398,8 +393,6 @@ class ExperimentExecutor:
 
                         # 4. Environment physics step
                         raw_obs, r_env, term_step, trunc_step, step_info = env.step(canonical_act.to_numpy())
-                        if minimap is not None:
-                            minimap.update()
                         step_idx += 1
 
                         # Update raw safety and task flags from step_info
@@ -455,8 +448,6 @@ class ExperimentExecutor:
                         )
 
                 finally:
-                    if minimap is not None:
-                        minimap.destroy()
                     if env is not None:
                         env.close()
 
