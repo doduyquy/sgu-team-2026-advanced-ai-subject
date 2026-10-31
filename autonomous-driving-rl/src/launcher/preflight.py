@@ -555,6 +555,18 @@ def run_preflight(
             category="AGENT"
         ))
 
+    # Trained artifact extension: validate before any logger, policy or simulator is created.
+    checkpoint = getattr(plan, "checkpoint_binding", None)
+    if reg.requires_checkpoint or checkpoint is not None:
+        try:
+            if not reg.requires_checkpoint or checkpoint is None:
+                raise ValueError("Select a trained checkpoint for a checkpoint-based agent only")
+            from src.launcher.checkpoints import validate_checkpoint_binding
+            validate_checkpoint_binding(checkpoint, root)
+            checks.append(PreflightCheckV1("checkpoint_binding", "PASS", "Trained checkpoint content and provenance verified.", "AGENT"))
+        except (ValueError, TypeError, OSError, KeyError) as exc:
+            checks.append(PreflightCheckV1("checkpoint_binding", "FAIL", str(exc), "AGENT"))
+
     # 4. Input profile and Action adapter support
     if reg.input_profile_id != "STATE_DECISION_V1":
         checks.append(PreflightCheckV1(

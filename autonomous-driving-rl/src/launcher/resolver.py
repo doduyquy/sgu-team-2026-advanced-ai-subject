@@ -20,6 +20,7 @@ from src.launcher.cases import (
     resolve_validation_cases,
 )
 from src.launcher.models import (
+    CheckpointResolvedExperimentPlanV1,
     LaunchRequestV1,
     LauncherMode,
     ResolvedCaseV1,
@@ -203,9 +204,13 @@ def resolve_experiment_plan(
         "factory_ref": factory_ref,
     }
 
+    checkpoint = getattr(request, "checkpoint_binding", None)
+    if checkpoint is not None:
+        raw_plan_dict["checkpoint_binding"] = checkpoint.to_dict()
     plan_hash = compute_resolved_plan_sha256(raw_plan_dict)
 
-    return ResolvedExperimentPlanV1(
+    plan_class = CheckpointResolvedExperimentPlanV1 if checkpoint is not None else ResolvedExperimentPlanV1
+    return plan_class(
         launcher_mode=request.mode,
         run_kind=run_kind,
         canonical_run=canonical_run,
@@ -228,5 +233,6 @@ def resolve_experiment_plan(
         canonical_agent_registry_sha256=canonical_reg_sha,
         factory_ref=factory_ref,
         resolved_plan_sha256=plan_hash,
-        warnings=warnings
+        warnings=warnings,
+        **({"checkpoint_binding": checkpoint} if checkpoint is not None else {}),
     )
