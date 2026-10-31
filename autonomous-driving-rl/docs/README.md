@@ -15,6 +15,7 @@ Read these when joining or developing the project:
 - [`STAGE_ROADMAP.md`](STAGE_ROADMAP.md) — Stage 0–7 research map and expected integration boundaries.
 - [`WORKBENCH_GUIDE.md`](WORKBENCH_GUIDE.md) — practical Research Workbench usage.
 - [`comparison/`](comparison/COMPARISON_SPEC_V1.md) — Gate C1 scientific comparison specification, field catalog, and comparability rules (draft).
+- [`visualization/`](visualization/HUD_V1_ARCHITECTURE_ADR.md) — Gate HUD-0 native racing HUD architecture, minimap feasibility audit, and render specification (draft).
 - [`../datasets/mapsuite_v1/README.md`](../datasets/mapsuite_v1/README.md) — dataset card for the packaged MetaDrive MapSuite V1 procedural benchmark.
 
 ## 2. Detailed technical evidence
