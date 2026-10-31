@@ -9,3 +9,10 @@ autonomous-driving-rl/results/audits/mapsuite/canonical_candidates.json text eol
 autonomous-driving-rl/results/audits/evaluation_protocol/geometry_split_manifest.csv text eol=crlf
 autonomous-driving-rl/results/audits/evaluation_protocol/validation_case_manifest.csv text eol=crlf
 autonomous-driving-rl/results/audits/evaluation_protocol/test_case_manifest.csv text eol=crlf
+
+# Frozen experiment sources and evidence record raw-byte SHA-256 digests.
+# Disable newline conversion so historical hashes survive add/checkout on any OS.
+autonomous-driving-rl/experiments/rule_based/versions/** -text
+autonomous-driving-rl/experiments/legacy_source/** -text
+autonomous-driving-rl/results/audits/rule_based/** -text
+autonomous-driving-rl/results/audits/source_cleanup/** -text
