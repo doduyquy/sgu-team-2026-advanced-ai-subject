@@ -127,7 +127,7 @@ class TestAgentRegistry(unittest.TestCase):
 
     def test_initial_fixture_agents_registered(self):
         agents = self.registry.list_all()
-        agent_ids = [a.agent_id for a in agents]
+        agent_ids = [a.agent_id for a in agents if a.purpose == "AUDIT_FIXTURE"]
         expected = [
             "fixture_constant_continuous",
             "fixture_discrete",

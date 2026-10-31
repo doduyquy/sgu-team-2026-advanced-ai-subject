@@ -76,6 +76,7 @@ def _add_plan_arguments(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--wandb", choices=["AUTO", "DISABLED", "OFFLINE", "ONLINE", "auto", "disabled", "offline", "online"], default="AUTO", help="W&B tracking mode (AUTO defaults to OFFLINE for benchmarks, DISABLED for sandbox)")
     subparser.add_argument("--runs-root", default=None, help="Custom runs storage directory override")
     subparser.add_argument("--run-id", "--custom-run-id", default=None, dest="custom_run_id", help="Custom run_id identifier")
+    subparser.add_argument("--finish-visual", choices=["hologram", "none"], default="hologram", help="3D finish visual in NATIVE render mode: 'hologram' (enabled) or 'none' (disabled)")
     subparser.add_argument("--json", action="store_true", help="Output structured JSON")
 
 
@@ -152,6 +153,10 @@ def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
     tier = args.tier.capitalize() if args.tier else None
     runs_root = Path(args.runs_root) if args.runs_root else None
     custom_run_id = getattr(args, "custom_run_id", None)
+
+    if hasattr(args, "finish_visual") and args.finish_visual:
+        import os
+        os.environ["METADRIVE_FINISH_VISUAL_STYLE"] = str(args.finish_visual).lower().strip()
 
     return LaunchRequestV1(
         mode=mode,
