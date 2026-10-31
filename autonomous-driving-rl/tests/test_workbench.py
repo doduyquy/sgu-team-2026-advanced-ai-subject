@@ -387,6 +387,25 @@ class TestWorkbenchSuite(unittest.TestCase):
             "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
         )
 
+    def test_15b_audit_scripts_fingerprint_variables_defined_and_consistent(self):
+        """Verifies that audit scripts define distinct historical vs canonical registry hashes without NameError."""
+        project_root = get_default_project_root()
+        scripts_to_check = [
+            project_root / "scripts" / "audit_workbench.py",
+            project_root / "scripts" / "audit_workbench_results.py",
+            project_root / "scripts" / "audit_workbench_hardening.py",
+        ]
+        for script_path in scripts_to_check:
+            self.assertTrue(script_path.exists(), f"Audit script {script_path.name} not found")
+            content = script_path.read_text(encoding="utf-8")
+            # Verify no undefined canon_reg_hash references remain in format strings
+            self.assertNotIn("{canon_reg_hash}", content, f"Undefined canon_reg_hash found in {script_path.name}")
+            # Verify both historical and current registry hashes are explicitly defined and referenced
+            self.assertIn("hist_reg_hash", content, f"hist_reg_hash missing in {script_path.name}")
+            self.assertIn("current_canon_reg_hash", content, f"current_canon_reg_hash missing in {script_path.name}")
+            self.assertIn("{hist_reg_hash}", content, f"historical hash missing from markdown in {script_path.name}")
+            self.assertIn("{current_canon_reg_hash}", content, f"current canonical hash missing from markdown in {script_path.name}")
+
     def test_16_successful_run_emits_worker_done_success_and_matching_run_id(self):
         """Successful run reports status COMPLETE and WORKER_DONE success=True with matching run_id."""
         project_root = get_default_project_root()

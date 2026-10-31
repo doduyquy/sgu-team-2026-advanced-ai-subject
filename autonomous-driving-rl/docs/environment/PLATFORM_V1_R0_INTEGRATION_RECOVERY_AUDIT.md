@@ -3,7 +3,7 @@
 - **Document ID:** `AUDIT-R0-INTEGRATION-RECOVERY`
 - **Version:** `1.0.0`
 - **Date:** 2026-10-31
-- **Status:** `AUDIT-COMPLETE / READY FOR INDEPENDENT REVIEW`
+- **Status:** `AUDIT-COMPLETE / READY FOR INDEPENDENT RE-AUDIT`
 - **Subproject Root:** `autonomous-driving-rl/`
 - **Baseline Commit:** `925164f4988e855f36006d586b5454f96ded4b4f` (PR #28 Merge)
 - **Author:** AI Software Engineering Agent (OpenCode Gemini)
@@ -14,12 +14,14 @@
 
 Gate R0 (Integration Recovery) restores the technical execution and simulation pipeline of Research Platform V1 following regressions introduced during early Stage 0 development. This audit documents the exact root causes, minimal non-invasive fixes, registry fingerprint preservation, test suite recovery, and real SANDBOX execution evidence.
 
-### Summary of Recoveries:
+### Summary of Recoveries & R1 Corrections:
 1. **Blocker R0-A (Stage 0 Import):** Resolved `ImportError` where `src/launcher/registry.py` imported `Stage0RandomNaiveAgent` from `src.agents` without package export.
 2. **Blocker R0-B (Missing MinimapOverlay):** Resolved `ModuleNotFoundError: No module named 'src.visualization'` in `src/launcher/executor.py` by restoring MetaDrive native 3D rendering semantics without uncommitted minimap overlay dependencies.
-3. **Registry Fingerprint Reconciliation:** Preserved the locked Gate 7.5A Historical Fixture Registry Baseline (`9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f`) via `build_historical_fixture_registry()` while verifying the active 5-agent canonical registry (`build_canonical_agent_registry()`).
-4. **Test Suite Status:** Full unit test discovery across all 11 test suites recovered from blocked status to **400 tests passing (100% OK)**.
-5. **Real Simulation Recovery:** Successfully executed a full end-to-end SANDBOX episode on TRAIN geometry, generating complete Gate-7 artifacts with `status: COMPLETE` and `IntegrityDisplayStatus.VERIFIED`.
+3. **Registry Fingerprint Reconciliation (R0-R1-02):** Preserved the locked Gate 7.5A Historical Fixture Registry Baseline (`9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f`) via `build_historical_fixture_registry()` while verifying the active 5-agent canonical registry (`build_canonical_agent_registry()`).
+4. **Audit Reporting Variable Parity (R0-R1-01):** Fixed undefined `canon_reg_hash` references in `scripts/audit_workbench.py`, `scripts/audit_workbench_results.py`, and `scripts/audit_workbench_hardening.py` by distinguishing `hist_reg_hash` (`historical_fixture_registry_sha256`) from `current_canon_reg_hash` (`current_canonical_agent_registry_sha256`). Added regression test `test_15b` in `tests/test_workbench.py`.
+5. **Public API Backwards Compatibility (R0-R1-03):** Restored `"compute_launcher_contract_sha256"` in `src/launcher/__init__.__all__` and added backwards-compatibility regression test in `tests/test_launcher_core.py`.
+6. **Test Suite Status:** Full unit test discovery across all 11 test suites: **402 tests ran across all 11 repository test suites: 401 passed, 1 skipped, 0 failures, 0 errors**.
+7. **Real Simulation Recovery:** Successfully executed a full end-to-end SANDBOX episode on TRAIN geometry, generating complete Gate-7 artifacts with `status: COMPLETE` and `IntegrityDisplayStatus.VERIFIED`.
 
 ---
 
@@ -118,20 +120,22 @@ python -c "import src.launcher.registry; import src.launcher.executor; import sr
 ### 5.3 Unit Test Suite Execution
 Executed across all 11 repository test modules in active conda `metadrive` environment:
 
-| Test Module | Tests Ran | Failures | Errors | Result |
-|---|---|---|---|---|
-| `tests.test_evaluation_protocol` | 20 | 0 | 0 | **PASS** |
-| `tests.test_reward_metrics` | 16 | 0 | 0 | **PASS** |
-| `tests.test_agent_contract` | 37 | 0 | 0 | **PASS** |
-| `tests.test_episode_lifecycle` | 10 | 0 | 0 | **PASS** |
-| `tests.test_logging_contract` | 47 | 0 | 0 | **PASS** |
-| `tests.test_launcher_core` | 97 | 0 | 0 | **PASS** |
-| `tests.test_workbench` | 29 | 0 | 0 | **PASS** |
-| `tests.test_workbench_hardening` | 49 | 0 | 0 | **PASS** (1 skip) |
-| `tests.test_workbench_results` | 46 | 0 | 0 | **PASS** |
-| `tests.test_mapsuite_preview_export` | 27 | 0 | 0 | **PASS** |
-| `tests.test_mapsuite_dataset` | 22 | 0 | 0 | **PASS** |
-| **TOTAL** | **400** | **0** | **0** | **100% PASS** |
+| Test Module | Tests Ran | Passed | Skipped | Failures | Errors | Result |
+|---|---|---|---|---|---|---|
+| `tests.test_evaluation_protocol` | 20 | 20 | 0 | 0 | 0 | **PASS** |
+| `tests.test_reward_metrics` | 16 | 16 | 0 | 0 | 0 | **PASS** |
+| `tests.test_agent_contract` | 37 | 37 | 0 | 0 | 0 | **PASS** |
+| `tests.test_episode_lifecycle` | 10 | 10 | 0 | 0 | 0 | **PASS** |
+| `tests.test_logging_contract` | 47 | 47 | 0 | 0 | 0 | **PASS** |
+| `tests.test_launcher_core` | 98 | 98 | 0 | 0 | 0 | **PASS** |
+| `tests.test_workbench` | 30 | 30 | 0 | 0 | 0 | **PASS** |
+| `tests.test_workbench_hardening` | 49 | 48 | 1 | 0 | 0 | **PASS** |
+| `tests.test_workbench_results` | 46 | 46 | 0 | 0 | 0 | **PASS** |
+| `tests.test_mapsuite_preview_export` | 27 | 27 | 0 | 0 | 0 | **PASS** |
+| `tests.test_mapsuite_dataset` | 22 | 22 | 0 | 0 | 0 | **PASS** |
+| **TOTAL** | **402** | **401** | **1** | **0** | **0** | **100% PASS** |
+
+*(Note: 1 test skipped in `test_workbench_hardening` is `test_44_100_runs_discovery_performance_informational_only`, which is explicitly decorated as an informational benchmark test, not a gating assertion).*
 
 ### 5.4 Real SANDBOX Execution Evidence
 Executed real episode simulation with physical MetaDrive environment:

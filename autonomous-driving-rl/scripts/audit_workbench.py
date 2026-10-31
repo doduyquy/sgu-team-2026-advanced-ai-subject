@@ -101,6 +101,7 @@ def run_audit() -> None:
     hist_reg = build_historical_fixture_registry()
     hist_reg_hash = compute_canonical_registry_sha256(hist_reg)
     canon_reg = build_canonical_agent_registry()
+    current_canon_reg_hash = compute_canonical_registry_sha256(canon_reg)
 
     assert GATE5_LOCKED_BENCHMARK_HASH == "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77"
     assert GATE6_LOCKED_AGENT_HASH == "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb"
@@ -407,7 +408,8 @@ def run_audit() -> None:
 - `gate7_platform_observability_contract`: `{GATE7_LOCKED_OBSERVABILITY_HASH}` (VERIFIED UNCHANGED)
 - `launcher_contract_sha256`: `{l_hash}` (VERIFIED UNCHANGED)
 - `platform_execution_contract_sha256`: `{p_exec_hash}` (VERIFIED UNCHANGED)
-- `canonical_agent_registry_sha256`: `{canon_reg_hash}` (VERIFIED UNCHANGED)
+- `historical_fixture_registry_sha256` (Gate 7.5A baseline, 4 fixtures): `{hist_reg_hash}` (VERIFIED UNCHANGED)
+- `current_canonical_agent_registry_sha256` (5 agents incl. Stage 0): `{current_canon_reg_hash}` (COMPUTED DYNAMIC)
 - `workbench_contract_sha256`: `{wb_hash}` (CANDIDATE)
 - `platform_workbench_contract_sha256`: `{p_wb_hash}` (CANDIDATE)
 

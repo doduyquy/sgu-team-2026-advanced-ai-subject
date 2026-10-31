@@ -80,6 +80,7 @@ __all__ = [
     "build_launcher_contract_core",
     "build_metadrive_case_config",
     "compute_canonical_registry_sha256",
+    "compute_launcher_contract_sha256",
     "compute_platform_execution_contract_sha256",
     "compute_resolved_plan_sha256",
     "compute_step_route_progress_and_reward",

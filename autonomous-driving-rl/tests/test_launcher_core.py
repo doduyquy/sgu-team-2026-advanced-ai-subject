@@ -1568,6 +1568,41 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
         chk = next(c for c in rep.checks if c.check_id == "metadrive_exact_pin")
         self.assertEqual(chk.status, "FAIL")
 
+    def test_public_api_backwards_compatibility_and_exports(self):
+        # Gate R0: Verify that all pre-R0 public launcher exports are preserved in src.launcher.__all__
+        import src.launcher
+        base_exports = [
+            "AgentRegistrationV1", "AgentRegistryV1", "EventCallback", "ExecutionReportV1",
+            "ExperimentExecutor", "LaunchRequestV1", "LauncherEventType", "LauncherEventV1",
+            "LauncherMode", "PreflightBlockedError", "PreflightCheckV1", "PreflightReportV1",
+            "ResolvedCaseV1", "ResolvedExperimentPlanV1", "build_default_agent_registry",
+            "build_launcher_contract_core", "build_metadrive_case_config",
+            "compute_launcher_contract_sha256", "compute_platform_execution_contract_sha256",
+            "compute_resolved_plan_sha256", "compute_step_route_progress_and_reward",
+            "describe_plan", "load_locked_geometry_block_sequence", "mode_to_run_kind",
+            "resolve_audit_cases", "resolve_experiment_plan", "resolve_manifest_name_for_mode",
+            "resolve_sandbox_case", "resolve_test_cases", "resolve_validation_cases",
+            "run_preflight", "validate_custom_run_id"
+        ]
+        for exp in base_exports:
+            self.assertIn(exp, src.launcher.__all__, f"Export '{exp}' missing from src.launcher.__all__")
+            self.assertTrue(hasattr(src.launcher, exp), f"Attribute '{exp}' missing from src.launcher package")
+
+        # Verify compute_launcher_contract_sha256 computes expected hash
+        core = src.launcher.build_launcher_contract_core()
+        l_hash = src.launcher.compute_launcher_contract_sha256(core)
+        self.assertEqual(l_hash, DEFAULT_LAUNCHER_CONTRACT_HASH)
+
+        # Verify historical vs canonical registry exports
+        hist_reg = src.launcher.build_historical_fixture_registry()
+        self.assertEqual(len(hist_reg.list_all()), 4)
+        self.assertEqual(src.launcher.compute_canonical_registry_sha256(hist_reg), src.launcher.HISTORICAL_FIXTURE_REGISTRY_SHA256)
+
+        canon_reg = src.launcher.build_canonical_agent_registry()
+        self.assertEqual(len(canon_reg.list_all()), 5)
+        self.assertTrue(canon_reg.has_agent("stage0_random_naive"))
+
+
 
 if __name__ == "__main__":
     unittest.main()

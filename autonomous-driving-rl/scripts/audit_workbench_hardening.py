@@ -117,6 +117,7 @@ def run_b3_audit() -> None:
     hist_reg = build_historical_fixture_registry()
     hist_reg_hash = compute_canonical_registry_sha256(hist_reg)
     canon_reg = build_canonical_agent_registry()
+    current_canon_reg_hash = compute_canonical_registry_sha256(canon_reg)
 
     wb_core = build_workbench_contract_core()
     wb_hash = compute_workbench_contract_sha256(wb_core)
@@ -805,7 +806,8 @@ def run_b3_audit() -> None:
 - `gate7_platform_observability_contract`: `{GATE7_LOCKED_OBSERVABILITY_HASH}` (VERIFIED UNCHANGED)
 - `launcher_contract_sha256`: `{l_hash}` (VERIFIED UNCHANGED)
 - `platform_execution_contract_sha256`: `{p_exec_hash}` (VERIFIED UNCHANGED)
-- `canonical_agent_registry_sha256`: `{canon_reg_hash}` (VERIFIED UNCHANGED)
+- `historical_fixture_registry_sha256` (Gate 7.5A baseline, 4 fixtures): `{hist_reg_hash}` (VERIFIED UNCHANGED)
+- `current_canonical_agent_registry_sha256` (5 agents incl. Stage 0): `{current_canon_reg_hash}` (COMPUTED DYNAMIC)
 - `workbench_contract_sha256` (B1): `{wb_hash}` (VERIFIED UNCHANGED)
 - `platform_workbench_contract_sha256` (B1): `{p_wb_hash}` (VERIFIED UNCHANGED)
 - `workbench_results_contract_sha256` (B2): `{wb_results_hash}` (VERIFIED UNCHANGED)
