@@ -48,7 +48,7 @@ Source audit of `src/launcher/executor.py` lines 413–414 reveals an existing d
 speed_kmh = float(env.agent.speed_kmh) if hasattr(env, "agent") and hasattr(env.agent, "speed_kmh") else 0.0
 ```
 In MetaDrive 0.4.3 (`DefaultVehicle`), the speed attribute is named **`speed_km_h`** (with an underscore), not `speed_kmh`. Because `hasattr(env.agent, "speed_kmh")` evaluates to `False`, the executor silently falls back to `0.0` km/h.
-*HUD Architecture Requirement:* In HUD-2, the telemetry extraction helper must defensively access `getattr(env.agent, "speed_km_h", getattr(env.agent, "speed_kmh", None))`, and test suites must explicitly assert non-zero speeds during forward motion to prevent false zero fallbacks.
+*HUD Architecture Requirement:* In HUD-2, the telemetry extraction helper must access the authoritative pinned attribute `getattr(env.agent, "speed_km_h", None)`. If `env.agent` lacks this attribute, `speed_kmh` must evaluate to `None` (missing telemetry), triggering `"---"` on the speedometer rather than silently fabricating `0.0`. A regression test must be added in HUD-2 to assert that moving vehicles produce non-null, non-zero speed.
 
 ### 2.2 Proposed Snapshot Schema (`HudTelemetrySnapshotV1`)
 ```python
@@ -69,9 +69,15 @@ class HudTelemetrySnapshotV1:
 
 ### 2.3 Missing Data & Fallback Semantics
 To maintain scientific truthfulness, the HUD never fabricates synthetic numbers (such as substituting 0.0 or North) for missing data:
-- **Missing Speed (`speed_kmh is None`):** Render digits as `"---"` and suppress arc fill. This is visually distinct from `0.0` km/h (a validly stationary vehicle).
+- **Missing Speed (`speed_kmh is None`):** Render digits as `"---"` and suppress arc fill. This is visually distinct from `0.0` km/h (a validly stationary vehicle with numeric readout `"000"`).
 - **Missing Route Completion (`route_completion is None`):** Render progress bar in dim gray with text `"---"`. This is visually distinct from `0.0` (valid vehicle position at the starting line).
-- **Missing Position / Heading (`None`):** Hide ego marker chevron and preserve existing historical trail without appending invalid coordinates.
+- **Missing Action Telemetry vs Neutral Coasting:**
+  - *Valid Neutral Action (`canonical_throttle_brake = 0.0`):* Meter frames remain active/illuminated with $0\%$ bar fill, visually indicating an active coasting command.
+  - *Missing Action (`canonical_throttle_brake is None`):* Throttle and brake meters render in a dimmed, disabled state (`UNAVAILABLE`), signaling absence of command data without adding extraneous widgets.
+  - *Turn Indicators:* Left and right chevrons glow amber when active, dim to dark slate-blue (`INDICATOR_IDLE`) when steering is neutral ($[-0.15, 0.15]$), and fade to low-alpha disabled state when `canonical_steering is None`.
+- **Missing Position / Heading:**
+  - If `world_position is None`: Hide ego marker completely and preserve existing trajectory trail without appending invalid points.
+  - If `world_position` is valid but `heading_theta_rad is None`: Render a non-directional circular dot at the known position without an oriented tip. Never fabricate an arbitrary North orientation ($\theta = 0.0$).
 - **Intermediate Episode Status:** `is_clean_success` is strictly `None` during intermediate steps; clean arrival is an episodic terminal classification that cannot be known prematurely.
 
 ---
@@ -85,12 +91,12 @@ Every HUD widget derives its state strictly from verified simulator and action o
 | **Speedometer (Digits)** | `getattr(env.agent, "speed_km_h", None)` | km/h | $[0.0, 150.0]$ | $0..999$ | Render `"---"` if None; render `"000"` if $0.0$ |
 | **Speedometer (Arc)** | Normalized: `speed_kmh / 100.0` | Fraction | $[0.0, 1.5]$ | $0.0..1.0$ (sweeps $240^\circ$) | Arc fill clamped at $1.0$ ($100\,\text{km/h}$); empty if None |
 | **Route Progress** | `step_info.get("route_completion", None)` | Fraction | $[0.0, 1.0]$ | $0\%..100\%$ | Render `"---"` and empty fill if None |
-| **Left Indicator** | `canonical_action.steering < -0.15` | Boolean | `{True, False}` | Amber pulse / Dim gray | Dim gray if action unavailable |
-| **Right Indicator** | `canonical_action.steering > 0.15` | Boolean | `{True, False}` | Amber pulse / Dim gray | Dim gray if action unavailable |
-| **Throttle Meter** | `max(0.0, canonical_action.throttle_brake)` | Fraction | $[0.0, 1.0]$ | Vertical fill $0\%..100\%$ | Empty fill ($0.0$) if None |
-| **Brake Meter** | `max(0.0, -canonical_action.throttle_brake)` | Fraction | $[0.0, 1.0]$ | Vertical fill $0\%..100\%$ | Empty fill ($0.0$) if None |
+| **Left Indicator** | `canonical_action.steering < -0.15` | Boolean | `{True, False}` | Amber pulse / Dim gray | Disabled state if action is None; dim gray if neutral |
+| **Right Indicator** | `canonical_action.steering > 0.15` | Boolean | `{True, False}` | Amber pulse / Dim gray | Disabled state if action is None; dim gray if neutral |
+| **Throttle Meter** | `max(0.0, canonical_action.throttle_brake)` | Fraction | $[0.0, 1.0]$ | Vertical fill $0\%..100\%$ | Disabled state if None; active frame with empty fill if $0.0$ |
+| **Brake Meter** | `max(0.0, -canonical_action.throttle_brake)` | Fraction | $[0.0, 1.0]$ | Vertical fill $0\%..100\%$ | Disabled state if None; active frame with empty fill if $0.0$ |
 | **Minimap (Ego Pos)** | `env.agent.position` | Meters $(x, y)$ | Route bounding box | Minimap viewport | Hide marker if unavailable |
-| **Minimap (Heading)** | `env.agent.heading_theta` | Radians | $[-\pi, \pi]$ | Oriented chevron | Point upward if None |
+| **Minimap (Heading)** | `env.agent.heading_theta` | Radians | $[-\pi, \pi]$ | Oriented chevron | Render non-directional position dot if None (no directional tip) |
 | **Minimap (Roads)** | `env.current_map.get_map_features(2.0)` | Polylines | World coordinate space | Top-down scene | Fallback to agent bounding box |
 
 ---
@@ -197,17 +203,15 @@ Panda3D's `aspect2d` coordinates are normalized to the screen height:
    - Right Bar: Throttle (fills bottom-to-top with `PEDAL_THROTTLE`).
 5. **Turn Indicators:**
    - Anchor: $X = -\alpha + 0.20$, Bottom $Z = -0.80$.
-   - Left Chevron (`<`): Glows `INDICATOR_ACTIVE` when steering $< -0.15$.
-   - Right Chevron (`>`): Glows `INDICATOR_ACTIVE` when steering $> +0.15$.
-   - Left Chevron (`<`): Glows `INDICATOR_ACTIVE` when steering $< -0.15$.
-   - Right Chevron (`>`): Glows `INDICATOR_ACTIVE` when steering $> +0.15$.
+   - Left Chevron (`<`): Glows `INDICATOR_ACTIVE` when steering $< -0.15$; `INDICATOR_IDLE` when neutral.
+   - Right Chevron (`>`): Glows `INDICATOR_ACTIVE` when steering $> +0.15$; `INDICATOR_IDLE` when neutral.
 
 ---
 
 ## 6. Scientific Isolation & Timing Invariants
 
 ### 6.1 Absolute Timing Boundary Protection
-To guarantee that rendering the HUD introduces **zero measurement distortion** into scientific latency benchmarks:
+To guarantee that rendering the HUD introduces strict measurement boundary isolation into scientific latency benchmarks:
 - Monotonic timing of agent decision latency in `src/launcher/executor.py` strictly measures `agent.act()`:
   ```python
   t0 = time.perf_counter_ns()
@@ -225,5 +229,4 @@ To guarantee that rendering the HUD introduces **zero measurement distortion** i
 
 ### 6.3 Headless Benchmark Isolation
 - `VALIDATION` and `TEST` launcher modes enforce `render_mode="OFF"`.
-- When `render_mode="OFF"`, the HUD system is completely bypassed (0 display regions allocated, 0 nodes attached, 0 draw calls emitted).
-- Benchmark results are 100% byte-identical whether the HUD subsystem is installed or uninstalled.
+- When `render_mode="OFF"`, the HUD system is completely bypassed: no secondary display regions are allocated, no 2D visualizer nodes are attached to scene graphs, and zero visualization draw calls are issued. Code path analysis, preflight enforcement, and regression test suites guarantee that headless benchmark simulations execute without any visualization overhead or interference.

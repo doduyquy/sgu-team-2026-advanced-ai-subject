@@ -68,14 +68,14 @@ We evaluate three architectural candidates:
 - **Minimap Integration:**
   - Khoa's existing `MiniMapOverlay` on `origin/khoa` proves the feasibility of creating a secondary camera (`camName="project_minimap_camera"`) assigned to a sub-region `REGION = (0.015, 0.18, 0.755, 0.975)`.
   - The road mesh is already in GPU memory. Using `CamMask.MiniMap`, Panda3D renders the road network orthographically with hardware acceleration.
-  - *Rendering Cost Note:* A secondary camera and display region is not zero-cost; it incurs scene graph traversal, culling, and additional draw calls on the GPU. However, because it avoids CPU-to-GPU pixel buffer transfers, its overhead is substantially lower than software blitting approaches.
+  - *Rendering Cost & Compositing Note:* A secondary camera and display region is not zero-cost; it incurs scene graph traversal, culling, transformation, and additional draw calls on the GPU. However, because geometry is resident in GPU memory and rendered via hardware rasterization, it avoids CPU software rasterization and texture upload cycles across the system bus. Furthermore, achieving true semi-transparent glass backing over the main 3D scene requires explicit framebuffer alpha configuration (`DisplayRegion.setClearColorActive(True)` with alpha or disabling color clear and using `TransparencyAttrib.MAlpha` on background quads); this compositing must be empirically verified on the pinned Panda3D runtime in HUD-1/2.
 - **Teardown & Leaks:**
   - When an episode completes or the environment closes, nodes attached to `aspect2d` or `render2d` are removed cleanly with `.removeNode()`, and the secondary display region is removed via `win.removeDisplayRegion()`.
 
 ### 4.2 Why Option B (MetaDrive Pygame Renderer) is Rejected
-- MetaDrive's `TopDownRenderer` renders onto a `pygame.Surface` with fixed film size `(2000, 2000)`.
-- Transferring a $2000 \times 2000$ RGBA surface from CPU RAM to GPU VRAM on every simulation step consumes 15–30 ms of bus bandwidth, causing unacceptable frame drops in what should be a smooth 60 FPS simulator.
-- It cannot easily render the glass-morphism semi-transparent HUD widgets specified in the brief.
+- MetaDrive's `TopDownRenderer` relies on CPU software rasterization via Pygame onto a `pygame.Surface`.
+- Blitting and transferring large software pixel surfaces across the system bus from CPU RAM to GPU VRAM on every simulation step introduces CPU-to-GPU transfer bottlenecks and memory bandwidth pressure, creating high risk of frame drops during interactive simulation.
+- Pygame software surfaces do not natively integrate with Panda3D's 2D scene graph or shader-based glass-morphism aesthetic.
 
 ### 4.3 Why Option C (External Qt Overlay) is Rejected
 - Creating a transparent PySide6 overlay on top of an external native Panda3D window requires tracking the exact native window coordinates, handling window move/minimize/restore events, and resolving OS-level click/focus conflicts.
@@ -88,10 +88,10 @@ We evaluate three architectural candidates:
 **DECISION:** Adopt **Option A (Native Panda3D 2D Scene Graph Overlay)** as the official rendering architecture for HUD V1.
 
 ### Performance Budgets & Frequency Targets (Falsifiable Hypotheses):
-- **Simulation Control Frequency:** Strictly 10.0 Hz nominal ($100.0\,\text{ms}$ step time budget).
-- **Display Target:** 60 FPS refresh rate in native desktop Panda3D window.
-- **HUD Overhead Budget:** The combined telemetry extraction and HUD rendering update must consume $< 1.0\,\text{ms}$ per step (targeting $< 1\%$ of the 100 ms simulation budget).
-*Note: These latency and frame rate figures are performance targets to be benchmarked empirically in HUD-3, not pre-claimed results.*
+- **Simulation Control Frequency:** Strictly 10.0 Hz nominal ($100.0\,\text{ms}$ simulation physical time per step, $\text{dt} = 0.1\,\text{s}$).
+- **Display Refresh Target:** 60 FPS target refresh rate in native desktop Panda3D window.
+- **HUD Overhead Budget:** The combined telemetry extraction and HUD rendering update must consume $< 1.0\,\text{ms}$ of wall-clock time per step (targeting $< 1\%$ of the 100 ms simulation budget).
+*Distinction of Time Domains:* A simulation timestep $\text{dt} = 0.1\,\text{s}$ describes simulated vehicle physical progression, not a guaranteed or required wall-clock execution budget. In non-real-time headless execution, steps execute as fast as CPU/GPU allows. In interactive NATIVE sessions, steps are paced to real-time. The HUD wall-clock overhead budget ($< 1.0\,\text{ms}$) is a design target to be empirically measured across p50, p95, and p99 step times in HUD-3, not an asserted fact.
 
 ### Concrete Structural Blueprint:
 ```text
@@ -133,10 +133,11 @@ MetaDrive Native Window (engine.win)
 ## 7. Consequences and Compliance
 
 - **Positive:**
-  - Pure GPU rendering with zero CPU surface blitting overhead.
+  - Hardware-accelerated GPU rendering without CPU-to-GPU software surface transfers.
   - Zero new external runtime dependencies (Panda3D is already installed).
-  - Maximizes code reuse from Khoa's existing minimap commit.
-  - Strict scientific isolation: HUD is completely bypassed when `render_mode="OFF"`.
+  - Maximizes architectural reuse from Khoa's existing minimap commit.
+  - Strict scientific isolation: no HUD display regions, cameras, or nodes are allocated when `render_mode="OFF"`.
 - **Negative / Constraints:**
-  - Requires writing procedural UI geometry using Panda3D's `LineSegs` and `CardMaker` rather than HTML/CSS or Qt stylesheets.
-  - Interactive testing requires a desktop session with an active display window.
+  - Requires writing procedural 2D UI geometry using Panda3D primitives (`LineSegs`, `CardMaker`, `OnscreenText`).
+  - True glass transparency requires validating DisplayRegion alpha clearing and blending on the pinned Panda3D engine.
+  - Interactive verification requires a desktop session with an active display window.

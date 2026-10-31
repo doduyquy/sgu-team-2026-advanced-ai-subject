@@ -85,7 +85,7 @@ Following the architectural decisions and visual specifications approved in **HU
 #### 2.4 Acceptance Criteria
 1. Minimap renders road geometry cleanly in top-left `DisplayRegion` (`[0.015, 0.185, 0.745, 0.985]`).
 2. Ego marker points in the exact direction of vehicle travel.
-3. Trajectory trail accurately traces path and resets to 0 points on episode restart.
+3. Trajectory trail buffer stores the sliding window of the most recent $K \le 500$ sampled waypoints; retained coordinates match raw vehicle positions within numerical floating-point precision ($< 1\text{e-4}\,\text{m}$); buffer resets cleanly to 0 points on episode restart.
 4. `destroy()` cleans up camera, display region, and nodes with zero resource leaks.
 5. All 402 existing unit tests continue to pass without regression.
 
@@ -153,8 +153,8 @@ If Panda3D camera allocation causes stability issues on certain platforms, `src/
 
 #### 3.3 Acceptance Criteria
 1. `render_mode="NATIVE"` in SANDBOX launches MetaDrive with full transparent racing HUD and live minimap.
-2. `render_mode="OFF"` in SANDBOX, VALIDATION, and TEST launches headless with zero HUD overhead.
-3. Decision latency timing boundary strictly measures `agent.act()` and excludes HUD overhead; under identical seed and deterministic policy, agent actions are identical; latency distribution differences between HUD ON/OFF are statistically consistent with normal OS scheduling variance.
+2. `render_mode="OFF"` in SANDBOX, VALIDATION, and TEST launches headless with zero HUD node or camera allocations.
+3. Controlled decision latency verification: timing boundary strictly measures `agent.act()` and completely excludes HUD overhead; under identical seed and deterministic policy, agent actions are identical; latency distributions (p50, p95, p99) are compared across repeated runs with reported confidence intervals rather than assuming unproven OS noise equivalence.
 4. An empirical desktop screenshot captured in a live native desktop session is committed in `docs/environment/` as verified visual evidence (cannot be fulfilled by offscreen mock).
 5. Simulator exceptions trigger safe cleanup without orphaned DisplayRegions or Panda3D window hangs.
 6. All repository unit tests pass (100% OK).
@@ -167,20 +167,20 @@ The following test matrix must be implemented across HUD-1, HUD-2, and HUD-3:
 
 | # | Test Scenario / Assertion | Testing Mechanism | Target Gate | Acceptance Criteria |
 |---|---|---|---|---|
-| **T01** | **Headless Import & Execution Independence** | Headless unittest | HUD-1, 2, 3 | `import src.launcher.executor` and headless SANDBOX execute with 0 HUD overhead. |
+| **T01** | **Headless Import & Execution Independence** | Headless unittest | HUD-1, 2, 3 | `import src.launcher.executor` and headless execution allocate zero HUD nodes or cameras. |
 | **T02** | **NATIVE HUD Initialization** | Mock/Subprocess launch | HUD-3 | HUD initializes when `render_mode="NATIVE"`; display region and aspect2d nodes attach. |
-| **T03** | **Decision Payload & Timing Non-Interference** | Unit test with fixture agent | HUD-3 | Timing boundary excludes HUD; agent action decisions match identically; latency shifts remain within OS scheduling noise. |
-| **T04** | **Minimap Geometry Extents** | Polyline bounding test | HUD-1 | Orthographic film size matches calculated map extents plus padding across all tiers. |
+| **T03** | **Decision Payload & Timing Non-Interference** | Controlled unit test with fixture agent | HUD-3 | Timing boundary excludes HUD; agent action sequences are identical; latency distributions (p50, p95, p99) are measured and reported across repeated runs. |
+| **T04** | **Minimap Geometry Extents** | Polyline bounding test | HUD-1 | Orthographic film size matches calculated map extents plus padding across tested tiers. |
 | **T05** | **Ego Heading Correctness** | Heading vector unit test | HUD-1 | Heading marker rotates counter-clockwise with positive yaw; tested at $0^\circ, 90^\circ, 180^\circ, 270^\circ$. |
-| **T06** | **Trajectory Trail Precision** | Waypoint append test | HUD-1 | Trail points match simulated vehicle trajectory within $<0.1\,\text{m}$ tolerance; downsampling active. |
+| **T06** | **Trajectory Trail Precision** | Waypoint append test | HUD-1 | Retained trail waypoints match sampled raw coordinates within floating-point precision ($< 1\text{e-4}\,\text{m}$); $0.5\,\text{m}$ filter bounds vertex spacing; ring buffer maintains trailing window of up to 500 points. |
 | **T07** | **Zero Cross-Episode Trail Leakage** | Sequential episode test | HUD-1 | `reset()` clears trajectory points to 0; Episode 2 does not display Episode 1's trail. |
 | **T08** | **Exception Teardown Resilience** | Injection of simulated runtime crash | HUD-1, 2, 3 | `destroy()` safely removes DisplayRegion and nodes even if episode crashes mid-loop. |
 | **T09** | **Route Completion Truthfulness** | Value injection test | HUD-2 | Progress bar percentage matches `step_info["route_completion"]` without divergence. |
-| **T10** | **Indicator & Meter Polarity** | Action payload matrix | HUD-2 | Steering $< -0.15$ triggers Left; $> +0.15$ triggers Right; Throttle/Brake map strictly to positive/negative values. |
-| **T11** | **Speedometer Unit Parity** | Speed comparison test | HUD-2 | Speed digits reflect `env.agent.speed_km_h` in km/h (not m/s or internal physics units). |
+| **T10** | **Indicator & Meter Polarity** | Action payload matrix | HUD-2 | Steering $< -0.15$ triggers Left; $> +0.15$ triggers Right; Throttle/Brake map strictly to positive/negative values; missing action yields disabled state. |
+| **T11** | **Speedometer Unit Parity** | Speed comparison test | HUD-2 | Speed digits reflect `env.agent.speed_km_h` in km/h (not m/s or internal physics units); missing data renders `"---"`. |
 | **T12** | **16:9 Aspect Ratio Resilience** | Window resize simulation | HUD-2, 3 | Circular speedometer and minimap do not warp into ellipses when window is resized. |
 | **T13** | **Interactive Screenshot Verification** | Visual artifact capture | HUD-3 | Real native desktop Panda3D screenshot captured and committed as empirical evidence in audit docs. |
-| **T14** | **Performance Overhead Benchmark** | Step time measurement on SANDBOX | HUD-3 | Dedicated profiling timer measures `hud_update_ms` independently; average $<1.0\,\text{ms}$, p95 $<2.0\,\text{ms}$, 60 FPS target. |
+| **T14** | **Performance Overhead Benchmark** | Step time measurement on SANDBOX | HUD-3 | Dedicated profiling timer measures `hud_update_ms` independently; design target: mean $< 1.0\,\text{ms}$, p95 $< 2.0\,\text{ms}$, 60 FPS target. |
 | **T15** | **TEST/VALIDATION Headless Gating** | Preflight negative test | HUD-3 | Launcher strictly rejects `render_mode="NATIVE"` on benchmark suites; HUD remains dormant. |
 
 ---
