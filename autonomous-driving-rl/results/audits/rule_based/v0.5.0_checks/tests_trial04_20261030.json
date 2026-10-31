@@ -1,0 +1,22 @@
+{
+  "recorded_at_utc": "2026-10-30T13:30:09.689442+00:00",
+  "modules": [
+    "tests.test_finish_visual",
+    "tests.test_random_naive_agent",
+    "tests.test_rule_based_agent",
+    "tests.test_rule_based_corridor",
+    "tests.test_agent_experiment_logging",
+    "tests.test_agent_contract",
+    "tests.test_launcher_core",
+    "tests.test_rule_based_report",
+    "tests.test_rule_based_p2_p3"
+  ],
+  "exit_code": 1,
+  "source_sha256": {
+    "src/agents/rule_based_agent.py": "5d905cab604964c46a66a5c7d9bb5137adacf3821b860cb60f73c806e86a2179",
+    "src/agents/rule_based_traffic.py": "47cd856b86f02243e139d59e5c36677a225b39bed2342ac72cf234fbcdf07a8e",
+    "src/agents/rule_based_memory.py": "bdae6518d646be47cc95dbbb7c65e5a8ef89ac13e0ab8865abdf759711b4c3a5",
+    "src/agents/rule_based_junction.py": "f7c9ccf4a3d1219d1a3ac780130a063ffb2c3729aac4d0653ee32d0badc7dda2",
+    "src/platform/agent_input.py": "37f2db76ebab8b890e5e2ef863cdd2311435c1cd4bf8f8cf6d7e9afb7f133824"
+  }
+}

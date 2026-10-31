@@ -1,0 +1,99 @@
+{
+  "source_run": "rule_based_v050_acceptance_family12_20261030",
+  "noncanonical": true,
+  "records": [
+    {
+      "case_id": "sandbox/Extreme/CrXROSTR/0/0",
+      "terminal_reason": "TIMEOUT",
+      "route_completion": 0.40312475088329236,
+      "tail_steps": 100,
+      "ego_speed_max_kmh_last100": 0.014545341953635216,
+      "winning_constraints": {
+        "front_vehicle": 100
+      },
+      "junction_phases": {
+        "TRAVERSE_JUNCTION": 100
+      },
+      "lead_observation_count": 100,
+      "lead_speed_median_mps": 0.004611143167065341,
+      "last_lead_observation": {
+        "step": 3187,
+        "projected_gap_m": 3.012708931620435,
+        "observed_actor_speed_mps": 0.0046045527908844175,
+        "actor": {
+          "relative_position_x": 7.5745,
+          "relative_position_y": 1.799,
+          "relative_velocity_x": -0.0001,
+          "relative_velocity_y": 0.0031,
+          "relative_heading": -0.2952,
+          "length": 4.3,
+          "width": 1.7
+        }
+      },
+      "last_yield_timer_s": 0.0,
+      "note": "Projected corridor leader and gap are policy estimates, not mesh clearance or a proof that overtaking is feasible. No success inferred from waiting."
+    },
+    {
+      "case_id": "sandbox/Extreme/SCTXORyCCS/0/0",
+      "terminal_reason": "TIMEOUT",
+      "route_completion": 0.4726938856105825,
+      "tail_steps": 100,
+      "ego_speed_max_kmh_last100": 0.015431275591254234,
+      "winning_constraints": {
+        "front_vehicle": 100
+      },
+      "junction_phases": {
+        "TRAVERSE_JUNCTION": 100
+      },
+      "lead_observation_count": 100,
+      "lead_speed_median_mps": 0.0029344696245560673,
+      "last_lead_observation": {
+        "step": 3428,
+        "projected_gap_m": 2.9684324088870615,
+        "observed_actor_speed_mps": 0.002941339463188957,
+        "actor": {
+          "relative_position_x": 7.0558,
+          "relative_position_y": 2.9509,
+          "relative_velocity_x": -0.0019,
+          "relative_velocity_y": 0.0014,
+          "relative_heading": 0.2821,
+          "length": 4.87,
+          "width": 2.05
+        }
+      },
+      "last_yield_timer_s": 0.0,
+      "note": "Projected corridor leader and gap are policy estimates, not mesh clearance or a proof that overtaking is feasible. No success inferred from waiting."
+    },
+    {
+      "case_id": "sandbox/Extreme/SCXOCrTYCS/0/0",
+      "terminal_reason": "TIMEOUT",
+      "route_completion": 0.4514835610968355,
+      "tail_steps": 100,
+      "ego_speed_max_kmh_last100": 0.013675099238753319,
+      "winning_constraints": {
+        "front_vehicle": 100
+      },
+      "junction_phases": {
+        "EXIT_JUNCTION": 100
+      },
+      "lead_observation_count": 100,
+      "lead_speed_median_mps": 0.0032485024023968904,
+      "last_lead_observation": {
+        "step": 2913,
+        "projected_gap_m": 3.0059816606162753,
+        "observed_actor_speed_mps": 0.003241310347840315,
+        "actor": {
+          "relative_position_x": 7.4478,
+          "relative_position_y": -0.9679,
+          "relative_velocity_x": 0.001,
+          "relative_velocity_y": 0.0022,
+          "relative_heading": -0.5118,
+          "length": 4.6,
+          "width": 1.85
+        }
+      },
+      "last_yield_timer_s": 0.0,
+      "note": "Projected corridor leader and gap are policy estimates, not mesh clearance or a proof that overtaking is feasible. No success inferred from waiting."
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "noncanonical": true,
+  "split": "TRAIN",
+  "source_manifest_sha256": "b82f26ce3b07a7d3772ee6a9a18806fa6f10b5e6ab26a937259ee226787c07e7",
+  "request": {
+    "manifest": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\experiments\\rule_based\\train_development_v1.json",
+    "variants": [
+      "current"
+    ],
+    "env_seeds": [
+      0
+    ],
+    "limit_cases": null,
+    "run_id": "rule_based_v050_acceptance_family12_20261030",
+    "baseline_version": "0.3.0"
+  },
+  "cases": [
+    {
+      "case_id": "sandbox/Easy/SCCS/0/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Easy",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "df9c8bb722fc6517de55dc18838470b91ec43b89767ede19d93b72dc94674f9b",
+      "environment_seed": 0,
+      "traffic_density": 0.0,
+      "horizon_steps": 1758
+    },
+    {
+      "case_id": "sandbox/Easy/SCS/0/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Easy",
+      "sequence": "SCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "environment_seed": 0,
+      "traffic_density": 0.0,
+      "horizon_steps": 1224
+    },
+    {
+      "case_id": "sandbox/Easy/SCSS/0/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Easy",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "f315580c575a221a020c9996f8c7c1ba64f936d0362f9eed316d08289feccf90",
+      "environment_seed": 0,
+      "traffic_density": 0.0,
+      "horizon_steps": 1345
+    },
+    {
+      "case_id": "sandbox/Medium/SCTCS/2/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Medium",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "07d3816c5f08bb08dd0de9838feacb2b12d43f8b64086c1ae2470a7fe403bb2c",
+      "environment_seed": 0,
+      "traffic_density": 0.08,
+      "horizon_steps": 1642
+    },
+    {
+      "case_id": "sandbox/Medium/SCXCCS/0/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Medium",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "66c3bfaaec42656edecc0ac161a9af79aacaeadd6ec6b032930089b0b22fe09b",
+      "environment_seed": 0,
+      "traffic_density": 0.08,
+      "horizon_steps": 2231
+    },
+    {
+      "case_id": "sandbox/Medium/SCXCS/14/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Medium",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 14,
+      "geometry_sha256": "281b1353d6ca897dda5c22baddabbb2d890860f22e7ff8e87c335f432ee5a426",
+      "environment_seed": 0,
+      "traffic_density": 0.08,
+      "horizon_steps": 1098
+    },
+    {
+      "case_id": "sandbox/Hard/SCTXrCS/2/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Hard",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "84cc4ae49427ce5cde984c58a3f68d261abbd791768ac9aa79d5b44f22f08218",
+      "environment_seed": 0,
+      "traffic_density": 0.15,
+      "horizon_steps": 2208
+    },
+    {
+      "case_id": "sandbox/Hard/SCXOCS/0/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Hard",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "8d90dee7d34fb2f6e90572ec32897400af5f40ebac98f867bafec4bfc383680f",
+      "environment_seed": 0,
+      "traffic_density": 0.15,
+      "horizon_steps": 1860
+    },
+    {
+      "case_id": "sandbox/Hard/XTOCS/0/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Hard",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "ffb3ce5f655174fad30b5145dfdb3fae4fd7944d3f96c20579076c517fc5e2b3",
+      "environment_seed": 0,
+      "traffic_density": 0.15,
+      "horizon_steps": 1194
+    },
+    {
+      "case_id": "sandbox/Extreme/CrXROSTR/0/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Extreme",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "7c392abe573ca9823069ef1f88680be6222a9f6b6b6a9d8a065e270cc560db93",
+      "environment_seed": 0,
+      "traffic_density": 0.25,
+      "horizon_steps": 3188
+    },
+    {
+      "case_id": "sandbox/Extreme/SCTXORyCCS/0/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Extreme",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "886a6ddc9850cb56b8d27ee1b17704e02add3e40f6040708cdbf492b470e35b2",
+      "environment_seed": 0,
+      "traffic_density": 0.25,
+      "horizon_steps": 3429
+    },
+    {
+      "case_id": "sandbox/Extreme/SCXOCrTYCS/0/0",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Extreme",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "73fb061319d5754a8cde93d461ffa06a61ad79f22fd775538caffe57e5782e34",
+      "environment_seed": 0,
+      "traffic_density": 0.25,
+      "horizon_steps": 2914
+    }
+  ]
+}

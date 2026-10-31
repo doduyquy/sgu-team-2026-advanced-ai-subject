@@ -1,0 +1,61 @@
+======================================================================
+ERROR: test_finish_visual (unittest.loader._FailedTest)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_finish_visual
+Traceback (most recent call last):
+  File "C:\Users\DANG KHOA\AppData\Local\Programs\Python\Python310\lib\unittest\loader.py", line 154, in loadTestsFromName
+    module = __import__(module_name)
+  File "D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl\tests\test_finish_visual.py", line 15, in <module>
+    from panda3d.core import DepthWriteAttrib, Shader, ShaderAttrib
+ModuleNotFoundError: No module named 'panda3d'
+
+
+======================================================================
+ERROR: test_random_naive_agent (unittest.loader._FailedTest)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_random_naive_agent
+Traceback (most recent call last):
+  File "C:\Users\DANG KHOA\AppData\Local\Programs\Python\Python310\lib\unittest\loader.py", line 154, in loadTestsFromName
+    module = __import__(module_name)
+  File "D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl\tests\test_random_naive_agent.py", line 13, in <module>
+    from src.launcher.registry import build_canonical_agent_registry
+  File "D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl\src\launcher\__init__.py", line 8, in <module>
+    from src.launcher.cases import (
+  File "D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl\src\launcher\cases.py", line 20, in <module>
+    from metadrive.component.map.pg_map import MapGenerateMethod
+ModuleNotFoundError: No module named 'metadrive'
+
+
+======================================================================
+ERROR: test_launcher_core (unittest.loader._FailedTest)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_launcher_core
+Traceback (most recent call last):
+  File "C:\Users\DANG KHOA\AppData\Local\Programs\Python\Python310\lib\unittest\loader.py", line 154, in loadTestsFromName
+    module = __import__(module_name)
+  File "D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl\tests\test_launcher_core.py", line 18, in <module>
+    from src.launcher.cases import (
+  File "D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl\src\launcher\__init__.py", line 8, in <module>
+    from src.launcher.cases import (
+  File "D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl\src\launcher\cases.py", line 20, in <module>
+    from metadrive.component.map.pg_map import MapGenerateMethod
+ModuleNotFoundError: No module named 'metadrive'
+
+
+======================================================================
+FAIL: test_provenance_archives_sources_and_configuration (tests.test_agent_experiment_logging.TestAgentExperimentLogging)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl\tests\test_agent_experiment_logging.py", line 37, in test_provenance_archives_sources_and_configuration
+    self.assertEqual(provenance["descriptor"]["agent_version"], "0.4.0")
+AssertionError: '0.5.0' != '0.4.0'
+- 0.5.0
+?   ^
++ 0.4.0
+?   ^
+
+
+----------------------------------------------------------------------
+Ran 104 tests in 0.632s
+
+FAILED (failures=1, errors=3)

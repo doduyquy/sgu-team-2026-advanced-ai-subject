@@ -1,0 +1,189 @@
+{
+  "noncanonical": true,
+  "split": "TRAIN",
+  "paired_cases": 4,
+  "baseline_run": "runs\\rule_based_v050_trial01_20261030",
+  "candidate_run": "runs\\rule_based_v050_trial06_road_paths_20261030",
+  "baseline_successes": 2,
+  "candidate_successes": 4,
+  "baseline_crashes": 2,
+  "candidate_crashes": 0,
+  "new_success_cases": [
+    "sandbox/Hard/SCXOCS/0/0",
+    "sandbox/Hard/XTOCS/0/0"
+  ],
+  "lost_success_cases": [],
+  "lower_completion_cases": [
+    "sandbox/Medium/SCXCCS/0/0",
+    "sandbox/Hard/SCTXrCS/2/0"
+  ],
+  "unmatched_baseline_cases": [],
+  "unmatched_candidate_cases": [],
+  "baseline_provenance": {
+    "descriptor": {
+      "agent_id": "stage1_rule_based",
+      "agent_version": "0.4.0",
+      "input_profile_id": "STATE_DECISION_V1",
+      "action_adapter_id": "continuous_box2_v1",
+      "inference_stochasticity": "deterministic",
+      "stateful_within_episode": true,
+      "method_family": "RULE_BASED"
+    },
+    "configuration": {
+      "lookahead_m": 5.0,
+      "lookahead_time_s": 0.5,
+      "k_angle": 1.2,
+      "k_lateral": 1.5,
+      "k_preview": 0.5,
+      "speed_softening_mps": 2.0,
+      "max_steering": 0.5,
+      "cruise_speed_kmh": 45.0,
+      "comfortable_deceleration_mps2": 2.5,
+      "response_time_s": 0.4,
+      "braking_buffer_m": 3.0,
+      "junction_speed_kmh": 24.0,
+      "following_time_s": 1.8,
+      "minimum_following_gap_m": 3.0,
+      "emergency_ttc_s": 1.0,
+      "traffic_margin_m": 0.25,
+      "obstacle_margin_m": 0.35,
+      "prediction_dt_s": 0.2,
+      "prediction_horizon_s": 3.0,
+      "junction_scan_m": 30.0,
+      "junction_conflict_radius_m": 12.0,
+      "yield_release_s": 0.5,
+      "lidar_range_m": 50.0,
+      "overflow_speed_kmh": 27.0,
+      "recovery_speed_kmh": 8.0,
+      "max_lateral_accel_mps2": 1.5,
+      "k_speed": 0.12,
+      "max_throttle": 0.55,
+      "safety_margin_m": 0.3,
+      "observation_max_speed_kmh": 80.0,
+      "observation_max_lane_width_m": 4.5,
+      "observation_road_scale_m": 18.0,
+      "vehicle_width_m": 1.852,
+      "vehicle_length_m": 4.515
+    },
+    "configuration_sha256": "b1392bf83a6909dac6391cf6aa0d83c97479c2e87c0628cf74603b2fdeb131ce",
+    "source_sha256": {
+      "policy.py": "03f51ec69127dedffec62bb04032f2d27bcdb15d10121dbca7a8b10b23e029fc",
+      "agent_input.py": "5f7fc106087ed1145c649cdbcb28498d403c74b15a747314c447707d6e96ea83",
+      "rule_based_traffic.py": "958bcf07e6f9afd4ccab2d6adaba8b7f36fcb742861b3482032b69a5f2283760",
+      "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+      "agent_experiment.py": "199fe831f70e820e7ed7a910139834a2f093e9c7b7a5c1e5c5d05eb2f2d3a45b"
+    }
+  },
+  "candidate_provenance": {
+    "descriptor": {
+      "agent_id": "stage1_rule_based",
+      "agent_version": "0.5.0",
+      "input_profile_id": "STATE_DECISION_V1",
+      "action_adapter_id": "continuous_box2_v1",
+      "inference_stochasticity": "deterministic",
+      "stateful_within_episode": true,
+      "method_family": "RULE_BASED"
+    },
+    "configuration": {
+      "lookahead_m": 5.0,
+      "lookahead_time_s": 0.5,
+      "k_angle": 1.2,
+      "k_lateral": 1.5,
+      "k_preview": 0.5,
+      "speed_softening_mps": 2.0,
+      "max_steering": 0.5,
+      "cruise_speed_kmh": 45.0,
+      "comfortable_deceleration_mps2": 2.5,
+      "response_time_s": 0.4,
+      "braking_buffer_m": 3.0,
+      "junction_speed_kmh": 24.0,
+      "following_time_s": 1.8,
+      "minimum_following_gap_m": 3.0,
+      "emergency_ttc_s": 1.0,
+      "traffic_margin_m": 0.25,
+      "obstacle_margin_m": 0.35,
+      "prediction_dt_s": 0.2,
+      "prediction_horizon_s": 3.0,
+      "junction_scan_m": 30.0,
+      "junction_conflict_radius_m": 12.0,
+      "yield_release_s": 0.5,
+      "lidar_range_m": 50.0,
+      "overflow_speed_kmh": 27.0,
+      "track_match_distance_m": 2.5,
+      "track_ttl_s": 0.6,
+      "junction_prediction_s": 12.0,
+      "junction_gap_s": 3.0,
+      "junction_entry_buffer_m": 4.0,
+      "junction_exit_buffer_m": 1.0,
+      "junction_exit_clearance_m": 6.0,
+      "junction_commit_distance_m": 8.0,
+      "junction_launch_acceleration_mps2": 1.3,
+      "stationary_actor_acceleration_mps2": 1.0,
+      "junction_queue_speed_mps": 1.0,
+      "blocked_after_s": 10.0,
+      "route_memory_ttl_s": 1.0,
+      "recovery_speed_kmh": 8.0,
+      "max_lateral_accel_mps2": 1.5,
+      "k_speed": 0.12,
+      "max_throttle": 0.55,
+      "safety_margin_m": 0.3,
+      "observation_max_speed_kmh": 80.0,
+      "observation_max_lane_width_m": 4.5,
+      "observation_road_scale_m": 18.0,
+      "vehicle_width_m": 1.852,
+      "vehicle_length_m": 4.515
+    },
+    "configuration_sha256": "16da8795c61d9d567b89c46d23d26a6f906676e378fb981720883da63ebda1bc",
+    "source_sha256": {
+      "policy.py": "83f65306c4122bf0533d260ecdb517e788bfb1ebbb5276fae56a87f28b6978e7",
+      "agent_input.py": "0998324612602f1e2b5c8c7177f79920e9f09451b5babdace39cc31fb932527e",
+      "agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+      "agents/rule_based_agent.py": "83f65306c4122bf0533d260ecdb517e788bfb1ebbb5276fae56a87f28b6978e7",
+      "agents/rule_based_junction.py": "9499c2ba26b5121edfaa6d63d8ab94ab71bb45b488bfcf8da9ed4cf2712a140b",
+      "agents/rule_based_memory.py": "92283f2ca7a001efe0baea2c249eb7a7e86f8e67d53f9086ca9eec5b5ede4c70",
+      "agents/rule_based_traffic.py": "b0d6a30b7bb58909b6794ed6041134c1a81d7b7009e15cc9e64bb3af41730eaa",
+      "agents/__init__.py": "de2af9150878aec49ba843f77291a8ca410944908e6b04ce27610d6678b29f02",
+      "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+      "agent_experiment.py": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5"
+    }
+  },
+  "verified_trace_hashes": {
+    "baseline": {
+      "sandbox/Medium/SCXCCS/0/0": {
+        "rows": 865,
+        "sha256": "8ad11458968d397aecad10d2be019b2729546c7ea0544a72ce940057f0a19ae2"
+      },
+      "sandbox/Hard/SCTXrCS/2/0": {
+        "rows": 1607,
+        "sha256": "2556b35748223ea5901049b84f125d7dae22e8e790f9249083a5668a2555c029"
+      },
+      "sandbox/Hard/SCXOCS/0/0": {
+        "rows": 508,
+        "sha256": "29d8f52b6576da27f7c626bb621555ccb037f2c034886b5adf7c26d8ff2e45cf"
+      },
+      "sandbox/Hard/XTOCS/0/0": {
+        "rows": 123,
+        "sha256": "b17b552e9459807d01568494185bf7ed3b62e8c7798ae50e15927c2eef44e028"
+      }
+    },
+    "candidate": {
+      "sandbox/Medium/SCXCCS/0/0": {
+        "rows": 873,
+        "sha256": "423831c70a28a8f533cae9e8d51cf0f969e8981b172846e1f720e5d62362ed6a"
+      },
+      "sandbox/Hard/SCTXrCS/2/0": {
+        "rows": 1641,
+        "sha256": "f63466fb6badf64b4dbd63a03bf7b4c8231da258d6858085a54ba8089e62d693"
+      },
+      "sandbox/Hard/SCXOCS/0/0": {
+        "rows": 1329,
+        "sha256": "44ee1bf3dac1e1e5ea850e235e69afeb19770ebac434fdb3c699aa985c83d081"
+      },
+      "sandbox/Hard/XTOCS/0/0": {
+        "rows": 1053,
+        "sha256": "313606b8cc813dd6c4555458703d5e5a9d3fab8769d779600e72d9c8c60ee8d5"
+      }
+    }
+  },
+  "comparison_scope": "Policy plus shared input-extractor change; not a policy-only ablation"
+}

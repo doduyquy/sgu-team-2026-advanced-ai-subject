@@ -1,0 +1,25 @@
+{
+  "noncanonical": true,
+  "split": "TRAIN",
+  "paired_cases": 16,
+  "baseline_version": "0.4.0",
+  "candidate_version": "0.5.0",
+  "baseline_successes": 10,
+  "candidate_successes": 13,
+  "baseline_crashes": 4,
+  "candidate_crashes": 0,
+  "baseline_timeouts": 2,
+  "candidate_timeouts": 3,
+  "new_success_cases": [
+    "sandbox/Hard/SCXOCS/0/0",
+    "sandbox/Hard/XTOCS/0/0",
+    "sandbox/Hard/SCXOCS/0/1"
+  ],
+  "lost_success_cases": [],
+  "reports": [
+    "results/audits/rule_based/v0.5.0/comparison.json",
+    "results/audits/rule_based/v0.5.0_env1/comparison.json"
+  ],
+  "comparison_scope": "Policy plus shared input-extractor change; not a policy-only ablation",
+  "full_108_train_suite": false
+}

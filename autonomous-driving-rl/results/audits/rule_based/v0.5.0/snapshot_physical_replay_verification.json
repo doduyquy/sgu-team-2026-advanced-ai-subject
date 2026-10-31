@@ -1,0 +1,18 @@
+{
+  "source_run": "rule_based_v050_acceptance_family12_20261030",
+  "archive_run": "rule_based_v050_snapshot_smoke_20261030",
+  "case_id": "sandbox/Medium/SCXCCS/0/0",
+  "source_steps": 895,
+  "archive_steps": 895,
+  "equal_step_count": true,
+  "excluded": [
+    "act_latency_ms"
+  ],
+  "trace_sha256": {
+    "source": "987f610bd7462b66e0d45c54fcad39b185d42ce7a8c7473b43a0eb8c607918b1",
+    "archive": "195e2ac198cda6beb8cb093b626365df2437220a6f9d9e3005a7fa89f5093d4c"
+  },
+  "equal_agent_input": true,
+  "equal_decision": true,
+  "equal_canonical_action": true
+}

@@ -1,0 +1,71 @@
+{
+  "noncanonical": true,
+  "split": "TRAIN",
+  "source_manifest_sha256": "bfdabaac41b2e3dc26e705b03dfe988477160de545e7a712b899220a67b4e4a8",
+  "request": {
+    "manifest": "experiments\\rule_based\\train_targeted_v040.json",
+    "variants": [
+      "current"
+    ],
+    "env_seeds": [
+      1
+    ],
+    "limit_cases": null,
+    "run_id": "rule_based_v050_acceptance_env1_20261030",
+    "baseline_version": "0.3.0"
+  },
+  "cases": [
+    {
+      "case_id": "sandbox/Medium/SCXCCS/0/1",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Medium",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "66c3bfaaec42656edecc0ac161a9af79aacaeadd6ec6b032930089b0b22fe09b",
+      "environment_seed": 1,
+      "traffic_density": 0.08,
+      "horizon_steps": 2231
+    },
+    {
+      "case_id": "sandbox/Hard/SCTXrCS/2/1",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Hard",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "84cc4ae49427ce5cde984c58a3f68d261abbd791768ac9aa79d5b44f22f08218",
+      "environment_seed": 1,
+      "traffic_density": 0.15,
+      "horizon_steps": 2208
+    },
+    {
+      "case_id": "sandbox/Hard/SCXOCS/0/1",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Hard",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "8d90dee7d34fb2f6e90572ec32897400af5f40ebac98f867bafec4bfc383680f",
+      "environment_seed": 1,
+      "traffic_density": 0.15,
+      "horizon_steps": 1860
+    },
+    {
+      "case_id": "sandbox/Hard/XTOCS/0/1",
+      "case_index": 1,
+      "protocol_order_index": 1,
+      "split": "TRAIN",
+      "tier": "Hard",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "ffb3ce5f655174fad30b5145dfdb3fae4fd7944d3f96c20579076c517fc5e2b3",
+      "environment_seed": 1,
+      "traffic_density": 0.15,
+      "horizon_steps": 1194
+    }
+  ]
+}

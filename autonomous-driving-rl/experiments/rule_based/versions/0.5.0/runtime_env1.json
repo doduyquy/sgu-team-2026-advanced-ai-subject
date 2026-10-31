@@ -1,0 +1,18 @@
+{
+  "python": "3.10.22 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:15:38) [MSC v.1942 64 bit (AMD64)]",
+  "executable": "C:\\Users\\DANG KHOA\\.conda\\envs\\metadrive\\python.exe",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "packages": {
+    "numpy": "2.2.6",
+    "panda3d": "1.10.16",
+    "metadrive-simulator": "0.4.3"
+  },
+  "git_head": "0980bbde54cc17369a074973c379635b50bfad05",
+  "git_dirty": true,
+  "git_status": " M autonomous-driving-rl/configs/platform/agent_contract_v1.json\n M autonomous-driving-rl/scripts/audit_agent_contract.py\n M autonomous-driving-rl/src/agents/README.md\n M autonomous-driving-rl/src/agents/__init__.py\n M autonomous-driving-rl/src/agents/random_naive_agent.py\n M autonomous-driving-rl/src/launcher/cli.py\n M autonomous-driving-rl/src/launcher/executor.py\n M autonomous-driving-rl/src/launcher/registry.py\n M autonomous-driving-rl/src/platform/__init__.py\n M autonomous-driving-rl/src/platform/agent.py\n M autonomous-driving-rl/src/platform/agent_input.py\n M autonomous-driving-rl/tests/test_launcher_core.py\n M \"weekly assignments/lab04 - csp/README.md\"\n?? autonomous-driving-rl/AGENTS.md\n?? autonomous-driving-rl/docs/AUTONOMOUS_DRIVING_PROJECT_HANDOVER_REPORT.md\n?? autonomous-driving-rl/docs/LANE_MARKING_AGENT_DESIGN.md\n?? autonomous-driving-rl/docs/MAPSUITE_V1_29_COLUMN_REPORT_VI.md\n?? autonomous-driving-rl/docs/MAPSUITE_V1_29_COLUMN_REPORT_VI.pdf\n?? autonomous-driving-rl/docs/RULE_BASED_AGENT_DEVELOPMENT_PLAN_VI.md\n?? autonomous-driving-rl/docs/RULE_BASED_AGENT_GUIDE.md\n?? autonomous-driving-rl/docs/RULE_BASED_CHANGELOG.md\n?? autonomous-driving-rl/docs/RULE_BASED_P2_P3_DESIGN.md\n?? autonomous-driving-rl/docs/RULE_BASED_V0_4_0_EXPERIMENT_REPORT.md\n?? autonomous-driving-rl/docs/RULE_BASED_V0_5_0_WORKLOG.md\n?? autonomous-driving-rl/docs/STAGE0_RANDOM_NAIVE_AGENT.md\n?? autonomous-driving-rl/docs/environment/PLATFORM_V1_EPISODE_AUDIT_VI.md\n?? autonomous-driving-rl/experiments/rule_based/\n?? autonomous-driving-rl/results/audits/finish_visual/\n?? autonomous-driving-rl/results/audits/rule_based/\n?? autonomous-driving-rl/scripts/audit_rule_based_agent.py\n?? autonomous-driving-rl/scripts/demo_finish_visual.py\n?? autonomous-driving-rl/scripts/probe_rule_based_obstacle.py\n?? autonomous-driving-rl/scripts/replay_rule_based_trace.py\n?? autonomous-driving-rl/scripts/run_rule_based_experiment.py\n?? autonomous-driving-rl/scripts/summarize_rule_based_experiment.py\n?? autonomous-driving-rl/src/agents/rule_based_agent.py\n?? autonomous-driving-rl/src/agents/rule_based_junction.py\n?? autonomous-driving-rl/src/agents/rule_based_memory.py\n?? autonomous-driving-rl/src/agents/rule_based_traffic.py\n?? autonomous-driving-rl/src/logging/agent_experiment.py\n?? autonomous-driving-rl/src/visualization/\n?? autonomous-driving-rl/tests/test_agent_experiment_logging.py\n?? autonomous-driving-rl/tests/test_finish_visual.py\n?? autonomous-driving-rl/tests/test_random_naive_agent.py\n?? autonomous-driving-rl/tests/test_rule_based_agent.py\n?? autonomous-driving-rl/tests/test_rule_based_corridor.py\n?? autonomous-driving-rl/tests/test_rule_based_p2_p3.py\n?? autonomous-driving-rl/tests/test_rule_based_replay.py\n?? autonomous-driving-rl/tests/test_rule_based_report.py\n",
+  "metadrive_module_version": null,
+  "metadrive_source_path": "D:\\Học\\Tri tue nhan to nang cao\\lab\\metadrive-src",
+  "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+  "control_dt_s": 0.1,
+  "runner_sha256": "8598c617a050f5d9810fa96ab10c296962b3367c6c2b81ce9ce52a2b73fb3693"
+}

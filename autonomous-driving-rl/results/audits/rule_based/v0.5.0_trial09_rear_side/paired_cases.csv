@@ -1,0 +1,2 @@
+case_id,baseline_success,candidate_success,baseline_reason,candidate_reason,baseline_completion,candidate_completion,baseline_simulation_time_s,candidate_simulation_time_s,baseline_speed_kmh,candidate_speed_kmh,candidate_latency_p95_ms,new_success,lost_success,lower_completion
+sandbox/Extreme/CrXROSTR/0/0,False,False,TIMEOUT,CRASH_VEHICLE,0.4032679047229375,0.3124166262752711,318.8,72.10000000000001,4.778902727670784,16.291526250615863,9.2003,False,False,True
