@@ -24,17 +24,17 @@ class Stage0RandomNaiveAgent:
     def __init__(self) ->None:
         self._rng: Optional[np.random.RandomState] = None
 
-        # Dự kiến  Agent sẽ nhớ action đã chọn cho đến decision tiếp theo.
-        self._current_action: int = 7  # mặc định là thả trôi
-        self._step_couter: int = 0
+        # Action 7 is straight + throttle in discrete9_lowbranch_v1.
+        self._current_action: int = 7
+        self._step_counter: int = 0
 
-        self._steps_until_resample: int = 10
+        self._steps_until_resample: int = 20
         self._min_hold_steps: int = 20
         self._max_hold_steps: int = 40
 
         self._descriptor = AgentDescriptor(
             agent_id="stage0_random_naive",
-            agent_version="0.1.0",
+            agent_version="0.1.1",
             input_profile_id="STATE_DECISION_V1",
             action_adapter_id="discrete9_lowbranch_v1",
             inference_stochasticity="stochastic",
@@ -82,16 +82,11 @@ class Stage0RandomNaiveAgent:
         return throttle_index * 3 + steering_index
 
     def act(self, agent_input: AgentInputV1) -> AgentDecision:
-        """
-        Placeholder trong giai đoạn dựng khung.
-
-        Logic nhận diện decision point và random action sẽ được
-        triển khai ở bước tiếp theo.
-        """
+        """Emit a held action; resample after 20--40 decisions without reading state."""
         if self._rng is None:
             raise RuntimeError("Agent must be reset before act().")
         
-        self._step_couter += 1
+        self._step_counter += 1
         action_resample = False
 
         if self._steps_until_resample <= 0:
@@ -111,7 +106,7 @@ class Stage0RandomNaiveAgent:
         return AgentDecision(
             action_payload=self._current_action,
             diagnostics={
-                "step_counter" : self._step_couter,
+                "step_counter" : self._step_counter,
                 "selected_action" : self._current_action,
                 "action_resample" : action_resample,
                 "steps_until_resample" : self._steps_until_resample,
@@ -120,4 +115,4 @@ class Stage0RandomNaiveAgent:
     def close(self) -> None:
         """Clean up resources."""
         self._rng = None
-    
+

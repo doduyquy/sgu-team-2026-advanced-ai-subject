@@ -220,7 +220,7 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
     registry.register(
         registration=AgentRegistrationV1(
             agent_id="stage0_random_naive",
-            agent_version="0.1.0",
+            agent_version="0.1.1",
             stage_label="STAGE_0",
             method_family="RANDOM",
             purpose="RESEARCH_BASELINE",
