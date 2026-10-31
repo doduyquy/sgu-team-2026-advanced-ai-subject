@@ -45,3 +45,6 @@ wandb/
 autonomous-driving-rl/artifacts/
 
 nii_notes/
+
+# Generated EDA figures; rebuild them from the notebook
+autonomous-driving-rl/notebooks/eda_figures/
