@@ -6,7 +6,12 @@ This directory is the autonomous-driving research subproject for the SGU Advance
 
 **Platform foundation: complete.** The environment, benchmark protocol, agent interface, logging/provenance, launcher/preflight layer, and Research Workbench are implemented and hardened.
 
-**Next research milestone: Stage 0 — Random / Naive Baseline Agent.**
+**Stage 0:** `stage0_random_naive` is implemented for SANDBOX/AUDIT. Benchmark certification and Stage 1 remain the next research milestones. See the [agent policy and local readiness workflow](src/agents/README.md).
+
+**Stage 2 / Stage 6 prototype:** `stage2_astar` and `stage6_astar_learned` share a public
+local planning graph and controller. Stage 6 has a real supervised heuristic trainer,
+fixed presets, checkpoint provenance and paired TRAIN evaluation in the Workbench.
+Both remain benchmark-ineligible candidates. See [train and compare A*](docs/ASTAR_LEARNED_HEURISTIC.md).
 
 **Known MapSuite V1 metadata erratum:** `declared_base_lane_num = 2`, but `effective_base_lane_num = 3` for the frozen geometry. See the [dedicated erratum](docs/environment/MAPSUITE_V1_LANE_METADATA_ERRATUM.md); do not apply a two-lane override based on the historical description.
 
@@ -74,7 +79,7 @@ autonomous-driving-rl/
 ├── configs/platform/       # Versioned scientific contracts and benchmark configuration
 ├── datasets/               # Packaged research datasets (e.g. MapSuite V1 procedural benchmark)
 ├── docs/                   # Human-facing guides + detailed audit/reference documents
-├── experiments/            # Future experiment/training definitions and orchestration notes
+├── experiments/            # Stage-specific training entry points and experiment notes
 ├── results/audits/         # Committed machine-derived platform audit evidence
 ├── runs/                   # Local experiment outputs (git-ignored except .gitkeep)
 ├── scripts/                # Platform audit and diagnostic scripts

@@ -2,6 +2,13 @@
 
 Research Workbench V1 is a desktop control/inspection layer over the same launcher, preflight, executor, logging, and result contracts used by the CLI.
 
+The fixed-benchmark prototype now opens on **Bộ đánh giá cố định** inside Experiment
+Setup; the manual controls below remain under **Nâng cao · chạy thủ công**. See the
+[fixed evaluation workflow](WORKBENCH_BENCHMARK_FLOW.md) for schedules, eligibility and limits.
+
+Stage 2 A* and Stage 6 learned-heuristic A* now have a separate TRAIN workflow under
+Experiment Setup. See [training, checkpoints and paired comparison](ASTAR_LEARNED_HEURISTIC.md).
+
 Launch it from `autonomous-driving-rl/`:
 
 ```powershell

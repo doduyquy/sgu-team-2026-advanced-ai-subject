@@ -105,7 +105,11 @@ For learned agents, also test checkpoint loading and frozen inference behavior.
 
 ## 8. Training vs evaluation
 
-The current launcher/workbench is an execution and evaluation foundation, not a complete RL trainer UI.
+The launcher handles frozen inference. The Workbench also exposes a separate,
+stage-specific supervised trainer for Stage 6's learned A* heuristic; this is not
+a general RL trainer. Stage 2 and Stage 6 share the public local graph and path
+controller. See [A* training and checkpoint integration](ASTAR_LEARNED_HEURISTIC.md)
+for the fixed presets, geometry-grouped TRAIN holdout and artifact adapter.
 
 For learned stages, build the training pipeline as a separate research component that uses TRAIN scenarios and produces a checkpoint. Evaluation should then load the frozen checkpoint through the normal AgentPolicy interface.
 
@@ -129,7 +133,7 @@ Only the third case justifies proposing a versioned platform extension. Such an 
 
 ## 10. Stage 0 starting point
 
-The immediate next implementation is the real Stage 0 Random / Naive baseline.
+`stage0_random_naive` is implemented with the certified 9-action adapter and SANDBOX/AUDIT eligibility. Its probability and hold-time semantics, local readiness command and development limits are documented in [`src/agents/README.md`](../src/agents/README.md). Benchmark eligibility remains disabled pending certification.
 
 Do not reuse `fixture_seeded_random` as the scientific Stage 0 result merely because it already emits random actions. The fixture was designed to validate infrastructure. Stage 0 should be a named, tested research baseline with explicit policy semantics, registration, reproducible seeds, documented expectations, and its own benchmark results.
 
