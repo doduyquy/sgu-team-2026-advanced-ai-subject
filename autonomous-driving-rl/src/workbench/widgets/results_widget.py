@@ -17,22 +17,19 @@ Provides comprehensive read-only browsing of Gate-7 experiment runs:
 
 import dataclasses
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
-    QComboBox,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QLineEdit,
     QPushButton,
-    QScrollArea,
     QSplitter,
     QTableWidget,
     QTableWidgetItem,

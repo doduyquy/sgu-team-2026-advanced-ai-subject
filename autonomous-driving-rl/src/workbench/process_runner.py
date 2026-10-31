@@ -19,7 +19,7 @@ import json
 from pathlib import Path
 import sys
 import tempfile
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from PySide6.QtCore import QObject, QProcess, Signal
 

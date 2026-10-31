@@ -6,7 +6,6 @@ This module defines the machine-readable WorkbenchHardeningContractV1 and comput
 - platform_workbench_hardening_contract_sha256: Additive hash joining B2 platform workbench hash with B3 hardening contract.
 """
 
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from src.platform import canonical_json_sha256

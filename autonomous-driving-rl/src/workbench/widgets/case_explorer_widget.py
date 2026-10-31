@@ -12,7 +12,6 @@ Read-only browsing for frozen Gate-5 manifests:
 
 from typing import Any, Dict, List, Optional
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,

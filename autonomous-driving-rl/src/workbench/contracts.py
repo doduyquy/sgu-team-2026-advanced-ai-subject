@@ -6,7 +6,6 @@ This module defines the machine-readable WorkbenchContractV1 and computes additi
 - platform_workbench_contract_sha256: Additive hash joining execution (Gate 7.5A) with workbench (Gate 7.5B).
 """
 
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from src.platform import canonical_json_sha256

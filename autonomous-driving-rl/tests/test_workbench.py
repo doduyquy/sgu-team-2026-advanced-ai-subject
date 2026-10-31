@@ -55,7 +55,7 @@ from src.launcher.contracts import (
 )
 from src.launcher.events import LauncherEventType, LauncherEventV1
 from src.launcher.models import LaunchRequestV1, LauncherMode
-from src.launcher.registry import build_canonical_agent_registry, compute_canonical_registry_sha256
+from src.launcher.registry import AgentRegistryV1, build_canonical_agent_registry, compute_canonical_registry_sha256
 from src.launcher.resolver import (
     GATE5_LOCKED_BENCHMARK_HASH,
     GATE6_LOCKED_AGENT_HASH,
@@ -338,8 +338,25 @@ class TestWorkbenchSuite(unittest.TestCase):
 
     def test_14_workbench_imports_do_not_modify_launcher_registry_or_contracts(self):
         """Importing Workbench does not alter Gate 7.5A registry or contract hashes."""
-        reg = build_canonical_agent_registry()
-        self.assertEqual(len(reg.list_all()), 4)
+        # Compare in a fresh process, including research agents added after the
+        # original four-fixture audit; import must preserve the complete registry.
+        script = """
+import json
+from src.launcher.registry import build_canonical_agent_registry
+from src.launcher.contracts import build_launcher_contract_core, compute_launcher_contract_sha256
+before = build_canonical_agent_registry().to_snapshot()
+before_hash = compute_launcher_contract_sha256(build_launcher_contract_core())
+import src.workbench.protocol
+after = build_canonical_agent_registry().to_snapshot()
+after_hash = compute_launcher_contract_sha256(build_launcher_contract_core())
+print(json.dumps({'before': before, 'after': after, 'before_hash': before_hash, 'after_hash': after_hash}))
+"""
+        result = subprocess.run([sys.executable, "-B", "-X", "utf8", "-c", script],
+                                cwd=get_default_project_root(), capture_output=True, text=True, encoding="utf8")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["before"], payload["after"])
+        self.assertEqual(payload["before_hash"], payload["after_hash"])
         launcher_core = build_launcher_contract_core()
         launcher_hash = compute_launcher_contract_sha256(launcher_core)
         self.assertEqual(launcher_hash, GATE7_5A_LAUNCHER_CONTRACT_HASH)
@@ -355,8 +372,15 @@ class TestWorkbenchSuite(unittest.TestCase):
         self.assertEqual(GATE7_LOCKED_LOGGING_HASH, "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2")
         self.assertEqual(GATE7_LOCKED_OBSERVABILITY_HASH, "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581")
         # Gate 7.5A
+        # The frozen 7.5A registry was the four audit fixtures. Keep its exact
+        # original hash; the live registry additionally contains research agents.
+        live = build_canonical_agent_registry()
+        frozen_fixtures = AgentRegistryV1()
+        for registration in live.list_all():
+            if registration.purpose == "AUDIT_FIXTURE":
+                frozen_fixtures.register(registration, live.get_factory(registration.agent_id))
         self.assertEqual(
-            compute_canonical_registry_sha256(build_canonical_agent_registry()),
+            compute_canonical_registry_sha256(frozen_fixtures),
             "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
         )
         self.assertEqual(

@@ -26,7 +26,7 @@ import os
 from pathlib import Path
 import sys
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 # Ensure project root is in sys.path
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -36,7 +36,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.launcher.events import LauncherEventV1
 from src.launcher.executor import ExperimentExecutor
-from src.launcher.models import LauncherMode, PreflightBlockedError
+from src.launcher.models import PreflightBlockedError
 from src.launcher.preflight import run_preflight
 from src.launcher.resolver import resolve_experiment_plan
 from src.platform import RunStatus
