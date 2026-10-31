@@ -92,6 +92,26 @@ class WorkbenchProcessRunner(QObject):
         if operation not in ("PLAN", "RUN"):
             raise ValueError(f"Unsupported operation: {operation}")
 
+        # Validate before marking a process active, so a bad request can be corrected.
+        serialized_req = serialize_launch_request(request)
+
+        # Write request payload before changing lifecycle state.
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False, suffix=".json") as tf:
+            json.dump(serialized_req, tf, indent=2)
+            self._temp_request_file = Path(tf.name)
+        worker_script = Path(__file__).resolve().parent / "worker.py"
+        self._launch_worker(operation, worker_script, ["--operation", operation, "--request-file", str(self._temp_request_file)])
+
+    def start_training(self, preset: str, *, publish_latest: bool = True) -> None:
+        """Separate versioned training protocol; benchmark operation schemas stay unchanged."""
+        if self._is_running:
+            raise RuntimeError("A worker process is already running.")
+        if preset not in ("smoke", "standard"):
+            raise ValueError("Unknown training preset")
+        script = Path(__file__).resolve().parents[1] / "training" / "worker.py"
+        self._launch_worker("TRAIN", script, ["--preset", preset] + ([] if publish_latest else ["--no-publish"]))
+
+    def _launch_worker(self, operation, worker_script, arguments):
         self._current_operation = operation
         self._is_running = True
         self._stdout_buffer = ""
@@ -99,25 +119,12 @@ class WorkbenchProcessRunner(QObject):
         self._force_terminated = False
         self._failed_to_start = False
 
-        # Write request payload to a temporary file
-        serialized_req = serialize_launch_request(request)
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False, suffix=".json") as tf:
-            json.dump(serialized_req, tf, indent=2)
-            self._temp_request_file = Path(tf.name)
-
-        worker_script = Path(__file__).resolve().parent / "worker.py"
         project_root = worker_script.parent.parent.parent
 
         self._process = QProcess(self)
         self._process.setWorkingDirectory(str(project_root))
         self._process.setProgram(sys.executable)
-        self._process.setArguments([
-            str(worker_script),
-            "--operation",
-            operation,
-            "--request-file",
-            str(self._temp_request_file),
-        ])
+        self._process.setArguments([str(worker_script), *arguments])
 
         self._process.started.connect(self._on_process_started)
         self._process.errorOccurred.connect(self._on_process_error)
