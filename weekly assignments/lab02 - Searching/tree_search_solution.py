@@ -8,6 +8,7 @@ from collections import deque
 from collections import Counter
 import heapq
 import itertools
+import math
 import random as _random
 
 import numpy as np
@@ -38,6 +39,10 @@ def set_order(order=None, random=False):
 
 def manhattan(state, goal):
     return abs(state[0] - goal[0]) + abs(state[1] - goal[1])
+
+
+def euclidean(state, goal):
+    return math.hypot(state[0] - goal[0], state[1] - goal[1])
 
 
 heuristic = manhattan
@@ -81,7 +86,8 @@ def _unpack(node):
     return [node.state for node in nodes], [node.action for node in nodes[1:]]
 
 
-def _result(goal_node, reached, expanded, generated, max_frontier, maze_anim=None):
+def _result(goal_node, reached, expanded, generated, max_frontier, maze_anim=None,
+            max_depth=None, expanded_states=None):
     if goal_node is None:
         path, actions = None, None
     else:
@@ -95,40 +101,89 @@ def _result(goal_node, reached, expanded, generated, max_frontier, maze_anim=Non
         "max_frontier": max_frontier,
         "path_cost": None if actions is None else len(actions),
         "maze_anim": maze_anim or [],
+        "max_depth": max_depth,
+        "expanded_states": expanded_states,
     }
 
 
-def best_first_search(maze, strategy="BFS", debug=False, vis=False, W=1):
-    """Run BFS, GBFS or (weighted) A* graph search."""
+def best_first_search(maze, strategy="BFS", debug=False, vis=False, W=1,
+                      animation=False):
+    """Run BFS, GBFS or (weighted) A* graph search.
+
+    Goal testing happens on pop; the goal is not counted as expanded.
+    max_depth counts generated nodes, max_frontier counts stored entries
+    (including stale heap entries). A* reopens states on improved cost.
+    """
     strategy = strategy.upper()
     if strategy == "DFS":
         return DFS(maze, vis=vis)
     if strategy not in {"BFS", "GBFS", "A*"}:
         raise ValueError("strategy must be BFS, DFS, GBFS or A*")
+    if strategy == "A*" and (not math.isfinite(W) or W < 0):
+        raise ValueError("W must be finite and nonnegative")
 
     start = mh.find_pos(maze, "S")
     goal = mh.find_pos(maze, "G")
     root = _Node(start)
     expanded = 0
     generated = 1
+    max_depth = 0
+    expanded_states = set()
+    maze_anim = []
+
+    def record_frame(goal_node=None):
+        if not animation:
+            return
+        frame = np.copy(maze)
+        for state in expanded_states:
+            if frame[state] == " ":
+                frame[state] = "."
+        waiting = frontier if strategy == "BFS" else (
+            entry[2] for entry in frontier
+            if entry[2].cost == best_cost.get(entry[2].state)
+        )
+        for pending in waiting:
+            if pending.state not in {start, goal}:
+                frame[pending.state] = "F"
+        if goal_node is not None:
+            path, _ = _unpack(goal_node)
+            for state in path:
+                if state not in {start, goal}:
+                    frame[state] = "P"
+        maze_anim.append(frame)
+
+    def finish(node):
+        record_frame(node)
+        answer = _result(node, reached, expanded, generated, max_frontier,
+                         maze_anim, max_depth, expanded_states.copy())
+        pending = frontier if strategy == "BFS" else (
+            entry[2] for entry in frontier
+            if entry[2].cost == best_cost.get(entry[2].state)
+        )
+        answer["frontier_states"] = {entry.state for entry in pending}
+        return answer
 
     if strategy == "BFS":
         frontier = deque([root])
         reached = {start: root}
         max_frontier = 1
+        record_frame()
         while frontier:
             node = frontier.popleft()
             if node.state == goal:
-                return _result(node, reached, expanded, generated, max_frontier)
+                return finish(node)
             expanded += 1
+            expanded_states.add(node.state)
             for action, state in _successors(maze, node.state):
                 if state not in reached:
                     child = _Node(state, node, action, node.cost + 1)
                     reached[state] = child
                     frontier.append(child)
                     generated += 1
+                    max_depth = max(max_depth, child.depth)
             max_frontier = max(max_frontier, len(frontier))
-        return _result(None, reached, expanded, generated, max_frontier)
+            record_frame()
+        return finish(None)
 
     counter = itertools.count()
     frontier = []
@@ -137,14 +192,16 @@ def best_first_search(maze, strategy="BFS", debug=False, vis=False, W=1):
     best_cost = {start: 0}
     reached = {start: root}
     max_frontier = 1
+    record_frame()
 
     while frontier:
         _, _, node = heapq.heappop(frontier)
         if node.cost != best_cost.get(node.state):
             continue
         if node.state == goal:
-            return _result(node, reached, expanded, generated, max_frontier)
+            return finish(node)
         expanded += 1
+        expanded_states.add(node.state)
         for action, state in _successors(maze, node.state):
             new_cost = node.cost + 1
             if strategy == "GBFS":
@@ -159,8 +216,10 @@ def best_first_search(maze, strategy="BFS", debug=False, vis=False, W=1):
                 reached[state] = child
                 heapq.heappush(frontier, (priority, -next(counter), child))
                 generated += 1
+                max_depth = max(max_depth, child.depth)
         max_frontier = max(max_frontier, len(frontier))
-    return _result(None, reached, expanded, generated, max_frontier)
+        record_frame()
+    return finish(None)
 
 
 def DFS(maze, vis=False, max_tries=100000, debug_reached=False,

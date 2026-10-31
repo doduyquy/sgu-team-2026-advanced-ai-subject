@@ -43,3 +43,5 @@ wandb/
 
 # Derived MapSuite preview bundles and local verification logs
 autonomous-driving-rl/artifacts/
+
+nii_notes/

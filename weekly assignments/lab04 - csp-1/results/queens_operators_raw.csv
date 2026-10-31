@@ -1,0 +1,1001 @@
+﻿n,trial,search_seed,operator,initial_board,h,seconds,status,stop_reason,evaluations,iterations,moves,patience
+8,0,2400000,single,"[0, 5, 4, 3, 0, 7, 1, 6]",1,0.008595300023443997,stalled,probabilistic_stopping,584,583,4,484
+8,0,2400000,single_step,"[0, 5, 4, 3, 0, 7, 1, 6]",2,0.0022886000806465745,stalled,probabilistic_stopping,139,138,4,119
+8,0,2400000,swap,"[0, 5, 4, 3, 0, 7, 1, 6]",2,0.003906600060872734,stalled,probabilistic_stopping,228,227,2,223
+8,0,2400000,dual,"[0, 5, 4, 3, 0, 7, 1, 6]",0,0.051384099991992116,solved,zero_conflicts,2127,2126,5,16230
+8,0,2400000,adaptive,"[0, 5, 4, 3, 0, 7, 1, 6]",1,0.04434759996365756,stalled,probabilistic_stopping,1233,1232,4,1209
+8,1,2400001,single,"[4, 3, 6, 1, 0, 5, 4, 1]",2,0.00791040004696697,stalled,probabilistic_stopping,578,577,6,484
+8,1,2400001,single_step,"[4, 3, 6, 1, 0, 5, 4, 1]",1,0.002963100094348192,stalled,probabilistic_stopping,150,149,7,119
+8,1,2400001,swap,"[4, 3, 6, 1, 0, 5, 4, 1]",2,0.006728100008331239,stalled,probabilistic_stopping,243,242,5,223
+8,1,2400001,dual,"[4, 3, 6, 1, 0, 5, 4, 1]",1,0.13486350001767278,budget,proposal_limit,5001,5000,6,16230
+8,1,2400001,adaptive,"[4, 3, 6, 1, 0, 5, 4, 1]",1,0.0741235000314191,stalled,probabilistic_stopping,1377,1376,6,1209
+8,2,2400002,single,"[0, 6, 1, 3, 4, 5, 5, 3]",1,0.012035699910484254,stalled,probabilistic_stopping,637,636,7,484
+8,2,2400002,single_step,"[0, 6, 1, 3, 4, 5, 5, 3]",4,0.0031230999156832695,stalled,probabilistic_stopping,140,139,3,119
+8,2,2400002,swap,"[0, 6, 1, 3, 4, 5, 5, 3]",3,0.007057999959215522,stalled,probabilistic_stopping,244,243,4,223
+8,2,2400002,dual,"[0, 6, 1, 3, 4, 5, 5, 3]",1,0.13995370001066476,budget,proposal_limit,5001,5000,7,16230
+8,2,2400002,adaptive,"[0, 6, 1, 3, 4, 5, 5, 3]",1,0.05204330000560731,stalled,probabilistic_stopping,1250,1249,6,1209
+8,3,2400003,single,"[2, 4, 7, 1, 3, 6, 7, 3]",1,0.008525500074028969,stalled,probabilistic_stopping,524,523,2,484
+8,3,2400003,single_step,"[2, 4, 7, 1, 3, 6, 7, 3]",2,0.002248699893243611,stalled,probabilistic_stopping,131,130,1,119
+8,3,2400003,swap,"[2, 4, 7, 1, 3, 6, 7, 3]",3,0.005005599930882454,stalled,probabilistic_stopping,224,223,0,223
+8,3,2400003,dual,"[2, 4, 7, 1, 3, 6, 7, 3]",1,0.12620060006156564,budget,proposal_limit,5001,5000,1,16230
+8,3,2400003,adaptive,"[2, 4, 7, 1, 3, 6, 7, 3]",1,0.051046599983237684,stalled,probabilistic_stopping,1214,1213,2,1209
+8,4,2400004,single,"[4, 3, 3, 0, 3, 4, 5, 4]",0,0.001460599945858121,solved,zero_conflicts,64,63,8,484
+8,4,2400004,single_step,"[4, 3, 3, 0, 3, 4, 5, 4]",3,0.003159999963827431,stalled,probabilistic_stopping,150,149,6,119
+8,4,2400004,swap,"[4, 3, 3, 0, 3, 4, 5, 4]",9,0.004807899938896298,stalled,probabilistic_stopping,236,235,3,223
+8,4,2400004,dual,"[4, 3, 3, 0, 3, 4, 5, 4]",1,0.1318765999749303,budget,proposal_limit,5001,5000,7,16230
+8,4,2400004,adaptive,"[4, 3, 3, 0, 3, 4, 5, 4]",0,0.002314399927854538,solved,zero_conflicts,28,27,5,1209
+8,5,2400005,single,"[4, 1, 0, 0, 1, 2, 1, 6]",1,0.010772300069220364,stalled,probabilistic_stopping,528,527,6,484
+8,5,2400005,single_step,"[4, 1, 0, 0, 1, 2, 1, 6]",5,0.004002499976195395,stalled,probabilistic_stopping,173,172,4,119
+8,5,2400005,swap,"[4, 1, 0, 0, 1, 2, 1, 6]",6,0.0076021000277251005,stalled,probabilistic_stopping,227,226,3,223
+8,5,2400005,dual,"[4, 1, 0, 0, 1, 2, 1, 6]",2,0.12912699999287724,budget,proposal_limit,5001,5000,5,16230
+8,5,2400005,adaptive,"[4, 1, 0, 0, 1, 2, 1, 6]",1,0.07182930002454668,stalled,probabilistic_stopping,1232,1231,6,1209
+8,6,2400006,single,"[7, 4, 1, 1, 2, 2, 3, 0]",2,0.012177799944765866,stalled,probabilistic_stopping,556,555,2,484
+8,6,2400006,single_step,"[7, 4, 1, 1, 2, 2, 3, 0]",6,0.0023236999986693263,stalled,probabilistic_stopping,124,123,1,119
+8,6,2400006,swap,"[7, 4, 1, 1, 2, 2, 3, 0]",2,0.007075499976053834,stalled,probabilistic_stopping,305,304,4,223
+8,6,2400006,dual,"[7, 4, 1, 1, 2, 2, 3, 0]",1,0.16250650002621114,budget,proposal_limit,5001,5000,4,16230
+8,6,2400006,adaptive,"[7, 4, 1, 1, 2, 2, 3, 0]",2,0.05765339999925345,stalled,probabilistic_stopping,1216,1215,4,1209
+8,7,2400007,single,"[0, 4, 4, 6, 5, 3, 3, 2]",2,0.010989399976097047,stalled,probabilistic_stopping,502,501,5,484
+8,7,2400007,single_step,"[0, 4, 4, 6, 5, 3, 3, 2]",4,0.0035912999883294106,stalled,probabilistic_stopping,131,130,4,119
+8,7,2400007,swap,"[0, 4, 4, 6, 5, 3, 3, 2]",3,0.006476600072346628,stalled,probabilistic_stopping,270,269,5,223
+8,7,2400007,dual,"[0, 4, 4, 6, 5, 3, 3, 2]",0,0.07479870005045086,solved,zero_conflicts,2594,2593,8,16230
+8,7,2400007,adaptive,"[0, 4, 4, 6, 5, 3, 3, 2]",1,0.08277999993879348,stalled,probabilistic_stopping,1237,1236,6,1209
+8,8,2400008,single,"[0, 6, 5, 5, 1, 1, 5, 3]",1,0.018878899980336428,stalled,probabilistic_stopping,508,507,4,484
+8,8,2400008,single_step,"[0, 6, 5, 5, 1, 1, 5, 3]",2,0.007386300014331937,stalled,probabilistic_stopping,150,149,4,119
+8,8,2400008,swap,"[0, 6, 5, 5, 1, 1, 5, 3]",5,0.011743700015358627,stalled,probabilistic_stopping,231,230,1,223
+8,8,2400008,dual,"[0, 6, 5, 5, 1, 1, 5, 3]",1,0.27578969998285174,budget,proposal_limit,5001,5000,4,16230
+8,8,2400008,adaptive,"[0, 6, 5, 5, 1, 1, 5, 3]",0,0.002522399998269975,solved,zero_conflicts,35,34,4,1209
+8,9,2400009,single,"[7, 2, 5, 3, 2, 6, 1, 2]",2,0.011844500084407628,stalled,probabilistic_stopping,521,520,4,484
+8,9,2400009,single_step,"[7, 2, 5, 3, 2, 6, 1, 2]",3,0.006336399936117232,stalled,probabilistic_stopping,138,137,3,119
+8,9,2400009,swap,"[7, 2, 5, 3, 2, 6, 1, 2]",5,0.004359400016255677,stalled,probabilistic_stopping,227,226,2,223
+8,9,2400009,dual,"[7, 2, 5, 3, 2, 6, 1, 2]",0,0.05473950004670769,solved,zero_conflicts,1262,1261,6,16230
+8,9,2400009,adaptive,"[7, 2, 5, 3, 2, 6, 1, 2]",2,0.10989199997857213,stalled,probabilistic_stopping,1286,1285,6,1209
+8,10,2400010,single,"[4, 7, 0, 1, 3, 5, 3, 3]",2,0.021759500028565526,stalled,probabilistic_stopping,629,628,4,484
+8,10,2400010,single_step,"[4, 7, 0, 1, 3, 5, 3, 3]",3,0.004763200064189732,stalled,probabilistic_stopping,159,158,3,119
+8,10,2400010,swap,"[4, 7, 0, 1, 3, 5, 3, 3]",4,0.01274790009483695,stalled,probabilistic_stopping,279,278,2,223
+8,10,2400010,dual,"[4, 7, 0, 1, 3, 5, 3, 3]",0,0.0054472999181598425,solved,zero_conflicts,103,102,4,16230
+8,10,2400010,adaptive,"[4, 7, 0, 1, 3, 5, 3, 3]",1,0.10066609992645681,stalled,probabilistic_stopping,1224,1223,5,1209
+8,11,2400011,single,"[4, 1, 3, 6, 2, 6, 0, 3]",1,0.009329000022262335,stalled,probabilistic_stopping,503,502,3,484
+8,11,2400011,single_step,"[4, 1, 3, 6, 2, 6, 0, 3]",2,0.002396699972450733,stalled,probabilistic_stopping,158,157,1,119
+8,11,2400011,swap,"[4, 1, 3, 6, 2, 6, 0, 3]",3,0.006295699975453317,stalled,probabilistic_stopping,241,240,1,223
+8,11,2400011,dual,"[4, 1, 3, 6, 2, 6, 0, 3]",1,0.15763929998502135,budget,proposal_limit,5001,5000,3,16230
+8,11,2400011,adaptive,"[4, 1, 3, 6, 2, 6, 0, 3]",1,0.08522720006294549,stalled,probabilistic_stopping,1213,1212,2,1209
+8,12,2400012,single,"[3, 0, 0, 7, 4, 2, 6, 0]",3,0.015114500070922077,stalled,probabilistic_stopping,504,503,2,484
+8,12,2400012,single_step,"[3, 0, 0, 7, 4, 2, 6, 0]",1,0.007764599984511733,stalled,probabilistic_stopping,148,147,4,119
+8,12,2400012,swap,"[3, 0, 0, 7, 4, 2, 6, 0]",4,0.011048899963498116,stalled,probabilistic_stopping,230,229,1,223
+8,12,2400012,dual,"[3, 0, 0, 7, 4, 2, 6, 0]",1,0.15277819999027997,budget,proposal_limit,5001,5000,3,16230
+8,12,2400012,adaptive,"[3, 0, 0, 7, 4, 2, 6, 0]",1,0.05151379993185401,stalled,probabilistic_stopping,1258,1257,4,1209
+8,13,2400013,single,"[3, 4, 5, 7, 4, 0, 2, 3]",1,0.009967399993911386,stalled,probabilistic_stopping,546,545,5,484
+8,13,2400013,single_step,"[3, 4, 5, 7, 4, 0, 2, 3]",3,0.0035168000031262636,stalled,probabilistic_stopping,136,135,3,119
+8,13,2400013,swap,"[3, 4, 5, 7, 4, 0, 2, 3]",3,0.005004400038160384,stalled,probabilistic_stopping,236,235,5,223
+8,13,2400013,dual,"[3, 4, 5, 7, 4, 0, 2, 3]",1,0.17232639994472265,budget,proposal_limit,5001,5000,6,16230
+8,13,2400013,adaptive,"[3, 4, 5, 7, 4, 0, 2, 3]",1,0.08609440003056079,stalled,probabilistic_stopping,1224,1223,5,1209
+8,14,2400014,single,"[6, 6, 5, 0, 5, 1, 5, 5]",2,0.00795899995137006,stalled,probabilistic_stopping,493,492,5,484
+8,14,2400014,single_step,"[6, 6, 5, 0, 5, 1, 5, 5]",4,0.002208300051279366,stalled,probabilistic_stopping,154,153,5,119
+8,14,2400014,swap,"[6, 6, 5, 0, 5, 1, 5, 5]",8,0.005317899980582297,stalled,probabilistic_stopping,229,228,1,223
+8,14,2400014,dual,"[6, 6, 5, 0, 5, 1, 5, 5]",1,0.13214429991785437,budget,proposal_limit,5001,5000,6,16230
+8,14,2400014,adaptive,"[6, 6, 5, 0, 5, 1, 5, 5]",3,0.05099549994338304,stalled,probabilistic_stopping,1221,1220,5,1209
+8,15,2400015,single,"[6, 2, 6, 4, 0, 3, 4, 7]",1,0.010574699961580336,stalled,probabilistic_stopping,678,677,4,484
+8,15,2400015,single_step,"[6, 2, 6, 4, 0, 3, 4, 7]",2,0.0019856999861076474,stalled,probabilistic_stopping,135,134,2,119
+8,15,2400015,swap,"[6, 2, 6, 4, 0, 3, 4, 7]",3,0.005716299987398088,stalled,probabilistic_stopping,228,227,2,223
+8,15,2400015,dual,"[6, 2, 6, 4, 0, 3, 4, 7]",1,0.1305856000399217,budget,proposal_limit,5001,5000,4,16230
+8,15,2400015,adaptive,"[6, 2, 6, 4, 0, 3, 4, 7]",2,0.05114390002563596,stalled,probabilistic_stopping,1227,1226,2,1209
+8,16,2400016,single,"[7, 2, 2, 4, 6, 4, 7, 6]",1,0.009426699951291084,stalled,probabilistic_stopping,608,607,6,484
+8,16,2400016,single_step,"[7, 2, 2, 4, 6, 4, 7, 6]",4,0.0018857999239116907,stalled,probabilistic_stopping,128,127,4,119
+8,16,2400016,swap,"[7, 2, 2, 4, 6, 4, 7, 6]",5,0.012070100056007504,stalled,probabilistic_stopping,252,251,4,223
+8,16,2400016,dual,"[7, 2, 2, 4, 6, 4, 7, 6]",1,0.1296781999990344,budget,proposal_limit,5001,5000,5,16230
+8,16,2400016,adaptive,"[7, 2, 2, 4, 6, 4, 7, 6]",1,0.055160999996587634,stalled,probabilistic_stopping,1267,1266,7,1209
+8,17,2400017,single,"[7, 3, 1, 7, 4, 7, 4, 5]",1,0.015592899988405406,stalled,probabilistic_stopping,652,651,7,484
+8,17,2400017,single_step,"[7, 3, 1, 7, 4, 7, 4, 5]",2,0.0033535000402480364,stalled,probabilistic_stopping,123,122,2,119
+8,17,2400017,swap,"[7, 3, 1, 7, 4, 7, 4, 5]",5,0.007677899906411767,stalled,probabilistic_stopping,228,227,2,223
+8,17,2400017,dual,"[7, 3, 1, 7, 4, 7, 4, 5]",1,0.17194219992961735,budget,proposal_limit,5001,5000,4,16230
+8,17,2400017,adaptive,"[7, 3, 1, 7, 4, 7, 4, 5]",1,0.05899339995812625,stalled,probabilistic_stopping,1230,1229,4,1209
+8,18,2400018,single,"[7, 4, 6, 5, 2, 4, 0, 0]",2,0.009677399997599423,stalled,probabilistic_stopping,501,500,3,484
+8,18,2400018,single_step,"[7, 4, 6, 5, 2, 4, 0, 0]",5,0.003025999991223216,stalled,probabilistic_stopping,120,119,0,119
+8,18,2400018,swap,"[7, 4, 6, 5, 2, 4, 0, 0]",3,0.003974499995820224,stalled,probabilistic_stopping,225,224,1,223
+8,18,2400018,dual,"[7, 4, 6, 5, 2, 4, 0, 0]",0,0.05333889997564256,solved,zero_conflicts,1305,1304,4,16230
+8,18,2400018,adaptive,"[7, 4, 6, 5, 2, 4, 0, 0]",1,0.0448034000582993,stalled,probabilistic_stopping,1247,1246,4,1209
+8,19,2400019,single,"[7, 1, 5, 6, 3, 2, 2, 7]",0,0.0010046999668702483,solved,zero_conflicts,66,65,7,484
+8,19,2400019,single_step,"[7, 1, 5, 6, 3, 2, 2, 7]",2,0.002455300069414079,stalled,probabilistic_stopping,162,161,6,119
+8,19,2400019,swap,"[7, 1, 5, 6, 3, 2, 2, 7]",2,0.0043206000700592995,stalled,probabilistic_stopping,240,239,4,223
+8,19,2400019,dual,"[7, 1, 5, 6, 3, 2, 2, 7]",1,0.15281250001862645,budget,proposal_limit,5001,5000,8,16230
+8,19,2400019,adaptive,"[7, 1, 5, 6, 3, 2, 2, 7]",1,0.0701755000045523,stalled,probabilistic_stopping,1220,1219,4,1209
+8,20,2400020,single,"[2, 7, 3, 7, 0, 0, 1, 4]",0,0.0008097999962046742,solved,zero_conflicts,18,17,2,484
+8,20,2400020,single_step,"[2, 7, 3, 7, 0, 0, 1, 4]",2,0.005411499994806945,stalled,probabilistic_stopping,140,139,2,119
+8,20,2400020,swap,"[2, 7, 3, 7, 0, 0, 1, 4]",2,0.011736399959772825,stalled,probabilistic_stopping,257,256,2,223
+8,20,2400020,dual,"[2, 7, 3, 7, 0, 0, 1, 4]",1,0.28318589995615184,budget,proposal_limit,5001,5000,3,16230
+8,20,2400020,adaptive,"[2, 7, 3, 7, 0, 0, 1, 4]",2,0.0759958999697119,stalled,probabilistic_stopping,1213,1212,2,1209
+8,21,2400021,single,"[0, 4, 6, 0, 3, 0, 4, 2]",1,0.008796600042842329,stalled,probabilistic_stopping,515,514,5,484
+8,21,2400021,single_step,"[0, 4, 6, 0, 3, 0, 4, 2]",3,0.0016635999782010913,stalled,probabilistic_stopping,124,123,2,119
+8,21,2400021,swap,"[0, 4, 6, 0, 3, 0, 4, 2]",4,0.005153400008566678,stalled,probabilistic_stopping,256,255,2,223
+8,21,2400021,dual,"[0, 4, 6, 0, 3, 0, 4, 2]",1,0.14837190008256584,budget,proposal_limit,5001,5000,4,16230
+8,21,2400021,adaptive,"[0, 4, 6, 0, 3, 0, 4, 2]",1,0.07062730006873608,stalled,probabilistic_stopping,1225,1224,3,1209
+8,22,2400022,single,"[7, 5, 4, 7, 1, 4, 3, 3]",2,0.018101599998772144,stalled,probabilistic_stopping,540,539,4,484
+8,22,2400022,single_step,"[7, 5, 4, 7, 1, 4, 3, 3]",5,0.004169399966485798,stalled,probabilistic_stopping,154,153,2,119
+8,22,2400022,swap,"[7, 5, 4, 7, 1, 4, 3, 3]",4,0.02952359989285469,stalled,probabilistic_stopping,249,248,3,223
+8,22,2400022,dual,"[7, 5, 4, 7, 1, 4, 3, 3]",1,0.2467813000548631,budget,proposal_limit,5001,5000,4,16230
+8,22,2400022,adaptive,"[7, 5, 4, 7, 1, 4, 3, 3]",1,0.08081020007375628,stalled,probabilistic_stopping,1297,1296,7,1209
+8,23,2400023,single,"[7, 0, 7, 0, 1, 0, 0, 7]",2,0.005908899940550327,stalled,probabilistic_stopping,556,555,5,484
+8,23,2400023,single_step,"[7, 0, 7, 0, 1, 0, 0, 7]",6,0.001018499955534935,stalled,probabilistic_stopping,122,121,2,119
+8,23,2400023,swap,"[7, 0, 7, 0, 1, 0, 0, 7]",10,0.0017830000724643469,stalled,probabilistic_stopping,225,224,1,223
+8,23,2400023,dual,"[7, 0, 7, 0, 1, 0, 0, 7]",1,0.06466739997267723,budget,proposal_limit,5001,5000,7,16230
+8,23,2400023,adaptive,"[7, 0, 7, 0, 1, 0, 0, 7]",2,0.021378299919888377,stalled,probabilistic_stopping,1229,1228,5,1209
+8,24,2400024,single,"[4, 6, 4, 6, 7, 7, 3, 7]",1,0.004282800015062094,stalled,probabilistic_stopping,569,568,6,484
+8,24,2400024,single_step,"[4, 6, 4, 6, 7, 7, 3, 7]",5,0.0010767000494524837,stalled,probabilistic_stopping,143,142,2,119
+8,24,2400024,swap,"[4, 6, 4, 6, 7, 7, 3, 7]",6,0.004140399978496134,stalled,probabilistic_stopping,227,226,1,223
+8,24,2400024,dual,"[4, 6, 4, 6, 7, 7, 3, 7]",1,0.09261759999208152,budget,proposal_limit,5001,5000,5,16230
+8,24,2400024,adaptive,"[4, 6, 4, 6, 7, 7, 3, 7]",3,0.02897859993390739,stalled,probabilistic_stopping,1218,1217,3,1209
+8,25,2400025,single,"[6, 3, 7, 3, 3, 5, 6, 4]",2,0.0037437999853864312,stalled,probabilistic_stopping,550,549,4,484
+8,25,2400025,single_step,"[6, 3, 7, 3, 3, 5, 6, 4]",3,0.0017571999924257398,stalled,probabilistic_stopping,136,135,2,119
+8,25,2400025,swap,"[6, 3, 7, 3, 3, 5, 6, 4]",5,0.0026946000289171934,stalled,probabilistic_stopping,245,244,3,223
+8,25,2400025,dual,"[6, 3, 7, 3, 3, 5, 6, 4]",1,0.049751600017771125,budget,proposal_limit,5001,5000,6,16230
+8,25,2400025,adaptive,"[6, 3, 7, 3, 3, 5, 6, 4]",1,0.022905699908733368,stalled,probabilistic_stopping,1220,1219,4,1209
+8,26,2400026,single,"[7, 0, 4, 6, 3, 5, 2, 2]",1,0.004689899971708655,stalled,probabilistic_stopping,533,532,2,484
+8,26,2400026,single_step,"[7, 0, 4, 6, 3, 5, 2, 2]",3,0.001048099948093295,stalled,probabilistic_stopping,126,125,1,119
+8,26,2400026,swap,"[7, 0, 4, 6, 3, 5, 2, 2]",4,0.002032899996265769,stalled,probabilistic_stopping,224,223,0,223
+8,26,2400026,dual,"[7, 0, 4, 6, 3, 5, 2, 2]",1,0.04783309996128082,budget,proposal_limit,5001,5000,2,16230
+8,26,2400026,adaptive,"[7, 0, 4, 6, 3, 5, 2, 2]",1,0.024836499942466617,stalled,probabilistic_stopping,1269,1268,3,1209
+8,27,2400027,single,"[3, 4, 7, 1, 5, 3, 2, 2]",1,0.015283899963833392,stalled,probabilistic_stopping,592,591,5,484
+8,27,2400027,single_step,"[3, 4, 7, 1, 5, 3, 2, 2]",2,0.0038563000271096826,stalled,probabilistic_stopping,168,167,5,119
+8,27,2400027,swap,"[3, 4, 7, 1, 5, 3, 2, 2]",3,0.005112100043334067,stalled,probabilistic_stopping,234,233,3,223
+8,27,2400027,dual,"[3, 4, 7, 1, 5, 3, 2, 2]",0,0.047274400014430285,solved,zero_conflicts,2757,2756,5,16230
+8,27,2400027,adaptive,"[3, 4, 7, 1, 5, 3, 2, 2]",0,0.0013201000401750207,solved,zero_conflicts,85,84,6,1209
+8,28,2400028,single,"[3, 0, 2, 6, 2, 2, 1, 7]",1,0.003319700015708804,stalled,probabilistic_stopping,520,519,4,484
+8,28,2400028,single_step,"[3, 0, 2, 6, 2, 2, 1, 7]",2,0.0010913999285548925,stalled,probabilistic_stopping,133,132,4,119
+8,28,2400028,swap,"[3, 0, 2, 6, 2, 2, 1, 7]",4,0.001717100036330521,stalled,probabilistic_stopping,226,225,1,223
+8,28,2400028,dual,"[3, 0, 2, 6, 2, 2, 1, 7]",0,0.003959800000302494,solved,zero_conflicts,460,459,5,16230
+8,28,2400028,adaptive,"[3, 0, 2, 6, 2, 2, 1, 7]",1,0.019311900017783046,stalled,probabilistic_stopping,1233,1232,5,1209
+8,29,2400029,single,"[5, 4, 7, 5, 5, 2, 6, 3]",1,0.004867300041951239,stalled,probabilistic_stopping,507,506,3,484
+8,29,2400029,single_step,"[5, 4, 7, 5, 5, 2, 6, 3]",3,0.0009130000835284591,stalled,probabilistic_stopping,123,122,1,119
+8,29,2400029,swap,"[5, 4, 7, 5, 5, 2, 6, 3]",4,0.0032745000207796693,stalled,probabilistic_stopping,267,266,2,223
+8,29,2400029,dual,"[5, 4, 7, 5, 5, 2, 6, 3]",1,0.08654089993797243,budget,proposal_limit,5001,5000,3,16230
+8,29,2400029,adaptive,"[5, 4, 7, 5, 5, 2, 6, 3]",1,0.054016900015994906,stalled,probabilistic_stopping,1281,1280,3,1209
+8,30,2400030,single,"[2, 1, 3, 1, 4, 2, 1, 0]",2,0.01604300003964454,stalled,probabilistic_stopping,518,517,4,484
+8,30,2400030,single_step,"[2, 1, 3, 1, 4, 2, 1, 0]",5,0.0010627999436110258,stalled,probabilistic_stopping,143,142,3,119
+8,30,2400030,swap,"[2, 1, 3, 1, 4, 2, 1, 0]",5,0.004635000019334257,stalled,probabilistic_stopping,240,239,3,223
+8,30,2400030,dual,"[2, 1, 3, 1, 4, 2, 1, 0]",1,0.09989800001494586,budget,proposal_limit,5001,5000,5,16230
+8,30,2400030,adaptive,"[2, 1, 3, 1, 4, 2, 1, 0]",0,0.0006311000324785709,solved,zero_conflicts,11,10,5,1209
+8,31,2400031,single,"[5, 6, 0, 1, 5, 6, 3, 7]",1,0.005028899991884828,stalled,probabilistic_stopping,513,512,5,484
+8,31,2400031,single_step,"[5, 6, 0, 1, 5, 6, 3, 7]",3,0.002055700053460896,stalled,probabilistic_stopping,124,123,2,119
+8,31,2400031,swap,"[5, 6, 0, 1, 5, 6, 3, 7]",3,0.0034675999777391553,stalled,probabilistic_stopping,226,225,2,223
+8,31,2400031,dual,"[5, 6, 0, 1, 5, 6, 3, 7]",1,0.05702999990899116,budget,proposal_limit,5001,5000,4,16230
+8,31,2400031,adaptive,"[5, 6, 0, 1, 5, 6, 3, 7]",3,0.02392659999895841,stalled,probabilistic_stopping,1215,1214,2,1209
+8,32,2400032,single,"[2, 2, 7, 1, 1, 3, 1, 3]",2,0.0033649998949840665,stalled,probabilistic_stopping,513,512,3,484
+8,32,2400032,single_step,"[2, 2, 7, 1, 1, 3, 1, 3]",2,0.0010299000423401594,stalled,probabilistic_stopping,149,148,3,119
+8,32,2400032,swap,"[2, 2, 7, 1, 1, 3, 1, 3]",6,0.0018861000426113605,stalled,probabilistic_stopping,224,223,0,223
+8,32,2400032,dual,"[2, 2, 7, 1, 1, 3, 1, 3]",1,0.04885679995641112,budget,proposal_limit,5001,5000,5,16230
+8,32,2400032,adaptive,"[2, 2, 7, 1, 1, 3, 1, 3]",1,0.05090380006004125,stalled,probabilistic_stopping,1223,1222,5,1209
+8,33,2400033,single,"[2, 4, 7, 5, 1, 1, 0, 4]",2,0.00486410001758486,stalled,probabilistic_stopping,499,498,4,484
+8,33,2400033,single_step,"[2, 4, 7, 5, 1, 1, 0, 4]",4,0.0021049000788480043,stalled,probabilistic_stopping,126,125,2,119
+8,33,2400033,swap,"[2, 4, 7, 5, 1, 1, 0, 4]",3,0.006960800033994019,stalled,probabilistic_stopping,245,244,3,223
+8,33,2400033,dual,"[2, 4, 7, 5, 1, 1, 0, 4]",1,0.10265899996738881,budget,proposal_limit,5001,5000,4,16230
+8,33,2400033,adaptive,"[2, 4, 7, 5, 1, 1, 0, 4]",1,0.02143859991338104,stalled,probabilistic_stopping,1239,1238,4,1209
+8,34,2400034,single,"[3, 1, 7, 5, 4, 3, 2, 0]",1,0.0035652999067679048,stalled,probabilistic_stopping,509,508,6,484
+8,34,2400034,single_step,"[3, 1, 7, 5, 4, 3, 2, 0]",4,0.0010121999075636268,stalled,probabilistic_stopping,139,138,3,119
+8,34,2400034,swap,"[3, 1, 7, 5, 4, 3, 2, 0]",2,0.002142000012099743,stalled,probabilistic_stopping,245,244,4,223
+8,34,2400034,dual,"[3, 1, 7, 5, 4, 3, 2, 0]",1,0.06707320001441985,budget,proposal_limit,5001,5000,5,16230
+8,34,2400034,adaptive,"[3, 1, 7, 5, 4, 3, 2, 0]",1,0.023341399966739118,stalled,probabilistic_stopping,1226,1225,5,1209
+8,35,2400035,single,"[7, 6, 5, 7, 0, 6, 5, 5]",0,0.0025157000636681914,solved,zero_conflicts,226,225,7,484
+8,35,2400035,single_step,"[7, 6, 5, 7, 0, 6, 5, 5]",5,0.001512999995611608,stalled,probabilistic_stopping,124,123,1,119
+8,35,2400035,swap,"[7, 6, 5, 7, 0, 6, 5, 5]",6,0.003165000001899898,stalled,probabilistic_stopping,237,236,3,223
+8,35,2400035,dual,"[7, 6, 5, 7, 0, 6, 5, 5]",1,0.06307289993856102,budget,proposal_limit,5001,5000,6,16230
+8,35,2400035,adaptive,"[7, 6, 5, 7, 0, 6, 5, 5]",1,0.031289500067941844,stalled,probabilistic_stopping,1225,1224,4,1209
+8,36,2400036,single,"[6, 4, 3, 0, 3, 3, 2, 3]",1,0.004307799972593784,stalled,probabilistic_stopping,620,619,7,484
+8,36,2400036,single_step,"[6, 4, 3, 0, 3, 3, 2, 3]",4,0.001992100034840405,stalled,probabilistic_stopping,203,202,3,119
+8,36,2400036,swap,"[6, 4, 3, 0, 3, 3, 2, 3]",7,0.002097100019454956,stalled,probabilistic_stopping,260,259,1,223
+8,36,2400036,dual,"[6, 4, 3, 0, 3, 3, 2, 3]",0,0.00026950007304549217,solved,zero_conflicts,28,27,4,16230
+8,36,2400036,adaptive,"[6, 4, 3, 0, 3, 3, 2, 3]",2,0.020848399959504604,stalled,probabilistic_stopping,1215,1214,3,1209
+8,37,2400037,single,"[2, 0, 2, 2, 1, 5, 1, 0]",0,0.0011079000541940331,solved,zero_conflicts,174,173,7,484
+8,37,2400037,single_step,"[2, 0, 2, 2, 1, 5, 1, 0]",4,0.0010296000400558114,stalled,probabilistic_stopping,156,155,4,119
+8,37,2400037,swap,"[2, 0, 2, 2, 1, 5, 1, 0]",7,0.0016938999760895967,stalled,probabilistic_stopping,225,224,1,223
+8,37,2400037,dual,"[2, 0, 2, 2, 1, 5, 1, 0]",1,0.045948500046506524,budget,proposal_limit,5001,5000,6,16230
+8,37,2400037,adaptive,"[2, 0, 2, 2, 1, 5, 1, 0]",1,0.022068899939768016,stalled,probabilistic_stopping,1231,1230,7,1209
+8,38,2400038,single,"[7, 2, 0, 5, 2, 3, 1, 3]",2,0.0036187999648973346,stalled,probabilistic_stopping,551,550,4,484
+8,38,2400038,single_step,"[7, 2, 0, 5, 2, 3, 1, 3]",3,0.0014541000127792358,stalled,probabilistic_stopping,153,152,4,119
+8,38,2400038,swap,"[7, 2, 0, 5, 2, 3, 1, 3]",2,0.004226700053550303,stalled,probabilistic_stopping,386,385,5,223
+8,38,2400038,dual,"[7, 2, 0, 5, 2, 3, 1, 3]",0,0.05365579994395375,solved,zero_conflicts,4299,4298,6,16230
+8,38,2400038,adaptive,"[7, 2, 0, 5, 2, 3, 1, 3]",0,0.00035200000274926424,solved,zero_conflicts,17,16,4,1209
+8,39,2400039,single,"[4, 0, 5, 0, 7, 3, 3, 1]",2,0.0048853999469429255,stalled,probabilistic_stopping,495,494,2,484
+8,39,2400039,single_step,"[4, 0, 5, 0, 7, 3, 3, 1]",4,0.0010111000156030059,stalled,probabilistic_stopping,142,141,1,119
+8,39,2400039,swap,"[4, 0, 5, 0, 7, 3, 3, 1]",2,0.001959300017915666,stalled,probabilistic_stopping,239,238,3,223
+8,39,2400039,dual,"[4, 0, 5, 0, 7, 3, 3, 1]",1,0.06521999998949468,budget,proposal_limit,5001,5000,3,16230
+8,39,2400039,adaptive,"[4, 0, 5, 0, 7, 3, 3, 1]",0,0.0015296000055968761,solved,zero_conflicts,36,35,5,1209
+8,40,2400040,single,"[6, 3, 6, 5, 1, 3, 7, 3]",2,0.013074099901132286,stalled,probabilistic_stopping,595,594,5,484
+8,40,2400040,single_step,"[6, 3, 6, 5, 1, 3, 7, 3]",3,0.002947300090454519,stalled,probabilistic_stopping,132,131,4,119
+8,40,2400040,swap,"[6, 3, 6, 5, 1, 3, 7, 3]",5,0.004277799976989627,stalled,probabilistic_stopping,226,225,1,223
+8,40,2400040,dual,"[6, 3, 6, 5, 1, 3, 7, 3]",1,0.0476502999663353,budget,proposal_limit,5001,5000,5,16230
+8,40,2400040,adaptive,"[6, 3, 6, 5, 1, 3, 7, 3]",3,0.017638999968767166,stalled,probabilistic_stopping,1217,1216,4,1209
+8,41,2400041,single,"[1, 1, 6, 0, 7, 2, 0, 7]",2,0.0031370000215247273,stalled,probabilistic_stopping,504,503,3,484
+8,41,2400041,single_step,"[1, 1, 6, 0, 7, 2, 0, 7]",3,0.0011903000995516777,stalled,probabilistic_stopping,163,162,2,119
+8,41,2400041,swap,"[1, 1, 6, 0, 7, 2, 0, 7]",3,0.0036196999717503786,stalled,probabilistic_stopping,266,265,2,223
+8,41,2400041,dual,"[1, 1, 6, 0, 7, 2, 0, 7]",2,0.050705699948593974,budget,proposal_limit,5001,5000,3,16230
+8,41,2400041,adaptive,"[1, 1, 6, 0, 7, 2, 0, 7]",2,0.025832500075921416,stalled,probabilistic_stopping,1219,1218,3,1209
+8,42,2400042,single,"[2, 2, 0, 3, 7, 3, 1, 4]",1,0.004804600030183792,stalled,probabilistic_stopping,513,512,3,484
+8,42,2400042,single_step,"[2, 2, 0, 3, 7, 3, 1, 4]",3,0.0010893000289797783,stalled,probabilistic_stopping,152,151,2,119
+8,42,2400042,swap,"[2, 2, 0, 3, 7, 3, 1, 4]",2,0.0018986000213772058,stalled,probabilistic_stopping,250,249,3,223
+8,42,2400042,dual,"[2, 2, 0, 3, 7, 3, 1, 4]",1,0.05289800011087209,budget,proposal_limit,5001,5000,4,16230
+8,42,2400042,adaptive,"[2, 2, 0, 3, 7, 3, 1, 4]",1,0.018425600021146238,stalled,probabilistic_stopping,1221,1220,3,1209
+8,43,2400043,single,"[0, 1, 1, 4, 1, 2, 3, 1]",2,0.0036869000177830458,stalled,probabilistic_stopping,546,545,6,484
+8,43,2400043,single_step,"[0, 1, 1, 4, 1, 2, 3, 1]",3,0.0010496999602764845,stalled,probabilistic_stopping,138,137,6,119
+8,43,2400043,swap,"[0, 1, 1, 4, 1, 2, 3, 1]",7,0.0032920000376179814,stalled,probabilistic_stopping,232,231,2,223
+8,43,2400043,dual,"[0, 1, 1, 4, 1, 2, 3, 1]",0,0.004517000052146614,solved,zero_conflicts,449,448,7,16230
+8,43,2400043,adaptive,"[0, 1, 1, 4, 1, 2, 3, 1]",1,0.031742199906148016,stalled,probabilistic_stopping,1232,1231,6,1209
+8,44,2400044,single,"[4, 5, 4, 4, 3, 5, 3, 4]",1,0.006610999931581318,stalled,probabilistic_stopping,515,514,7,484
+8,44,2400044,single_step,"[4, 5, 4, 4, 3, 5, 3, 4]",8,0.0016372998943552375,stalled,probabilistic_stopping,140,139,2,119
+8,44,2400044,swap,"[4, 5, 4, 4, 3, 5, 3, 4]",9,0.005034399917349219,stalled,probabilistic_stopping,255,254,2,223
+8,44,2400044,dual,"[4, 5, 4, 4, 3, 5, 3, 4]",1,0.07050579995848238,budget,proposal_limit,5001,5000,5,16230
+8,44,2400044,adaptive,"[4, 5, 4, 4, 3, 5, 3, 4]",2,0.023988400003872812,stalled,probabilistic_stopping,1240,1239,6,1209
+8,45,2400045,single,"[1, 1, 4, 6, 4, 7, 0, 4]",1,0.005169200012460351,stalled,probabilistic_stopping,627,626,6,484
+8,45,2400045,single_step,"[1, 1, 4, 6, 4, 7, 0, 4]",4,0.001029500039294362,stalled,probabilistic_stopping,132,131,2,119
+8,45,2400045,swap,"[1, 1, 4, 6, 4, 7, 0, 4]",5,0.0018760999664664268,stalled,probabilistic_stopping,242,241,2,223
+8,45,2400045,dual,"[1, 1, 4, 6, 4, 7, 0, 4]",1,0.05342499993275851,budget,proposal_limit,5001,5000,5,16230
+8,45,2400045,adaptive,"[1, 1, 4, 6, 4, 7, 0, 4]",3,0.01856859994586557,stalled,probabilistic_stopping,1212,1211,2,1209
+8,46,2400046,single,"[2, 6, 6, 6, 4, 5, 2, 7]",2,0.00319279998075217,stalled,probabilistic_stopping,508,507,6,484
+8,46,2400046,single_step,"[2, 6, 6, 6, 4, 5, 2, 7]",6,0.000952300033532083,stalled,probabilistic_stopping,141,140,4,119
+8,46,2400046,swap,"[2, 6, 6, 6, 4, 5, 2, 7]",5,0.002066000015474856,stalled,probabilistic_stopping,240,239,3,223
+8,46,2400046,dual,"[2, 6, 6, 6, 4, 5, 2, 7]",1,0.04921339999418706,budget,proposal_limit,5001,5000,6,16230
+8,46,2400046,adaptive,"[2, 6, 6, 6, 4, 5, 2, 7]",0,0.0016041999915614724,solved,zero_conflicts,51,50,8,1209
+8,47,2400047,single,"[1, 1, 3, 4, 0, 2, 4, 4]",1,0.004846600000746548,stalled,probabilistic_stopping,553,552,6,484
+8,47,2400047,single_step,"[1, 1, 3, 4, 0, 2, 4, 4]",3,0.0010327000636607409,stalled,probabilistic_stopping,148,147,4,119
+8,47,2400047,swap,"[1, 1, 3, 4, 0, 2, 4, 4]",5,0.0020580999553203583,stalled,probabilistic_stopping,264,263,4,223
+8,47,2400047,dual,"[1, 1, 3, 4, 0, 2, 4, 4]",1,0.10172180004883558,budget,proposal_limit,5001,5000,6,16230
+8,47,2400047,adaptive,"[1, 1, 3, 4, 0, 2, 4, 4]",0,0.00042040005791932344,solved,zero_conflicts,26,25,6,1209
+8,48,2400048,single,"[6, 3, 7, 6, 6, 4, 1, 0]",1,0.006711299996823072,stalled,probabilistic_stopping,627,626,6,484
+8,48,2400048,single_step,"[6, 3, 7, 6, 6, 4, 1, 0]",3,0.000992499990388751,stalled,probabilistic_stopping,141,140,3,119
+8,48,2400048,swap,"[6, 3, 7, 6, 6, 4, 1, 0]",4,0.0033321999944746494,stalled,probabilistic_stopping,236,235,3,223
+8,48,2400048,dual,"[6, 3, 7, 6, 6, 4, 1, 0]",0,0.008881799993105233,solved,zero_conflicts,987,986,8,16230
+8,48,2400048,adaptive,"[6, 3, 7, 6, 6, 4, 1, 0]",1,0.0254731000168249,stalled,probabilistic_stopping,1241,1240,5,1209
+8,49,2400049,single,"[2, 1, 3, 1, 0, 4, 2, 6]",1,0.004255599924363196,stalled,probabilistic_stopping,601,600,4,484
+8,49,2400049,single_step,"[2, 1, 3, 1, 0, 4, 2, 6]",3,0.0013564000837504864,stalled,probabilistic_stopping,162,161,3,119
+8,49,2400049,swap,"[2, 1, 3, 1, 0, 4, 2, 6]",4,0.0017902000108733773,stalled,probabilistic_stopping,235,234,2,223
+8,49,2400049,dual,"[2, 1, 3, 1, 0, 4, 2, 6]",1,0.04868089989759028,budget,proposal_limit,5001,5000,3,16230
+8,49,2400049,adaptive,"[2, 1, 3, 1, 0, 4, 2, 6]",1,0.019701099954545498,stalled,probabilistic_stopping,1220,1219,4,1209
+8,50,2400050,single,"[3, 1, 2, 6, 1, 7, 1, 2]",2,0.0033113000681623816,stalled,probabilistic_stopping,525,524,5,484
+8,50,2400050,single_step,"[3, 1, 2, 6, 1, 7, 1, 2]",2,0.0010775999398902059,stalled,probabilistic_stopping,161,160,4,119
+8,50,2400050,swap,"[3, 1, 2, 6, 1, 7, 1, 2]",4,0.0017497000517323613,stalled,probabilistic_stopping,234,233,3,223
+8,50,2400050,dual,"[3, 1, 2, 6, 1, 7, 1, 2]",1,0.050671800039708614,budget,proposal_limit,5001,5000,4,16230
+8,50,2400050,adaptive,"[3, 1, 2, 6, 1, 7, 1, 2]",1,0.020821699989028275,stalled,probabilistic_stopping,1228,1227,4,1209
+8,51,2400051,single,"[3, 6, 4, 5, 6, 3, 4, 2]",0,0.0007207000162452459,solved,zero_conflicts,43,42,6,484
+8,51,2400051,single_step,"[3, 6, 4, 5, 6, 3, 4, 2]",1,0.0021519999718293548,stalled,probabilistic_stopping,159,158,5,119
+8,51,2400051,swap,"[3, 6, 4, 5, 6, 3, 4, 2]",5,0.004729999927803874,stalled,probabilistic_stopping,230,229,1,223
+8,51,2400051,dual,"[3, 6, 4, 5, 6, 3, 4, 2]",0,0.04795179993379861,solved,zero_conflicts,2910,2909,6,16230
+8,51,2400051,adaptive,"[3, 6, 4, 5, 6, 3, 4, 2]",2,0.04849279997870326,stalled,probabilistic_stopping,1219,1218,4,1209
+8,52,2400052,single,"[2, 6, 6, 0, 3, 2, 4, 1]",0,0.002133500063791871,solved,zero_conflicts,117,116,4,484
+8,52,2400052,single_step,"[2, 6, 6, 0, 3, 2, 4, 1]",1,0.0017201000591740012,stalled,probabilistic_stopping,159,158,4,119
+8,52,2400052,swap,"[2, 6, 6, 0, 3, 2, 4, 1]",3,0.0026366000529378653,stalled,probabilistic_stopping,251,250,2,223
+8,52,2400052,dual,"[2, 6, 6, 0, 3, 2, 4, 1]",1,0.06400380004197359,budget,proposal_limit,5001,5000,6,16230
+8,52,2400052,adaptive,"[2, 6, 6, 0, 3, 2, 4, 1]",1,0.07112400000914931,stalled,probabilistic_stopping,1228,1227,4,1209
+8,53,2400053,single,"[5, 3, 0, 6, 4, 6, 0, 0]",0,0.0008717000018805265,solved,zero_conflicts,42,41,3,484
+8,53,2400053,single_step,"[5, 3, 0, 6, 4, 6, 0, 0]",2,0.001715600024908781,stalled,probabilistic_stopping,207,206,2,119
+8,53,2400053,swap,"[5, 3, 0, 6, 4, 6, 0, 0]",4,0.002177800051867962,stalled,probabilistic_stopping,224,223,0,223
+8,53,2400053,dual,"[5, 3, 0, 6, 4, 6, 0, 0]",1,0.09950829995796084,budget,proposal_limit,5001,5000,2,16230
+8,53,2400053,adaptive,"[5, 3, 0, 6, 4, 6, 0, 0]",1,0.02125929994508624,stalled,probabilistic_stopping,1233,1232,3,1209
+8,54,2400054,single,"[1, 0, 3, 6, 6, 4, 5, 0]",2,0.0035056000342592597,stalled,probabilistic_stopping,505,504,5,484
+8,54,2400054,single_step,"[1, 0, 3, 6, 6, 4, 5, 0]",3,0.0011891999747604132,stalled,probabilistic_stopping,150,149,5,119
+8,54,2400054,swap,"[1, 0, 3, 6, 6, 4, 5, 0]",3,0.001832999987527728,stalled,probabilistic_stopping,244,243,4,223
+8,54,2400054,dual,"[1, 0, 3, 6, 6, 4, 5, 0]",1,0.042347699985839427,budget,proposal_limit,5001,5000,6,16230
+8,54,2400054,adaptive,"[1, 0, 3, 6, 6, 4, 5, 0]",1,0.017953600035980344,stalled,probabilistic_stopping,1216,1215,5,1209
+8,55,2400055,single,"[6, 6, 4, 4, 7, 6, 3, 3]",1,0.003960000001825392,stalled,probabilistic_stopping,621,620,6,484
+8,55,2400055,single_step,"[6, 6, 4, 4, 7, 6, 3, 3]",3,0.001024700002744794,stalled,probabilistic_stopping,143,142,6,119
+8,55,2400055,swap,"[6, 6, 4, 4, 7, 6, 3, 3]",6,0.0019185999408364296,stalled,probabilistic_stopping,241,240,2,223
+8,55,2400055,dual,"[6, 6, 4, 4, 7, 6, 3, 3]",1,0.10621649993117899,budget,proposal_limit,5001,5000,7,16230
+8,55,2400055,adaptive,"[6, 6, 4, 4, 7, 6, 3, 3]",2,0.02591490000486374,stalled,probabilistic_stopping,1222,1221,3,1209
+8,56,2400056,single,"[0, 3, 4, 1, 1, 3, 0, 1]",1,0.0044321001041680574,stalled,probabilistic_stopping,637,636,7,484
+8,56,2400056,single_step,"[0, 3, 4, 1, 1, 3, 0, 1]",4,0.0013259999686852098,stalled,probabilistic_stopping,184,183,5,119
+8,56,2400056,swap,"[0, 3, 4, 1, 1, 3, 0, 1]",6,0.002142000012099743,stalled,probabilistic_stopping,255,254,3,223
+8,56,2400056,dual,"[0, 3, 4, 1, 1, 3, 0, 1]",1,0.10260179999750108,budget,proposal_limit,5001,5000,5,16230
+8,56,2400056,adaptive,"[0, 3, 4, 1, 1, 3, 0, 1]",1,0.06951479997951537,stalled,probabilistic_stopping,1278,1277,6,1209
+8,57,2400057,single,"[6, 0, 6, 3, 4, 0, 2, 7]",0,0.0018049998907372355,solved,zero_conflicts,91,90,7,484
+8,57,2400057,single_step,"[6, 0, 6, 3, 4, 0, 2, 7]",4,0.003691399935632944,stalled,probabilistic_stopping,128,127,3,119
+8,57,2400057,swap,"[6, 0, 6, 3, 4, 0, 2, 7]",3,0.010273599997162819,stalled,probabilistic_stopping,269,268,3,223
+8,57,2400057,dual,"[6, 0, 6, 3, 4, 0, 2, 7]",0,0.03613009990658611,solved,zero_conflicts,2060,2059,6,16230
+8,57,2400057,adaptive,"[6, 0, 6, 3, 4, 0, 2, 7]",1,0.018207999994046986,stalled,probabilistic_stopping,1231,1230,7,1209
+8,58,2400058,single,"[5, 3, 0, 1, 5, 4, 4, 6]",1,0.003475199919193983,stalled,probabilistic_stopping,520,519,5,484
+8,58,2400058,single_step,"[5, 3, 0, 1, 5, 4, 4, 6]",4,0.0011563999578356743,stalled,probabilistic_stopping,147,146,3,119
+8,58,2400058,swap,"[5, 3, 0, 1, 5, 4, 4, 6]",4,0.0018706999253481627,stalled,probabilistic_stopping,233,232,3,223
+8,58,2400058,dual,"[5, 3, 0, 1, 5, 4, 4, 6]",1,0.06579379993490875,budget,proposal_limit,5001,5000,6,16230
+8,58,2400058,adaptive,"[5, 3, 0, 1, 5, 4, 4, 6]",1,0.02725869999267161,stalled,probabilistic_stopping,1237,1236,5,1209
+8,59,2400059,single,"[0, 7, 0, 0, 5, 2, 5, 5]",1,0.009037100011482835,stalled,probabilistic_stopping,529,528,6,484
+8,59,2400059,single_step,"[0, 7, 0, 0, 5, 2, 5, 5]",2,0.0015541999600827694,stalled,probabilistic_stopping,150,149,5,119
+8,59,2400059,swap,"[0, 7, 0, 0, 5, 2, 5, 5]",7,0.0027597000589594245,stalled,probabilistic_stopping,279,278,1,223
+8,59,2400059,dual,"[0, 7, 0, 0, 5, 2, 5, 5]",1,0.07413329998962581,budget,proposal_limit,5001,5000,5,16230
+8,59,2400059,adaptive,"[0, 7, 0, 0, 5, 2, 5, 5]",2,0.01776760001666844,stalled,probabilistic_stopping,1239,1238,5,1209
+8,60,2400060,single,"[3, 3, 4, 2, 0, 4, 4, 1]",0,0.0002668000524863601,solved,zero_conflicts,38,37,3,484
+8,60,2400060,single_step,"[3, 3, 4, 2, 0, 4, 4, 1]",2,0.0009665000252425671,stalled,probabilistic_stopping,148,147,4,119
+8,60,2400060,swap,"[3, 3, 4, 2, 0, 4, 4, 1]",6,0.0018734000623226166,stalled,probabilistic_stopping,246,245,1,223
+8,60,2400060,dual,"[3, 3, 4, 2, 0, 4, 4, 1]",0,0.0209307000041008,solved,zero_conflicts,2364,2363,6,16230
+8,60,2400060,adaptive,"[3, 3, 4, 2, 0, 4, 4, 1]",0,0.0003282000543549657,solved,zero_conflicts,18,17,4,1209
+8,61,2400061,single,"[7, 0, 4, 6, 5, 4, 5, 1]",2,0.0039938000263646245,stalled,probabilistic_stopping,562,561,5,484
+8,61,2400061,single_step,"[7, 0, 4, 6, 5, 4, 5, 1]",4,0.0009945000056177378,stalled,probabilistic_stopping,127,126,3,119
+8,61,2400061,swap,"[7, 0, 4, 6, 5, 4, 5, 1]",3,0.0018686000257730484,stalled,probabilistic_stopping,233,232,4,223
+8,61,2400061,dual,"[7, 0, 4, 6, 5, 4, 5, 1]",0,0.009247400099411607,solved,zero_conflicts,961,960,6,16230
+8,61,2400061,adaptive,"[7, 0, 4, 6, 5, 4, 5, 1]",1,0.041881299926899374,stalled,probabilistic_stopping,1230,1229,5,1209
+8,62,2400062,single,"[1, 0, 4, 6, 1, 3, 7, 5]",2,0.027215000009164214,stalled,probabilistic_stopping,486,485,1,484
+8,62,2400062,single_step,"[1, 0, 4, 6, 1, 3, 7, 5]",2,0.00674280000384897,stalled,probabilistic_stopping,121,120,1,119
+8,62,2400062,swap,"[1, 0, 4, 6, 1, 3, 7, 5]",2,0.009811700088903308,stalled,probabilistic_stopping,233,232,2,223
+8,62,2400062,dual,"[1, 0, 4, 6, 1, 3, 7, 5]",1,0.06736920005641878,budget,proposal_limit,5001,5000,3,16230
+8,62,2400062,adaptive,"[1, 0, 4, 6, 1, 3, 7, 5]",2,0.018051000079140067,stalled,probabilistic_stopping,1213,1212,1,1209
+8,63,2400063,single,"[3, 2, 7, 6, 5, 0, 1, 2]",1,0.0071579000214114785,stalled,probabilistic_stopping,573,572,6,484
+8,63,2400063,single_step,"[3, 2, 7, 6, 5, 0, 1, 2]",2,0.0049242000095546246,stalled,probabilistic_stopping,145,144,6,119
+8,63,2400063,swap,"[3, 2, 7, 6, 5, 0, 1, 2]",1,0.0037059999303892255,stalled,probabilistic_stopping,257,256,6,223
+8,63,2400063,dual,"[3, 2, 7, 6, 5, 0, 1, 2]",1,0.11450789996888489,budget,proposal_limit,5001,5000,6,16230
+8,63,2400063,adaptive,"[3, 2, 7, 6, 5, 0, 1, 2]",1,0.05931070004589856,stalled,probabilistic_stopping,1258,1257,6,1209
+8,64,2400064,single,"[4, 0, 4, 3, 2, 5, 4, 6]",0,0.0014279000461101532,solved,zero_conflicts,57,56,8,484
+8,64,2400064,single_step,"[4, 0, 4, 3, 2, 5, 4, 6]",3,0.00494999997317791,stalled,probabilistic_stopping,160,159,6,119
+8,64,2400064,swap,"[4, 0, 4, 3, 2, 5, 4, 6]",4,0.009630799992009997,stalled,probabilistic_stopping,247,246,4,223
+8,64,2400064,dual,"[4, 0, 4, 3, 2, 5, 4, 6]",1,0.06940420006867498,budget,proposal_limit,5001,5000,6,16230
+8,64,2400064,adaptive,"[4, 0, 4, 3, 2, 5, 4, 6]",1,0.01940600003581494,stalled,probabilistic_stopping,1253,1252,6,1209
+8,65,2400065,single,"[6, 6, 3, 2, 0, 3, 4, 3]",1,0.003265300067141652,stalled,probabilistic_stopping,515,514,4,484
+8,65,2400065,single_step,"[6, 6, 3, 2, 0, 3, 4, 3]",4,0.000901999999769032,stalled,probabilistic_stopping,133,132,3,119
+8,65,2400065,swap,"[6, 6, 3, 2, 0, 3, 4, 3]",5,0.003040799987502396,stalled,probabilistic_stopping,278,277,2,223
+8,65,2400065,dual,"[6, 6, 3, 2, 0, 3, 4, 3]",1,0.04401900002267212,budget,proposal_limit,5001,5000,5,16230
+8,65,2400065,adaptive,"[6, 6, 3, 2, 0, 3, 4, 3]",1,0.01976910000666976,stalled,probabilistic_stopping,1288,1287,5,1209
+8,66,2400066,single,"[5, 4, 5, 6, 2, 3, 5, 3]",1,0.003954399959184229,stalled,probabilistic_stopping,601,600,6,484
+8,66,2400066,single_step,"[5, 4, 5, 6, 2, 3, 5, 3]",2,0.0010970999719575047,stalled,probabilistic_stopping,132,131,5,119
+8,66,2400066,swap,"[5, 4, 5, 6, 2, 3, 5, 3]",6,0.001778499921783805,stalled,probabilistic_stopping,233,232,2,223
+8,66,2400066,dual,"[5, 4, 5, 6, 2, 3, 5, 3]",1,0.05864479998126626,budget,proposal_limit,5001,5000,4,16230
+8,66,2400066,adaptive,"[5, 4, 5, 6, 2, 3, 5, 3]",1,0.02806919999420643,stalled,probabilistic_stopping,1300,1299,6,1209
+8,67,2400067,single,"[1, 4, 3, 4, 0, 5, 2, 3]",3,0.0038637000834569335,stalled,probabilistic_stopping,510,509,4,484
+8,67,2400067,single_step,"[1, 4, 3, 4, 0, 5, 2, 3]",5,0.0030592000111937523,stalled,probabilistic_stopping,125,124,3,119
+8,67,2400067,swap,"[1, 4, 3, 4, 0, 5, 2, 3]",4,0.0022743999725207686,stalled,probabilistic_stopping,243,242,4,223
+8,67,2400067,dual,"[1, 4, 3, 4, 0, 5, 2, 3]",1,0.07307209994178265,budget,proposal_limit,5001,5000,6,16230
+8,67,2400067,adaptive,"[1, 4, 3, 4, 0, 5, 2, 3]",1,0.049367600004188716,stalled,probabilistic_stopping,1233,1232,6,1209
+8,68,2400068,single,"[0, 6, 4, 2, 2, 0, 5, 5]",1,0.006090599927119911,stalled,probabilistic_stopping,577,576,4,484
+8,68,2400068,single_step,"[0, 6, 4, 2, 2, 0, 5, 5]",3,0.0026842999504879117,stalled,probabilistic_stopping,147,146,4,119
+8,68,2400068,swap,"[0, 6, 4, 2, 2, 0, 5, 5]",3,0.008462900063022971,stalled,probabilistic_stopping,311,310,3,223
+8,68,2400068,dual,"[0, 6, 4, 2, 2, 0, 5, 5]",1,0.06712849996984005,budget,proposal_limit,5001,5000,5,16230
+8,68,2400068,adaptive,"[0, 6, 4, 2, 2, 0, 5, 5]",1,0.01851129997521639,stalled,probabilistic_stopping,1225,1224,4,1209
+8,69,2400069,single,"[1, 5, 2, 7, 7, 6, 2, 0]",2,0.0036776999477297068,stalled,probabilistic_stopping,582,581,3,484
+8,69,2400069,single_step,"[1, 5, 2, 7, 7, 6, 2, 0]",4,0.0009097999427467585,stalled,probabilistic_stopping,136,135,1,119
+8,69,2400069,swap,"[1, 5, 2, 7, 7, 6, 2, 0]",2,0.0017957000527530909,stalled,probabilistic_stopping,230,229,2,223
+8,69,2400069,dual,"[1, 5, 2, 7, 7, 6, 2, 0]",1,0.043100800015963614,budget,proposal_limit,5001,5000,4,16230
+8,69,2400069,adaptive,"[1, 5, 2, 7, 7, 6, 2, 0]",1,0.025740699958987534,stalled,probabilistic_stopping,1414,1413,4,1209
+8,70,2400070,single,"[7, 6, 5, 7, 4, 6, 7, 3]",1,0.0042643999913707376,stalled,probabilistic_stopping,523,522,7,484
+8,70,2400070,single_step,"[7, 6, 5, 7, 4, 6, 7, 3]",5,0.0009265999542549253,stalled,probabilistic_stopping,140,139,3,119
+8,70,2400070,swap,"[7, 6, 5, 7, 4, 6, 7, 3]",5,0.0017993999645113945,stalled,probabilistic_stopping,240,239,3,223
+8,70,2400070,dual,"[7, 6, 5, 7, 4, 6, 7, 3]",0,0.011524999979883432,solved,zero_conflicts,1358,1357,4,16230
+8,70,2400070,adaptive,"[7, 6, 5, 7, 4, 6, 7, 3]",1,0.018432200071401894,stalled,probabilistic_stopping,1241,1240,4,1209
+8,71,2400071,single,"[3, 6, 6, 6, 6, 3, 2, 4]",1,0.004300900036469102,stalled,probabilistic_stopping,680,679,7,484
+8,71,2400071,single_step,"[3, 6, 6, 6, 6, 3, 2, 4]",4,0.0008292999118566513,stalled,probabilistic_stopping,126,125,4,119
+8,71,2400071,swap,"[3, 6, 6, 6, 6, 3, 2, 4]",8,0.0020728999515995383,stalled,probabilistic_stopping,234,233,1,223
+8,71,2400071,dual,"[3, 6, 6, 6, 6, 3, 2, 4]",0,0.004273700062185526,solved,zero_conflicts,479,478,5,16230
+8,71,2400071,adaptive,"[3, 6, 6, 6, 6, 3, 2, 4]",0,0.004354200093075633,solved,zero_conflicts,294,293,7,1209
+8,72,2400072,single,"[5, 3, 2, 1, 4, 4, 3, 3]",1,0.00475719990208745,stalled,probabilistic_stopping,747,746,7,484
+8,72,2400072,single_step,"[5, 3, 2, 1, 4, 4, 3, 3]",5,0.0010597000364214182,stalled,probabilistic_stopping,157,156,4,119
+8,72,2400072,swap,"[5, 3, 2, 1, 4, 4, 3, 3]",6,0.0017598000122234225,stalled,probabilistic_stopping,238,237,3,223
+8,72,2400072,dual,"[5, 3, 2, 1, 4, 4, 3, 3]",1,0.09128679998684675,budget,proposal_limit,5001,5000,6,16230
+8,72,2400072,adaptive,"[5, 3, 2, 1, 4, 4, 3, 3]",3,0.032964800018817186,stalled,probabilistic_stopping,1225,1224,3,1209
+8,73,2400073,single,"[4, 4, 6, 3, 0, 0, 4, 4]",1,0.0037953000282868743,stalled,probabilistic_stopping,582,581,6,484
+8,73,2400073,single_step,"[4, 4, 6, 3, 0, 0, 4, 4]",3,0.001072899904102087,stalled,probabilistic_stopping,161,160,4,119
+8,73,2400073,swap,"[4, 4, 6, 3, 0, 0, 4, 4]",8,0.0017446000128984451,stalled,probabilistic_stopping,233,232,2,223
+8,73,2400073,dual,"[4, 4, 6, 3, 0, 0, 4, 4]",1,0.042496099951677024,budget,proposal_limit,5001,5000,7,16230
+8,73,2400073,adaptive,"[4, 4, 6, 3, 0, 0, 4, 4]",1,0.024350599967874587,stalled,probabilistic_stopping,1269,1268,4,1209
+8,74,2400074,single,"[5, 1, 2, 6, 0, 6, 2, 2]",1,0.0046709999442100525,stalled,probabilistic_stopping,517,516,5,484
+8,74,2400074,single_step,"[5, 1, 2, 6, 0, 6, 2, 2]",3,0.002044200082309544,stalled,probabilistic_stopping,131,130,4,119
+8,74,2400074,swap,"[5, 1, 2, 6, 0, 6, 2, 2]",5,0.002622300060465932,stalled,probabilistic_stopping,238,237,3,223
+8,74,2400074,dual,"[5, 1, 2, 6, 0, 6, 2, 2]",1,0.11564429989084601,budget,proposal_limit,5001,5000,5,16230
+8,74,2400074,adaptive,"[5, 1, 2, 6, 0, 6, 2, 2]",0,0.00031759997364133596,solved,zero_conflicts,13,12,6,1209
+8,75,2400075,single,"[2, 4, 5, 5, 5, 6, 6, 4]",0,0.0015149000100791454,solved,zero_conflicts,43,42,7,484
+8,75,2400075,single_step,"[2, 4, 5, 5, 5, 6, 6, 4]",7,0.0009296999778598547,stalled,probabilistic_stopping,125,124,1,119
+8,75,2400075,swap,"[2, 4, 5, 5, 5, 6, 6, 4]",6,0.002239599940367043,stalled,probabilistic_stopping,269,268,3,223
+8,75,2400075,dual,"[2, 4, 5, 5, 5, 6, 6, 4]",1,0.06001050001941621,budget,proposal_limit,5001,5000,3,16230
+8,75,2400075,adaptive,"[2, 4, 5, 5, 5, 6, 6, 4]",1,0.02097329997923225,stalled,probabilistic_stopping,1334,1333,6,1209
+8,76,2400076,single,"[3, 5, 0, 1, 1, 7, 0, 3]",1,0.004563999944366515,stalled,probabilistic_stopping,661,660,4,484
+8,76,2400076,single_step,"[3, 5, 0, 1, 1, 7, 0, 3]",3,0.0012104000197723508,stalled,probabilistic_stopping,150,149,2,119
+8,76,2400076,swap,"[3, 5, 0, 1, 1, 7, 0, 3]",4,0.00288459996227175,stalled,probabilistic_stopping,263,262,1,223
+8,76,2400076,dual,"[3, 5, 0, 1, 1, 7, 0, 3]",1,0.06506619998253882,budget,proposal_limit,5001,5000,4,16230
+8,76,2400076,adaptive,"[3, 5, 0, 1, 1, 7, 0, 3]",0,0.00030519999563694,solved,zero_conflicts,16,15,5,1209
+8,77,2400077,single,"[6, 3, 7, 2, 7, 0, 7, 3]",2,0.003182700020261109,stalled,probabilistic_stopping,511,510,2,484
+8,77,2400077,single_step,"[6, 3, 7, 2, 7, 0, 7, 3]",4,0.0008153000380843878,stalled,probabilistic_stopping,121,120,1,119
+8,77,2400077,swap,"[6, 3, 7, 2, 7, 0, 7, 3]",4,0.002065500011667609,stalled,probabilistic_stopping,280,279,1,223
+8,77,2400077,dual,"[6, 3, 7, 2, 7, 0, 7, 3]",1,0.04270550003275275,budget,proposal_limit,5001,5000,3,16230
+8,77,2400077,adaptive,"[6, 3, 7, 2, 7, 0, 7, 3]",2,0.020057599991559982,stalled,probabilistic_stopping,1232,1231,3,1209
+8,78,2400078,single,"[0, 7, 4, 3, 2, 0, 1, 7]",2,0.0035728999646380544,stalled,probabilistic_stopping,554,553,6,484
+8,78,2400078,single_step,"[0, 7, 4, 3, 2, 0, 1, 7]",5,0.0009960000170394778,stalled,probabilistic_stopping,130,129,2,119
+8,78,2400078,swap,"[0, 7, 4, 3, 2, 0, 1, 7]",2,0.0020254000555723906,stalled,probabilistic_stopping,260,259,4,223
+8,78,2400078,dual,"[0, 7, 4, 3, 2, 0, 1, 7]",1,0.043282900005578995,budget,proposal_limit,5001,5000,7,16230
+8,78,2400078,adaptive,"[0, 7, 4, 3, 2, 0, 1, 7]",1,0.017991999979130924,stalled,probabilistic_stopping,1245,1244,6,1209
+8,79,2400079,single,"[7, 2, 3, 0, 5, 7, 2, 4]",2,0.003122400026768446,stalled,probabilistic_stopping,497,496,2,484
+8,79,2400079,single_step,"[7, 2, 3, 0, 5, 7, 2, 4]",1,0.0021394999930635095,stalled,probabilistic_stopping,160,159,4,119
+8,79,2400079,swap,"[7, 2, 3, 0, 5, 7, 2, 4]",2,0.0018906000768765807,stalled,probabilistic_stopping,234,233,3,223
+8,79,2400079,dual,"[7, 2, 3, 0, 5, 7, 2, 4]",1,0.04375339997932315,budget,proposal_limit,5001,5000,6,16230
+8,79,2400079,adaptive,"[7, 2, 3, 0, 5, 7, 2, 4]",2,0.018276900053024292,stalled,probabilistic_stopping,1271,1270,4,1209
+8,80,2400080,single,"[1, 7, 6, 1, 6, 3, 1, 6]",2,0.0032007000409066677,stalled,probabilistic_stopping,514,513,6,484
+8,80,2400080,single_step,"[1, 7, 6, 1, 6, 3, 1, 6]",5,0.0008903999114409089,stalled,probabilistic_stopping,126,125,3,119
+8,80,2400080,swap,"[1, 7, 6, 1, 6, 3, 1, 6]",6,0.0018693000311031938,stalled,probabilistic_stopping,242,241,3,223
+8,80,2400080,dual,"[1, 7, 6, 1, 6, 3, 1, 6]",1,0.048308399971574545,budget,proposal_limit,5001,5000,7,16230
+8,80,2400080,adaptive,"[1, 7, 6, 1, 6, 3, 1, 6]",2,0.06816510006319731,stalled,probabilistic_stopping,1232,1231,5,1209
+8,81,2400081,single,"[1, 2, 4, 3, 1, 6, 6, 2]",1,0.011419499991461635,stalled,probabilistic_stopping,619,618,6,484
+8,81,2400081,single_step,"[1, 2, 4, 3, 1, 6, 6, 2]",2,0.002037400030530989,stalled,probabilistic_stopping,151,150,5,119
+8,81,2400081,swap,"[1, 2, 4, 3, 1, 6, 6, 2]",4,0.005389799945987761,stalled,probabilistic_stopping,252,251,3,223
+8,81,2400081,dual,"[1, 2, 4, 3, 1, 6, 6, 2]",1,0.12460610002744943,budget,proposal_limit,5001,5000,5,16230
+8,81,2400081,adaptive,"[1, 2, 4, 3, 1, 6, 6, 2]",1,0.02071429998613894,stalled,probabilistic_stopping,1222,1221,4,1209
+8,82,2400082,single,"[7, 3, 6, 0, 6, 7, 0, 7]",0,0.001637800014577806,solved,zero_conflicts,123,122,7,484
+8,82,2400082,single_step,"[7, 3, 6, 0, 6, 7, 0, 7]",5,0.001848700107075274,stalled,probabilistic_stopping,124,123,2,119
+8,82,2400082,swap,"[7, 3, 6, 0, 6, 7, 0, 7]",5,0.0036497999681159854,stalled,probabilistic_stopping,238,237,3,223
+8,82,2400082,dual,"[7, 3, 6, 0, 6, 7, 0, 7]",1,0.07198000000789762,budget,proposal_limit,5001,5000,5,16230
+8,82,2400082,adaptive,"[7, 3, 6, 0, 6, 7, 0, 7]",1,0.017851300071924925,stalled,probabilistic_stopping,1233,1232,4,1209
+8,83,2400083,single,"[2, 0, 0, 2, 3, 7, 6, 5]",1,0.0033759999787434936,stalled,probabilistic_stopping,525,524,6,484
+8,83,2400083,single_step,"[2, 0, 0, 2, 3, 7, 6, 5]",4,0.0009264999534934759,stalled,probabilistic_stopping,140,139,4,119
+8,83,2400083,swap,"[2, 0, 0, 2, 3, 7, 6, 5]",2,0.0020068000303581357,stalled,probabilistic_stopping,260,259,4,223
+8,83,2400083,dual,"[2, 0, 0, 2, 3, 7, 6, 5]",1,0.04303920001257211,budget,proposal_limit,5001,5000,4,16230
+8,83,2400083,adaptive,"[2, 0, 0, 2, 3, 7, 6, 5]",0,0.0005101000424474478,solved,zero_conflicts,28,27,7,1209
+8,84,2400084,single,"[6, 6, 7, 6, 3, 4, 4, 0]",1,0.004042299930006266,stalled,probabilistic_stopping,635,634,7,484
+8,84,2400084,single_step,"[6, 6, 7, 6, 3, 4, 4, 0]",3,0.0011264999629929662,stalled,probabilistic_stopping,167,166,6,119
+8,84,2400084,swap,"[6, 6, 7, 6, 3, 4, 4, 0]",4,0.0027167999651283026,stalled,probabilistic_stopping,242,241,3,223
+8,84,2400084,dual,"[6, 6, 7, 6, 3, 4, 4, 0]",1,0.04865319991949946,budget,proposal_limit,5001,5000,6,16230
+8,84,2400084,adaptive,"[6, 6, 7, 6, 3, 4, 4, 0]",2,0.019013699959032238,stalled,probabilistic_stopping,1242,1241,5,1209
+8,85,2400085,single,"[1, 7, 3, 4, 3, 5, 0, 4]",1,0.003909200080670416,stalled,probabilistic_stopping,612,611,4,484
+8,85,2400085,single_step,"[1, 7, 3, 4, 3, 5, 0, 4]",4,0.000826300005428493,stalled,probabilistic_stopping,123,122,1,119
+8,85,2400085,swap,"[1, 7, 3, 4, 3, 5, 0, 4]",3,0.002241700072772801,stalled,probabilistic_stopping,234,233,2,223
+8,85,2400085,dual,"[1, 7, 3, 4, 3, 5, 0, 4]",1,0.051714499946683645,budget,proposal_limit,5001,5000,3,16230
+8,85,2400085,adaptive,"[1, 7, 3, 4, 3, 5, 0, 4]",2,0.022297800052911043,stalled,probabilistic_stopping,1222,1221,3,1209
+8,86,2400086,single,"[3, 0, 0, 5, 0, 1, 7, 0]",2,0.004238299909047782,stalled,probabilistic_stopping,556,555,4,484
+8,86,2400086,single_step,"[3, 0, 0, 5, 0, 1, 7, 0]",4,0.0008275998989120126,stalled,probabilistic_stopping,123,122,1,119
+8,86,2400086,swap,"[3, 0, 0, 5, 0, 1, 7, 0]",7,0.0016440999461337924,stalled,probabilistic_stopping,224,223,0,223
+8,86,2400086,dual,"[3, 0, 0, 5, 0, 1, 7, 0]",0,0.007208599941805005,solved,zero_conflicts,854,853,6,16230
+8,86,2400086,adaptive,"[3, 0, 0, 5, 0, 1, 7, 0]",1,0.01988770009484142,stalled,probabilistic_stopping,1255,1254,4,1209
+8,87,2400087,single,"[7, 6, 5, 6, 1, 6, 1, 6]",0,0.0004830999532714486,solved,zero_conflicts,44,43,7,484
+8,87,2400087,single_step,"[7, 6, 5, 6, 1, 6, 1, 6]",6,0.001680399989709258,stalled,probabilistic_stopping,133,132,7,119
+8,87,2400087,swap,"[7, 6, 5, 6, 1, 6, 1, 6]",8,0.002632700023241341,stalled,probabilistic_stopping,235,234,5,223
+8,87,2400087,dual,"[7, 6, 5, 6, 1, 6, 1, 6]",1,0.059845699928700924,budget,proposal_limit,5001,5000,10,16230
+8,87,2400087,adaptive,"[7, 6, 5, 6, 1, 6, 1, 6]",1,0.026397099951282144,stalled,probabilistic_stopping,1238,1237,6,1209
+8,88,2400088,single,"[1, 2, 1, 6, 3, 1, 0, 4]",1,0.0036094000097364187,stalled,probabilistic_stopping,561,560,5,484
+8,88,2400088,single_step,"[1, 2, 1, 6, 3, 1, 0, 4]",4,0.0012585000367835164,stalled,probabilistic_stopping,124,123,2,119
+8,88,2400088,swap,"[1, 2, 1, 6, 3, 1, 0, 4]",5,0.0023155000526458025,stalled,probabilistic_stopping,226,225,2,223
+8,88,2400088,dual,"[1, 2, 1, 6, 3, 1, 0, 4]",0,0.020314899971708655,solved,zero_conflicts,873,872,5,16230
+8,88,2400088,adaptive,"[1, 2, 1, 6, 3, 1, 0, 4]",1,0.09431439999025315,stalled,probabilistic_stopping,1263,1262,4,1209
+8,89,2400089,single,"[0, 5, 6, 2, 5, 4, 2, 3]",1,0.017423100071027875,stalled,probabilistic_stopping,540,539,4,484
+8,89,2400089,single_step,"[0, 5, 6, 2, 5, 4, 2, 3]",4,0.0048198000295087695,stalled,probabilistic_stopping,121,120,1,119
+8,89,2400089,swap,"[0, 5, 6, 2, 5, 4, 2, 3]",3,0.011044500046409667,stalled,probabilistic_stopping,265,264,4,223
+8,89,2400089,dual,"[0, 5, 6, 2, 5, 4, 2, 3]",0,0.06344469997566193,solved,zero_conflicts,4895,4894,6,16230
+8,89,2400089,adaptive,"[0, 5, 6, 2, 5, 4, 2, 3]",1,0.0288287999574095,stalled,probabilistic_stopping,1218,1217,5,1209
+8,90,2400090,single,"[4, 2, 0, 3, 5, 7, 4, 2]",0,0.00048099993728101254,solved,zero_conflicts,71,70,4,484
+8,90,2400090,single_step,"[4, 2, 0, 3, 5, 7, 4, 2]",3,0.0009573999559506774,stalled,probabilistic_stopping,144,143,2,119
+8,90,2400090,swap,"[4, 2, 0, 3, 5, 7, 4, 2]",4,0.002027499955147505,stalled,probabilistic_stopping,232,231,1,223
+8,90,2400090,dual,"[4, 2, 0, 3, 5, 7, 4, 2]",1,0.04528109997045249,budget,proposal_limit,5001,5000,3,16230
+8,90,2400090,adaptive,"[4, 2, 0, 3, 5, 7, 4, 2]",0,0.0003030999796465039,solved,zero_conflicts,20,19,3,1209
+8,91,2400091,single,"[0, 2, 0, 1, 6, 1, 3, 1]",1,0.004662699997425079,stalled,probabilistic_stopping,736,735,3,484
+8,91,2400091,single_step,"[0, 2, 0, 1, 6, 1, 3, 1]",3,0.0009646000107750297,stalled,probabilistic_stopping,135,134,1,119
+8,91,2400091,swap,"[0, 2, 0, 1, 6, 1, 3, 1]",5,0.0016978000057861209,stalled,probabilistic_stopping,224,223,0,223
+8,91,2400091,dual,"[0, 2, 0, 1, 6, 1, 3, 1]",1,0.05098529998213053,budget,proposal_limit,5001,5000,3,16230
+8,91,2400091,adaptive,"[0, 2, 0, 1, 6, 1, 3, 1]",1,0.09712229995056987,stalled,probabilistic_stopping,1360,1359,3,1209
+8,92,2400092,single,"[0, 3, 1, 4, 0, 1, 1, 2]",1,0.00931180000770837,stalled,probabilistic_stopping,517,516,4,484
+8,92,2400092,single_step,"[0, 3, 1, 4, 0, 1, 1, 2]",4,0.0025044999783858657,stalled,probabilistic_stopping,156,155,4,119
+8,92,2400092,swap,"[0, 3, 1, 4, 0, 1, 1, 2]",5,0.0032778000459074974,stalled,probabilistic_stopping,252,251,3,223
+8,92,2400092,dual,"[0, 3, 1, 4, 0, 1, 1, 2]",0,0.01415390009060502,solved,zero_conflicts,1108,1107,6,16230
+8,92,2400092,adaptive,"[0, 3, 1, 4, 0, 1, 1, 2]",1,0.022697499953210354,stalled,probabilistic_stopping,1217,1216,5,1209
+8,93,2400093,single,"[1, 3, 7, 4, 6, 3, 2, 4]",2,0.0037326000165194273,stalled,probabilistic_stopping,553,552,3,484
+8,93,2400093,single_step,"[1, 3, 7, 4, 6, 3, 2, 4]",4,0.001163399894721806,stalled,probabilistic_stopping,140,139,1,119
+8,93,2400093,swap,"[1, 3, 7, 4, 6, 3, 2, 4]",3,0.0025462000630795956,stalled,probabilistic_stopping,256,255,1,223
+8,93,2400093,dual,"[1, 3, 7, 4, 6, 3, 2, 4]",1,0.052914900006726384,budget,proposal_limit,5001,5000,4,16230
+8,93,2400093,adaptive,"[1, 3, 7, 4, 6, 3, 2, 4]",2,0.022808399982750416,stalled,probabilistic_stopping,1298,1297,3,1209
+8,94,2400094,single,"[5, 3, 7, 4, 2, 1, 2, 4]",2,0.0033554999390617013,stalled,probabilistic_stopping,518,517,3,484
+8,94,2400094,single_step,"[5, 3, 7, 4, 2, 1, 2, 4]",3,0.001701700035482645,stalled,probabilistic_stopping,137,136,2,119
+8,94,2400094,swap,"[5, 3, 7, 4, 2, 1, 2, 4]",3,0.0021243999944999814,stalled,probabilistic_stopping,229,228,1,223
+8,94,2400094,dual,"[5, 3, 7, 4, 2, 1, 2, 4]",1,0.05642530007753521,budget,proposal_limit,5001,5000,4,16230
+8,94,2400094,adaptive,"[5, 3, 7, 4, 2, 1, 2, 4]",1,0.025620899978093803,stalled,probabilistic_stopping,1238,1237,4,1209
+8,95,2400095,single,"[1, 5, 7, 5, 1, 0, 1, 6]",1,0.0063940000254660845,stalled,probabilistic_stopping,686,685,5,484
+8,95,2400095,single_step,"[1, 5, 7, 5, 1, 0, 1, 6]",2,0.0019351999508216977,stalled,probabilistic_stopping,157,156,4,119
+8,95,2400095,swap,"[1, 5, 7, 5, 1, 0, 1, 6]",5,0.0038931999588385224,stalled,probabilistic_stopping,226,225,1,223
+8,95,2400095,dual,"[1, 5, 7, 5, 1, 0, 1, 6]",0,0.02475009998306632,solved,zero_conflicts,2174,2173,5,16230
+8,95,2400095,adaptive,"[1, 5, 7, 5, 1, 0, 1, 6]",1,0.019300600048154593,stalled,probabilistic_stopping,1288,1287,5,1209
+8,96,2400096,single,"[6, 2, 1, 3, 6, 5, 6, 3]",1,0.0034539999905973673,stalled,probabilistic_stopping,538,537,9,484
+8,96,2400096,single_step,"[6, 2, 1, 3, 6, 5, 6, 3]",2,0.001036000088788569,stalled,probabilistic_stopping,154,153,7,119
+8,96,2400096,swap,"[6, 2, 1, 3, 6, 5, 6, 3]",4,0.0019505999516695738,stalled,probabilistic_stopping,260,259,4,223
+8,96,2400096,dual,"[6, 2, 1, 3, 6, 5, 6, 3]",1,0.049052400048822165,budget,proposal_limit,5001,5000,7,16230
+8,96,2400096,adaptive,"[6, 2, 1, 3, 6, 5, 6, 3]",0,0.0009797000093385577,solved,zero_conflicts,41,40,8,1209
+8,97,2400097,single,"[5, 0, 3, 3, 1, 5, 5, 1]",2,0.003310999949462712,stalled,probabilistic_stopping,501,500,5,484
+8,97,2400097,single_step,"[5, 0, 3, 3, 1, 5, 5, 1]",4,0.0009481000015512109,stalled,probabilistic_stopping,135,134,3,119
+8,97,2400097,swap,"[5, 0, 3, 3, 1, 5, 5, 1]",6,0.002541600028052926,stalled,probabilistic_stopping,232,231,3,223
+8,97,2400097,dual,"[5, 0, 3, 3, 1, 5, 5, 1]",0,0.03206520003732294,solved,zero_conflicts,3061,3060,6,16230
+8,97,2400097,adaptive,"[5, 0, 3, 3, 1, 5, 5, 1]",2,0.020713799982331693,stalled,probabilistic_stopping,1222,1221,5,1209
+8,98,2400098,single,"[6, 6, 2, 5, 6, 4, 0, 4]",2,0.003928899997845292,stalled,probabilistic_stopping,609,608,4,484
+8,98,2400098,single_step,"[6, 6, 2, 5, 6, 4, 0, 4]",3,0.0015576999867334962,stalled,probabilistic_stopping,155,154,3,119
+8,98,2400098,swap,"[6, 6, 2, 5, 6, 4, 0, 4]",6,0.002436599927023053,stalled,probabilistic_stopping,224,223,0,223
+8,98,2400098,dual,"[6, 6, 2, 5, 6, 4, 0, 4]",1,0.07589879992883652,budget,proposal_limit,5001,5000,3,16230
+8,98,2400098,adaptive,"[6, 6, 2, 5, 6, 4, 0, 4]",0,0.00045819999650120735,solved,zero_conflicts,16,15,3,1209
+8,99,2400099,single,"[2, 2, 3, 6, 2, 5, 5, 1]",2,0.007631500018760562,stalled,probabilistic_stopping,561,560,3,484
+8,99,2400099,single_step,"[2, 2, 3, 6, 2, 5, 5, 1]",4,0.0011261999607086182,stalled,probabilistic_stopping,131,130,1,119
+8,99,2400099,swap,"[2, 2, 3, 6, 2, 5, 5, 1]",5,0.0028855999698862433,stalled,probabilistic_stopping,224,223,0,223
+8,99,2400099,dual,"[2, 2, 3, 6, 2, 5, 5, 1]",1,0.07012059993576258,budget,proposal_limit,5001,5000,3,16230
+8,99,2400099,adaptive,"[2, 2, 3, 6, 2, 5, 5, 1]",1,0.02515310002490878,stalled,probabilistic_stopping,1219,1218,3,1209
+12,0,3600000,single,"[10, 9, 7, 9, 1, 6, 8, 3, 3, 10, 10, 1]",1,0.016618699999526143,stalled,probabilistic_stopping,1544,1543,10,1253
+12,0,3600000,single_step,"[10, 9, 7, 9, 1, 6, 8, 3, 3, 10, 10, 1]",8,0.0024759999942034483,stalled,probabilistic_stopping,275,274,4,187
+12,0,3600000,swap,"[10, 9, 7, 9, 1, 6, 8, 3, 3, 10, 10, 1]",7,0.006832399987615645,stalled,probabilistic_stopping,605,604,3,581
+12,0,3600000,dual,"[10, 9, 7, 9, 1, 6, 8, 3, 3, 10, 10, 1]",1,0.09497059998102486,budget,proposal_limit,5001,5000,8,108535
+12,0,3600000,adaptive,"[10, 9, 7, 9, 1, 6, 8, 3, 3, 10, 10, 1]",2,0.11926880001556128,stalled,probabilistic_stopping,3224,3223,9,3132
+12,1,3600001,single,"[6, 0, 9, 4, 10, 8, 7, 3, 8, 9, 8, 6]",2,0.013924500090070069,stalled,probabilistic_stopping,1343,1342,7,1253
+12,1,3600001,single_step,"[6, 0, 9, 4, 10, 8, 7, 3, 8, 9, 8, 6]",6,0.0020900999661535025,stalled,probabilistic_stopping,216,215,2,187
+12,1,3600001,swap,"[6, 0, 9, 4, 10, 8, 7, 3, 8, 9, 8, 6]",6,0.007109900005161762,stalled,probabilistic_stopping,653,652,2,581
+12,1,3600001,dual,"[6, 0, 9, 4, 10, 8, 7, 3, 8, 9, 8, 6]",1,0.0781258000060916,budget,proposal_limit,5001,5000,9,108535
+12,1,3600001,adaptive,"[6, 0, 9, 4, 10, 8, 7, 3, 8, 9, 8, 6]",1,0.19362809997983277,stalled,probabilistic_stopping,3301,3300,7,3132
+12,2,3600002,single,"[8, 2, 0, 1, 2, 2, 10, 11, 3, 7, 10, 5]",1,0.013425200013443828,stalled,probabilistic_stopping,1385,1384,11,1253
+12,2,3600002,single_step,"[8, 2, 0, 1, 2, 2, 10, 11, 3, 7, 10, 5]",4,0.0022298000985756516,stalled,probabilistic_stopping,249,248,7,187
+12,2,3600002,swap,"[8, 2, 0, 1, 2, 2, 10, 11, 3, 7, 10, 5]",5,0.007441200083121657,stalled,probabilistic_stopping,721,720,5,581
+12,2,3600002,dual,"[8, 2, 0, 1, 2, 2, 10, 11, 3, 7, 10, 5]",1,0.07699570001568645,budget,proposal_limit,5001,5000,9,108535
+12,2,3600002,adaptive,"[8, 2, 0, 1, 2, 2, 10, 11, 3, 7, 10, 5]",1,0.16482319997157902,stalled,probabilistic_stopping,3168,3167,8,3132
+12,3,3600003,single,"[5, 8, 8, 3, 3, 2, 10, 4, 5, 1, 5, 8]",2,0.02854470000602305,stalled,probabilistic_stopping,1636,1635,10,1253
+12,3,3600003,single_step,"[5, 8, 8, 3, 3, 2, 10, 4, 5, 1, 5, 8]",8,0.005580299999564886,stalled,probabilistic_stopping,202,201,4,187
+12,3,3600003,swap,"[5, 8, 8, 3, 3, 2, 10, 4, 5, 1, 5, 8]",8,0.013105899910442531,stalled,probabilistic_stopping,630,629,5,581
+12,3,3600003,dual,"[5, 8, 8, 3, 3, 2, 10, 4, 5, 1, 5, 8]",2,0.08074210002087057,budget,proposal_limit,5001,5000,7,108535
+12,3,3600003,adaptive,"[5, 8, 8, 3, 3, 2, 10, 4, 5, 1, 5, 8]",0,0.008447500062175095,solved,zero_conflicts,199,198,9,3132
+12,4,3600004,single,"[6, 9, 7, 9, 1, 7, 7, 9, 6, 9, 4, 9]",3,0.02479449997190386,stalled,probabilistic_stopping,1400,1399,11,1253
+12,4,3600004,single_step,"[6, 9, 7, 9, 1, 7, 7, 9, 6, 9, 4, 9]",6,0.004116699914447963,stalled,probabilistic_stopping,230,229,8,187
+12,4,3600004,swap,"[6, 9, 7, 9, 1, 7, 7, 9, 6, 9, 4, 9]",16,0.013717600028030574,stalled,probabilistic_stopping,616,615,3,581
+12,4,3600004,dual,"[6, 9, 7, 9, 1, 7, 7, 9, 6, 9, 4, 9]",1,0.1037347000092268,budget,proposal_limit,5001,5000,9,108535
+12,4,3600004,adaptive,"[6, 9, 7, 9, 1, 7, 7, 9, 6, 9, 4, 9]",2,0.1421386000001803,stalled,probabilistic_stopping,3220,3219,10,3132
+12,5,3600005,single,"[11, 7, 8, 0, 5, 0, 0, 3, 0, 11, 2, 9]",2,0.016364699928089976,stalled,probabilistic_stopping,1737,1736,8,1253
+12,5,3600005,single_step,"[11, 7, 8, 0, 5, 0, 0, 3, 0, 11, 2, 9]",4,0.0026944999117404222,stalled,probabilistic_stopping,218,217,6,187
+12,5,3600005,swap,"[11, 7, 8, 0, 5, 0, 0, 3, 0, 11, 2, 9]",7,0.011032499955035746,stalled,probabilistic_stopping,861,860,5,581
+12,5,3600005,dual,"[11, 7, 8, 0, 5, 0, 0, 3, 0, 11, 2, 9]",1,0.10474520002026111,budget,proposal_limit,5001,5000,9,108535
+12,5,3600005,adaptive,"[11, 7, 8, 0, 5, 0, 0, 3, 0, 11, 2, 9]",1,0.11814070004038513,stalled,probabilistic_stopping,3230,3229,7,3132
+12,6,3600006,single,"[3, 7, 11, 6, 9, 5, 3, 11, 2, 1, 8, 4]",2,0.014254200039431453,stalled,probabilistic_stopping,1388,1387,7,1253
+12,6,3600006,single_step,"[3, 7, 11, 6, 9, 5, 3, 11, 2, 1, 8, 4]",4,0.002199999988079071,stalled,probabilistic_stopping,226,225,3,187
+12,6,3600006,swap,"[3, 7, 11, 6, 9, 5, 3, 11, 2, 1, 8, 4]",2,0.006584499962627888,stalled,probabilistic_stopping,669,668,5,581
+12,6,3600006,dual,"[3, 7, 11, 6, 9, 5, 3, 11, 2, 1, 8, 4]",1,0.06640610005706549,budget,proposal_limit,5001,5000,6,108535
+12,6,3600006,adaptive,"[3, 7, 11, 6, 9, 5, 3, 11, 2, 1, 8, 4]",1,0.1413318000268191,stalled,probabilistic_stopping,3402,3401,7,3132
+12,7,3600007,single,"[7, 5, 10, 6, 2, 4, 4, 6, 1, 8, 10, 6]",3,0.012833600048907101,stalled,probabilistic_stopping,1309,1308,8,1253
+12,7,3600007,single_step,"[7, 5, 10, 6, 2, 4, 4, 6, 1, 8, 10, 6]",5,0.0018945999909192324,stalled,probabilistic_stopping,215,214,5,187
+12,7,3600007,swap,"[7, 5, 10, 6, 2, 4, 4, 6, 1, 8, 10, 6]",7,0.007428099983371794,stalled,probabilistic_stopping,603,602,4,581
+12,7,3600007,dual,"[7, 5, 10, 6, 2, 4, 4, 6, 1, 8, 10, 6]",1,0.0805348000722006,budget,proposal_limit,5001,5000,8,108535
+12,7,3600007,adaptive,"[7, 5, 10, 6, 2, 4, 4, 6, 1, 8, 10, 6]",3,0.21271100000012666,stalled,probabilistic_stopping,3175,3174,9,3132
+12,8,3600008,single,"[0, 6, 3, 10, 6, 2, 4, 10, 11, 10, 0, 11]",2,0.026809500064700842,stalled,probabilistic_stopping,1409,1408,11,1253
+12,8,3600008,single_step,"[0, 6, 3, 10, 6, 2, 4, 10, 11, 10, 0, 11]",4,0.002030799980275333,stalled,probabilistic_stopping,222,221,9,187
+12,8,3600008,swap,"[0, 6, 3, 10, 6, 2, 4, 10, 11, 10, 0, 11]",6,0.010996300028637052,stalled,probabilistic_stopping,887,886,7,581
+12,8,3600008,dual,"[0, 6, 3, 10, 6, 2, 4, 10, 11, 10, 0, 11]",1,0.05801500007510185,budget,proposal_limit,5001,5000,9,108535
+12,8,3600008,adaptive,"[0, 6, 3, 10, 6, 2, 4, 10, 11, 10, 0, 11]",3,0.08327279996592551,stalled,probabilistic_stopping,3172,3171,8,3132
+12,9,3600009,single,"[7, 11, 8, 8, 9, 7, 0, 11, 8, 1, 11, 10]",1,0.014124499983154237,stalled,probabilistic_stopping,1519,1518,7,1253
+12,9,3600009,single_step,"[7, 11, 8, 8, 9, 7, 0, 11, 8, 1, 11, 10]",9,0.0030077999690547585,stalled,probabilistic_stopping,241,240,2,187
+12,9,3600009,swap,"[7, 11, 8, 8, 9, 7, 0, 11, 8, 1, 11, 10]",8,0.013600299949757755,stalled,probabilistic_stopping,626,625,3,581
+12,9,3600009,dual,"[7, 11, 8, 8, 9, 7, 0, 11, 8, 1, 11, 10]",0,0.03840289998333901,solved,zero_conflicts,3011,3010,8,108535
+12,9,3600009,adaptive,"[7, 11, 8, 8, 9, 7, 0, 11, 8, 1, 11, 10]",1,0.0796519999857992,stalled,probabilistic_stopping,3171,3170,7,3132
+12,10,3600010,single,"[2, 6, 1, 7, 6, 5, 1, 5, 2, 11, 8, 9]",2,0.018097399966791272,stalled,probabilistic_stopping,1314,1313,10,1253
+12,10,3600010,single_step,"[2, 6, 1, 7, 6, 5, 1, 5, 2, 11, 8, 9]",5,0.004030699958093464,stalled,probabilistic_stopping,202,201,6,187
+12,10,3600010,swap,"[2, 6, 1, 7, 6, 5, 1, 5, 2, 11, 8, 9]",6,0.04615059995558113,stalled,probabilistic_stopping,635,634,7,581
+12,10,3600010,dual,"[2, 6, 1, 7, 6, 5, 1, 5, 2, 11, 8, 9]",1,0.060897500021383166,budget,proposal_limit,5001,5000,10,108535
+12,10,3600010,adaptive,"[2, 6, 1, 7, 6, 5, 1, 5, 2, 11, 8, 9]",3,0.1258862999966368,stalled,probabilistic_stopping,3252,3251,8,3132
+12,11,3600011,single,"[8, 3, 6, 4, 9, 5, 10, 8, 5, 10, 5, 0]",2,0.014484499930404127,stalled,probabilistic_stopping,1532,1531,7,1253
+12,11,3600011,single_step,"[8, 3, 6, 4, 9, 5, 10, 8, 5, 10, 5, 0]",5,0.0022227000445127487,stalled,probabilistic_stopping,257,256,6,187
+12,11,3600011,swap,"[8, 3, 6, 4, 9, 5, 10, 8, 5, 10, 5, 0]",6,0.009249399998225272,stalled,probabilistic_stopping,947,946,5,581
+12,11,3600011,dual,"[8, 3, 6, 4, 9, 5, 10, 8, 5, 10, 5, 0]",1,0.06482189998496324,budget,proposal_limit,5001,5000,7,108535
+12,11,3600011,adaptive,"[8, 3, 6, 4, 9, 5, 10, 8, 5, 10, 5, 0]",1,0.11644469993188977,stalled,probabilistic_stopping,3185,3184,8,3132
+12,12,3600012,single,"[5, 4, 10, 8, 10, 4, 7, 8, 1, 3, 11, 11]",4,0.03663279989268631,stalled,probabilistic_stopping,1291,1290,6,1253
+12,12,3600012,single_step,"[5, 4, 10, 8, 10, 4, 7, 8, 1, 3, 11, 11]",6,0.003418800071813166,stalled,probabilistic_stopping,213,212,5,187
+12,12,3600012,swap,"[5, 4, 10, 8, 10, 4, 7, 8, 1, 3, 11, 11]",4,0.0143640999449417,stalled,probabilistic_stopping,859,858,7,581
+12,12,3600012,dual,"[5, 4, 10, 8, 10, 4, 7, 8, 1, 3, 11, 11]",1,0.07440649997442961,budget,proposal_limit,5001,5000,8,108535
+12,12,3600012,adaptive,"[5, 4, 10, 8, 10, 4, 7, 8, 1, 3, 11, 11]",3,0.08142609999049455,stalled,probabilistic_stopping,3146,3145,7,3132
+12,13,3600013,single,"[6, 11, 0, 7, 10, 9, 7, 5, 2, 0, 7, 1]",4,0.014339499990455806,stalled,probabilistic_stopping,1324,1323,7,1253
+12,13,3600013,single_step,"[6, 11, 0, 7, 10, 9, 7, 5, 2, 0, 7, 1]",5,0.001992400037124753,stalled,probabilistic_stopping,206,205,5,187
+12,13,3600013,swap,"[6, 11, 0, 7, 10, 9, 7, 5, 2, 0, 7, 1]",5,0.011819200008176267,stalled,probabilistic_stopping,666,665,6,581
+12,13,3600013,dual,"[6, 11, 0, 7, 10, 9, 7, 5, 2, 0, 7, 1]",1,0.09914890001527965,budget,proposal_limit,5001,5000,6,108535
+12,13,3600013,adaptive,"[6, 11, 0, 7, 10, 9, 7, 5, 2, 0, 7, 1]",2,0.17192730004899204,stalled,probabilistic_stopping,3213,3212,7,3132
+12,14,3600014,single,"[4, 10, 10, 3, 7, 1, 8, 8, 5, 1, 6, 0]",2,0.02144599996972829,stalled,probabilistic_stopping,1307,1306,5,1253
+12,14,3600014,single_step,"[4, 10, 10, 3, 7, 1, 8, 8, 5, 1, 6, 0]",3,0.0038790999678894877,stalled,probabilistic_stopping,221,220,4,187
+12,14,3600014,swap,"[4, 10, 10, 3, 7, 1, 8, 8, 5, 1, 6, 0]",3,0.007736600004136562,stalled,probabilistic_stopping,594,593,3,581
+12,14,3600014,dual,"[4, 10, 10, 3, 7, 1, 8, 8, 5, 1, 6, 0]",1,0.09601029998157173,budget,proposal_limit,5001,5000,6,108535
+12,14,3600014,adaptive,"[4, 10, 10, 3, 7, 1, 8, 8, 5, 1, 6, 0]",1,0.1156112999888137,stalled,probabilistic_stopping,3302,3301,6,3132
+12,15,3600015,single,"[0, 4, 7, 8, 1, 8, 7, 3, 10, 9, 8, 0]",1,0.01304270001128316,stalled,probabilistic_stopping,1374,1373,9,1253
+12,15,3600015,single_step,"[0, 4, 7, 8, 1, 8, 7, 3, 10, 9, 8, 0]",5,0.003054099972359836,stalled,probabilistic_stopping,230,229,8,187
+12,15,3600015,swap,"[0, 4, 7, 8, 1, 8, 7, 3, 10, 9, 8, 0]",6,0.013341599958948791,stalled,probabilistic_stopping,610,609,5,581
+12,15,3600015,dual,"[0, 4, 7, 8, 1, 8, 7, 3, 10, 9, 8, 0]",1,0.07886629994027317,budget,proposal_limit,5001,5000,7,108535
+12,15,3600015,adaptive,"[0, 4, 7, 8, 1, 8, 7, 3, 10, 9, 8, 0]",1,0.10092759993858635,stalled,probabilistic_stopping,3177,3176,9,3132
+12,16,3600016,single,"[6, 11, 5, 1, 8, 5, 9, 7, 3, 3, 5, 6]",3,0.01181140006519854,stalled,probabilistic_stopping,1317,1316,8,1253
+12,16,3600016,single_step,"[6, 11, 5, 1, 8, 5, 9, 7, 3, 3, 5, 6]",2,0.002562599955126643,stalled,probabilistic_stopping,238,237,9,187
+12,16,3600016,swap,"[6, 11, 5, 1, 8, 5, 9, 7, 3, 3, 5, 6]",7,0.005877900053746998,stalled,probabilistic_stopping,604,603,5,581
+12,16,3600016,dual,"[6, 11, 5, 1, 8, 5, 9, 7, 3, 3, 5, 6]",1,0.0644429000094533,budget,proposal_limit,5001,5000,10,108535
+12,16,3600016,adaptive,"[6, 11, 5, 1, 8, 5, 9, 7, 3, 3, 5, 6]",2,0.0901993999723345,stalled,probabilistic_stopping,3155,3154,8,3132
+12,17,3600017,single,"[11, 6, 0, 2, 2, 4, 8, 6, 2, 9, 3, 11]",1,0.013993799919262528,stalled,probabilistic_stopping,1419,1418,10,1253
+12,17,3600017,single_step,"[11, 6, 0, 2, 2, 4, 8, 6, 2, 9, 3, 11]",5,0.0020846999250352383,stalled,probabilistic_stopping,221,220,4,187
+12,17,3600017,swap,"[11, 6, 0, 2, 2, 4, 8, 6, 2, 9, 3, 11]",5,0.00821389991324395,stalled,probabilistic_stopping,748,747,6,581
+12,17,3600017,dual,"[11, 6, 0, 2, 2, 4, 8, 6, 2, 9, 3, 11]",1,0.10033730010036379,budget,proposal_limit,5001,5000,7,108535
+12,17,3600017,adaptive,"[11, 6, 0, 2, 2, 4, 8, 6, 2, 9, 3, 11]",1,0.11661269993055612,stalled,probabilistic_stopping,3199,3198,8,3132
+12,18,3600018,single,"[2, 4, 1, 5, 4, 3, 2, 10, 9, 3, 6, 10]",1,0.036688299966044724,stalled,probabilistic_stopping,1458,1457,11,1253
+12,18,3600018,single_step,"[2, 4, 1, 5, 4, 3, 2, 10, 9, 3, 6, 10]",6,0.016828899970278144,stalled,probabilistic_stopping,265,264,7,187
+12,18,3600018,swap,"[2, 4, 1, 5, 4, 3, 2, 10, 9, 3, 6, 10]",6,0.025804099976085126,stalled,probabilistic_stopping,636,635,6,581
+12,18,3600018,dual,"[2, 4, 1, 5, 4, 3, 2, 10, 9, 3, 6, 10]",1,0.0537138000363484,budget,proposal_limit,5001,5000,10,108535
+12,18,3600018,adaptive,"[2, 4, 1, 5, 4, 3, 2, 10, 9, 3, 6, 10]",1,0.09135499992407858,stalled,probabilistic_stopping,3383,3382,9,3132
+12,19,3600019,single,"[0, 7, 11, 9, 1, 8, 4, 9, 6, 9, 2, 9]",2,0.014089800068177283,stalled,probabilistic_stopping,1440,1439,9,1253
+12,19,3600019,single_step,"[0, 7, 11, 9, 1, 8, 4, 9, 6, 9, 2, 9]",7,0.001790700014680624,stalled,probabilistic_stopping,201,200,3,187
+12,19,3600019,swap,"[0, 7, 11, 9, 1, 8, 4, 9, 6, 9, 2, 9]",7,0.011740300105884671,stalled,probabilistic_stopping,707,706,5,581
+12,19,3600019,dual,"[0, 7, 11, 9, 1, 8, 4, 9, 6, 9, 2, 9]",1,0.06404700002167374,budget,proposal_limit,5001,5000,8,108535
+12,19,3600019,adaptive,"[0, 7, 11, 9, 1, 8, 4, 9, 6, 9, 2, 9]",2,0.09539539995603263,stalled,probabilistic_stopping,3170,3169,8,3132
+12,20,3600020,single,"[10, 9, 6, 8, 1, 1, 7, 10, 2, 4, 8, 3]",4,0.015881699975579977,stalled,probabilistic_stopping,1331,1330,2,1253
+12,20,3600020,single_step,"[10, 9, 6, 8, 1, 1, 7, 10, 2, 4, 8, 3]",3,0.004215599969029427,stalled,probabilistic_stopping,245,244,3,187
+12,20,3600020,swap,"[10, 9, 6, 8, 1, 1, 7, 10, 2, 4, 8, 3]",4,0.013310199952684343,stalled,probabilistic_stopping,613,612,3,581
+12,20,3600020,dual,"[10, 9, 6, 8, 1, 1, 7, 10, 2, 4, 8, 3]",1,0.08685600000899285,budget,proposal_limit,5001,5000,6,108535
+12,20,3600020,adaptive,"[10, 9, 6, 8, 1, 1, 7, 10, 2, 4, 8, 3]",2,0.11110609991010278,stalled,probabilistic_stopping,3178,3177,4,3132
+12,21,3600021,single,"[6, 3, 6, 11, 7, 9, 6, 3, 8, 0, 11, 11]",1,0.030130799976177514,stalled,probabilistic_stopping,1324,1323,7,1253
+12,21,3600021,single_step,"[6, 3, 6, 11, 7, 9, 6, 3, 8, 0, 11, 11]",6,0.0029676000121980906,stalled,probabilistic_stopping,192,191,2,187
+12,21,3600021,swap,"[6, 3, 6, 11, 7, 9, 6, 3, 8, 0, 11, 11]",8,0.008163099992088974,stalled,probabilistic_stopping,593,592,4,581
+12,21,3600021,dual,"[6, 3, 6, 11, 7, 9, 6, 3, 8, 0, 11, 11]",1,0.05945120006799698,budget,proposal_limit,5001,5000,9,108535
+12,21,3600021,adaptive,"[6, 3, 6, 11, 7, 9, 6, 3, 8, 0, 11, 11]",2,0.09957349998876452,stalled,probabilistic_stopping,3161,3160,6,3132
+12,22,3600022,single,"[8, 9, 10, 0, 6, 8, 2, 6, 1, 10, 9, 11]",1,0.0399378000292927,stalled,probabilistic_stopping,1532,1531,8,1253
+12,22,3600022,single_step,"[8, 9, 10, 0, 6, 8, 2, 6, 1, 10, 9, 11]",4,0.002230999991297722,stalled,probabilistic_stopping,209,208,5,187
+12,22,3600022,swap,"[8, 9, 10, 0, 6, 8, 2, 6, 1, 10, 9, 11]",6,0.010134999989531934,stalled,probabilistic_stopping,617,616,5,581
+12,22,3600022,dual,"[8, 9, 10, 0, 6, 8, 2, 6, 1, 10, 9, 11]",1,0.07330779999028891,budget,proposal_limit,5001,5000,9,108535
+12,22,3600022,adaptive,"[8, 9, 10, 0, 6, 8, 2, 6, 1, 10, 9, 11]",1,0.13591700000688434,stalled,probabilistic_stopping,3162,3161,8,3132
+12,23,3600023,single,"[1, 6, 7, 2, 4, 11, 4, 10, 1, 2, 0, 9]",2,0.011919599957764149,stalled,probabilistic_stopping,1286,1285,4,1253
+12,23,3600023,single_step,"[1, 6, 7, 2, 4, 11, 4, 10, 1, 2, 0, 9]",5,0.0018754999618977308,stalled,probabilistic_stopping,219,218,3,187
+12,23,3600023,swap,"[1, 6, 7, 2, 4, 11, 4, 10, 1, 2, 0, 9]",4,0.006181299919262528,stalled,probabilistic_stopping,646,645,4,581
+12,23,3600023,dual,"[1, 6, 7, 2, 4, 11, 4, 10, 1, 2, 0, 9]",2,0.053147500031627715,budget,proposal_limit,5001,5000,5,108535
+12,23,3600023,adaptive,"[1, 6, 7, 2, 4, 11, 4, 10, 1, 2, 0, 9]",0,0.00538570003118366,solved,zero_conflicts,187,186,5,3132
+12,24,3600024,single,"[9, 10, 11, 2, 1, 4, 11, 10, 6, 2, 3, 3]",1,0.015528000076301396,stalled,probabilistic_stopping,1588,1587,11,1253
+12,24,3600024,single_step,"[9, 10, 11, 2, 1, 4, 11, 10, 6, 2, 3, 3]",7,0.0028933000285178423,stalled,probabilistic_stopping,251,250,6,187
+12,24,3600024,swap,"[9, 10, 11, 2, 1, 4, 11, 10, 6, 2, 3, 3]",5,0.007423499948345125,stalled,probabilistic_stopping,596,595,5,581
+12,24,3600024,dual,"[9, 10, 11, 2, 1, 4, 11, 10, 6, 2, 3, 3]",1,0.09339319996070117,budget,proposal_limit,5001,5000,8,108535
+12,24,3600024,adaptive,"[9, 10, 11, 2, 1, 4, 11, 10, 6, 2, 3, 3]",3,0.13914260000456125,stalled,probabilistic_stopping,3303,3302,7,3132
+12,25,3600025,single,"[4, 1, 9, 5, 2, 0, 4, 2, 2, 9, 11, 8]",2,0.014970800024457276,stalled,probabilistic_stopping,1306,1305,4,1253
+12,25,3600025,single_step,"[4, 1, 9, 5, 2, 0, 4, 2, 2, 9, 11, 8]",5,0.005368700018152595,stalled,probabilistic_stopping,264,263,4,187
+12,25,3600025,swap,"[4, 1, 9, 5, 2, 0, 4, 2, 2, 9, 11, 8]",6,0.01321590004954487,stalled,probabilistic_stopping,613,612,3,581
+12,25,3600025,dual,"[4, 1, 9, 5, 2, 0, 4, 2, 2, 9, 11, 8]",2,0.08827389997895807,budget,proposal_limit,5001,5000,7,108535
+12,25,3600025,adaptive,"[4, 1, 9, 5, 2, 0, 4, 2, 2, 9, 11, 8]",1,0.09077989996876568,stalled,probabilistic_stopping,3201,3200,7,3132
+12,26,3600026,single,"[4, 6, 3, 11, 0, 7, 2, 8, 3, 3, 1, 1]",1,0.014604699914343655,stalled,probabilistic_stopping,1391,1390,9,1253
+12,26,3600026,single_step,"[4, 6, 3, 11, 0, 7, 2, 8, 3, 3, 1, 1]",7,0.00303869997151196,stalled,probabilistic_stopping,213,212,3,187
+12,26,3600026,swap,"[4, 6, 3, 11, 0, 7, 2, 8, 3, 3, 1, 1]",5,0.007651400053873658,stalled,probabilistic_stopping,641,640,6,581
+12,26,3600026,dual,"[4, 6, 3, 11, 0, 7, 2, 8, 3, 3, 1, 1]",0,0.04226110002491623,solved,zero_conflicts,3053,3052,8,108535
+12,26,3600026,adaptive,"[4, 6, 3, 11, 0, 7, 2, 8, 3, 3, 1, 1]",2,0.09795140009373426,stalled,probabilistic_stopping,3206,3205,7,3132
+12,27,3600027,single,"[3, 2, 9, 3, 7, 3, 3, 3, 0, 0, 4, 4]",1,0.03890100005082786,stalled,probabilistic_stopping,1557,1556,8,1253
+12,27,3600027,single_step,"[3, 2, 9, 3, 7, 3, 3, 3, 0, 0, 4, 4]",5,0.008495099958963692,stalled,probabilistic_stopping,253,252,8,187
+12,27,3600027,swap,"[3, 2, 9, 3, 7, 3, 3, 3, 0, 0, 4, 4]",13,0.01417760003823787,stalled,probabilistic_stopping,685,684,3,581
+12,27,3600027,dual,"[3, 2, 9, 3, 7, 3, 3, 3, 0, 0, 4, 4]",0,0.05752050003502518,solved,zero_conflicts,4550,4549,9,108535
+12,27,3600027,adaptive,"[3, 2, 9, 3, 7, 3, 3, 3, 0, 0, 4, 4]",3,0.14380200009327382,stalled,probabilistic_stopping,3153,3152,8,3132
+12,28,3600028,single,"[3, 0, 11, 5, 3, 8, 3, 4, 8, 9, 0, 6]",2,0.02285519998986274,stalled,probabilistic_stopping,1362,1361,6,1253
+12,28,3600028,single_step,"[3, 0, 11, 5, 3, 8, 3, 4, 8, 9, 0, 6]",3,0.007017299998551607,stalled,probabilistic_stopping,287,286,6,187
+12,28,3600028,swap,"[3, 0, 11, 5, 3, 8, 3, 4, 8, 9, 0, 6]",6,0.014036400010809302,stalled,probabilistic_stopping,623,622,4,581
+12,28,3600028,dual,"[3, 0, 11, 5, 3, 8, 3, 4, 8, 9, 0, 6]",1,0.0813015999738127,budget,proposal_limit,5001,5000,6,108535
+12,28,3600028,adaptive,"[3, 0, 11, 5, 3, 8, 3, 4, 8, 9, 0, 6]",2,0.2902796999551356,stalled,probabilistic_stopping,3159,3158,5,3132
+12,29,3600029,single,"[4, 4, 2, 9, 9, 5, 7, 7, 4, 2, 5, 0]",2,0.06647700001485646,stalled,probabilistic_stopping,1429,1428,9,1253
+12,29,3600029,single_step,"[4, 4, 2, 9, 9, 5, 7, 7, 4, 2, 5, 0]",5,0.01590660004876554,stalled,probabilistic_stopping,376,375,8,187
+12,29,3600029,swap,"[4, 4, 2, 9, 9, 5, 7, 7, 4, 2, 5, 0]",8,0.021780800074338913,stalled,probabilistic_stopping,590,589,3,581
+12,29,3600029,dual,"[4, 4, 2, 9, 9, 5, 7, 7, 4, 2, 5, 0]",2,0.14575390005484223,budget,proposal_limit,5001,5000,9,108535
+12,29,3600029,adaptive,"[4, 4, 2, 9, 9, 5, 7, 7, 4, 2, 5, 0]",2,0.1885543999960646,stalled,probabilistic_stopping,3268,3267,8,3132
+12,30,3600030,single,"[2, 5, 1, 9, 9, 9, 8, 3, 4, 1, 4, 6]",1,0.0404526999918744,stalled,probabilistic_stopping,1318,1317,8,1253
+12,30,3600030,single_step,"[2, 5, 1, 9, 9, 9, 8, 3, 4, 1, 4, 6]",3,0.00820659997407347,stalled,probabilistic_stopping,258,257,6,187
+12,30,3600030,swap,"[2, 5, 1, 9, 9, 9, 8, 3, 4, 1, 4, 6]",7,0.01654229999985546,stalled,probabilistic_stopping,616,615,4,581
+12,30,3600030,dual,"[2, 5, 1, 9, 9, 9, 8, 3, 4, 1, 4, 6]",2,0.24351900001056492,budget,proposal_limit,5001,5000,8,108535
+12,30,3600030,adaptive,"[2, 5, 1, 9, 9, 9, 8, 3, 4, 1, 4, 6]",2,0.3759582999628037,stalled,probabilistic_stopping,3363,3362,6,3132
+12,31,3600031,single,"[11, 1, 0, 0, 7, 2, 1, 1, 9, 2, 5, 4]",3,0.03172400000039488,stalled,probabilistic_stopping,1324,1323,8,1253
+12,31,3600031,single_step,"[11, 1, 0, 0, 7, 2, 1, 1, 9, 2, 5, 4]",7,0.003838700009509921,stalled,probabilistic_stopping,201,200,6,187
+12,31,3600031,swap,"[11, 1, 0, 0, 7, 2, 1, 1, 9, 2, 5, 4]",6,0.015140799921937287,stalled,probabilistic_stopping,666,665,5,581
+12,31,3600031,dual,"[11, 1, 0, 0, 7, 2, 1, 1, 9, 2, 5, 4]",2,0.12355839996598661,budget,proposal_limit,5001,5000,7,108535
+12,31,3600031,adaptive,"[11, 1, 0, 0, 7, 2, 1, 1, 9, 2, 5, 4]",2,0.22219339990988374,stalled,probabilistic_stopping,3299,3298,10,3132
+12,32,3600032,single,"[2, 10, 5, 3, 9, 0, 1, 5, 6, 11, 10, 5]",1,0.025263500050641596,stalled,probabilistic_stopping,1407,1406,8,1253
+12,32,3600032,single_step,"[2, 10, 5, 3, 9, 0, 1, 5, 6, 11, 10, 5]",3,0.004300800035707653,stalled,probabilistic_stopping,239,238,4,187
+12,32,3600032,swap,"[2, 10, 5, 3, 9, 0, 1, 5, 6, 11, 10, 5]",4,0.012851000064983964,stalled,probabilistic_stopping,597,596,4,581
+12,32,3600032,dual,"[2, 10, 5, 3, 9, 0, 1, 5, 6, 11, 10, 5]",1,0.12583530007395893,budget,proposal_limit,5001,5000,7,108535
+12,32,3600032,adaptive,"[2, 10, 5, 3, 9, 0, 1, 5, 6, 11, 10, 5]",2,0.21651919989380985,stalled,probabilistic_stopping,3233,3232,5,3132
+12,33,3600033,single,"[6, 7, 10, 6, 9, 7, 3, 2, 4, 5, 8, 6]",3,0.06452739995438606,stalled,probabilistic_stopping,1510,1509,7,1253
+12,33,3600033,single_step,"[6, 7, 10, 6, 9, 7, 3, 2, 4, 5, 8, 6]",7,0.009997599991038442,stalled,probabilistic_stopping,199,198,5,187
+12,33,3600033,swap,"[6, 7, 10, 6, 9, 7, 3, 2, 4, 5, 8, 6]",5,0.02495600003749132,stalled,probabilistic_stopping,608,607,4,581
+12,33,3600033,dual,"[6, 7, 10, 6, 9, 7, 3, 2, 4, 5, 8, 6]",1,0.14780549996066839,budget,proposal_limit,5001,5000,9,108535
+12,33,3600033,adaptive,"[6, 7, 10, 6, 9, 7, 3, 2, 4, 5, 8, 6]",2,0.16959539998788387,stalled,probabilistic_stopping,3204,3203,7,3132
+12,34,3600034,single,"[1, 4, 2, 5, 1, 1, 7, 9, 3, 10, 10, 11]",4,0.028011700022034347,stalled,probabilistic_stopping,1525,1524,6,1253
+12,34,3600034,single_step,"[1, 4, 2, 5, 1, 1, 7, 9, 3, 10, 10, 11]",7,0.005087000085040927,stalled,probabilistic_stopping,208,207,4,187
+12,34,3600034,swap,"[1, 4, 2, 5, 1, 1, 7, 9, 3, 10, 10, 11]",4,0.01756289997138083,stalled,probabilistic_stopping,657,656,6,581
+12,34,3600034,dual,"[1, 4, 2, 5, 1, 1, 7, 9, 3, 10, 10, 11]",1,0.30907760001719,budget,proposal_limit,5001,5000,8,108535
+12,34,3600034,adaptive,"[1, 4, 2, 5, 1, 1, 7, 9, 3, 10, 10, 11]",0,0.014827199978753924,solved,zero_conflicts,111,110,9,3132
+12,35,3600035,single,"[6, 7, 5, 2, 0, 0, 6, 7, 6, 6, 6, 4]",3,0.06984590005595237,stalled,probabilistic_stopping,1375,1374,6,1253
+12,35,3600035,single_step,"[6, 7, 5, 2, 0, 0, 6, 7, 6, 6, 6, 4]",7,0.0357302000047639,stalled,probabilistic_stopping,295,294,9,187
+12,35,3600035,swap,"[6, 7, 5, 2, 0, 0, 6, 7, 6, 6, 6, 4]",13,0.03542550001293421,stalled,probabilistic_stopping,687,686,5,581
+12,35,3600035,dual,"[6, 7, 5, 2, 0, 0, 6, 7, 6, 6, 6, 4]",1,0.4561763000674546,budget,proposal_limit,5001,5000,9,108535
+12,35,3600035,adaptive,"[6, 7, 5, 2, 0, 0, 6, 7, 6, 6, 6, 4]",2,0.28668710007332265,stalled,probabilistic_stopping,3188,3187,9,3132
+12,36,3600036,single,"[11, 8, 9, 7, 3, 8, 1, 7, 5, 0, 1, 6]",3,0.02921989990863949,stalled,probabilistic_stopping,1317,1316,9,1253
+12,36,3600036,single_step,"[11, 8, 9, 7, 3, 8, 1, 7, 5, 0, 1, 6]",6,0.005622899974696338,stalled,probabilistic_stopping,211,210,3,187
+12,36,3600036,swap,"[11, 8, 9, 7, 3, 8, 1, 7, 5, 0, 1, 6]",3,0.021234999992884696,stalled,probabilistic_stopping,645,644,7,581
+12,36,3600036,dual,"[11, 8, 9, 7, 3, 8, 1, 7, 5, 0, 1, 6]",1,0.15623580000828952,budget,proposal_limit,5001,5000,8,108535
+12,36,3600036,adaptive,"[11, 8, 9, 7, 3, 8, 1, 7, 5, 0, 1, 6]",3,0.2143027000129223,stalled,probabilistic_stopping,3151,3150,6,3132
+12,37,3600037,single,"[8, 0, 3, 11, 7, 11, 8, 10, 8, 4, 5, 2]",2,0.02916229993570596,stalled,probabilistic_stopping,1466,1465,6,1253
+12,37,3600037,single_step,"[8, 0, 3, 11, 7, 11, 8, 10, 8, 4, 5, 2]",6,0.003953599953092635,stalled,probabilistic_stopping,201,200,2,187
+12,37,3600037,swap,"[8, 0, 3, 11, 7, 11, 8, 10, 8, 4, 5, 2]",5,0.02665430004708469,stalled,probabilistic_stopping,622,621,5,581
+12,37,3600037,dual,"[8, 0, 3, 11, 7, 11, 8, 10, 8, 4, 5, 2]",1,0.18296600005123764,budget,proposal_limit,5001,5000,9,108535
+12,37,3600037,adaptive,"[8, 0, 3, 11, 7, 11, 8, 10, 8, 4, 5, 2]",2,0.2649821999948472,stalled,probabilistic_stopping,3297,3296,7,3132
+12,38,3600038,single,"[11, 2, 1, 8, 4, 5, 0, 1, 6, 9, 2, 3]",2,0.04039600002579391,stalled,probabilistic_stopping,1319,1318,7,1253
+12,38,3600038,single_step,"[11, 2, 1, 8, 4, 5, 0, 1, 6, 9, 2, 3]",4,0.007034000009298325,stalled,probabilistic_stopping,208,207,4,187
+12,38,3600038,swap,"[11, 2, 1, 8, 4, 5, 0, 1, 6, 9, 2, 3]",3,0.0352203999646008,stalled,probabilistic_stopping,704,703,4,581
+12,38,3600038,dual,"[11, 2, 1, 8, 4, 5, 0, 1, 6, 9, 2, 3]",2,0.21570009994320571,budget,proposal_limit,5001,5000,6,108535
+12,38,3600038,adaptive,"[11, 2, 1, 8, 4, 5, 0, 1, 6, 9, 2, 3]",3,0.2556313000386581,stalled,probabilistic_stopping,3159,3158,6,3132
+12,39,3600039,single,"[10, 11, 11, 1, 10, 4, 3, 3, 0, 10, 5, 2]",1,0.08681750006508082,stalled,probabilistic_stopping,1674,1673,6,1253
+12,39,3600039,single_step,"[10, 11, 11, 1, 10, 4, 3, 3, 0, 10, 5, 2]",5,0.012530699954368174,stalled,probabilistic_stopping,204,203,3,187
+12,39,3600039,swap,"[10, 11, 11, 1, 10, 4, 3, 3, 0, 10, 5, 2]",6,0.02347140002530068,stalled,probabilistic_stopping,657,656,2,581
+12,39,3600039,dual,"[10, 11, 11, 1, 10, 4, 3, 3, 0, 10, 5, 2]",2,0.28373639995697886,budget,proposal_limit,5001,5000,5,108535
+12,39,3600039,adaptive,"[10, 11, 11, 1, 10, 4, 3, 3, 0, 10, 5, 2]",2,0.37738489999901503,stalled,probabilistic_stopping,3217,3216,6,3132
+12,40,3600040,single,"[9, 3, 7, 7, 3, 0, 7, 10, 10, 2, 4, 8]",2,0.02839810005389154,stalled,probabilistic_stopping,1376,1375,4,1253
+12,40,3600040,single_step,"[9, 3, 7, 7, 3, 0, 7, 10, 10, 2, 4, 8]",4,0.004038600018247962,stalled,probabilistic_stopping,217,216,2,187
+12,40,3600040,swap,"[9, 3, 7, 7, 3, 0, 7, 10, 10, 2, 4, 8]",6,0.02087559993378818,stalled,probabilistic_stopping,615,614,1,581
+12,40,3600040,dual,"[9, 3, 7, 7, 3, 0, 7, 10, 10, 2, 4, 8]",1,0.14265850000083447,budget,proposal_limit,5001,5000,5,108535
+12,40,3600040,adaptive,"[9, 3, 7, 7, 3, 0, 7, 10, 10, 2, 4, 8]",3,0.24258209997788072,stalled,probabilistic_stopping,3178,3177,4,3132
+12,41,3600041,single,"[5, 4, 0, 5, 3, 10, 8, 10, 0, 9, 9, 7]",2,0.027277500019408762,stalled,probabilistic_stopping,1331,1330,8,1253
+12,41,3600041,single_step,"[5, 4, 0, 5, 3, 10, 8, 10, 0, 9, 9, 7]",5,0.004932999960146844,stalled,probabilistic_stopping,201,200,5,187
+12,41,3600041,swap,"[5, 4, 0, 5, 3, 10, 8, 10, 0, 9, 9, 7]",4,0.02019740000832826,stalled,probabilistic_stopping,676,675,5,581
+12,41,3600041,dual,"[5, 4, 0, 5, 3, 10, 8, 10, 0, 9, 9, 7]",1,0.14909840002655983,budget,proposal_limit,5001,5000,6,108535
+12,41,3600041,adaptive,"[5, 4, 0, 5, 3, 10, 8, 10, 0, 9, 9, 7]",1,0.2636643999721855,stalled,probabilistic_stopping,3174,3173,8,3132
+12,42,3600042,single,"[3, 1, 3, 8, 2, 10, 0, 3, 9, 11, 10, 0]",3,0.024903799989260733,stalled,probabilistic_stopping,1359,1358,8,1253
+12,42,3600042,single_step,"[3, 1, 3, 8, 2, 10, 0, 3, 9, 11, 10, 0]",7,0.0049202999798581,stalled,probabilistic_stopping,218,217,4,187
+12,42,3600042,swap,"[3, 1, 3, 8, 2, 10, 0, 3, 9, 11, 10, 0]",6,0.02224459999706596,stalled,probabilistic_stopping,619,618,4,581
+12,42,3600042,dual,"[3, 1, 3, 8, 2, 10, 0, 3, 9, 11, 10, 0]",2,0.19875980005599558,budget,proposal_limit,5001,5000,9,108535
+12,42,3600042,adaptive,"[3, 1, 3, 8, 2, 10, 0, 3, 9, 11, 10, 0]",3,0.5712876999750733,stalled,probabilistic_stopping,3173,3172,6,3132
+12,43,3600043,single,"[4, 10, 4, 8, 11, 10, 5, 4, 6, 1, 6, 8]",1,0.059928800095804036,stalled,probabilistic_stopping,1456,1455,10,1253
+12,43,3600043,single_step,"[4, 10, 4, 8, 11, 10, 5, 4, 6, 1, 6, 8]",4,0.01196389994584024,stalled,probabilistic_stopping,257,256,8,187
+12,43,3600043,swap,"[4, 10, 4, 8, 11, 10, 5, 4, 6, 1, 6, 8]",7,0.03498749993741512,stalled,probabilistic_stopping,635,634,6,581
+12,43,3600043,dual,"[4, 10, 4, 8, 11, 10, 5, 4, 6, 1, 6, 8]",0,0.15611979993991554,solved,zero_conflicts,3166,3165,5,108535
+12,43,3600043,adaptive,"[4, 10, 4, 8, 11, 10, 5, 4, 6, 1, 6, 8]",2,0.24731569993309677,stalled,probabilistic_stopping,3151,3150,7,3132
+12,44,3600044,single,"[7, 11, 1, 8, 8, 0, 5, 10, 6, 6, 8, 3]",2,0.0413322999374941,stalled,probabilistic_stopping,1306,1305,5,1253
+12,44,3600044,single_step,"[7, 11, 1, 8, 8, 0, 5, 10, 6, 6, 8, 3]",5,0.004189800005406141,stalled,probabilistic_stopping,207,206,3,187
+12,44,3600044,swap,"[7, 11, 1, 8, 8, 0, 5, 10, 6, 6, 8, 3]",6,0.028047700063325465,stalled,probabilistic_stopping,606,605,3,581
+12,44,3600044,dual,"[7, 11, 1, 8, 8, 0, 5, 10, 6, 6, 8, 3]",1,0.16517489997204393,budget,proposal_limit,5001,5000,7,108535
+12,44,3600044,adaptive,"[7, 11, 1, 8, 8, 0, 5, 10, 6, 6, 8, 3]",2,0.23681239993311465,stalled,probabilistic_stopping,3149,3148,6,3132
+12,45,3600045,single,"[4, 11, 9, 8, 5, 4, 10, 6, 6, 0, 8, 3]",1,0.03125250001903623,stalled,probabilistic_stopping,1417,1416,7,1253
+12,45,3600045,single_step,"[4, 11, 9, 8, 5, 4, 10, 6, 6, 0, 8, 3]",4,0.0038505999837070704,stalled,probabilistic_stopping,199,198,5,187
+12,45,3600045,swap,"[4, 11, 9, 8, 5, 4, 10, 6, 6, 0, 8, 3]",4,0.01900630001910031,stalled,probabilistic_stopping,691,690,6,581
+12,45,3600045,dual,"[4, 11, 9, 8, 5, 4, 10, 6, 6, 0, 8, 3]",1,0.1506268000230193,budget,proposal_limit,5001,5000,7,108535
+12,45,3600045,adaptive,"[4, 11, 9, 8, 5, 4, 10, 6, 6, 0, 8, 3]",1,0.2591955999378115,stalled,probabilistic_stopping,3176,3175,7,3132
+12,46,3600046,single,"[11, 9, 4, 9, 8, 3, 5, 9, 11, 1, 2, 8]",1,0.04882019991055131,stalled,probabilistic_stopping,1389,1388,9,1253
+12,46,3600046,single_step,"[11, 9, 4, 9, 8, 3, 5, 9, 11, 1, 2, 8]",4,0.006224500015377998,stalled,probabilistic_stopping,227,226,4,187
+12,46,3600046,swap,"[11, 9, 4, 9, 8, 3, 5, 9, 11, 1, 2, 8]",6,0.013904999941587448,stalled,probabilistic_stopping,615,614,4,581
+12,46,3600046,dual,"[11, 9, 4, 9, 8, 3, 5, 9, 11, 1, 2, 8]",1,0.14881149993743747,budget,proposal_limit,5001,5000,10,108535
+12,46,3600046,adaptive,"[11, 9, 4, 9, 8, 3, 5, 9, 11, 1, 2, 8]",0,0.02071330009493977,solved,zero_conflicts,358,357,11,3132
+12,47,3600047,single,"[8, 6, 0, 2, 3, 4, 6, 9, 5, 6, 3, 10]",3,0.0789765000808984,stalled,probabilistic_stopping,1286,1285,4,1253
+12,47,3600047,single_step,"[8, 6, 0, 2, 3, 4, 6, 9, 5, 6, 3, 10]",7,0.012922000023536384,stalled,probabilistic_stopping,217,216,5,187
+12,47,3600047,swap,"[8, 6, 0, 2, 3, 4, 6, 9, 5, 6, 3, 10]",5,0.06212670006789267,stalled,probabilistic_stopping,741,740,5,581
+12,47,3600047,dual,"[8, 6, 0, 2, 3, 4, 6, 9, 5, 6, 3, 10]",0,0.35399089998099953,solved,zero_conflicts,4722,4721,8,108535
+12,47,3600047,adaptive,"[8, 6, 0, 2, 3, 4, 6, 9, 5, 6, 3, 10]",2,0.20861450000666082,stalled,probabilistic_stopping,3176,3175,8,3132
+12,48,3600048,single,"[7, 8, 5, 4, 7, 11, 9, 11, 8, 1, 3, 6]",1,0.02561090001836419,stalled,probabilistic_stopping,1505,1504,8,1253
+12,48,3600048,single_step,"[7, 8, 5, 4, 7, 11, 9, 11, 8, 1, 3, 6]",6,0.0034921999322250485,stalled,probabilistic_stopping,212,211,4,187
+12,48,3600048,swap,"[7, 8, 5, 4, 7, 11, 9, 11, 8, 1, 3, 6]",5,0.01389439997728914,stalled,probabilistic_stopping,608,607,5,581
+12,48,3600048,dual,"[7, 8, 5, 4, 7, 11, 9, 11, 8, 1, 3, 6]",1,0.12982300005387515,budget,proposal_limit,5001,5000,6,108535
+12,48,3600048,adaptive,"[7, 8, 5, 4, 7, 11, 9, 11, 8, 1, 3, 6]",1,0.18665029993280768,stalled,probabilistic_stopping,3185,3184,9,3132
+12,49,3600049,single,"[6, 1, 11, 2, 1, 10, 6, 3, 10, 5, 9, 10]",2,0.03834219998680055,stalled,probabilistic_stopping,1441,1440,8,1253
+12,49,3600049,single_step,"[6, 1, 11, 2, 1, 10, 6, 3, 10, 5, 9, 10]",5,0.0044610999757424,stalled,probabilistic_stopping,233,232,6,187
+12,49,3600049,swap,"[6, 1, 11, 2, 1, 10, 6, 3, 10, 5, 9, 10]",5,0.021376000018790364,stalled,probabilistic_stopping,815,814,4,581
+12,49,3600049,dual,"[6, 1, 11, 2, 1, 10, 6, 3, 10, 5, 9, 10]",1,0.3189578999299556,budget,proposal_limit,5001,5000,9,108535
+12,49,3600049,adaptive,"[6, 1, 11, 2, 1, 10, 6, 3, 10, 5, 9, 10]",3,0.5174801000393927,stalled,probabilistic_stopping,3158,3157,6,3132
+12,50,3600050,single,"[2, 3, 5, 11, 7, 7, 8, 9, 11, 5, 11, 6]",3,0.02260749996639788,stalled,probabilistic_stopping,1275,1274,8,1253
+12,50,3600050,single_step,"[2, 3, 5, 11, 7, 7, 8, 9, 11, 5, 11, 6]",8,0.004658199963159859,stalled,probabilistic_stopping,253,252,8,187
+12,50,3600050,swap,"[2, 3, 5, 11, 7, 7, 8, 9, 11, 5, 11, 6]",6,0.018731200019828975,stalled,probabilistic_stopping,633,632,10,581
+12,50,3600050,dual,"[2, 3, 5, 11, 7, 7, 8, 9, 11, 5, 11, 6]",1,0.14929770003072917,budget,proposal_limit,5001,5000,13,108535
+12,50,3600050,adaptive,"[2, 3, 5, 11, 7, 7, 8, 9, 11, 5, 11, 6]",1,0.33269149996340275,stalled,probabilistic_stopping,3229,3228,12,3132
+12,51,3600051,single,"[9, 6, 11, 3, 9, 10, 10, 1, 3, 9, 6, 4]",2,0.0993587999837473,stalled,probabilistic_stopping,1340,1339,6,1253
+12,51,3600051,single_step,"[9, 6, 11, 3, 9, 10, 10, 1, 3, 9, 6, 4]",7,0.018849499989300966,stalled,probabilistic_stopping,211,210,6,187
+12,51,3600051,swap,"[9, 6, 11, 3, 9, 10, 10, 1, 3, 9, 6, 4]",7,0.11409519996959716,stalled,probabilistic_stopping,698,697,5,581
+12,51,3600051,dual,"[9, 6, 11, 3, 9, 10, 10, 1, 3, 9, 6, 4]",1,0.15406000008806586,budget,proposal_limit,5001,5000,11,108535
+12,51,3600051,adaptive,"[9, 6, 11, 3, 9, 10, 10, 1, 3, 9, 6, 4]",2,0.19800949993077666,stalled,probabilistic_stopping,3319,3318,8,3132
+12,52,3600052,single,"[2, 6, 4, 1, 6, 10, 2, 10, 2, 5, 0, 8]",2,0.025489599909633398,stalled,probabilistic_stopping,1370,1369,7,1253
+12,52,3600052,single_step,"[2, 6, 4, 1, 6, 10, 2, 10, 2, 5, 0, 8]",3,0.00407000002451241,stalled,probabilistic_stopping,205,204,8,187
+12,52,3600052,swap,"[2, 6, 4, 1, 6, 10, 2, 10, 2, 5, 0, 8]",6,0.01666349999140948,stalled,probabilistic_stopping,641,640,5,581
+12,52,3600052,dual,"[2, 6, 4, 1, 6, 10, 2, 10, 2, 5, 0, 8]",1,0.13228639995213598,budget,proposal_limit,5001,5000,7,108535
+12,52,3600052,adaptive,"[2, 6, 4, 1, 6, 10, 2, 10, 2, 5, 0, 8]",2,0.17649820004589856,stalled,probabilistic_stopping,3170,3169,7,3132
+12,53,3600053,single,"[3, 1, 5, 6, 1, 1, 4, 10, 5, 1, 1, 5]",1,0.03194769995752722,stalled,probabilistic_stopping,1715,1714,13,1253
+12,53,3600053,single_step,"[3, 1, 5, 6, 1, 1, 4, 10, 5, 1, 1, 5]",7,0.004689799970947206,stalled,probabilistic_stopping,222,221,8,187
+12,53,3600053,swap,"[3, 1, 5, 6, 1, 1, 4, 10, 5, 1, 1, 5]",13,0.015414400026202202,stalled,probabilistic_stopping,674,673,6,581
+12,53,3600053,dual,"[3, 1, 5, 6, 1, 1, 4, 10, 5, 1, 1, 5]",0,0.005409400095231831,solved,zero_conflicts,208,207,9,108535
+12,53,3600053,adaptive,"[3, 1, 5, 6, 1, 1, 4, 10, 5, 1, 1, 5]",2,0.20393100008368492,stalled,probabilistic_stopping,3232,3231,13,3132
+12,54,3600054,single,"[3, 3, 0, 7, 0, 2, 6, 5, 5, 0, 8, 11]",2,0.03433729999233037,stalled,probabilistic_stopping,1451,1450,8,1253
+12,54,3600054,single_step,"[3, 3, 0, 7, 0, 2, 6, 5, 5, 0, 8, 11]",5,0.00568639999255538,stalled,probabilistic_stopping,208,207,4,187
+12,54,3600054,swap,"[3, 3, 0, 7, 0, 2, 6, 5, 5, 0, 8, 11]",6,0.025946500012651086,stalled,probabilistic_stopping,613,612,4,581
+12,54,3600054,dual,"[3, 3, 0, 7, 0, 2, 6, 5, 5, 0, 8, 11]",1,0.13943310000468045,budget,proposal_limit,5001,5000,8,108535
+12,54,3600054,adaptive,"[3, 3, 0, 7, 0, 2, 6, 5, 5, 0, 8, 11]",1,0.20370199996978045,stalled,probabilistic_stopping,3178,3177,8,3132
+12,55,3600055,single,"[2, 10, 11, 3, 6, 10, 9, 1, 4, 9, 10, 11]",2,0.039709500037133694,stalled,probabilistic_stopping,1625,1624,8,1253
+12,55,3600055,single_step,"[2, 10, 11, 3, 6, 10, 9, 1, 4, 9, 10, 11]",9,0.0054206999484449625,stalled,probabilistic_stopping,206,205,3,187
+12,55,3600055,swap,"[2, 10, 11, 3, 6, 10, 9, 1, 4, 9, 10, 11]",6,0.04909149999730289,stalled,probabilistic_stopping,616,615,6,581
+12,55,3600055,dual,"[2, 10, 11, 3, 6, 10, 9, 1, 4, 9, 10, 11]",2,0.40766120003536344,budget,proposal_limit,5001,5000,6,108535
+12,55,3600055,adaptive,"[2, 10, 11, 3, 6, 10, 9, 1, 4, 9, 10, 11]",3,0.2526098999660462,stalled,probabilistic_stopping,3188,3187,6,3132
+12,56,3600056,single,"[10, 6, 5, 3, 4, 0, 9, 10, 6, 8, 6, 6]",3,0.029078499996103346,stalled,probabilistic_stopping,1290,1289,9,1253
+12,56,3600056,single_step,"[10, 6, 5, 3, 4, 0, 9, 10, 6, 8, 6, 6]",7,0.005321200005710125,stalled,probabilistic_stopping,215,214,6,187
+12,56,3600056,swap,"[10, 6, 5, 3, 4, 0, 9, 10, 6, 8, 6, 6]",9,0.016812400077469647,stalled,probabilistic_stopping,609,608,4,581
+12,56,3600056,dual,"[10, 6, 5, 3, 4, 0, 9, 10, 6, 8, 6, 6]",1,0.2490562000311911,budget,proposal_limit,5001,5000,8,108535
+12,56,3600056,adaptive,"[10, 6, 5, 3, 4, 0, 9, 10, 6, 8, 6, 6]",2,0.17890440009068698,stalled,probabilistic_stopping,3160,3159,7,3132
+12,57,3600057,single,"[2, 9, 11, 3, 7, 5, 8, 9, 7, 1, 3, 7]",3,0.026306999963708222,stalled,probabilistic_stopping,1309,1308,8,1253
+12,57,3600057,single_step,"[2, 9, 11, 3, 7, 5, 8, 9, 7, 1, 3, 7]",5,0.004171600099653006,stalled,probabilistic_stopping,215,214,6,187
+12,57,3600057,swap,"[2, 9, 11, 3, 7, 5, 8, 9, 7, 1, 3, 7]",7,0.013353100046515465,stalled,probabilistic_stopping,609,608,4,581
+12,57,3600057,dual,"[2, 9, 11, 3, 7, 5, 8, 9, 7, 1, 3, 7]",1,0.14891670003999025,budget,proposal_limit,5001,5000,8,108535
+12,57,3600057,adaptive,"[2, 9, 11, 3, 7, 5, 8, 9, 7, 1, 3, 7]",3,0.2277098000049591,stalled,probabilistic_stopping,3208,3207,7,3132
+12,58,3600058,single,"[10, 1, 5, 0, 8, 1, 0, 3, 7, 3, 3, 10]",3,0.02846890001092106,stalled,probabilistic_stopping,1282,1281,7,1253
+12,58,3600058,single_step,"[10, 1, 5, 0, 8, 1, 0, 3, 7, 3, 3, 10]",5,0.0063544000731781125,stalled,probabilistic_stopping,205,204,5,187
+12,58,3600058,swap,"[10, 1, 5, 0, 8, 1, 0, 3, 7, 3, 3, 10]",8,0.03185629996005446,stalled,probabilistic_stopping,595,594,3,581
+12,58,3600058,dual,"[10, 1, 5, 0, 8, 1, 0, 3, 7, 3, 3, 10]",1,0.15778400003910065,budget,proposal_limit,5001,5000,7,108535
+12,58,3600058,adaptive,"[10, 1, 5, 0, 8, 1, 0, 3, 7, 3, 3, 10]",2,0.205506999976933,stalled,probabilistic_stopping,3168,3167,7,3132
+12,59,3600059,single,"[0, 2, 3, 10, 0, 6, 5, 11, 2, 3, 3, 0]",3,0.028623500023968518,stalled,probabilistic_stopping,1273,1272,5,1253
+12,59,3600059,single_step,"[0, 2, 3, 10, 0, 6, 5, 11, 2, 3, 3, 0]",8,0.006002299953252077,stalled,probabilistic_stopping,198,197,2,187
+12,59,3600059,swap,"[0, 2, 3, 10, 0, 6, 5, 11, 2, 3, 3, 0]",9,0.020996500039473176,stalled,probabilistic_stopping,592,591,4,581
+12,59,3600059,dual,"[0, 2, 3, 10, 0, 6, 5, 11, 2, 3, 3, 0]",1,0.3534830999560654,budget,proposal_limit,5001,5000,8,108535
+12,59,3600059,adaptive,"[0, 2, 3, 10, 0, 6, 5, 11, 2, 3, 3, 0]",1,0.3233122999081388,stalled,probabilistic_stopping,3285,3284,9,3132
+12,60,3600060,single,"[1, 10, 7, 10, 7, 1, 9, 10, 2, 11, 9, 11]",2,0.09994720004033297,stalled,probabilistic_stopping,1454,1453,7,1253
+12,60,3600060,single_step,"[1, 10, 7, 10, 7, 1, 9, 10, 2, 11, 9, 11]",7,0.016736699966713786,stalled,probabilistic_stopping,234,233,4,187
+12,60,3600060,swap,"[1, 10, 7, 10, 7, 1, 9, 10, 2, 11, 9, 11]",8,0.05979940004181117,stalled,probabilistic_stopping,614,613,3,581
+12,60,3600060,dual,"[1, 10, 7, 10, 7, 1, 9, 10, 2, 11, 9, 11]",1,0.4039348999504,budget,proposal_limit,5001,5000,8,108535
+12,60,3600060,adaptive,"[1, 10, 7, 10, 7, 1, 9, 10, 2, 11, 9, 11]",1,0.3059516000794247,stalled,probabilistic_stopping,3260,3259,10,3132
+12,61,3600061,single,"[8, 8, 9, 1, 9, 0, 8, 4, 9, 5, 4, 7]",1,0.035877899965271354,stalled,probabilistic_stopping,1384,1383,9,1253
+12,61,3600061,single_step,"[8, 8, 9, 1, 9, 0, 8, 4, 9, 5, 4, 7]",5,0.005204500048421323,stalled,probabilistic_stopping,233,232,7,187
+12,61,3600061,swap,"[8, 8, 9, 1, 9, 0, 8, 4, 9, 5, 4, 7]",8,0.01868910004850477,stalled,probabilistic_stopping,611,610,2,581
+12,61,3600061,dual,"[8, 8, 9, 1, 9, 0, 8, 4, 9, 5, 4, 7]",1,0.14347360003739595,budget,proposal_limit,5001,5000,8,108535
+12,61,3600061,adaptive,"[8, 8, 9, 1, 9, 0, 8, 4, 9, 5, 4, 7]",1,0.2548255999572575,stalled,probabilistic_stopping,3386,3385,9,3132
+12,62,3600062,single,"[6, 2, 9, 8, 8, 0, 7, 2, 6, 6, 4, 0]",1,0.05831739993300289,stalled,probabilistic_stopping,2008,2007,10,1253
+12,62,3600062,single_step,"[6, 2, 9, 8, 8, 0, 7, 2, 6, 6, 4, 0]",6,0.006040099891833961,stalled,probabilistic_stopping,199,198,4,187
+12,62,3600062,swap,"[6, 2, 9, 8, 8, 0, 7, 2, 6, 6, 4, 0]",7,0.0207321000052616,stalled,probabilistic_stopping,695,694,4,581
+12,62,3600062,dual,"[6, 2, 9, 8, 8, 0, 7, 2, 6, 6, 4, 0]",2,0.14360619999933988,budget,proposal_limit,5001,5000,8,108535
+12,62,3600062,adaptive,"[6, 2, 9, 8, 8, 0, 7, 2, 6, 6, 4, 0]",2,0.2747351999860257,stalled,probabilistic_stopping,3152,3151,9,3132
+12,63,3600063,single,"[3, 2, 2, 0, 1, 5, 2, 1, 6, 3, 7, 6]",2,0.1078107999637723,stalled,probabilistic_stopping,1307,1306,10,1253
+12,63,3600063,single_step,"[3, 2, 2, 0, 1, 5, 2, 1, 6, 3, 7, 6]",8,0.012810099986381829,stalled,probabilistic_stopping,213,212,5,187
+12,63,3600063,swap,"[3, 2, 2, 0, 1, 5, 2, 1, 6, 3, 7, 6]",10,0.023438500007614493,stalled,probabilistic_stopping,589,588,2,581
+12,63,3600063,dual,"[3, 2, 2, 0, 1, 5, 2, 1, 6, 3, 7, 6]",1,0.38089979998767376,budget,proposal_limit,5001,5000,10,108535
+12,63,3600063,adaptive,"[3, 2, 2, 0, 1, 5, 2, 1, 6, 3, 7, 6]",2,0.6489978999597952,stalled,probabilistic_stopping,3156,3155,8,3132
+12,64,3600064,single,"[10, 6, 8, 4, 6, 3, 3, 7, 1, 4, 9, 10]",3,0.07422080007381737,stalled,probabilistic_stopping,1427,1426,6,1253
+12,64,3600064,single_step,"[10, 6, 8, 4, 6, 3, 3, 7, 1, 4, 9, 10]",5,0.006897300016134977,stalled,probabilistic_stopping,204,203,4,187
+12,64,3600064,swap,"[10, 6, 8, 4, 6, 3, 3, 7, 1, 4, 9, 10]",5,0.045684600016102195,stalled,probabilistic_stopping,726,725,5,581
+12,64,3600064,dual,"[10, 6, 8, 4, 6, 3, 3, 7, 1, 4, 9, 10]",1,0.15278020000550896,budget,proposal_limit,5001,5000,7,108535
+12,64,3600064,adaptive,"[10, 6, 8, 4, 6, 3, 3, 7, 1, 4, 9, 10]",3,0.282614600029774,stalled,probabilistic_stopping,3148,3147,6,3132
+12,65,3600065,single,"[9, 7, 1, 6, 0, 0, 8, 2, 5, 10, 10, 5]",2,0.03276009997352958,stalled,probabilistic_stopping,1344,1343,5,1253
+12,65,3600065,single_step,"[9, 7, 1, 6, 0, 0, 8, 2, 5, 10, 10, 5]",3,0.009263599989935756,stalled,probabilistic_stopping,225,224,4,187
+12,65,3600065,swap,"[9, 7, 1, 6, 0, 0, 8, 2, 5, 10, 10, 5]",4,0.020350900012999773,stalled,probabilistic_stopping,608,607,3,581
+12,65,3600065,dual,"[9, 7, 1, 6, 0, 0, 8, 2, 5, 10, 10, 5]",1,0.1482665000949055,budget,proposal_limit,5001,5000,5,108535
+12,65,3600065,adaptive,"[9, 7, 1, 6, 0, 0, 8, 2, 5, 10, 10, 5]",2,0.2357229000190273,stalled,probabilistic_stopping,3171,3170,4,3132
+12,66,3600066,single,"[7, 4, 8, 1, 9, 0, 6, 1, 11, 6, 7, 9]",2,0.029958800063468516,stalled,probabilistic_stopping,1470,1469,4,1253
+12,66,3600066,single_step,"[7, 4, 8, 1, 9, 0, 6, 1, 11, 6, 7, 9]",4,0.004066299996338785,stalled,probabilistic_stopping,230,229,3,187
+12,66,3600066,swap,"[7, 4, 8, 1, 9, 0, 6, 1, 11, 6, 7, 9]",6,0.013705699937418103,stalled,probabilistic_stopping,598,597,2,581
+12,66,3600066,dual,"[7, 4, 8, 1, 9, 0, 6, 1, 11, 6, 7, 9]",1,0.45216179999988526,budget,proposal_limit,5001,5000,4,108535
+12,66,3600066,adaptive,"[7, 4, 8, 1, 9, 0, 6, 1, 11, 6, 7, 9]",1,0.5548829999752343,stalled,probabilistic_stopping,3177,3176,6,3132
+12,67,3600067,single,"[2, 11, 9, 8, 5, 5, 11, 5, 11, 1, 6, 6]",2,0.03568560001440346,stalled,probabilistic_stopping,1525,1524,8,1253
+12,67,3600067,single_step,"[2, 11, 9, 8, 5, 5, 11, 5, 11, 1, 6, 6]",8,0.004830699996091425,stalled,probabilistic_stopping,196,195,4,187
+12,67,3600067,swap,"[2, 11, 9, 8, 5, 5, 11, 5, 11, 1, 6, 6]",8,0.01381470006890595,stalled,probabilistic_stopping,631,630,4,581
+12,67,3600067,dual,"[2, 11, 9, 8, 5, 5, 11, 5, 11, 1, 6, 6]",1,0.12576650001574308,budget,proposal_limit,5001,5000,10,108535
+12,67,3600067,adaptive,"[2, 11, 9, 8, 5, 5, 11, 5, 11, 1, 6, 6]",1,0.26878159993793815,stalled,probabilistic_stopping,3314,3313,8,3132
+12,68,3600068,single,"[5, 4, 6, 7, 8, 4, 9, 2, 1, 11, 10, 7]",1,0.030003399937413633,stalled,probabilistic_stopping,1465,1464,8,1253
+12,68,3600068,single_step,"[5, 4, 6, 7, 8, 4, 9, 2, 1, 11, 10, 7]",6,0.008500299998559058,stalled,probabilistic_stopping,218,217,4,187
+12,68,3600068,swap,"[5, 4, 6, 7, 8, 4, 9, 2, 1, 11, 10, 7]",3,0.01750840002205223,stalled,probabilistic_stopping,629,628,4,581
+12,68,3600068,dual,"[5, 4, 6, 7, 8, 4, 9, 2, 1, 11, 10, 7]",1,0.16661720001138747,budget,proposal_limit,5001,5000,9,108535
+12,68,3600068,adaptive,"[5, 4, 6, 7, 8, 4, 9, 2, 1, 11, 10, 7]",1,0.2464005999499932,stalled,probabilistic_stopping,3171,3170,7,3132
+12,69,3600069,single,"[0, 0, 8, 6, 11, 1, 5, 7, 5, 3, 2, 2]",2,0.025420099962502718,stalled,probabilistic_stopping,1276,1275,4,1253
+12,69,3600069,single_step,"[0, 0, 8, 6, 11, 1, 5, 7, 5, 3, 2, 2]",6,0.00488040002528578,stalled,probabilistic_stopping,211,210,1,187
+12,69,3600069,swap,"[0, 0, 8, 6, 11, 1, 5, 7, 5, 3, 2, 2]",4,0.014850600040517747,stalled,probabilistic_stopping,651,650,3,581
+12,69,3600069,dual,"[0, 0, 8, 6, 11, 1, 5, 7, 5, 3, 2, 2]",1,0.13767550000920892,budget,proposal_limit,5001,5000,6,108535
+12,69,3600069,adaptive,"[0, 0, 8, 6, 11, 1, 5, 7, 5, 3, 2, 2]",1,0.2042834999738261,stalled,probabilistic_stopping,3168,3167,6,3132
+12,70,3600070,single,"[6, 2, 6, 8, 1, 1, 0, 6, 3, 8, 2, 8]",1,0.05018829996697605,stalled,probabilistic_stopping,1304,1303,11,1253
+12,70,3600070,single_step,"[6, 2, 6, 8, 1, 1, 0, 6, 3, 8, 2, 8]",5,0.008218199945986271,stalled,probabilistic_stopping,227,226,7,187
+12,70,3600070,swap,"[6, 2, 6, 8, 1, 1, 0, 6, 3, 8, 2, 8]",10,0.035620099981315434,stalled,probabilistic_stopping,596,595,4,581
+12,70,3600070,dual,"[6, 2, 6, 8, 1, 1, 0, 6, 3, 8, 2, 8]",0,0.16346769989468157,solved,zero_conflicts,3313,3312,9,108535
+12,70,3600070,adaptive,"[6, 2, 6, 8, 1, 1, 0, 6, 3, 8, 2, 8]",2,0.2194179999642074,stalled,probabilistic_stopping,3217,3216,7,3132
+12,71,3600071,single,"[9, 7, 7, 3, 6, 10, 2, 8, 0, 2, 1, 4]",3,0.023592000012286007,stalled,probabilistic_stopping,1324,1323,6,1253
+12,71,3600071,single_step,"[9, 7, 7, 3, 6, 10, 2, 8, 0, 2, 1, 4]",3,0.004713700036518276,stalled,probabilistic_stopping,216,215,6,187
+12,71,3600071,swap,"[9, 7, 7, 3, 6, 10, 2, 8, 0, 2, 1, 4]",3,0.01387240004260093,stalled,probabilistic_stopping,624,623,6,581
+12,71,3600071,dual,"[9, 7, 7, 3, 6, 10, 2, 8, 0, 2, 1, 4]",1,0.12154079996980727,budget,proposal_limit,5001,5000,9,108535
+12,71,3600071,adaptive,"[9, 7, 7, 3, 6, 10, 2, 8, 0, 2, 1, 4]",2,0.39302399998996407,stalled,probabilistic_stopping,3298,3297,9,3132
+12,72,3600072,single,"[9, 0, 10, 0, 9, 4, 8, 4, 8, 2, 8, 2]",3,0.03272549994289875,stalled,probabilistic_stopping,1361,1360,9,1253
+12,72,3600072,single_step,"[9, 0, 10, 0, 9, 4, 8, 4, 8, 2, 8, 2]",7,0.0061021000146865845,stalled,probabilistic_stopping,216,215,4,187
+12,72,3600072,swap,"[9, 0, 10, 0, 9, 4, 8, 4, 8, 2, 8, 2]",8,0.018761000013910234,stalled,probabilistic_stopping,630,629,3,581
+12,72,3600072,dual,"[9, 0, 10, 0, 9, 4, 8, 4, 8, 2, 8, 2]",1,0.15989449992775917,budget,proposal_limit,5001,5000,8,108535
+12,72,3600072,adaptive,"[9, 0, 10, 0, 9, 4, 8, 4, 8, 2, 8, 2]",2,0.24578070000279695,stalled,probabilistic_stopping,3196,3195,8,3132
+12,73,3600073,single,"[4, 6, 11, 10, 7, 8, 11, 1, 4, 5, 0, 6]",2,0.031586900004185736,stalled,probabilistic_stopping,1331,1330,6,1253
+12,73,3600073,single_step,"[4, 6, 11, 10, 7, 8, 11, 1, 4, 5, 0, 6]",5,0.007905000005848706,stalled,probabilistic_stopping,221,220,5,187
+12,73,3600073,swap,"[4, 6, 11, 10, 7, 8, 11, 1, 4, 5, 0, 6]",4,0.014820200041867793,stalled,probabilistic_stopping,601,600,5,581
+12,73,3600073,dual,"[4, 6, 11, 10, 7, 8, 11, 1, 4, 5, 0, 6]",2,0.1732800001045689,budget,proposal_limit,5001,5000,5,108535
+12,73,3600073,adaptive,"[4, 6, 11, 10, 7, 8, 11, 1, 4, 5, 0, 6]",2,0.21711249998770654,stalled,probabilistic_stopping,3171,3170,7,3132
+12,74,3600074,single,"[3, 2, 5, 2, 3, 5, 10, 0, 2, 5, 7, 3]",2,0.024670599959790707,stalled,probabilistic_stopping,1323,1322,10,1253
+12,74,3600074,single_step,"[3, 2, 5, 2, 3, 5, 10, 0, 2, 5, 7, 3]",5,0.0048241999465972185,stalled,probabilistic_stopping,205,204,5,187
+12,74,3600074,swap,"[3, 2, 5, 2, 3, 5, 10, 0, 2, 5, 7, 3]",10,0.01728280005045235,stalled,probabilistic_stopping,667,666,4,581
+12,74,3600074,dual,"[3, 2, 5, 2, 3, 5, 10, 0, 2, 5, 7, 3]",1,0.16236850002314895,budget,proposal_limit,5001,5000,9,108535
+12,74,3600074,adaptive,"[3, 2, 5, 2, 3, 5, 10, 0, 2, 5, 7, 3]",0,0.03121579997241497,solved,zero_conflicts,170,169,11,3132
+12,75,3600075,single,"[2, 2, 3, 10, 4, 9, 5, 7, 2, 10, 1, 5]",2,0.04609000007621944,stalled,probabilistic_stopping,1287,1286,5,1253
+12,75,3600075,single_step,"[2, 2, 3, 10, 4, 9, 5, 7, 2, 10, 1, 5]",6,0.00678269995842129,stalled,probabilistic_stopping,226,225,4,187
+12,75,3600075,swap,"[2, 2, 3, 10, 4, 9, 5, 7, 2, 10, 1, 5]",5,0.033514700015075505,stalled,probabilistic_stopping,679,678,4,581
+12,75,3600075,dual,"[2, 2, 3, 10, 4, 9, 5, 7, 2, 10, 1, 5]",1,0.20024179993197322,budget,proposal_limit,5001,5000,10,108535
+12,75,3600075,adaptive,"[2, 2, 3, 10, 4, 9, 5, 7, 2, 10, 1, 5]",2,0.22014350001700222,stalled,probabilistic_stopping,3179,3178,10,3132
+12,76,3600076,single,"[1, 4, 6, 4, 6, 2, 3, 4, 0, 1, 11, 5]",1,0.02412940002977848,stalled,probabilistic_stopping,1346,1345,11,1253
+12,76,3600076,single_step,"[1, 4, 6, 4, 6, 2, 3, 4, 0, 1, 11, 5]",6,0.0057345000095665455,stalled,probabilistic_stopping,298,297,6,187
+12,76,3600076,swap,"[1, 4, 6, 4, 6, 2, 3, 4, 0, 1, 11, 5]",7,0.014660199987702072,stalled,probabilistic_stopping,682,681,4,581
+12,76,3600076,dual,"[1, 4, 6, 4, 6, 2, 3, 4, 0, 1, 11, 5]",1,0.247213099966757,budget,proposal_limit,5001,5000,8,108535
+12,76,3600076,adaptive,"[1, 4, 6, 4, 6, 2, 3, 4, 0, 1, 11, 5]",3,0.41774029994849116,stalled,probabilistic_stopping,3191,3190,9,3132
+12,77,3600077,single,"[8, 2, 8, 9, 2, 4, 10, 9, 11, 1, 2, 2]",2,0.05213139997795224,stalled,probabilistic_stopping,1431,1430,9,1253
+12,77,3600077,single_step,"[8, 2, 8, 9, 2, 4, 10, 9, 11, 1, 2, 2]",6,0.011902000056579709,stalled,probabilistic_stopping,202,201,4,187
+12,77,3600077,swap,"[8, 2, 8, 9, 2, 4, 10, 9, 11, 1, 2, 2]",9,0.03179689997341484,stalled,probabilistic_stopping,627,626,4,581
+12,77,3600077,dual,"[8, 2, 8, 9, 2, 4, 10, 9, 11, 1, 2, 2]",1,0.21341959992423654,budget,proposal_limit,5001,5000,10,108535
+12,77,3600077,adaptive,"[8, 2, 8, 9, 2, 4, 10, 9, 11, 1, 2, 2]",2,0.2430024000350386,stalled,probabilistic_stopping,3205,3204,8,3132
+12,78,3600078,single,"[4, 0, 8, 1, 4, 10, 7, 8, 8, 10, 9, 5]",1,0.02717290003784001,stalled,probabilistic_stopping,1436,1435,10,1253
+12,78,3600078,single_step,"[4, 0, 8, 1, 4, 10, 7, 8, 8, 10, 9, 5]",5,0.004488299950025976,stalled,probabilistic_stopping,233,232,6,187
+12,78,3600078,swap,"[4, 0, 8, 1, 4, 10, 7, 8, 8, 10, 9, 5]",6,0.013779999921098351,stalled,probabilistic_stopping,635,634,6,581
+12,78,3600078,dual,"[4, 0, 8, 1, 4, 10, 7, 8, 8, 10, 9, 5]",1,0.17425220005679876,budget,proposal_limit,5001,5000,9,108535
+12,78,3600078,adaptive,"[4, 0, 8, 1, 4, 10, 7, 8, 8, 10, 9, 5]",2,0.3390728000085801,stalled,probabilistic_stopping,3196,3195,9,3132
+12,79,3600079,single,"[11, 4, 9, 2, 3, 4, 4, 3, 4, 8, 7, 7]",2,0.03426790004596114,stalled,probabilistic_stopping,1378,1377,14,1253
+12,79,3600079,single_step,"[11, 4, 9, 2, 3, 4, 4, 3, 4, 8, 7, 7]",6,0.006021899986080825,stalled,probabilistic_stopping,249,248,12,187
+12,79,3600079,swap,"[11, 4, 9, 2, 3, 4, 4, 3, 4, 8, 7, 7]",9,0.020353400032036006,stalled,probabilistic_stopping,624,623,9,581
+12,79,3600079,dual,"[11, 4, 9, 2, 3, 4, 4, 3, 4, 8, 7, 7]",0,0.15006140002515167,solved,zero_conflicts,4651,4650,9,108535
+12,79,3600079,adaptive,"[11, 4, 9, 2, 3, 4, 4, 3, 4, 8, 7, 7]",1,0.353577799978666,stalled,probabilistic_stopping,3174,3173,12,3132
+12,80,3600080,single,"[2, 8, 8, 10, 0, 7, 3, 4, 3, 3, 5, 2]",3,0.10404720006044954,stalled,probabilistic_stopping,1316,1315,7,1253
+12,80,3600080,single_step,"[2, 8, 8, 10, 0, 7, 3, 4, 3, 3, 5, 2]",7,0.026894800015725195,stalled,probabilistic_stopping,215,214,3,187
+12,80,3600080,swap,"[2, 8, 8, 10, 0, 7, 3, 4, 3, 3, 5, 2]",7,0.05050829995889217,stalled,probabilistic_stopping,640,639,5,581
+12,80,3600080,dual,"[2, 8, 8, 10, 0, 7, 3, 4, 3, 3, 5, 2]",1,0.4106222999980673,budget,proposal_limit,5001,5000,9,108535
+12,80,3600080,adaptive,"[2, 8, 8, 10, 0, 7, 3, 4, 3, 3, 5, 2]",2,0.17177959997206926,stalled,probabilistic_stopping,3157,3156,5,3132
+12,81,3600081,single,"[4, 4, 4, 0, 2, 10, 4, 6, 0, 5, 2, 3]",3,0.034338600002229214,stalled,probabilistic_stopping,1332,1331,8,1253
+12,81,3600081,single_step,"[4, 4, 4, 0, 2, 10, 4, 6, 0, 5, 2, 3]",6,0.003839900018647313,stalled,probabilistic_stopping,219,218,5,187
+12,81,3600081,swap,"[4, 4, 4, 0, 2, 10, 4, 6, 0, 5, 2, 3]",8,0.015433399938046932,stalled,probabilistic_stopping,620,619,4,581
+12,81,3600081,dual,"[4, 4, 4, 0, 2, 10, 4, 6, 0, 5, 2, 3]",0,0.014310400001704693,solved,zero_conflicts,523,522,7,108535
+12,81,3600081,adaptive,"[4, 4, 4, 0, 2, 10, 4, 6, 0, 5, 2, 3]",3,0.3135472999420017,stalled,probabilistic_stopping,3161,3160,7,3132
+12,82,3600082,single,"[0, 8, 6, 8, 5, 6, 0, 5, 1, 7, 0, 7]",0,0.02082720003090799,solved,zero_conflicts,678,677,10,1253
+12,82,3600082,single_step,"[0, 8, 6, 8, 5, 6, 0, 5, 1, 7, 0, 7]",7,0.01216720009688288,stalled,probabilistic_stopping,238,237,6,187
+12,82,3600082,swap,"[0, 8, 6, 8, 5, 6, 0, 5, 1, 7, 0, 7]",8,0.02897999994456768,stalled,probabilistic_stopping,692,691,4,581
+12,82,3600082,dual,"[0, 8, 6, 8, 5, 6, 0, 5, 1, 7, 0, 7]",1,0.16540789999999106,budget,proposal_limit,5001,5000,9,108535
+12,82,3600082,adaptive,"[0, 8, 6, 8, 5, 6, 0, 5, 1, 7, 0, 7]",3,0.2491913998965174,stalled,probabilistic_stopping,3181,3180,8,3132
+12,83,3600083,single,"[10, 9, 5, 11, 6, 9, 8, 10, 11, 10, 0, 7]",0,0.00550570001360029,solved,zero_conflicts,250,249,12,1253
+12,83,3600083,single_step,"[10, 9, 5, 11, 6, 9, 8, 10, 11, 10, 0, 7]",9,0.006597000057809055,stalled,probabilistic_stopping,235,234,5,187
+12,83,3600083,swap,"[10, 9, 5, 11, 6, 9, 8, 10, 11, 10, 0, 7]",7,0.021133000031113625,stalled,probabilistic_stopping,600,599,6,581
+12,83,3600083,dual,"[10, 9, 5, 11, 6, 9, 8, 10, 11, 10, 0, 7]",1,0.32556889997795224,budget,proposal_limit,5001,5000,11,108535
+12,83,3600083,adaptive,"[10, 9, 5, 11, 6, 9, 8, 10, 11, 10, 0, 7]",3,0.3956010000547394,stalled,probabilistic_stopping,3151,3150,9,3132
+12,84,3600084,single,"[0, 11, 5, 3, 3, 9, 4, 6, 9, 11, 6, 3]",2,0.10789079999085516,stalled,probabilistic_stopping,1386,1385,7,1253
+12,84,3600084,single_step,"[0, 11, 5, 3, 3, 9, 4, 6, 9, 11, 6, 3]",6,0.01159799995366484,stalled,probabilistic_stopping,197,196,3,187
+12,84,3600084,swap,"[0, 11, 5, 3, 3, 9, 4, 6, 9, 11, 6, 3]",8,0.05247130000498146,stalled,probabilistic_stopping,630,629,2,581
+12,84,3600084,dual,"[0, 11, 5, 3, 3, 9, 4, 6, 9, 11, 6, 3]",1,0.3869957000715658,budget,proposal_limit,5001,5000,5,108535
+12,84,3600084,adaptive,"[0, 11, 5, 3, 3, 9, 4, 6, 9, 11, 6, 3]",2,0.32808409992139786,stalled,probabilistic_stopping,3409,3408,5,3132
+12,85,3600085,single,"[11, 8, 4, 6, 10, 11, 9, 0, 4, 4, 2, 8]",2,0.03790110000409186,stalled,probabilistic_stopping,1638,1637,7,1253
+12,85,3600085,single_step,"[11, 8, 4, 6, 10, 11, 9, 0, 4, 4, 2, 8]",3,0.005027999985031784,stalled,probabilistic_stopping,225,224,5,187
+12,85,3600085,swap,"[11, 8, 4, 6, 10, 11, 9, 0, 4, 4, 2, 8]",5,0.021583499968983233,stalled,probabilistic_stopping,681,680,4,581
+12,85,3600085,dual,"[11, 8, 4, 6, 10, 11, 9, 0, 4, 4, 2, 8]",0,0.1543772000586614,solved,zero_conflicts,3654,3653,9,108535
+12,85,3600085,adaptive,"[11, 8, 4, 6, 10, 11, 9, 0, 4, 4, 2, 8]",2,0.1897152999881655,stalled,probabilistic_stopping,3154,3153,6,3132
+12,86,3600086,single,"[10, 7, 5, 4, 0, 10, 9, 4, 2, 9, 7, 11]",4,0.02850460004992783,stalled,probabilistic_stopping,1328,1327,5,1253
+12,86,3600086,single_step,"[10, 7, 5, 4, 0, 10, 9, 4, 2, 9, 7, 11]",4,0.010372700053267181,stalled,probabilistic_stopping,227,226,5,187
+12,86,3600086,swap,"[10, 7, 5, 4, 0, 10, 9, 4, 2, 9, 7, 11]",5,0.017518999986350536,stalled,probabilistic_stopping,673,672,4,581
+12,86,3600086,dual,"[10, 7, 5, 4, 0, 10, 9, 4, 2, 9, 7, 11]",1,0.20514320000074804,budget,proposal_limit,5001,5000,7,108535
+12,86,3600086,adaptive,"[10, 7, 5, 4, 0, 10, 9, 4, 2, 9, 7, 11]",1,0.22157589998096228,stalled,probabilistic_stopping,3164,3163,8,3132
+12,87,3600087,single,"[3, 6, 1, 2, 3, 5, 9, 5, 3, 2, 7, 6]",2,0.024943599943071604,stalled,probabilistic_stopping,1333,1332,8,1253
+12,87,3600087,single_step,"[3, 6, 1, 2, 3, 5, 9, 5, 3, 2, 7, 6]",7,0.0051908999448642135,stalled,probabilistic_stopping,202,201,4,187
+12,87,3600087,swap,"[3, 6, 1, 2, 3, 5, 9, 5, 3, 2, 7, 6]",9,0.01779990002978593,stalled,probabilistic_stopping,635,634,3,581
+12,87,3600087,dual,"[3, 6, 1, 2, 3, 5, 9, 5, 3, 2, 7, 6]",1,0.22668860002886504,budget,proposal_limit,5001,5000,9,108535
+12,87,3600087,adaptive,"[3, 6, 1, 2, 3, 5, 9, 5, 3, 2, 7, 6]",1,0.29811979993246496,stalled,probabilistic_stopping,3203,3202,9,3132
+12,88,3600088,single,"[5, 6, 8, 2, 6, 3, 10, 11, 11, 9, 8, 6]",2,0.039367099991068244,stalled,probabilistic_stopping,1298,1297,6,1253
+12,88,3600088,single_step,"[5, 6, 8, 2, 6, 3, 10, 11, 11, 9, 8, 6]",6,0.00581969995982945,stalled,probabilistic_stopping,207,206,6,187
+12,88,3600088,swap,"[5, 6, 8, 2, 6, 3, 10, 11, 11, 9, 8, 6]",6,0.038851400022394955,stalled,probabilistic_stopping,645,644,6,581
+12,88,3600088,dual,"[5, 6, 8, 2, 6, 3, 10, 11, 11, 9, 8, 6]",1,0.30826199997682124,budget,proposal_limit,5001,5000,6,108535
+12,88,3600088,adaptive,"[5, 6, 8, 2, 6, 3, 10, 11, 11, 9, 8, 6]",3,0.31526709999889135,stalled,probabilistic_stopping,3195,3194,8,3132
+12,89,3600089,single,"[4, 11, 10, 1, 0, 3, 7, 0, 2, 10, 10, 4]",0,0.007967300014570355,solved,zero_conflicts,422,421,9,1253
+12,89,3600089,single_step,"[4, 11, 10, 1, 0, 3, 7, 0, 2, 10, 10, 4]",6,0.003832099959254265,stalled,probabilistic_stopping,203,202,5,187
+12,89,3600089,swap,"[4, 11, 10, 1, 0, 3, 7, 0, 2, 10, 10, 4]",5,0.013148300000466406,stalled,probabilistic_stopping,598,597,4,581
+12,89,3600089,dual,"[4, 11, 10, 1, 0, 3, 7, 0, 2, 10, 10, 4]",1,0.15683049999643117,budget,proposal_limit,5001,5000,7,108535
+12,89,3600089,adaptive,"[4, 11, 10, 1, 0, 3, 7, 0, 2, 10, 10, 4]",1,0.23996759997680783,stalled,probabilistic_stopping,3184,3183,8,3132
+12,90,3600090,single,"[11, 3, 4, 6, 9, 6, 6, 10, 5, 4, 4, 9]",2,0.028071500011719763,stalled,probabilistic_stopping,1341,1340,8,1253
+12,90,3600090,single_step,"[11, 3, 4, 6, 9, 6, 6, 10, 5, 4, 4, 9]",6,0.004185199970379472,stalled,probabilistic_stopping,214,213,5,187
+12,90,3600090,swap,"[11, 3, 4, 6, 9, 6, 6, 10, 5, 4, 4, 9]",9,0.021975600044243038,stalled,probabilistic_stopping,634,633,4,581
+12,90,3600090,dual,"[11, 3, 4, 6, 9, 6, 6, 10, 5, 4, 4, 9]",1,0.21434780000708997,budget,proposal_limit,5001,5000,10,108535
+12,90,3600090,adaptive,"[11, 3, 4, 6, 9, 6, 6, 10, 5, 4, 4, 9]",1,0.29552049993071705,stalled,probabilistic_stopping,3233,3232,11,3132
+12,91,3600091,single,"[4, 0, 6, 0, 10, 1, 7, 10, 6, 9, 7, 2]",2,0.02406429999973625,stalled,probabilistic_stopping,1293,1292,5,1253
+12,91,3600091,single_step,"[4, 0, 6, 0, 10, 1, 7, 10, 6, 9, 7, 2]",5,0.003725699963979423,stalled,probabilistic_stopping,201,200,3,187
+12,91,3600091,swap,"[4, 0, 6, 0, 10, 1, 7, 10, 6, 9, 7, 2]",5,0.014340099995024502,stalled,probabilistic_stopping,623,622,4,581
+12,91,3600091,dual,"[4, 0, 6, 0, 10, 1, 7, 10, 6, 9, 7, 2]",1,0.2084910999983549,budget,proposal_limit,5001,5000,7,108535
+12,91,3600091,adaptive,"[4, 0, 6, 0, 10, 1, 7, 10, 6, 9, 7, 2]",1,0.4437484999652952,stalled,probabilistic_stopping,3298,3297,7,3132
+12,92,3600092,single,"[5, 11, 3, 6, 9, 1, 11, 4, 3, 5, 0, 4]",1,0.09684779995586723,stalled,probabilistic_stopping,1477,1476,7,1253
+12,92,3600092,single_step,"[5, 11, 3, 6, 9, 1, 11, 4, 3, 5, 0, 4]",3,0.011152499937452376,stalled,probabilistic_stopping,210,209,4,187
+12,92,3600092,swap,"[5, 11, 3, 6, 9, 1, 11, 4, 3, 5, 0, 4]",6,0.0844539999961853,stalled,probabilistic_stopping,627,626,4,581
+12,92,3600092,dual,"[5, 11, 3, 6, 9, 1, 11, 4, 3, 5, 0, 4]",2,0.3618561999173835,budget,proposal_limit,5001,5000,6,108535
+12,92,3600092,adaptive,"[5, 11, 3, 6, 9, 1, 11, 4, 3, 5, 0, 4]",1,0.31978509994223714,stalled,probabilistic_stopping,3180,3179,6,3132
+12,93,3600093,single,"[5, 11, 2, 3, 7, 0, 9, 2, 8, 10, 0, 2]",1,0.043235599994659424,stalled,probabilistic_stopping,1694,1693,8,1253
+12,93,3600093,single_step,"[5, 11, 2, 3, 7, 0, 9, 2, 8, 10, 0, 2]",4,0.01143499999307096,stalled,probabilistic_stopping,233,232,5,187
+12,93,3600093,swap,"[5, 11, 2, 3, 7, 0, 9, 2, 8, 10, 0, 2]",5,0.05829079996328801,stalled,probabilistic_stopping,861,860,3,581
+12,93,3600093,dual,"[5, 11, 2, 3, 7, 0, 9, 2, 8, 10, 0, 2]",2,0.25023260002490133,budget,proposal_limit,5001,5000,5,108535
+12,93,3600093,adaptive,"[5, 11, 2, 3, 7, 0, 9, 2, 8, 10, 0, 2]",2,0.2232600999996066,stalled,probabilistic_stopping,3167,3166,7,3132
+12,94,3600094,single,"[2, 10, 8, 2, 9, 5, 6, 5, 7, 9, 5, 8]",3,0.027571799932047725,stalled,probabilistic_stopping,1298,1297,7,1253
+12,94,3600094,single_step,"[2, 10, 8, 2, 9, 5, 6, 5, 7, 9, 5, 8]",6,0.004804600030183792,stalled,probabilistic_stopping,195,194,4,187
+12,94,3600094,swap,"[2, 10, 8, 2, 9, 5, 6, 5, 7, 9, 5, 8]",8,0.018162599997594953,stalled,probabilistic_stopping,636,635,3,581
+12,94,3600094,dual,"[2, 10, 8, 2, 9, 5, 6, 5, 7, 9, 5, 8]",1,0.1469021999510005,budget,proposal_limit,5001,5000,8,108535
+12,94,3600094,adaptive,"[2, 10, 8, 2, 9, 5, 6, 5, 7, 9, 5, 8]",2,0.2783845999510959,stalled,probabilistic_stopping,3173,3172,6,3132
+12,95,3600095,single,"[10, 7, 6, 2, 6, 1, 5, 6, 6, 1, 1, 6]",1,0.02393079991452396,stalled,probabilistic_stopping,1366,1365,14,1253
+12,95,3600095,single_step,"[10, 7, 6, 2, 6, 1, 5, 6, 6, 1, 1, 6]",5,0.004648000001907349,stalled,probabilistic_stopping,246,245,8,187
+12,95,3600095,swap,"[10, 7, 6, 2, 6, 1, 5, 6, 6, 1, 1, 6]",16,0.013798199943266809,stalled,probabilistic_stopping,587,586,3,581
+12,95,3600095,dual,"[10, 7, 6, 2, 6, 1, 5, 6, 6, 1, 1, 6]",1,0.3592284999322146,budget,proposal_limit,5001,5000,11,108535
+12,95,3600095,adaptive,"[10, 7, 6, 2, 6, 1, 5, 6, 6, 1, 1, 6]",2,0.542138300021179,stalled,probabilistic_stopping,3314,3313,9,3132
+12,96,3600096,single,"[2, 8, 7, 3, 6, 5, 4, 7, 10, 3, 10, 0]",2,0.13523130002431571,stalled,probabilistic_stopping,1465,1464,10,1253
+12,96,3600096,single_step,"[2, 8, 7, 3, 6, 5, 4, 7, 10, 3, 10, 0]",6,0.0204088999889791,stalled,probabilistic_stopping,259,258,7,187
+12,96,3600096,swap,"[2, 8, 7, 3, 6, 5, 4, 7, 10, 3, 10, 0]",4,0.02113070001360029,stalled,probabilistic_stopping,752,751,7,581
+12,96,3600096,dual,"[2, 8, 7, 3, 6, 5, 4, 7, 10, 3, 10, 0]",1,0.1919564000563696,budget,proposal_limit,5001,5000,9,108535
+12,96,3600096,adaptive,"[2, 8, 7, 3, 6, 5, 4, 7, 10, 3, 10, 0]",3,0.2598720999667421,stalled,probabilistic_stopping,3158,3157,9,3132
+12,97,3600097,single,"[1, 11, 7, 2, 5, 5, 10, 4, 11, 8, 5, 2]",2,0.042604299960657954,stalled,probabilistic_stopping,1293,1292,5,1253
+12,97,3600097,single_step,"[1, 11, 7, 2, 5, 5, 10, 4, 11, 8, 5, 2]",4,0.006345000001601875,stalled,probabilistic_stopping,194,193,2,187
+12,97,3600097,swap,"[1, 11, 7, 2, 5, 5, 10, 4, 11, 8, 5, 2]",7,0.02962149993982166,stalled,probabilistic_stopping,623,622,1,581
+12,97,3600097,dual,"[1, 11, 7, 2, 5, 5, 10, 4, 11, 8, 5, 2]",1,0.1703605999937281,budget,proposal_limit,5001,5000,7,108535
+12,97,3600097,adaptive,"[1, 11, 7, 2, 5, 5, 10, 4, 11, 8, 5, 2]",2,0.2252586999675259,stalled,probabilistic_stopping,3238,3237,5,3132
+12,98,3600098,single,"[4, 4, 4, 0, 8, 1, 9, 9, 9, 0, 10, 8]",2,0.03179679997265339,stalled,probabilistic_stopping,1344,1343,9,1253
+12,98,3600098,single_step,"[4, 4, 4, 0, 8, 1, 9, 9, 9, 0, 10, 8]",9,0.006010799901559949,stalled,probabilistic_stopping,274,273,3,187
+12,98,3600098,swap,"[4, 4, 4, 0, 8, 1, 9, 9, 9, 0, 10, 8]",8,0.020367300021462142,stalled,probabilistic_stopping,643,642,5,581
+12,98,3600098,dual,"[4, 4, 4, 0, 8, 1, 9, 9, 9, 0, 10, 8]",2,0.16940329992212355,budget,proposal_limit,5001,5000,10,108535
+12,98,3600098,adaptive,"[4, 4, 4, 0, 8, 1, 9, 9, 9, 0, 10, 8]",4,0.25717590004205704,stalled,probabilistic_stopping,3147,3146,6,3132
+12,99,3600099,single,"[9, 9, 4, 11, 4, 6, 8, 10, 8, 11, 11, 0]",2,0.11828950000926852,stalled,probabilistic_stopping,1474,1473,8,1253
+12,99,3600099,single_step,"[9, 9, 4, 11, 4, 6, 8, 10, 8, 11, 11, 0]",6,0.010820599971339107,stalled,probabilistic_stopping,212,211,6,187
+12,99,3600099,swap,"[9, 9, 4, 11, 4, 6, 8, 10, 8, 11, 11, 0]",7,0.05173479998484254,stalled,probabilistic_stopping,681,680,5,581
+12,99,3600099,dual,"[9, 9, 4, 11, 4, 6, 8, 10, 8, 11, 11, 0]",1,0.5168162999907508,budget,proposal_limit,5001,5000,9,108535
+12,99,3600099,adaptive,"[9, 9, 4, 11, 4, 6, 8, 10, 8, 11, 11, 0]",2,0.40359899995382875,stalled,probabilistic_stopping,3253,3252,9,3132

@@ -1,0 +1,51 @@
+{
+  "runs_per_configuration": 100,
+  "benchmark_n": [
+    4,
+    8
+  ],
+  "benchmark_board_seed": "4100+n",
+  "benchmark_search_seed": "100000*n+trial",
+  "scaling_n": [
+    4,
+    8,
+    12,
+    16,
+    20
+  ],
+  "scaling_board_seed": "5100+n",
+  "scaling_search_seed": "200000*n+trial",
+  "operator_n": [
+    8,
+    12
+  ],
+  "operator_board_seed": "6100+n",
+  "operator_search_seed": "300000*n+trial",
+  "hc_max_iterations": 10000,
+  "epsilon_per_stagnant_state": 0.01,
+  "rr_max_restarts": 100,
+  "rr_max_starts": 101,
+  "sa_max_steps": 5000,
+  "sa_t0": 2.0,
+  "sa_tend": 0.01,
+  "sa_schedules": [
+    "geometric",
+    "inverse"
+  ],
+  "operators_max_proposals": 5000,
+  "operators": [
+    "single",
+    "single_step",
+    "swap",
+    "dual",
+    "adaptive"
+  ],
+  "adaptive_uniform_probability": 0.4,
+  "versions": {
+    "python": "3.10.11",
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "matplotlib": "3.10.7"
+  },
+  "timing_scope": "solver including internal initialization/restarts; excludes dataset generation and rendering"
+}
