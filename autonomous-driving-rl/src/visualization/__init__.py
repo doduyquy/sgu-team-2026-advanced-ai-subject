@@ -1,10 +1,11 @@
 """
-Research Platform V1 Visualization & HUD Subsystem (Gate HUD-1 & HUD-2).
+Research Platform V1 Visualization & HUD Subsystem (Gate HUD-1, HUD-2 & HUD-3).
 
-Provides hardware-accelerated minimap and transparent racing HUD overlay components
-for MetaDrive NATIVE mode.
+Provides hardware-accelerated minimap, transparent racing HUD overlay, and
+the unified RacingHudManager facade for MetaDrive NATIVE mode.
 """
 
+from src.visualization.hud_manager import RacingHudManager
 from src.visualization.minimap_math import (
     TrajectoryTrailBuffer,
     calculate_film_size,
@@ -21,6 +22,7 @@ from src.visualization.telemetry_model import (
 __all__ = [
     "MiniMapOverlay",
     "RacingHud",
+    "RacingHudManager",
     "HudTelemetrySnapshotV1",
     "create_telemetry_snapshot",
     "calculate_map_bounds",
