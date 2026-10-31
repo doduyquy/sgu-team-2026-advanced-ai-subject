@@ -312,6 +312,13 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
             lens_size = lens.getFilmSize()
             self.assertAlmostEqual(lens_size.x, overlay.film_width, places=4)
             self.assertAlmostEqual(lens_size.y, overlay.film_height, places=4)
+
+            # Verify background quad scale was updated to cover new film size
+            bg_scale = overlay.background.getScale()
+            expected_scale_x = overlay.film_width / initial_film[0]
+            expected_scale_y = overlay.film_height / initial_film[1]
+            self.assertAlmostEqual(bg_scale.x, expected_scale_x, places=4)
+            self.assertAlmostEqual(bg_scale.y, expected_scale_y, places=4)
         finally:
             overlay.destroy()
 
@@ -343,14 +350,29 @@ class TestMinimapOverlayUnitSuite(unittest.TestCase):
             MiniMapOverlay(mock_env_no_win)
         self.assertIn("Render window not available", str(ctx2.exception))
 
-        # Test 20b: Failure injection after camera creation (during _create_markers)
+        # Test 20b: Failure injection after camera creation (during _create_background)
+        env_bg_fail, _ = _create_mock_minimap_env()
+        with patch.object(MiniMapOverlay, "_create_background", side_effect=RuntimeError("Simulated background failure")):
+            with self.assertRaises(RuntimeError) as ctx3:
+                MiniMapOverlay(env_bg_fail)
+            self.assertIn("Simulated background failure", str(ctx3.exception))
+            # Verify camera and display_region were cleanly removed during rollback
+            env_bg_fail.engine.win.removeDisplayRegion.assert_called()
+
+        # Test 20c: Failure injection after camera creation (during _create_markers)
         env_inject, _ = _create_mock_minimap_env()
         with patch.object(MiniMapOverlay, "_create_markers", side_effect=RuntimeError("Simulated marker failure")):
-            with self.assertRaises(RuntimeError) as ctx3:
+            with self.assertRaises(RuntimeError) as ctx4:
                 MiniMapOverlay(env_inject)
-            self.assertIn("Simulated marker failure", str(ctx3.exception))
+            self.assertIn("Simulated marker failure", str(ctx4.exception))
             # Verify that camera and display_region were cleanly removed during rollback
             env_inject.engine.win.removeDisplayRegion.assert_called()
+
+        # Test 20d: Successive successful initialization after failure
+        env_retry, _ = _create_mock_minimap_env()
+        retry_overlay = MiniMapOverlay(env_retry)
+        self.assertIsNotNone(retry_overlay.camera)
+        retry_overlay.destroy()
 
     def test_21_constructor_spawns_no_background_taskmgr_tasks(self):
         """21. MiniMapOverlay constructor operates purely step-driven without taskMgr.add() background tasks."""

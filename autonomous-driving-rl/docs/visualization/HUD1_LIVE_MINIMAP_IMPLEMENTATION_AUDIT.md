@@ -2,7 +2,7 @@
 
 - **Document ID:** `AUDIT-HUD1-LIVE-MINIMAP`
 - **Version:** `1.0.0`
-- **Status:** `AUDIT-COMPLETE / READY FOR INDEPENDENT RE-AUDIT (R1)`
+- **Status:** `AUDIT-COMPLETE / READY FOR INDEPENDENT RE-AUDIT (R2)`
 - **Date:** 2026-10-31
 - **Lead / Stage 5 + GUI:** **Hữu Tri**
 - **Base Commit (`origin/main`):** `c5107b84d9e166e276e34ece1a90f11675180aa0` (PR #30 Merge)
@@ -20,13 +20,14 @@ Gate HUD-1 delivers the live, hardware-accelerated top-down minimap overlay for 
 2. **Directional Heading Orientation:** Replaced the static circle with an electric cyan chevron marker that dynamically rotates to match the vehicle's real-time yaw angle (`heading_theta`), with a non-directional dot fallback when heading is unavailable.
 3. **Historical Trajectory Trail:** Implemented an in-memory bounded ring buffer ($K \le 500$) with a $0.5\,\text{m}$ spatial distance filter, rendered via Panda3D `LineSegs` to show the traveled route without leaking across episodes.
 4. **Decoupled Step-Driven API (HUD1-R1-01):** Formulated the canonical interface `update(world_x, world_y, heading_rad)` invoked after simulation steps, strictly using passed arguments with zero implicit fallback to `env.agent`.
-5. **Dynamic Window Resize Handling (HUD1-R1-02):** Implemented `_check_window_resize()` monitoring window dimensions, dynamically recalculating film size and marker scale without recreating cameras or DisplayRegions.
-6. **Exception-Safe Partial Construction Rollback (HUD1-R1-03):** Constructor wraps resource allocation in `try...except`, invoking `self.destroy()` upon failure to prevent orphaned DisplayRegions or cameras.
-7. **Trajectory Sampling Independence (HUD1-R1-04):** Position validation and trajectory appending execute prior to camera projection and screen clipping, preserving traveled path even when the vehicle temporarily leaves the viewport.
-8. **Standalone Sandbox Demo (HUD1-R1-06):** Implemented `scripts/demo_minimap_native.py` with cleanly labeled scripted constant driving (`continuous_box2_v1`), without creating unused `AgentPolicy` instances.
-9. **Visual Evidence (HUD1-R1-07):** Captured and committed two real desktop Panda3D screenshots under `docs/visualization/evidence/` demonstrating near-start and after-movement states.
-10. **Unit Test Suite (HUD1-R1-05):** Implemented `tests/test_minimap_overlay.py` with 22 dedicated test cases exercising actual component methods under a mock Panda3D environment; full repository test suite verified at **424 tests (423 passed, 1 skipped informational, 0 failures, 0 errors — 100% OK)**.
-11. **Complete Scientific Isolation:** Zero modifications to `src/launcher/executor.py`, zero modifications to `configs/platform/` or frozen contracts, and strict headless isolation for benchmark suites.
+5. **Marker Geometry Hardware Clipping (HUD1-R2-01):** Applied `ScissorEffect.makeScreen(scissor_box)` to `marker_root`, enforcing GPU-level pixel clipping at the exact DisplayRegion boundaries. Tested at edge/corner coordinates and heading angles pointing outward.
+6. **Immediate DisplayRegion Tracking & Robust Rollback (HUD1-R2-02):** Captured `display_region` reference immediately after `makeCamera()`. `destroy()` checks both `self.display_region` and `camera.node().getDisplayRegion(0)` to guarantee clean teardown on partial failure.
+7. **Resize Consistency across Camera, Backing, and Marker (HUD1-R1-02 & HUD1-R2-03):** `_check_window_resize()` recalculates film size, updates `lens.setFilmSize()`, dynamically scales `self.background.setScale()`, and updates marker scale without recreating cameras or DisplayRegions.
+8. **Trajectory Sampling Independence (HUD1-R1-04):** Position validation and trajectory appending execute prior to camera projection and screen clipping, preserving traveled path even when the vehicle temporarily leaves the viewport.
+9. **Standalone Sandbox Demo (HUD1-R1-06):** Implemented `scripts/demo_minimap_native.py` with cleanly labeled scripted constant driving (`continuous_box2_v1`), without creating unused `AgentPolicy` instances.
+10. **Visual Evidence (HUD1-R1-07):** Captured and committed two real desktop Panda3D screenshots under `docs/visualization/evidence/` demonstrating near-start and after-movement states.
+11. **Unit Test Suite (HUD1-R1-05):** Implemented `tests/test_minimap_overlay.py` with 22 dedicated test cases exercising actual component methods under a mock Panda3D environment; full repository test suite verified at **424 tests (423 passed, 1 skipped informational, 0 failures, 0 errors — 100% OK)**.
+12. **Complete Scientific Isolation:** Zero modifications to `src/launcher/executor.py`, zero modifications to `configs/platform/` or frozen contracts, and strict headless isolation for benchmark suites.
 
 ---
 

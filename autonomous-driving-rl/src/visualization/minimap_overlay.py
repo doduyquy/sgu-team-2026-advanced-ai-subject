@@ -6,8 +6,13 @@ directly in the MetaDrive Panda3D window (render_mode="NATIVE"):
 - Uses secondary Panda3D camera with OrthographicLens and CamMask.MiniMap.
 - Dedicated DisplayRegion anchored to top-left corner per HUD-0 specification.
 - Directional heading marker indicating exact yaw travel direction in real-time.
+- Non-directional circular dot fallback when heading orientation is unavailable.
+- Hardware-accelerated marker clipping via ScissorEffect preventing boundary spillover.
 - Bounded in-memory trajectory ring buffer (K <= 500) rendering traveled trail.
+- Trajectory sampling executed independently of camera projection / marker clipping.
 - Step-driven decoupled pose update API: update(world_x, world_y, heading_rad).
+- Exception-safe partial construction rollback and idempotent teardown.
+- Dynamic window resize handling maintaining map aspect ratio and background coverage.
 - Complete scientific isolation: zero invocation and zero overhead when render_mode="OFF".
 
 Attribution:
@@ -32,6 +37,8 @@ from panda3d.core import (
     OrthographicLens,
     Point2,
     Point3,
+    Point4,
+    ScissorEffect,
     Vec4,
 )
 
@@ -60,6 +67,7 @@ class MiniMapOverlay:
     REGION = (0.015, 0.185, 0.745, 0.985)
 
     def __init__(self, env: Any, padding_m: float = 12.0) -> None:
+        # Initialize resource holders first to enable safe partial-construction rollback
         self.env = env
         self.engine = getattr(env, "engine", None)
         self.padding_m = float(padding_m)
@@ -73,9 +81,10 @@ class MiniMapOverlay:
         self.trail_np = None
         self._trail_buffer = TrajectoryTrailBuffer(max_capacity=500)
         self._last_win_size = (1.0, 1.0)
-        self._initial_win_size = (1.0, 1.0)
+        self._initial_film_size = (100.0, 100.0)
         self.film_width = 100.0
         self.film_height = 100.0
+        self._last_marker_heading: Optional[float] = None
 
         if self.engine is None:
             raise RuntimeError(
@@ -122,7 +131,6 @@ class MiniMapOverlay:
         left, right, bottom, top = self.REGION
         win_w = max(float(self.engine.win.getXSize()), 1.0)
         win_h = max(float(self.engine.win.getYSize()), 1.0)
-        self._initial_win_size = (win_w, win_h)
         self._last_win_size = (win_w, win_h)
 
         region_w = (right - left) * win_w
@@ -130,30 +138,42 @@ class MiniMapOverlay:
         region_aspect = region_w / max(region_h, 1.0)
 
         self.film_width, self.film_height = calculate_film_size(bounds, region_aspect, padding_m=padding_m)
+        self._initial_film_size = (self.film_width, self.film_height)
 
         lens = OrthographicLens()
         lens.setFilmSize(self.film_width, self.film_height)
         camera_height = max(self.film_width, self.film_height) * 2.0 + 50.0
         lens.setNearFar(1.0, camera_height + 1000.0)
 
+        # Allocate camera on window
         self.camera = self.engine.makeCamera(
             self.engine.win,
             sort=5,
             displayRegion=self.REGION,
             camName="project_minimap_camera",
         )
+
+        # Immediately store display_region reference for rollback safety
+        try:
+            if self.camera is not None and hasattr(self.camera, "node"):
+                cam_node = self.camera.node()
+                if hasattr(cam_node, "getDisplayRegion"):
+                    self.display_region = cam_node.getDisplayRegion(0)
+        except Exception:
+            pass
+
         self.camera.node().setLens(lens)
         self.camera.node().setCameraMask(CamMask.MiniMap)
         self.camera.reparentTo(self.engine.render)
         self.camera.setPos(center_x, center_y, camera_height)
         self.camera.setHpr(0.0, -90.0, 0.0)
 
-        self.display_region = self.camera.node().getDisplayRegion(0)
-        self.display_region.setClearColorActive(True)
-        # Transparent dark glass background tint (#0B131B with 0.75 alpha)
-        self.display_region.setClearColor(Vec4(0.043, 0.075, 0.106, 0.75))
-        self.display_region.setClearDepthActive(True)
-        self.display_region.setClearDepth(1.0)
+        if self.display_region is not None:
+            self.display_region.setClearColorActive(True)
+            # Transparent dark glass background tint (#0B131B with 0.75 alpha)
+            self.display_region.setClearColor(Vec4(0.043, 0.075, 0.106, 0.75))
+            self.display_region.setClearDepthActive(True)
+            self.display_region.setClearDepth(1.0)
 
     def _create_background(self) -> None:
         """Creates transparent dark backing quad in render with CamMask.MiniMap."""
@@ -192,6 +212,7 @@ class MiniMapOverlay:
     def _create_markers(self) -> None:
         """
         Creates 2D screen-space marker root in render2d with fixed pixel dimensions:
+        - ScissorEffect hardware clipping restricts marker rendering to the exact minimap DisplayRegion.
         - marker_arrow: Directional chevron pointing East (right) at rest (heading=0).
         - marker_dot: Non-directional circular dot used when heading is None.
         """
@@ -211,10 +232,19 @@ class MiniMapOverlay:
         self.marker_root.setTwoSided(True)
         self.marker_root.setBin("fixed", 225)
 
+        # Apply ScissorEffect: clips any marker geometry outside the minimap screen box
+        left, right, bottom, top = self.REGION
+        screen_left = left * 2.0 - 1.0
+        screen_right = right * 2.0 - 1.0
+        screen_bottom = bottom * 2.0 - 1.0
+        screen_top = top * 2.0 - 1.0
+        scissor_box = Point4(screen_left, screen_right, screen_bottom, screen_top)
+        self.marker_root.setEffect(ScissorEffect.makeScreen(scissor_box))
+
         # 1. Directional Chevron (Tip points along +X at heading=0)
         # Electric cyan accent color (#00E5FF)
         arrow_color = (0.0, 0.898, 1.0, 1.0)
-        arrow_vdata = GeomVertexData("marker_arrow_vdata", GeomVertexFormat.getV3c4(), Geom.UHStatic)
+        arrow_vdata = GeomVertexData("marker_arrow_vdata", GeomVertexFormat.getV3c4(), Geom.UHDynamic)
         av = GeomVertexWriter(arrow_vdata, "vertex")
         ac = GeomVertexWriter(arrow_vdata, "color")
 
@@ -302,8 +332,8 @@ class MiniMapOverlay:
 
     def _check_window_resize(self) -> None:
         """
-        Detects window dimension changes and dynamically recalculates orthographic lens film size
-        and marker pixel scale to prevent geometric warping without recreating cameras or DisplayRegions.
+        Detects window dimension changes and dynamically recalculates orthographic lens film size,
+        background quad coverage, and marker pixel scale without recreating cameras or DisplayRegions.
         """
         if self.engine is None or getattr(self.engine, "win", None) is None:
             return
@@ -325,20 +355,22 @@ class MiniMapOverlay:
         region_h = (top - bottom) * win_h
         region_aspect = region_w / max(region_h, 1.0)
 
-        # Recalculate film size to preserve map aspect ratio
+        # 1. Recalculate film size to preserve map aspect ratio
         self.film_width, self.film_height = calculate_film_size(
             self.bounds, region_aspect, padding_m=self.padding_m
         )
-        if self.camera is not None and self.camera.node() is not None:
-            lens = self.camera.node().getLens()
-            if lens is not None:
-                lens.setFilmSize(self.film_width, self.film_height)
+        if self.camera is not None and hasattr(self.camera, "node"):
+            cam_node = self.camera.node()
+            if cam_node is not None and hasattr(cam_node, "getLens"):
+                lens = cam_node.getLens()
+                if lens is not None and hasattr(lens, "setFilmSize"):
+                    lens.setFilmSize(self.film_width, self.film_height)
 
-        # Recalculate marker pixel scale in render2d
-        if self.marker_root is not None and self._initial_win_size[0] > 0 and self._initial_win_size[1] > 0:
-            scale_x = self._initial_win_size[0] / win_w
-            scale_z = self._initial_win_size[1] / win_h
-            self.marker_root.setScale(scale_x, 1.0, scale_z)
+        # 2. Update background quad scale to maintain coverage over updated film area
+        if self.background is not None and self._initial_film_size[0] > 0 and self._initial_film_size[1] > 0:
+            bg_scale_x = self.film_width / self._initial_film_size[0]
+            bg_scale_y = self.film_height / self._initial_film_size[1]
+            self.background.setScale(bg_scale_x, bg_scale_y, 1.0)
 
         self._last_win_size = (win_w, win_h)
 
@@ -350,13 +382,13 @@ class MiniMapOverlay:
     ) -> None:
         """
         Step-driven decoupled pose update:
-        - Only uses the passed arguments (no implicit fallback to env.agent).
+        - Only uses the passed arguments (strictly zero implicit fallback to env.agent).
         - If world_x or world_y is None/non-finite: hides marker without appending to trajectory.
-        - Trajectory sampling is independent of marker projection / screen clipping.
-        - If position is valid: evaluates trajectory distance filter and projects marker.
-        - If position is within minimap viewport: displays marker (oriented chevron if heading is valid,
+        - Trajectory sampling is independent of camera projection / screen clipping.
+        - If position is valid: evaluates trajectory distance filter (>= 0.5m) and updates trail buffer.
+        - If position is within viewport: displays marker (oriented chevron if heading is valid,
           non-directional dot if heading is None).
-        - If position is outside minimap viewport: hides marker cleanly.
+        - If position is outside viewport: hides marker cleanly.
         """
         if self.camera is None or self.marker_root is None:
             return
@@ -398,7 +430,7 @@ class MiniMapOverlay:
         region_u = (float(projected.x) + 1.0) / 2.0
         region_v = (float(projected.y) + 1.0) / 2.0
 
-        # Screen-space clipping: hide marker if vehicle is outside minimap display region
+        # Screen-space clipping: hide marker if vehicle center is outside minimap display region
         if not (0.0 <= region_u <= 1.0 and 0.0 <= region_v <= 1.0):
             self.marker_root.hide()
             return
@@ -479,10 +511,19 @@ class MiniMapOverlay:
                 pass
             self.background = None
 
-        if self.display_region is not None:
+        # Robust DisplayRegion cleanup: check both self.display_region and camera's DisplayRegion
+        dr = self.display_region
+        if dr is None and self.camera is not None:
+            try:
+                if hasattr(self.camera, "node") and hasattr(self.camera.node(), "getDisplayRegion"):
+                    dr = self.camera.node().getDisplayRegion(0)
+            except Exception:
+                dr = None
+
+        if dr is not None:
             if self.engine is not None and getattr(self.engine, "win", None) is not None:
                 try:
-                    self.engine.win.removeDisplayRegion(self.display_region)
+                    self.engine.win.removeDisplayRegion(dr)
                 except Exception:
                     pass
             self.display_region = None
