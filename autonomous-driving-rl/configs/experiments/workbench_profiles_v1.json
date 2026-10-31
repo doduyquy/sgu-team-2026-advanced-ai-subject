@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "profiles": [
+    {
+      "id": "mapsuite_validation_v1",
+      "title": "VALIDATION · 96 case cố định",
+      "mode": "VALIDATION",
+      "case_count": 96,
+      "replicate_seeds": [101, 202, 303],
+      "description": "Dùng để lựa chọn cấu hình trên cùng 96 case. Mỗi agent stochastic chạy ba replicate; agent deterministic chạy một lần."
+    },
+    {
+      "id": "mapsuite_test_v1",
+      "title": "TEST · 60 case cố định",
+      "mode": "TEST",
+      "case_count": 60,
+      "replicate_seeds": [101, 202, 303],
+      "description": "Đánh giá cuối trên cùng 60 case sau khi đã chốt phương pháp. Không dùng kết quả TEST để chỉnh cấu hình."
+    },
+    {
+      "id": "train_demo_v1",
+      "title": "Chạy thử TRAIN · 1 case cố định",
+      "mode": "SANDBOX",
+      "case_count": 1,
+      "replicate_seeds": [101],
+      "tier": "Easy",
+      "sequence": "SCS",
+      "geometry_generation_seed": 0,
+      "environment_seed": 0,
+      "description": "Kiểm tra luồng chạy trên TRAIN/Easy/SCS, geometry 0, environment 0, agent seed 101. Đây là demo, không phải kết quả benchmark."
+    }
+  ]
+}
