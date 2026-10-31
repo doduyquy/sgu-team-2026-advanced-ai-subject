@@ -63,10 +63,12 @@ Following the architectural decisions and visual specifications approved in **HU
 - Add historical trajectory trail via a bounded ring buffer ($K \le 500$) drawn with `LineSegs`.
 - Replace opaque olive background with translucent dark glass (`#0B131B` @ 0.75 alpha) and subtle glass border.
 - Provide a clean step-driven update method: `update(world_pos, heading_rad)` without thread racing in `taskMgr`.
+- **Standalone Demo Harness:** Implement `scripts/demo_minimap_native.py` allowing interactive testing and visual inspection of the minimap in SANDBOX mode without modifying production `src/launcher/executor.py` before HUD-3.
 
 #### 2.2 Expected Files
 - `src/visualization/__init__.py`: Package export for visualizer components.
 - `src/visualization/minimap_overlay.py`: Hardware-accelerated minimap overlay class.
+- `scripts/demo_minimap_native.py`: Standalone sandbox demo harness for visual verification.
 - `tests/test_minimap_overlay.py`: Unit and mock tests verifying camera creation, bounding box calculation, trajectory appending, and node destruction.
 
 #### 2.3 Dependencies & Interfaces
@@ -104,10 +106,12 @@ If Panda3D camera allocation causes stability issues on certain platforms, `src/
   6. Throttle Meter (bottom-right, vertical fill bar glowing green on acceleration).
 - Apply uniform visual tokens: dark glass (`#0B131B`), subtle white frame borders (`#E0F0FF`), and electric cyan accents (`#00E5FF`).
 - Enforce responsive scaling in `aspect2d` across window dimensions without geometric distortion.
+- **Standalone Demo Harness:** Implement `scripts/demo_racing_hud_native.py` allowing visual inspection of all six 2D widgets in SANDBOX mode without touching production `executor.py`.
 
 #### 2.2 Expected Files
 - `src/visualization/racing_hud.py`: Procedural 2D racing HUD class.
 - `src/visualization/telemetry_model.py`: `HudTelemetrySnapshotV1` dataclass.
+- `scripts/demo_racing_hud_native.py`: Standalone sandbox demo harness for HUD-2 verification.
 - `tests/test_racing_hud.py`: Unit tests verifying widget positioning, clamp math, indicator threshold triggers, and clean node disposal.
 
 #### 2.3 Dependencies & Interfaces
@@ -150,9 +154,10 @@ If Panda3D camera allocation causes stability issues on certain platforms, `src/
 #### 3.3 Acceptance Criteria
 1. `render_mode="NATIVE"` in SANDBOX launches MetaDrive with full transparent racing HUD and live minimap.
 2. `render_mode="OFF"` in SANDBOX, VALIDATION, and TEST launches headless with zero HUD overhead.
-3. Decision latency records in `timing.csv` are mathematically identical with HUD ON vs HUD OFF.
-4. Simulator exceptions trigger safe cleanup without orphaned DisplayRegions or Panda3D window hangs.
-5. All repository unit tests pass (100% OK).
+3. Decision latency timing boundary strictly measures `agent.act()` and excludes HUD overhead; under identical seed and deterministic policy, agent actions are identical; latency distribution differences between HUD ON/OFF are statistically consistent with normal OS scheduling variance.
+4. An empirical desktop screenshot captured in a live native desktop session is committed in `docs/environment/` as verified visual evidence (cannot be fulfilled by offscreen mock).
+5. Simulator exceptions trigger safe cleanup without orphaned DisplayRegions or Panda3D window hangs.
+6. All repository unit tests pass (100% OK).
 
 ---
 
@@ -164,7 +169,7 @@ The following test matrix must be implemented across HUD-1, HUD-2, and HUD-3:
 |---|---|---|---|---|
 | **T01** | **Headless Import & Execution Independence** | Headless unittest | HUD-1, 2, 3 | `import src.launcher.executor` and headless SANDBOX execute with 0 HUD overhead. |
 | **T02** | **NATIVE HUD Initialization** | Mock/Subprocess launch | HUD-3 | HUD initializes when `render_mode="NATIVE"`; display region and aspect2d nodes attach. |
-| **T03** | **Decision Payload Non-Interference** | Unit test with fixture agent | HUD-3 | Agent actions, returns, and decision latencies in `timing.csv` match across HUD ON/OFF. |
+| **T03** | **Decision Payload & Timing Non-Interference** | Unit test with fixture agent | HUD-3 | Timing boundary excludes HUD; agent action decisions match identically; latency shifts remain within OS scheduling noise. |
 | **T04** | **Minimap Geometry Extents** | Polyline bounding test | HUD-1 | Orthographic film size matches calculated map extents plus padding across all tiers. |
 | **T05** | **Ego Heading Correctness** | Heading vector unit test | HUD-1 | Heading marker rotates counter-clockwise with positive yaw; tested at $0^\circ, 90^\circ, 180^\circ, 270^\circ$. |
 | **T06** | **Trajectory Trail Precision** | Waypoint append test | HUD-1 | Trail points match simulated vehicle trajectory within $<0.1\,\text{m}$ tolerance; downsampling active. |
@@ -174,8 +179,8 @@ The following test matrix must be implemented across HUD-1, HUD-2, and HUD-3:
 | **T10** | **Indicator & Meter Polarity** | Action payload matrix | HUD-2 | Steering $< -0.15$ triggers Left; $> +0.15$ triggers Right; Throttle/Brake map strictly to positive/negative values. |
 | **T11** | **Speedometer Unit Parity** | Speed comparison test | HUD-2 | Speed digits reflect `env.agent.speed_km_h` in km/h (not m/s or internal physics units). |
 | **T12** | **16:9 Aspect Ratio Resilience** | Window resize simulation | HUD-2, 3 | Circular speedometer and minimap do not warp into ellipses when window is resized. |
-| **T13** | **Interactive Screenshot Verification** | Visual artifact capture | HUD-3 | Manual screenshot captured in NATIVE SANDBOX demonstrating visual fidelity against brief. |
-| **T14** | **Performance Overhead Benchmark** | Step time measurement on SANDBOX | HUD-3 | Average HUD update step time $<1.0\,\text{ms}$; 60 FPS maintained during simulation. |
+| **T13** | **Interactive Screenshot Verification** | Visual artifact capture | HUD-3 | Real native desktop Panda3D screenshot captured and committed as empirical evidence in audit docs. |
+| **T14** | **Performance Overhead Benchmark** | Step time measurement on SANDBOX | HUD-3 | Dedicated profiling timer measures `hud_update_ms` independently; average $<1.0\,\text{ms}$, p95 $<2.0\,\text{ms}$, 60 FPS target. |
 | **T15** | **TEST/VALIDATION Headless Gating** | Preflight negative test | HUD-3 | Launcher strictly rejects `render_mode="NATIVE"` on benchmark suites; HUD remains dormant. |
 
 ---

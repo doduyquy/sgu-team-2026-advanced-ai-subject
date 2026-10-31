@@ -42,22 +42,37 @@ To prevent UI clutter and maintain scientific integrity, the following elements 
 
 To enforce complete decoupling between the simulation engine and the visual overlay, the HUD consumes an immutable snapshot object created on each simulation step.
 
-### 2.1 Proposed Snapshot Schema (`HudTelemetrySnapshotV1`)
+### 2.1 Pre-Existing Telemetry Defect Note
+Source audit of `src/launcher/executor.py` lines 413–414 reveals an existing defect:
+```python
+speed_kmh = float(env.agent.speed_kmh) if hasattr(env, "agent") and hasattr(env.agent, "speed_kmh") else 0.0
+```
+In MetaDrive 0.4.3 (`DefaultVehicle`), the speed attribute is named **`speed_km_h`** (with an underscore), not `speed_kmh`. Because `hasattr(env.agent, "speed_kmh")` evaluates to `False`, the executor silently falls back to `0.0` km/h.
+*HUD Architecture Requirement:* In HUD-2, the telemetry extraction helper must defensively access `getattr(env.agent, "speed_km_h", getattr(env.agent, "speed_kmh", None))`, and test suites must explicitly assert non-zero speeds during forward motion to prevent false zero fallbacks.
+
+### 2.2 Proposed Snapshot Schema (`HudTelemetrySnapshotV1`)
 ```python
 @dataclass(frozen=True)
 class HudTelemetrySnapshotV1:
     """Immutable per-step telemetry snapshot consumed strictly by the HUD renderer."""
-    step_index: int                    # Current simulation step (0..horizon)
-    simulation_time_s: float           # Elapsed simulation time (step_index * 0.1s)
-    world_position: Tuple[float, float]# Ego vehicle (x, y) coordinates in meters
-    heading_theta_rad: float           # Ego heading angle in radians [-pi, pi]
-    speed_kmh: float                   # Current vehicle speed in km/h [0.0, 150.0]
-    route_completion: float            # Fraction of route completed [0.0, 1.0]
-    canonical_steering: float          # Physical steering command [-1.0, 1.0] (negative=left, positive=right)
-    canonical_throttle_brake: float    # Physical throttle/brake [-1.0, 1.0] (positive=throttle, negative=brake)
-    is_clean_success: bool             # Destination reached with zero violations
-    is_terminated: bool                # Episode has reached a terminal state
+    step_index: int                               # Current simulation step (0..horizon)
+    simulation_time_s: float                      # Elapsed simulation time (step_index * control_dt_s)
+    world_position: Optional[Tuple[float, float]] # Ego vehicle (x, y) in meters (None if unavailable)
+    heading_theta_rad: Optional[float]            # Ego yaw angle in radians [-pi, pi] (None if unavailable)
+    speed_kmh: Optional[float]                    # Current speed in km/h [0.0, 150.0] (None if unavailable)
+    route_completion: Optional[float]             # Route completion fraction [0.0, 1.0] (None if unavailable)
+    canonical_steering: Optional[float]           # Physical steering [-1.0, 1.0] (None if unavailable)
+    canonical_throttle_brake: Optional[float]     # Physical throttle/brake [-1.0, 1.0] (None if unavailable)
+    terminal_outcome_status: str                  # "UNDETERMINED" during episode; TerminalReason upon end
+    is_clean_success: Optional[bool]              # None during intermediate steps; bool only upon completion
 ```
+
+### 2.3 Missing Data & Fallback Semantics
+To maintain scientific truthfulness, the HUD never fabricates synthetic numbers (such as substituting 0.0 or North) for missing data:
+- **Missing Speed (`speed_kmh is None`):** Render digits as `"---"` and suppress arc fill. This is visually distinct from `0.0` km/h (a validly stationary vehicle).
+- **Missing Route Completion (`route_completion is None`):** Render progress bar in dim gray with text `"---"`. This is visually distinct from `0.0` (valid vehicle position at the starting line).
+- **Missing Position / Heading (`None`):** Hide ego marker chevron and preserve existing historical trail without appending invalid coordinates.
+- **Intermediate Episode Status:** `is_clean_success` is strictly `None` during intermediate steps; clean arrival is an episodic terminal classification that cannot be known prematurely.
 
 ---
 
@@ -65,18 +80,18 @@ class HudTelemetrySnapshotV1:
 
 Every HUD widget derives its state strictly from verified simulator and action objects:
 
-| HUD Widget | Source Object / API in Code | Physical Unit | Valid Data Range | Update Timing | Fallback / Missing Data Behavior |
+| HUD Widget | Source Object / API in Code | Physical Unit | Valid Data Range | Display Range | Fallback / Missing Data Behavior |
 |---|---|---|---|---|---|
-| **Speedometer (Value)** | `env.agent.speed_km_h` | km/h | $[0.0, 150.0]$ | 10 Hz (every step) | Clamp to $0.0$; render as `"0"` |
-| **Speedometer (Arc)** | Normalized: `speed_kmh / 100.0` | Fraction | $[0.0, 1.0]$ | 10 Hz | Clamp to $[0.0, 1.0]$; $0\%$ arc fill |
-| **Route Progress** | `step_info.get("route_completion", 0.0)` | Fraction | $[0.0, 1.0]$ | 10 Hz | Clamp to $[0.0, 1.0]$; empty bar |
-| **Left Indicator** | `canonical_action.steering < -0.15` | Boolean | `{True, False}` | 10 Hz | Inactive state (dim gray) |
-| **Right Indicator** | `canonical_action.steering > 0.15` | Boolean | `{True, False}` | 10 Hz | Inactive state (dim gray) |
-| **Throttle Meter** | `max(0.0, canonical_action.throttle_brake)` | Fraction | $[0.0, 1.0]$ | 10 Hz | $0.0$ fill (empty meter) |
-| **Brake Meter** | `max(0.0, -canonical_action.throttle_brake)` | Fraction | $[0.0, 1.0]$ | 10 Hz | $0.0$ fill (empty meter) |
-| **Minimap (Ego Pos)** | `env.agent.position` | Meters $(x, y)$ | Route bounding box | 10 Hz | Hide ego marker |
-| **Minimap (Heading)** | `env.agent.heading_theta` | Radians | $[-\pi, \pi]$ | 10 Hz | Point northward ($0.0$) |
-| **Minimap (Roads)** | `env.current_map.get_map_features(2.0)` | Polylines | World coordinate space | Once at episode start | Fallback to agent bounding box |
+| **Speedometer (Digits)** | `getattr(env.agent, "speed_km_h", None)` | km/h | $[0.0, 150.0]$ | $0..999$ | Render `"---"` if None; render `"000"` if $0.0$ |
+| **Speedometer (Arc)** | Normalized: `speed_kmh / 100.0` | Fraction | $[0.0, 1.5]$ | $0.0..1.0$ (sweeps $240^\circ$) | Arc fill clamped at $1.0$ ($100\,\text{km/h}$); empty if None |
+| **Route Progress** | `step_info.get("route_completion", None)` | Fraction | $[0.0, 1.0]$ | $0\%..100\%$ | Render `"---"` and empty fill if None |
+| **Left Indicator** | `canonical_action.steering < -0.15` | Boolean | `{True, False}` | Amber pulse / Dim gray | Dim gray if action unavailable |
+| **Right Indicator** | `canonical_action.steering > 0.15` | Boolean | `{True, False}` | Amber pulse / Dim gray | Dim gray if action unavailable |
+| **Throttle Meter** | `max(0.0, canonical_action.throttle_brake)` | Fraction | $[0.0, 1.0]$ | Vertical fill $0\%..100\%$ | Empty fill ($0.0$) if None |
+| **Brake Meter** | `max(0.0, -canonical_action.throttle_brake)` | Fraction | $[0.0, 1.0]$ | Vertical fill $0\%..100\%$ | Empty fill ($0.0$) if None |
+| **Minimap (Ego Pos)** | `env.agent.position` | Meters $(x, y)$ | Route bounding box | Minimap viewport | Hide marker if unavailable |
+| **Minimap (Heading)** | `env.agent.heading_theta` | Radians | $[-\pi, \pi]$ | Oriented chevron | Point upward if None |
+| **Minimap (Roads)** | `env.current_map.get_map_features(2.0)` | Polylines | World coordinate space | Top-down scene | Fallback to agent bounding box |
 
 ---
 
@@ -99,12 +114,14 @@ Let $\mathcal{P} = \{\mathbf{p}_i = (x_i, y_i)\}_{i=1}^M$ be the set of road pol
    The `OrthographicLens` film size is set to `(film_width, film_height)`.
 
 ### 4.2 Heading Direction Vector
-In MetaDrive, vehicle heading angle $\theta$ is defined such that $\theta = 0$ points along the $+X$ axis, and $\theta = \frac{\pi}{2}$ points along the $+Y$ axis.
+In MetaDrive, vehicle heading angle $\theta$ is defined such that $\theta = 0$ points along the $+X$ axis, and $\theta = \frac{\pi}{2}$ points along the $+Y$ axis (counter-clockwise positive yaw).
+In Panda3D screen space (`aspect2d`), $+X$ is rightward and $+Z$ is upward.
 The minimap ego marker is rendered as an oriented triangle with vertices:
 $$\mathbf{v}_{\text{tip}} = (x_e + L \cos\theta, \; y_e + L \sin\theta)$$
 $$\mathbf{v}_{\text{left}} = (x_e + W \cos(\theta + \frac{5\pi}{6}), \; y_e + W \sin(\theta + \frac{5\pi}{6}))$$
 $$\mathbf{v}_{\text{right}} = (x_e + W \cos(\theta - \frac{5\pi}{6}), \; y_e + W \sin(\theta - \frac{5\pi}{6}))$$
 where $L = 5.0\,\text{m}$ and $W = 3.5\,\text{m}$ in world space coordinates.
+*Validation Requirement:* In HUD-1, heading marker rotation must be asserted at cardinal headings: East ($\theta = 0$, pointing right), North ($\theta = \frac{\pi}{2}$, pointing up), West ($\theta = \pi$, pointing left), and South ($\theta = -\frac{\pi}{2}$, pointing down).
 
 ### 4.3 Trajectory History Buffer
 - **Ring Buffer Specification:** Stores the last $K \le 500$ points.
@@ -120,7 +137,9 @@ where $L = 5.0\,\text{m}$ and $W = 3.5\,\text{m}$ in world space coordinates.
 ### 5.1 Screen Coordinate System (`aspect2d`)
 Panda3D's `aspect2d` coordinates are normalized to the screen height:
 - Vertical axis $Z \in [-1.0, 1.0]$ ($Z = 1.0$ is screen top, $Z = -1.0$ is screen bottom).
-- Horizontal axis $X \in [-\alpha, \alpha]$, where $\alpha = \frac{\text{width}}{\text{height}}$ (e.g. $\alpha = 1.777$ for 16:9 aspect ratio).
+- Horizontal axis $X \in [-\alpha, \alpha]$, where $\alpha = \frac{\text{width}}{\text{height}}$ (for 16:9 aspect ratio, $\alpha = \frac{16}{9} \approx 1.7778$, giving a total screen width of $2\alpha \approx 3.5556$ units).
+- Consistent Sizing Formula: To span a screen width fraction $f_{\text{width}} \in [0.0, 1.0]$ on 16:9:
+  $$\text{width}_{\text{aspect2d}} = 2 \times \frac{16}{9} \times f_{\text{width}} \approx 3.5556 \times f_{\text{width}}$$
 - All 2D widgets anchor relative to screen edges using $\alpha$:
   - Left edge: $X = -\alpha + x_{\text{margin}}$
   - Right edge: $X = \alpha - x_{\text{margin}}$
@@ -160,16 +179,17 @@ Panda3D's `aspect2d` coordinates are normalized to the screen height:
 
 ### 5.3 Widget Dimensions & Layout Parameters (16:9 Baseline)
 1. **Minimap Viewport (`DisplayRegion`):**
-   - Coordinates: `[0.015, 0.185, 0.745, 0.985]` (Width = 17%, Height = 24%).
-   - Frame: 1.5 px border with `BORDER_GLASS` color.
+   - Coordinates: `[0.015, 0.185, 0.745, 0.985]` (Width fraction = $17\%$, Height fraction = $24\%$).
+   - Pixel dimensions at $1920 \times 1080$: $326.4 \times 259.2\,\text{px}$ (aspect ratio $1.26$). The internal `OrthographicLens` camera uses aspect-ratio locking so the map is never distorted within this rectangular frame. *(Alternative pixel-square viewport: `[0.015, 0.150, 0.745, 0.985]` yielding $260 \times 260\,\text{px}$ at $1920 \times 1080$)*.
+   - Glass backing & border: 1.5 px border with `BORDER_GLASS`. Translucent glass backing configured with Panda3D `TransparencyAttrib.MAlpha`.
 2. **Route Progress Bar:**
    - Anchor: Center $X = 0.0$, Top $Z = 0.92$.
-   - Dimensions: Width = $0.70$ units ($\approx 35\%$ of screen), Height = $0.024$ units ($\approx 1.2\%$).
-   - Fill: Cyan fill bar scaling from left to right as `route_completion` advances from $0.0$ to $1.0$.
+   - Dimensions: Width = $1.244$ units (exactly $35\%$ of 16:9 screen width), Height = $0.024$ units ($\approx 1.2\%$ of screen height). Extends from $X = -0.622$ to $X = +0.622$.
+   - Fill: Cyan fill bar scaling from left to right as `route_completion` advances from $0.0$ to $1.0$. If `route_completion is None`, bar is dim gray with label `"---"`.
 3. **Speedometer Gauge:**
    - Anchor: Center $X = \alpha - 0.32$, Bottom $Z = -0.72$.
-   - Digits: 3-digit bold font (`64 pt`), format `f"{int(speed_kmh):03d}"`, followed by `"km/h"` in `16 pt`.
-   - Outer Arc: 240-degree circular arc ($120^\circ$ sweep to $-120^\circ$ sweep), filling proportionally up to $100\,\text{km/h}$.
+   - Digits: 3-digit bold font (`64 pt`), format `f"{int(speed_kmh):03d}"` (or `"---"` if None), followed by `"km/h"` in `16 pt`.
+   - Outer Arc: 240-degree circular arc ($120^\circ$ sweep to $-120^\circ$ sweep), filling proportionally up to $100\,\text{km/h}$. Clamped at $100\,\text{km/h}$ for visual arc fill, with digits showing full un-clamped speed up to $150\,\text{km/h}$.
 4. **Pedal Meters (Brake & Throttle):**
    - Anchor: $X = \alpha - 0.62$, Bottom $Z = -0.72$.
    - Two vertical bars: Width = $0.035$ units, Height = $0.20$ units, separated by $0.02$ units.
@@ -177,6 +197,8 @@ Panda3D's `aspect2d` coordinates are normalized to the screen height:
    - Right Bar: Throttle (fills bottom-to-top with `PEDAL_THROTTLE`).
 5. **Turn Indicators:**
    - Anchor: $X = -\alpha + 0.20$, Bottom $Z = -0.80$.
+   - Left Chevron (`<`): Glows `INDICATOR_ACTIVE` when steering $< -0.15$.
+   - Right Chevron (`>`): Glows `INDICATOR_ACTIVE` when steering $> +0.15$.
    - Left Chevron (`<`): Glows `INDICATOR_ACTIVE` when steering $< -0.15$.
    - Right Chevron (`>`): Glows `INDICATOR_ACTIVE` when steering $> +0.15$.
 

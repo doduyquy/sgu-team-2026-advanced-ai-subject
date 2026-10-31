@@ -16,10 +16,12 @@
 This feasibility audit inspects existing visualizer and minimap implementations across accessible branches to prevent redundant work, preserve team effort (specifically work by Đặng Khoa on Stage 0), and evaluate technical feasibility for the upcoming **HUD-1 (Live Minimap)** gate.
 
 ### Key Audit Findings:
-1. **Source Discovery:** An existing `MiniMapOverlay` implementation was successfully located on remote branch `origin/khoa` at commit `271d704bdf04c64c869a48237375a36bbae05750` (`autonomous-driving-rl/src/visualization/minimap_overlay.py`, 299 lines).
-2. **Current `main` State:** The module was not present on `main` when Gate R0 executed; Gate R0 correctly eliminated the dangling import from `src/launcher/executor.py` to restore test and execution integrity.
-3. **Reusability Score:** The implementation on `origin/khoa` is **high-quality and approximately 80% reusable**. It uses a secondary Panda3D GPU camera (`OrthographicLens`) rendering directly into a `DisplayRegion` on the native window, avoiding heavy CPU software rasterization.
-4. **Required Enhancements for HUD-1:**
+1. **Source Discovery:** An existing `MiniMapOverlay` implementation was successfully located on remote branch `origin/khoa` at commit `271d704bdf04c64c869a48237375a36bbae05750` (`autonomous-driving-rl/src/visualization/minimap_overlay.py`, verified exactly 372 lines in source).
+2. **Package Dependency Trap:** In commit `271d704`, `src/visualization/__init__.py` attempted to import `FinishFloatingHologram`, which was not committed until a later commit (`db68db0`). Blindly importing or porting the package at commit `271d704` triggers `ModuleNotFoundError`. HUD-1 must isolate `minimap_overlay.py` without coupling to unneeded hologram assets.
+3. **Branch Provenance:** Commit `271d704` is an intermediate development commit; the latest HEAD on `origin/khoa` is `9a36c313eb3ccdbc671842a81ddb1769bd6ae747` (containing subsequent agent development and experiment archiving).
+4. **Current `main` State:** `src/visualization/` was not present on `main` when Gate R0 executed; Gate R0 correctly eliminated the dangling import from `src/launcher/executor.py` to restore test and execution integrity.
+5. **Reusability Assessment:** The existing implementation provides a viable foundational architecture: a secondary Panda3D GPU camera (`OrthographicLens`) rendering directly into a `DisplayRegion` on the native window. However, it requires substantive enhancements for heading orientation, trajectory trail, transparent glass styling, and step synchronization.
+6. **Required Enhancements for HUD-1:**
    - Add vehicle heading orientation (replace static circular dot with directional chevron/arrow).
    - Add historical trajectory trail (FIFO point buffer).
    - Upgrade visual styling from opaque olive-gray to transparent dark glass with cyan accents per the approved design brief.
@@ -34,8 +36,9 @@ A full scan across git history and remote branches identified the following arti
 
 | Branch / Location | Commit SHA | Date & Author | Artifact Path | Description |
 |---|---|---|---|---|
-| `origin/khoa` | `271d704bdf04c64c869a48237375a36bbae05750` | 2026-10-31 11:39:12<br>Khoa `<khoanguyen12062005@gmail.com>` | `src/visualization/minimap_overlay.py`<br>`src/visualization/__init__.py` | Original `MiniMapOverlay` implementation using Panda3D `DisplayRegion` and `OrthographicLens`. |
-| `origin/khoa` | `db68db00006f9dbb303d70fc6fb915006a6855e6` | 2026-10-31 11:41:39<br>Khoa | `src/visualization/finish_floating_hologram.py` | 3D floating finish line hologram banner placed at route terminus. |
+| `origin/khoa` (Intermediate) | `271d704bdf04c64c869a48237375a36bbae05750` | 2026-10-31 11:39:12<br>Khoa `<khoanguyen12062005@gmail.com>` | `src/visualization/minimap_overlay.py` (372 lines)<br>`src/visualization/__init__.py` | Original `MiniMapOverlay` implementation using Panda3D `DisplayRegion` and `OrthographicLens`. *(Note: `__init__.py` in this commit had a broken import referencing `FinishFloatingHologram` before that file was committed)*. |
+| `origin/khoa` (Intermediate) | `db68db00006f9dbb303d70fc6fb915006a6855e6` | 2026-10-31 11:41:39<br>Khoa | `src/visualization/finish_floating_hologram.py` | 3D floating finish line hologram banner placed at route terminus. |
+| `origin/khoa` (Latest HEAD) | `9a36c313eb3ccdbc671842a81ddb1769bd6ae747` | 2026-10-31 13:31:58<br>Khoa | Multiple directories | Branch HEAD on `khoa` containing subsequent agent maintenance, archived development snapshots, and reports. |
 | `main` | `581dc49570ceb00fff13cf8df073a76e654735df` | 2026-10-31<br>PR #29 Merge | *None (Clean)* | Clean baseline. `src/visualization/` is absent, unblocking headless tests and CI. |
 
 *Handoff ZIP Note:* File `XeTuHanh_HUD_Handoff_2026-10-31.zip` was not present on the local execution machine filesystem. All design requirements and visual constraints are derived directly from the user-approved brief specified in the HUD-0 charter.
@@ -96,7 +99,7 @@ MiniMapOverlay
 | **Top-Left Screen Anchor** | `REGION = (0.015, 0.18, 0.755, 0.975)` | **PASS** | Keep exact anchor; wrap with glass border styling. |
 | **GPU Hardware Acceleration** | Direct secondary camera in Panda3D | **EXCELLENT** | Preserve architecture. No Pygame software blitting needed. |
 | **Aspect Ratio Locking** | Dynamic orthographic film scaling | **PASS** | Preserve aspect locking logic. |
-| **Map Feature Bounding** | Polylines from `get_map_features(2.0)` | **PASS** | Fully compatible with all 240 MapSuite V1 geometries. |
+| **Map Feature Bounding** | Polylines from `get_map_features(2.0)` | **QUALIFIED PASS** | Compatible with polyline road extraction in tested scenarios; requires runtime verification across MapSuite geometry archetypes in HUD-1. |
 | **Camera Masking** | `CamMask.MiniMap` | **PASS** | Verified correct for MetaDrive 0.4.3. |
 | **Vehicle Heading** | Static 2D circle (`radius_px=3.0`) | **NEEDS WORK** | Replace circle with directional arrow/chevron rotated by heading angle. |
 | **Trajectory Trail** | Not implemented | **MISSING** | Add FIFO buffer of traveled coordinates rendered via `LineSegs`. |
@@ -117,13 +120,22 @@ Rather than rewriting the minimap from scratch, **HUD-1 should adopt Khoa's `Min
 
 ---
 
+### 5.2 Team Coordination Checklist with Khoa
+To ensure smooth integration and prevent duplicate work or branch conflicts:
+1. **Targeted Extraction:** In HUD-1, port strictly `minimap_overlay.py` as a standalone module into `src/visualization/`. Do NOT import or depend on `finish_floating_hologram.py` or experimental Stage 0 components.
+2. **Clean Package Interface:** Ensure `src/visualization/__init__.py` exports strictly verified modules (`MiniMapOverlay`), eliminating the premature `FinishFloatingHologram` import present in commit `271d704`.
+3. **Branch Awareness:** Acknowledge that branch `origin/khoa` has evolved beyond commit `271d704` to HEAD `9a36c31`. Coordinate with Khoa before modifying shared agent or experiment paths.
+4. **Empirical MapSuite Testing:** Test minimap polyline extraction across representative geometry archetypes (straight, curve, intersection, roundabout) rather than assuming all 240 geometries render identically without verification.
+
+---
+
 ## 6. Audit Verdict
 
 ```
 ========================================================================================
 MINIMAP AUDIT VERDICT: EXISTING IMPLEMENTATION VERIFIED ON ORIGIN/KHOA (COMMIT 271d704)
 ========================================================================================
-- Status: 80% structurally complete and technically viable.
+- Structural Viability: High reusability for core camera, bounding, and DisplayRegion logic.
 - Strategy: Adopt and enhance in HUD-1; do NOT reimplement from scratch.
 - Current main: Remains clean; implementation will be introduced via dedicated PR for HUD-1.
 ========================================================================================

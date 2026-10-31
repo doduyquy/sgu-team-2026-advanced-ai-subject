@@ -51,7 +51,7 @@ We evaluate three architectural candidates:
 |---|---|---|---|---|
 | **MetaDrive Pinned Parity** | High | **EXCELLENT** (Uses Panda3D 1.10 directly; 100% native) | **MEDIUM** (MetaDrive's Pygame renderer is designed for separate 2D window) | **POOR** (Cross-process / cross-toolkit window coupling) |
 | **Existing Minimap Reuse** | High | **EXCELLENT** (Directly adopts Khoa's `MiniMapOverlay` on `origin/khoa`) | **POOR** (Cannot reuse Khoa's Panda3D camera overlay) | **POOR** (Requires complete rewrite in Qt QPainter) |
-| **Runtime Performance** | High | **EXCELLENT** (GPU-accelerated; zero CPU surface copies; <0.5 ms overhead) | **POOR** (CPU software blitting, texture upload bottleck; 10–25 ms latency) | **MEDIUM** (OS compositing overhead, dual event loops) |
+| **Runtime Performance** | High | **DESIGN TARGET** (GPU-accelerated; zero CPU surface copies; <1.0 ms target) | **INFERRED POOR** (CPU software blitting, texture upload bottleneck across PCI-e bus) | **INFERRED MEDIUM** (OS compositing overhead, dual event loops) |
 | **Scientific Isolation** | Critical | **EXCELLENT** (Strictly active on `NATIVE`; zero presence in `OFF` mode) | **EXCELLENT** (Can be gated by `NATIVE`) | **RISKY** (Requires inter-process synchronization if worker is isolated) |
 | **Cross-Platform Resilience** | Medium | **EXCELLENT** (Panda3D manages single OpenGL/DirectX window across OS) | **GOOD** (Pygame is cross-platform, but multi-window causes focus bugs) | **POOR** (Transparent window layering fails frequently on Linux/Wayland) |
 | **Visual Aesthetics** | Medium | **EXCELLENT** (True alpha blending, cyan glow, vector anti-aliasing) | **POOR** (Pixelated 2D blit; no modern transparent glass styling) | **EXCELLENT** (Qt stylesheet / QPainter supports rich styling) |
@@ -67,7 +67,8 @@ We evaluate three architectural candidates:
   - `aspect2d`: Uniformly scaled 2D space where $Y \in [-1.0, 1.0]$ and $X \in [-\text{aspect}, \text{aspect}]$ (e.g. $[-1.777, 1.777]$ in 16:9). Circles remain true circles and arcs do not deform when the window resizes.
 - **Minimap Integration:**
   - Khoa's existing `MiniMapOverlay` on `origin/khoa` proves the feasibility of creating a secondary camera (`camName="project_minimap_camera"`) assigned to a sub-region `REGION = (0.015, 0.18, 0.755, 0.975)`.
-  - The road mesh is already in GPU memory. Using `CamMask.MiniMap`, Panda3D renders the road network orthographically with hardware acceleration in a fraction of a millisecond.
+  - The road mesh is already in GPU memory. Using `CamMask.MiniMap`, Panda3D renders the road network orthographically with hardware acceleration.
+  - *Rendering Cost Note:* A secondary camera and display region is not zero-cost; it incurs scene graph traversal, culling, and additional draw calls on the GPU. However, because it avoids CPU-to-GPU pixel buffer transfers, its overhead is substantially lower than software blitting approaches.
 - **Teardown & Leaks:**
   - When an episode completes or the environment closes, nodes attached to `aspect2d` or `render2d` are removed cleanly with `.removeNode()`, and the secondary display region is removed via `win.removeDisplayRegion()`.
 
@@ -86,6 +87,12 @@ We evaluate three architectural candidates:
 
 **DECISION:** Adopt **Option A (Native Panda3D 2D Scene Graph Overlay)** as the official rendering architecture for HUD V1.
 
+### Performance Budgets & Frequency Targets (Falsifiable Hypotheses):
+- **Simulation Control Frequency:** Strictly 10.0 Hz nominal ($100.0\,\text{ms}$ step time budget).
+- **Display Target:** 60 FPS refresh rate in native desktop Panda3D window.
+- **HUD Overhead Budget:** The combined telemetry extraction and HUD rendering update must consume $< 1.0\,\text{ms}$ per step (targeting $< 1\%$ of the 100 ms simulation budget).
+*Note: These latency and frame rate figures are performance targets to be benchmarked empirically in HUD-3, not pre-claimed results.*
+
 ### Concrete Structural Blueprint:
 ```text
 MetaDrive Native Window (engine.win)
@@ -94,7 +101,7 @@ MetaDrive Native Window (engine.win)
 │   └── Camera: Perspective (Panda3D default render)
 │       └── World: 3D vehicles, road blocks, buildings, sky
 │
-├── DisplayRegion [0.015, 0.18, 0.755, 0.975] (Minimap Viewport)
+├── DisplayRegion [0.015, 0.185, 0.745, 0.985] (Minimap Viewport)
 │   └── Camera: Orthographic (CamMask.MiniMap)
 │       ├── Top-Down Road Geometry (Hardware Rendered)
 │       └── Minimap Background Quad (#0B131B @ 0.75 alpha)
@@ -113,13 +120,13 @@ MetaDrive Native Window (engine.win)
 
 | Component / Subsystem | Status | Evidence / Notes |
 |---|---|---|
-| Pinned MetaDrive Native Rendering (`use_render=True`) | `VERIFIED BY RUNTIME EXPERIMENT` | Verified in SANDBOX run with Panda3D 1.10 / MetaDrive 0.4.3. |
+| Pinned MetaDrive Native Rendering (`use_render=True`) | `VERIFIED IN SOURCE / REQUIRES RUNTIME DISPLAY TEST` | Flag verified in MetaDrive source; visual window test requires desktop session. |
 | Panda3D 2D Primitives (`LineSegs`, `CardMaker`, `OnscreenText`) | `VERIFIED IN CODE` | Verified present and accessible in project Python environment. |
-| Top-Left DisplayRegion Minimap | `VERIFIED IN CODE` | Verified in `origin/khoa:src/visualization/minimap_overlay.py`. |
+| Top-Left DisplayRegion Minimap | `VERIFIED IN SOURCE (origin/khoa:271d704)` | Verified in `origin/khoa:src/visualization/minimap_overlay.py` (372 lines). |
 | Trajectory Trail via `LineSegs` | `PROPOSED` | To be implemented and verified in HUD-1. |
 | Directional Heading Chevron | `PROPOSED` | To be implemented and verified in HUD-1. |
 | Transparent Glass HUD Styling | `PROPOSED` | To be implemented and verified in HUD-2. |
-| 60 FPS Performance Overhead (<1.0 ms) | `UNKNOWN / REQUIRES HUD-3 TEST` | To be benchmarked empirically in HUD-3. |
+| Performance Budget (<1.0 ms step overhead) | `DESIGN TARGET / REQUIRES HUD-3 TEST` | To be benchmarked empirically in HUD-3 across p50, p95, p99. |
 
 ---
 
