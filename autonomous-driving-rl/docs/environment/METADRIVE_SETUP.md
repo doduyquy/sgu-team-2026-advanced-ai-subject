@@ -76,13 +76,14 @@ python -m src.workbench.app
 
 ## Headless simulator diagnostic
 
-The legacy `inspect_metadrive.py` script remains available as a lightweight import/environment diagnostic:
+Use the launcher for a logged headless TRAIN diagnostic:
 
 ```powershell
-python inspect_metadrive.py
+python -X utf8 -m src.launcher.cli run --mode SANDBOX --agent stage1_rule_based --tier Easy --sequence SCS --geom-seed 0 --env-seed 0 --agent-seed 42 --render OFF --wandb DISABLED
 ```
 
-It is not a benchmark entrypoint.
+This is a development check. The old root inspection scripts were retired;
+their source references are in `experiments/legacy_source/pre_cleanup_20261031/`.
 
 ## Common problems
 
