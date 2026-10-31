@@ -387,6 +387,18 @@ class ExperimentExecutor:
                     env = MetaDriveEnv(env_config)
                     raw_obs, info = env.reset(seed=case.environment_seed)
 
+                    # Initialize HUD facade strictly for SANDBOX + NATIVE mode (Gate HUD-3)
+                    hud_manager = None
+                    launcher_mode_str = (
+                        self.plan.launcher_mode.value
+                        if hasattr(self.plan.launcher_mode, "value")
+                        else str(self.plan.launcher_mode)
+                    ).upper()
+                    render_mode_str = str(self.plan.render_mode).upper()
+                    if launcher_mode_str == "SANDBOX" and render_mode_str == "NATIVE":
+                        from src.visualization.hud_manager import RacingHudManager
+                        hud_manager = RacingHudManager(env)
+
                     # C. Reset agent with public context (Information Parity)
                     public_context = AgentPublicEpisodeContext(
                         control_frequency_hz=int(self.plan.control_frequency_hz),
@@ -468,6 +480,17 @@ class ExperimentExecutor:
                         )
                         cumulative_reward += breakdown.total_reward
 
+                        # Update HUD visualizer strictly after physics step and outcome classification
+                        if hud_manager is not None:
+                            hud_manager.update(
+                                step_idx=step_idx,
+                                control_dt_s=float(self.plan.control_dt_s),
+                                canonical_steering=canonical_act.steering,
+                                canonical_throttle_brake=canonical_act.throttle_brake,
+                                step_info=step_info,
+                                outcome=outcome if (terminated or truncated) else None,
+                            )
+
                         # Emit progress event periodically (every 10 steps, preserving 10 Hz control)
                         if step_idx % 10 == 0:
                             self._emit(LauncherEventV1.create(
@@ -490,6 +513,12 @@ class ExperimentExecutor:
                         )
 
                 finally:
+                    if hud_manager is not None:
+                        try:
+                            hud_manager.destroy()
+                        except Exception:
+                            pass
+                        hud_manager = None
                     if env is not None:
                         env.close()
 
