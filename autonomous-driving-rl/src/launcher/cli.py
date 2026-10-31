@@ -22,6 +22,7 @@ from src.launcher.cases import (
 )
 from src.launcher.executor import ExperimentExecutor
 from src.launcher.models import (
+    CheckpointLaunchRequestV1,
     LaunchRequestV1,
     LauncherMode,
     describe_plan,
@@ -72,6 +73,8 @@ def _add_plan_arguments(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--geom-seed", type=int, default=None, dest="geom_seed", help="Geometry generation seed")
     subparser.add_argument("--env-seed", type=int, default=None, dest="env_seed", help="Environment seed")
     subparser.add_argument("--agent-seed", type=int, default=None, dest="agent_seed", help="Agent stochasticity seed (101, 202, 303 for benchmark)")
+    subparser.add_argument("--training-manifest", default=None, help="Stage 6 training manifest with verified checkpoints")
+    subparser.add_argument("--training-seed", type=int, choices=[101, 202, 303], default=101, help="Select an independently trained model")
     subparser.add_argument("--render", choices=["OFF", "NATIVE", "off", "native"], default="OFF", help="Rendering mode")
     subparser.add_argument("--wandb", choices=["AUTO", "DISABLED", "OFFLINE", "ONLINE", "auto", "disabled", "offline", "online"], default="AUTO", help="W&B tracking mode (AUTO defaults to OFFLINE for benchmarks, DISABLED for sandbox)")
     subparser.add_argument("--runs-root", default=None, help="Custom runs storage directory override")
@@ -152,8 +155,16 @@ def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
     tier = args.tier.capitalize() if args.tier else None
     runs_root = Path(args.runs_root) if args.runs_root else None
     custom_run_id = getattr(args, "custom_run_id", None)
+    checkpoint = None
+    if getattr(args, "training_manifest", None):
+        from src.launcher.checkpoints import bindings_from_training_manifest
+        bindings = bindings_from_training_manifest(get_default_project_root(), args.training_manifest)
+        checkpoint = next((b for b in bindings if b.training_run_seed == args.training_seed), None)
+        if checkpoint is None:
+            raise ValueError("No trained checkpoint for the requested training seed")
 
-    return LaunchRequestV1(
+    request_class = CheckpointLaunchRequestV1 if checkpoint is not None else LaunchRequestV1
+    return request_class(
         mode=mode,
         agent_id=args.agent,
         tier=tier,
@@ -164,7 +175,8 @@ def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
         render_mode=render_mode,
         wandb_mode=wandb_mode,
         runs_root=runs_root,
-        custom_run_id=custom_run_id
+        custom_run_id=custom_run_id,
+        **({"checkpoint_binding": checkpoint} if checkpoint is not None else {}),
     )
 
 

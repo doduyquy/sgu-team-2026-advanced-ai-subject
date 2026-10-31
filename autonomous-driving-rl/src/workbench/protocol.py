@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.launcher.events import LauncherEventType, LauncherEventV1
-from src.launcher.models import LaunchRequestV1, LauncherMode, ResolvedExperimentPlanV1
+from src.launcher.models import CheckpointBindingV1, CheckpointLaunchRequestV1, LaunchRequestV1, LauncherMode, ResolvedExperimentPlanV1
 from src.launcher.preflight import PreflightCheckV1, PreflightReportV1
 from src.platform import WandbMode
 from src.workbench.contracts import WORKBENCH_PROTOCOL_VERSION
@@ -147,7 +147,9 @@ def deserialize_launch_request(data: Dict[str, Any]) -> LaunchRequestV1:
     if custom_run_id == "" or custom_run_id == "None":
         custom_run_id = None
 
-    return LaunchRequestV1(
+    checkpoint = CheckpointBindingV1(**data["checkpoint_binding"]) if data.get("checkpoint_binding") is not None else None
+    request_class = CheckpointLaunchRequestV1 if checkpoint is not None else LaunchRequestV1
+    return request_class(
         mode=mode,
         agent_id=agent_id,
         tier=tier,
@@ -159,4 +161,5 @@ def deserialize_launch_request(data: Dict[str, Any]) -> LaunchRequestV1:
         wandb_mode=wandb_mode,
         runs_root=runs_root,
         custom_run_id=custom_run_id,
+        **({"checkpoint_binding": checkpoint} if checkpoint is not None else {}),
     )
