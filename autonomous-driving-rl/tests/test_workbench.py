@@ -135,8 +135,33 @@ class TestWorkbenchSuite(unittest.TestCase):
         self.assertEqual(req.geometry_generation_seed, 0)
         self.assertEqual(req.environment_seed, 0)
         self.assertEqual(req.render_mode, "OFF")
+        self.assertIsInstance(req.wandb_mode, WandbMode)
         self.assertEqual(req.wandb_mode, WandbMode.DISABLED)
         window.close()
+
+    def test_02b_gui_wandb_modes_survive_request_serialization(self):
+        """Qt combo values retain their enum semantics at the worker boundary."""
+        window = MainWindow()
+        self.addCleanup(window.close)
+        setup = window.setup_widget
+        for label, expected in (
+            ("AUTO (Mode Default)", None),
+            ("DISABLED", WandbMode.DISABLED),
+            ("OFFLINE", WandbMode.OFFLINE),
+            ("ONLINE", WandbMode.ONLINE),
+        ):
+            with self.subTest(wandb_mode=label):
+                setup.combo_wandb.setCurrentText(label)
+                request = setup.build_launch_request()
+                if expected is None:
+                    self.assertIsNone(request.wandb_mode)
+                else:
+                    self.assertIsInstance(request.wandb_mode, WandbMode)
+                    self.assertIs(request.wandb_mode, expected)
+                payload = serialize_launch_request(request)
+                self.assertEqual(payload["wandb_mode"], expected.value if expected else None)
+                restored = deserialize_launch_request(json.loads(json.dumps(payload)))
+                self.assertIs(restored.wandb_mode, expected)
 
     def test_03_mode_switching_disables_enables_ux_controls(self):
         """Benchmark modes disable case selection and lock render=OFF."""
@@ -246,13 +271,24 @@ class TestWorkbenchSuite(unittest.TestCase):
         """Worker subprocess PLAN operation resolves plan and preflight without simulation."""
         project_root = get_default_project_root()
         worker_script = project_root / "src" / "workbench" / "worker.py"
-        req = '{"mode": "SANDBOX", "agent_id": "fixture_constant_continuous", "tier": "Easy", "render_mode": "OFF", "wandb_mode": "DISABLED"}'
+        window = MainWindow()
+        self.addCleanup(window.close)
+        setup = window.setup_widget
+        setup.combo_agent.setCurrentIndex(setup.combo_agent.findData("stage0_random_naive"))
+        setup.combo_tier.setCurrentText("Easy")
+        setup.edit_sequence.setText("SCS")
+        setup.edit_geom_seed.setText("0")
+        setup.edit_env_seed.setText("0")
+        setup.edit_agent_seed.setText("101")
+        setup.combo_wandb.setCurrentText("DISABLED")
+        req = json.dumps(serialize_launch_request(setup.build_launch_request()))
 
         proc = subprocess.run(
             [sys.executable, str(worker_script), "--operation", "PLAN", "--request-json", req],
             capture_output=True,
             text=True,
             cwd=str(project_root),
+            timeout=60,
         )
         self.assertEqual(proc.returncode, 0)
 
@@ -295,7 +331,7 @@ class TestWorkbenchSuite(unittest.TestCase):
 
         step_payload = {
             "event": {
-                "event_type": "STEP_COMPLETED",
+                "event_type": LauncherEventType.EPISODE_PROGRESS.value,
                 "run_id": "test_run_123",
                 "episode_index": 0,
                 "total_episodes": 1,
@@ -338,8 +374,12 @@ class TestWorkbenchSuite(unittest.TestCase):
 
     def test_14_workbench_imports_do_not_modify_launcher_registry_or_contracts(self):
         """Importing Workbench does not alter Gate 7.5A registry or contract hashes."""
+        import importlib
+        before = build_canonical_agent_registry().to_snapshot()
+        importlib.import_module("src.workbench.app")
         reg = build_canonical_agent_registry()
-        self.assertEqual(len(reg.list_all()), 5)
+        self.assertEqual(reg.to_snapshot(), before)
+        self.assertEqual(len(reg.list_all()), 7)
         self.assertTrue(reg.has_agent("stage0_random_naive"))
         from src.launcher.registry import (
             HISTORICAL_FIXTURE_REGISTRY_SHA256,
@@ -374,7 +414,7 @@ class TestWorkbenchSuite(unittest.TestCase):
             HISTORICAL_FIXTURE_REGISTRY_SHA256,
             "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
         )
-        # Current Canonical Registry with Stage 0
+        # Current canonical registry includes Stage 0 and the A* pair
         canonical_sha = compute_canonical_registry_sha256(build_canonical_agent_registry())
         self.assertEqual(canonical_sha, compute_canonical_registry_sha256(build_canonical_agent_registry()))
         self.assertNotEqual(canonical_sha, HISTORICAL_FIXTURE_REGISTRY_SHA256)
