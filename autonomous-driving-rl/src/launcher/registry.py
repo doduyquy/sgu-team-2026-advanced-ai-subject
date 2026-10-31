@@ -8,10 +8,11 @@ This module implements AgentRegistryV1:
 - Provides algorithm-neutral registration interface for future Stage 0 through Stage 7 agents.
 """
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 
 from src.launcher.models import AgentRegistrationV1
 from src.agents import Stage0RandomNaiveAgent
+from src.agents import Stage1RuleBasedAgent
 from src.platform import (
     AgentPolicy,
     DeterministicConstantFixtureAgent,
@@ -105,6 +106,9 @@ def _factory_fixture_discrete() -> DiscreteFixtureAgent:
 
 def _factory_stage0_random_naive() -> Stage0RandomNaiveAgent:
     return Stage0RandomNaiveAgent()
+
+def _factory_stage1_rule_based() -> Stage1RuleBasedAgent:
+    return Stage1RuleBasedAgent()
 
 def build_canonical_agent_registry() -> AgentRegistryV1:
     """
@@ -202,7 +206,7 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
         ),
         factory=_factory_fixture_discrete
     )
-
+    # 5. Stage 0 Random / Naive Baseline Agent
     registry.register(
         registration=AgentRegistrationV1(
             agent_id="stage0_random_naive",
@@ -227,13 +231,38 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
 
             description=(
                 "Stage 0 Random / Naive research baseline. "
-                "Randomly selects direction and throttle/brake behavior"
-                "without learning."
+                "Holds random controls for 2-4 seconds and resamples immediately "
+                "at local road junctions, restarting the timer without learning."
             ),
         ),
         factory=_factory_stage0_random_naive
     )
 
+    # 6. Stage 1 Rule-Based Agent
+    registry.register(
+        registration=AgentRegistrationV1(
+            agent_id="stage1_rule_based",
+            agent_version="0.6.1",
+            stage_label="STAGE_1",
+            method_family="RULE_BASED",
+            purpose="RESEARCH_BASELINE",
+            implementation_ref=(
+                f"{Stage1RuleBasedAgent.__module__}:"
+                f"{Stage1RuleBasedAgent.__qualname__}"
+            ),
+            input_profile_id="STATE_DECISION_V1",
+            action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic",
+            stateful_within_episode=True,
+            # Chỉ phát triển trong SANDBOX/AUDIT trước.
+            benchmark_eligible=False,
+            sandbox_eligible=True,
+            audit_eligible=True,
+            requires_checkpoint=False,
+            description="Rule-based lane following, tracked traffic/LiDAR braking, junction lifecycle and guarded adjacent lane changes.",
+        ),
+        factory=_factory_stage1_rule_based
+    )
     return registry
 
 
