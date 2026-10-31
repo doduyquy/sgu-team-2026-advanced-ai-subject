@@ -130,11 +130,12 @@ where $L = 5.0\,\text{m}$ and $W = 3.5\,\text{m}$ in world space coordinates.
 *Validation Requirement:* In HUD-1, heading marker rotation must be asserted at cardinal headings: East ($\theta = 0$, pointing right), North ($\theta = \frac{\pi}{2}$, pointing up), West ($\theta = \pi$, pointing left), and South ($\theta = -\frac{\pi}{2}$, pointing down).
 
 ### 4.3 Trajectory History Buffer
-- **Ring Buffer Specification:** Stores the last $K \le 500$ points.
-- **Distance Filtering:** A point $(x_t, y_t)$ is appended to the trail only if Euclidean distance from the preceding point exceeds $d_{\text{thresh}} = 0.5\,\text{m}$:
-  $$\sqrt{(x_t - x_{t-1})^2 + (y_t - y_{t-1})^2} \ge 0.5\,\text{m}$$
-  This prevents redundant memory allocation when the vehicle is stationary or stopped at an intersection.
-- **Reset Invariant:** When an episode terminates or `env.reset()` is invoked, the trajectory buffer is cleared to 0 points. Old trajectory trails never leak into subsequent episodes.
+- **Ring Buffer Specification:** Stores an in-memory trailing visual history of up to $K \le 500$ retained waypoints. When the buffer reaches capacity, it functions as a FIFO sliding window retaining the most recent 500 points (a visual trailing wake of traveled path); it is not an exhaustive recording of an arbitrarily long entire route.
+- **Minimum Distance Threshold (Not an Upper Bound):** A new vehicle coordinate $(x_t, y_t)$ is appended to the trail if and only if its Euclidean distance from the preceding retained point satisfies the minimum distance threshold:
+  $$\Delta d = \sqrt{(x_t - x_{\text{last}})^2 + (y_t - y_{\text{last}})^2} \ge d_{\text{thresh}} = 0.5\,\text{m}$$
+  *Clarification on Vertex Spacing:* The threshold $0.5\,\text{m}$ is a lower bound designed to filter out stationary vehicle jitter and prevent redundant vertex accumulation when stopped; it is **not an upper bound** on vertex spacing. For example, if a vehicle travels at $72\,\text{km/h}$ ($20.0\,\text{m/s}$), in one $100\,\text{ms}$ simulation step it covers $2.0\,\text{m}$. Two consecutive retained points will be spaced $2.0\,\text{m}$ apart, which is completely valid.
+- **Piecewise Linear Polyline Representation:** Consecutive retained waypoints are connected via `LineSegs` segments. The resulting polyline is a piecewise linear visual approximation of the traveled path. Retained waypoint coordinates match raw simulator positions at the instant of sampling within numerical precision ($< 1\text{e-4}\,\text{m}$), but the connecting line segments do not claim an unconditional bound on continuous curve interpolation error between distant samples.
+- **Reset Invariant & Scientific Boundary:** When an episode terminates or `env.reset()` is invoked, the trajectory buffer is cleared to 0 points. Old trajectory trails never leak into subsequent episodes. Trajectory data is ephemeral visualization state held exclusively in memory; it is never persisted into Gate 7 scientific run artifacts (`episodes.csv`, `summary.json`), and no replay subsystem is added.
 
 ---
 
@@ -208,10 +209,12 @@ Panda3D's `aspect2d` coordinates are normalized to the screen height:
 
 ---
 
-## 6. Scientific Isolation & Timing Invariants
+## 6. Scientific Isolation & Timing Design Invariants
 
-### 6.1 Absolute Timing Boundary Protection
-To guarantee that rendering the HUD introduces strict measurement boundary isolation into scientific latency benchmarks:
+*Status Classification:* These principles are **DESIGN INVARIANTS** established at HUD-0 to govern implementation in HUD-1/2/3. Because HUD-0 is documentation-only, runtime isolation must be empirically verified via code path audits and regression testing in HUD-3 before being classified as `VERIFIED`.
+
+### 6.1 Timing Boundary Design Principle
+To isolate agent decision latency measurements in scientific benchmarks:
 - Monotonic timing of agent decision latency in `src/launcher/executor.py` strictly measures `agent.act()`:
   ```python
   t0 = time.perf_counter_ns()
@@ -219,14 +222,15 @@ To guarantee that rendering the HUD introduces strict measurement boundary isola
   t1 = time.perf_counter_ns()
   latencies_ms.append((t1 - t0) / 1e6)
   ```
-- **HUD telemetry capture and rendering updates occur strictly after physics stepping and outcome classification.**
-- Under no circumstances may any HUD update code, scene graph traversal, or OpenGL drawing call execute between `t0` and `t1`.
+- **Design Invariant:** HUD telemetry extraction and visualizer updates execute strictly *after* physics stepping and outcome classification. Under no circumstances may any HUD update code, scene graph traversal, or drawing call execute between `t0` and `t1`.
+- *Caveat on System Contention:* While timing-boundary isolation ensures that HUD update logic does not execute inside the `t0..t1` measurement bracket, it does not categorically eliminate shared OS thread scheduling or GPU queue contention on multi-threaded runtimes. Consequently, potential background contention must be evaluated via controlled comparison in HUD-3 rather than assumed to be zero.
 
-### 6.2 Zero Environment Mutation
-- The HUD renderer has strictly read-only access to `HudTelemetrySnapshotV1`.
-- It possesses zero references to `env.step()`, `env.reset()`, or action adapters.
-- It cannot alter physics state, spawn locations, or background traffic.
+### 6.2 Read-Only Environment Access (Design Invariant)
+- The HUD renderer receives strictly an immutable `HudTelemetrySnapshotV1` copy.
+- The visualizer holds zero references to `env.step()`, `env.reset()`, or action adapters.
+- It cannot mutate physics state, spawn positions, traffic manager queues, or episode outcome classifications.
+- Frozen platform contracts, action adapters, observation rights, reward specs, metrics, seed protocols, and benchmark manifests remain completely untouched.
 
-### 6.3 Headless Benchmark Isolation
-- `VALIDATION` and `TEST` launcher modes enforce `render_mode="OFF"`.
-- When `render_mode="OFF"`, the HUD system is completely bypassed: no secondary display regions are allocated, no 2D visualizer nodes are attached to scene graphs, and zero visualization draw calls are issued. Code path analysis, preflight enforcement, and regression test suites guarantee that headless benchmark simulations execute without any visualization overhead or interference.
+### 6.3 Headless Benchmark Execution Gating (Verification Criterion)
+- Benchmark suites (`VALIDATION`, `TEST`) strictly enforce `render_mode="OFF"` in preflight.
+- **Acceptance Criterion for HUD-3:** In `render_mode="OFF"`, code path audits and unit tests must verify that no secondary DisplayRegions are allocated, no visualizer nodes are attached to scene graphs, and zero visualization draw calls or background tasks are spawned. Headless benchmark simulations must execute identically without initializing visualizer infrastructure.

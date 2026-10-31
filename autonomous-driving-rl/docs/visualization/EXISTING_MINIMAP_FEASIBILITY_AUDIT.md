@@ -116,7 +116,7 @@ Rather than rewriting the minimap from scratch, **HUD-1 should adopt Khoa's `Min
 1. **Directional Heading Pointer:** Replace the static circle with a 3-vertex directional triangle oriented by `env.agent.heading_theta` in minimap space.
 2. **Path Trail Buffer:** Add an in-memory ring buffer (maximum 500 points) recording `(x, y)` coordinates, rendered into `render2d` via `LineSegs` with a fading cyan gradient.
 3. **Transparent Dark Glass Theme:** Update the background quad color and shader to translucent dark slate with a 1.5 px cyan/white frame border per the approved visual brief.
-4. **Step-Driven API:** Expose `update(telemetry_snapshot)` called explicitly by the simulation harness after physics step, eliminating background `taskMgr` overhead.
+4. **Step-Driven Pose API:** Expose a decoupled pose update method `update(world_x: Optional[float], world_y: Optional[float], heading_rad: Optional[float]) -> None` called explicitly by the simulation harness after physics step, eliminating background `taskMgr` overhead and decoupling the minimap from unrelated HUD telemetry fields. Missing coordinates or heading are handled gracefully per the approved missing-data policy.
 
 ---
 

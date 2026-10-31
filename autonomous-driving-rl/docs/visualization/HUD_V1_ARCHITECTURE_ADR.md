@@ -21,7 +21,7 @@ When evaluating autonomous driving policies in MetaDrive native 3D mode (`render
 6. Brake Pedal Meter (bottom-right, left of speed)
 7. Throttle Pedal Meter (bottom-right, left of speed)
 
-We must select the rendering architecture for this HUD that achieves high visual fidelity, seamless 60 FPS performance, zero scientific contamination, and maximum reuse of existing team implementations (specifically the `MiniMapOverlay` developed by Đặng Khoa).
+We must select the rendering architecture for this HUD that achieves high visual fidelity, target 60 FPS performance, strict scientific isolation, and maximum reuse of existing team implementations (specifically the `MiniMapOverlay` developed by Đặng Khoa).
 
 ---
 
@@ -88,10 +88,10 @@ We evaluate three architectural candidates:
 **DECISION:** Adopt **Option A (Native Panda3D 2D Scene Graph Overlay)** as the official rendering architecture for HUD V1.
 
 ### Performance Budgets & Frequency Targets (Falsifiable Hypotheses):
-- **Simulation Control Frequency:** Strictly 10.0 Hz nominal ($100.0\,\text{ms}$ simulation physical time per step, $\text{dt} = 0.1\,\text{s}$).
+- **Simulation Control Frequency:** Strictly 10.0 Hz nominal ($\text{dt} = 0.1\,\text{s}$ of simulated physical progression per decision step).
 - **Display Refresh Target:** 60 FPS target refresh rate in native desktop Panda3D window.
-- **HUD Overhead Budget:** The combined telemetry extraction and HUD rendering update must consume $< 1.0\,\text{ms}$ of wall-clock time per step (targeting $< 1\%$ of the 100 ms simulation budget).
-*Distinction of Time Domains:* A simulation timestep $\text{dt} = 0.1\,\text{s}$ describes simulated vehicle physical progression, not a guaranteed or required wall-clock execution budget. In non-real-time headless execution, steps execute as fast as CPU/GPU allows. In interactive NATIVE sessions, steps are paced to real-time. The HUD wall-clock overhead budget ($< 1.0\,\text{ms}$) is a design target to be empirically measured across p50, p95, and p99 step times in HUD-3, not an asserted fact.
+- **HUD Overhead Target:** The combined telemetry extraction and HUD rendering update has an independent wall-clock design target of mean $< 1.0\,\text{ms}$ and p95 $< 2.0\,\text{ms}$ per step.
+*Strict Separation of Time Domains:* A simulation timestep $\text{dt} = 0.1\,\text{s}$ represents physical simulation progression inside the virtual environment; it does not define a wall-clock execution deadline. Wall-clock execution speed depends entirely on underlying hardware throughput and simulator scheduling. Whether interactive NATIVE mode synchronizes with real-time clock pacing is a runtime behavior to be verified, not assumed. Frame rendering time, HUD update wall-clock time (`hud_update_ms`), and agent decision latency (`agent.act()`) must be instrumented and measured as separate, independent metrics in HUD-3.
 
 ### Concrete Structural Blueprint:
 ```text
@@ -136,7 +136,7 @@ MetaDrive Native Window (engine.win)
   - Hardware-accelerated GPU rendering without CPU-to-GPU software surface transfers.
   - Zero new external runtime dependencies (Panda3D is already installed).
   - Maximizes architectural reuse from Khoa's existing minimap commit.
-  - Strict scientific isolation: no HUD display regions, cameras, or nodes are allocated when `render_mode="OFF"`.
+  - Scientific isolation by design: no HUD display regions, cameras, or nodes are allocated when `render_mode="OFF"` (to be verified as an acceptance criterion in HUD-3).
 - **Negative / Constraints:**
   - Requires writing procedural 2D UI geometry using Panda3D primitives (`LineSegs`, `CardMaker`, `OnscreenText`).
   - True glass transparency requires validating DisplayRegion alpha clearing and blending on the pinned Panda3D engine.

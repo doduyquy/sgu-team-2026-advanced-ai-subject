@@ -39,8 +39,8 @@ Following the architectural decisions and visual specifications approved in **HU
 +-----------------------------------------------------------------------------------+
 | HUD-3: Runtime Integration & Scientific Isolation Audit                          |
 | - Wire HUD into src/launcher/executor.py strictly when render_mode="NATIVE"      |
-| - Benchmark runtime performance (<1.0 ms overhead) on SANDBOX                     |
-| - Prove zero scientific contamination and complete headless isolation             |
+| - Benchmark runtime performance (<1.0 ms overhead target) on SANDBOX              |
+| - Verify headless isolation criteria and absence of visualizer allocations        |
 +-----------------------------------------------------------------------------------+
                                          │
                                          ▼
@@ -62,7 +62,7 @@ Following the architectural decisions and visual specifications approved in **HU
 - Add vehicle heading orientation via an oriented triangle/chevron.
 - Add historical trajectory trail via a bounded ring buffer ($K \le 500$) drawn with `LineSegs`.
 - Replace opaque olive background with translucent dark glass (`#0B131B` @ 0.75 alpha) and subtle glass border.
-- Provide a clean step-driven update method: `update(world_pos, heading_rad)` without thread racing in `taskMgr`.
+- Provide a clean step-driven pose update method: `update(world_x: Optional[float], world_y: Optional[float], heading_rad: Optional[float]) -> None` without background `taskMgr` thread racing, decoupling minimap pose from unrelated HUD telemetry fields.
 - **Standalone Demo Harness:** Implement `scripts/demo_minimap_native.py` allowing interactive testing and visual inspection of the minimap in SANDBOX mode without modifying production `src/launcher/executor.py` before HUD-3.
 
 #### 2.2 Expected Files
@@ -77,15 +77,15 @@ Following the architectural decisions and visual specifications approved in **HU
   ```python
   class MiniMapOverlay:
       def __init__(self, env: MetaDriveEnv, padding_m: float = 12.0) -> None: ...
-      def update(self, world_x: float, world_y: float, heading_rad: float) -> None: ...
+      def update(self, world_x: Optional[float], world_y: Optional[float], heading_rad: Optional[float]) -> None: ...
       def reset(self) -> None: ...
       def destroy(self) -> None: ...
   ```
 
 #### 2.4 Acceptance Criteria
 1. Minimap renders road geometry cleanly in top-left `DisplayRegion` (`[0.015, 0.185, 0.745, 0.985]`).
-2. Ego marker points in the exact direction of vehicle travel.
-3. Trajectory trail buffer stores the sliding window of the most recent $K \le 500$ sampled waypoints; retained coordinates match raw vehicle positions within numerical floating-point precision ($< 1\text{e-4}\,\text{m}$); buffer resets cleanly to 0 points on episode restart.
+2. Ego marker points in the exact direction of vehicle travel when heading is valid; renders a non-directional position dot if heading is None; marker is hidden if position is None.
+3. Trajectory trail buffer stores the sliding window of the most recent $K \le 500$ sampled waypoints; retained coordinates match raw vehicle positions within numerical floating-point precision ($< 1\text{e-4}\,\text{m}$); $0.5\,\text{m}$ minimum distance threshold filters stationary jitter without upper-bounding vertex spacing; buffer resets cleanly to 0 points on episode restart.
 4. `destroy()` cleans up camera, display region, and nodes with zero resource leaks.
 5. All 402 existing unit tests continue to pass without regression.
 
@@ -139,10 +139,11 @@ If Panda3D camera allocation causes stability issues on certain platforms, `src/
 #### 3.1 Scope & Objectives
 - Wire `MiniMapOverlay` and `RacingHud` into `src/launcher/executor.py` under an integrated `RacingHudManager`:
   - Instantiated strictly when `self.plan.render_mode.upper() == "NATIVE"`.
+  - Acts as the visualizer facade receiving `HudTelemetrySnapshotV1`; routes full telemetry to `RacingHud.update(snapshot)` and extracts pose coordinates `(snapshot.world_position[0], snapshot.world_position[1], snapshot.heading_theta_rad)` (or `None` if missing) to invoke `MiniMapOverlay.update(world_x, world_y, heading_rad)`.
   - Updated strictly *after* `env.step()`, preserving absolute timing isolation around `agent.act()`.
   - Cleaned up safely in `finally:` block of `executor.py`.
-- Benchmark runtime performance: verify that rendering the HUD adds $<1.0\,\text{ms}$ per step ($<10\%$ of the 100 ms step budget), maintaining 60 FPS simulator performance.
-- Perform strict Scientific Isolation Audit: prove that canonical benchmark modes (`VALIDATION`, `TEST`) remain 100% headless with zero HUD invocation.
+- Benchmark runtime performance: empirically measure HUD wall-clock update overhead (falsifiable design target: mean $< 1.0\,\text{ms}$, p95 $< 2.0\,\text{ms}$ per step) and display frame rate (target: 60 FPS in desktop window), keeping HUD instrumentation completely decoupled from agent decision latency.
+- Perform strict Scientific Isolation Audit: verify that canonical benchmark modes (`VALIDATION`, `TEST`) remain 100% headless with zero HUD allocations, tasks, or draw calls.
 - Document full integration evidence in `docs/environment/PLATFORM_V1_HUD_INTEGRATION_AUDIT.md`.
 
 #### 3.2 Expected Files
@@ -172,7 +173,7 @@ The following test matrix must be implemented across HUD-1, HUD-2, and HUD-3:
 | **T03** | **Decision Payload & Timing Non-Interference** | Controlled unit test with fixture agent | HUD-3 | Timing boundary excludes HUD; agent action sequences are identical; latency distributions (p50, p95, p99) are measured and reported across repeated runs. |
 | **T04** | **Minimap Geometry Extents** | Polyline bounding test | HUD-1 | Orthographic film size matches calculated map extents plus padding across tested tiers. |
 | **T05** | **Ego Heading Correctness** | Heading vector unit test | HUD-1 | Heading marker rotates counter-clockwise with positive yaw; tested at $0^\circ, 90^\circ, 180^\circ, 270^\circ$. |
-| **T06** | **Trajectory Trail Precision** | Waypoint append test | HUD-1 | Retained trail waypoints match sampled raw coordinates within floating-point precision ($< 1\text{e-4}\,\text{m}$); $0.5\,\text{m}$ filter bounds vertex spacing; ring buffer maintains trailing window of up to 500 points. |
+| **T06** | **Trajectory Trail Precision** | Waypoint append test | HUD-1 | Retained trail waypoints match sampled raw coordinates within floating-point precision ($< 1\text{e-4}\,\text{m}$); $0.5\,\text{m}$ minimum distance threshold filters stationary vehicle noise without constraining high-speed vertex spacing; ring buffer maintains trailing visual window of up to 500 points. |
 | **T07** | **Zero Cross-Episode Trail Leakage** | Sequential episode test | HUD-1 | `reset()` clears trajectory points to 0; Episode 2 does not display Episode 1's trail. |
 | **T08** | **Exception Teardown Resilience** | Injection of simulated runtime crash | HUD-1, 2, 3 | `destroy()` safely removes DisplayRegion and nodes even if episode crashes mid-loop. |
 | **T09** | **Route Completion Truthfulness** | Value injection test | HUD-2 | Progress bar percentage matches `step_info["route_completion"]` without divergence. |
