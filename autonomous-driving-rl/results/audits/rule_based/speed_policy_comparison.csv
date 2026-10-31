@@ -1,0 +1,15 @@
+case,agent_version,steps,success,crash,out_of_road,boundary_contact,route_completion,mean_speed_kmh,max_speed_kmh,mean_target_kmh,max_abs_lane_offset_m
+sandbox/Easy/SCSS/0/0,0.2.0,745,true,false,false,false,0.9888,21.15,22.0,22.0,0.143
+sandbox/Easy/SCSS/0/0,0.3.0,450,true,false,false,false,0.9890,35.00,45.00,39.31,0.321
+sandbox/Easy/SCS/0/0,0.2.0,680,true,false,false,false,0.9889,21.07,22.0,22.0,0.143
+sandbox/Easy/SCS/0/0,0.3.0,418,true,false,false,false,0.9877,34.21,45.00,38.85,0.321
+sandbox/Easy/SCCS/0/0,0.2.0,971,true,false,false,false,0.9924,21.35,22.0,22.0,0.143
+sandbox/Easy/SCCS/0/0,0.3.0,597,true,false,false,false,0.9918,34.66,45.00,38.10,0.321
+sandbox/Easy/SCCS/7/0,0.2.0,838,true,false,false,false,0.9902,21.24,22.0,22.0,0.307
+sandbox/Easy/SCCS/7/0,0.3.0,539,true,false,false,false,0.9902,33.00,44.99,37.34,0.329
+sandbox/Medium/SCTCS/2/0,0.2.0,933,true,false,false,false,0.9914,20.70,22.0,21.58,0.436
+sandbox/Medium/SCTCS/2/0,0.3.0,674,true,false,false,false,0.9912,28.63,44.13,32.94,0.433
+sandbox/Medium/SCXCS/14/0,0.2.0,641,true,false,false,false,0.9877,19.97,22.0,21.31,0.463
+sandbox/Medium/SCXCS/14/0,0.3.0,538,true,false,false,false,0.9863,23.78,44.09,32.24,0.462
+sandbox/Hard/SCXOCS/0/0,0.2.0,641,false,true,false,false,0.6124,21.01,22.0,22.0,0.143
+sandbox/Hard/SCXOCS/0/0,0.3.0,642,false,true,false,false,0.7161,24.56,44.99,30.72,0.511

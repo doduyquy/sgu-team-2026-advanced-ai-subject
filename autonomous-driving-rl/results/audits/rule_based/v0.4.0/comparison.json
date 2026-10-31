@@ -1,0 +1,219 @@
+{
+  "noncanonical": true,
+  "split": "TRAIN",
+  "paired_cases": 9,
+  "baseline_run": "runs\\rule_based_v030_baseline12_20261030",
+  "candidate_run": "runs\\rule_based_v040_regression9_20261030",
+  "baseline_successes": 5,
+  "candidate_successes": 7,
+  "baseline_crashes": 4,
+  "candidate_crashes": 2,
+  "new_success_cases": [
+    "sandbox/Medium/SCXCCS/0/0",
+    "sandbox/Hard/SCTXrCS/2/0"
+  ],
+  "lost_success_cases": [],
+  "lower_completion_cases": [
+    "sandbox/Hard/SCXOCS/0/0",
+    "sandbox/Hard/XTOCS/0/0"
+  ],
+  "unmatched_baseline_cases": [
+    "sandbox/Extreme/CrXROSTR/0/0",
+    "sandbox/Extreme/SCTXORyCCS/0/0",
+    "sandbox/Extreme/SCXOCrTYCS/0/0"
+  ],
+  "unmatched_candidate_cases": [],
+  "baseline_provenance": {
+    "descriptor": {
+      "agent_id": "stage1_rule_based",
+      "agent_version": "0.3.0",
+      "input_profile_id": "STATE_DECISION_V1",
+      "action_adapter_id": "continuous_box2_v1",
+      "inference_stochasticity": "deterministic",
+      "stateful_within_episode": false,
+      "method_family": "RULE_BASED"
+    },
+    "configuration": {
+      "lookahead_m": 5.0,
+      "lookahead_time_s": 0.5,
+      "k_angle": 1.2,
+      "k_lateral": 1.5,
+      "k_preview": 0.5,
+      "speed_softening_mps": 2.0,
+      "max_steering": 0.5,
+      "cruise_speed_kmh": 45.0,
+      "comfortable_deceleration_mps2": 2.5,
+      "response_time_s": 0.4,
+      "braking_buffer_m": 3.0,
+      "junction_speed_kmh": 24.0,
+      "following_time_s": 1.8,
+      "minimum_following_gap_m": 3.0,
+      "emergency_ttc_s": 1.0,
+      "recovery_speed_kmh": 8.0,
+      "max_lateral_accel_mps2": 1.5,
+      "k_speed": 0.12,
+      "max_throttle": 0.55,
+      "safety_margin_m": 0.3,
+      "observation_max_speed_kmh": 80.0,
+      "observation_max_lane_width_m": 4.5,
+      "observation_road_scale_m": 18.0,
+      "vehicle_width_m": 1.852,
+      "vehicle_length_m": 4.515
+    },
+    "configuration_sha256": "8e5ddc659a1fffd20d2aa316d0b5c0e7a478a433f16f3681fc6c1b411f9c1882",
+    "source_sha256": {
+      "policy.py": "57b5691f50375470f60fc996836d0a75f02d3041ad015cc4bd882966eb8171f7",
+      "agent_input.py": "7f12d3e199008244f5c0352ce5fb0c659f6718358043de48d37d41ac90addc12",
+      "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4"
+    }
+  },
+  "candidate_provenance": {
+    "descriptor": {
+      "agent_id": "stage1_rule_based",
+      "agent_version": "0.4.0",
+      "input_profile_id": "STATE_DECISION_V1",
+      "action_adapter_id": "continuous_box2_v1",
+      "inference_stochasticity": "deterministic",
+      "stateful_within_episode": true,
+      "method_family": "RULE_BASED"
+    },
+    "configuration": {
+      "lookahead_m": 5.0,
+      "lookahead_time_s": 0.5,
+      "k_angle": 1.2,
+      "k_lateral": 1.5,
+      "k_preview": 0.5,
+      "speed_softening_mps": 2.0,
+      "max_steering": 0.5,
+      "cruise_speed_kmh": 45.0,
+      "comfortable_deceleration_mps2": 2.5,
+      "response_time_s": 0.4,
+      "braking_buffer_m": 3.0,
+      "junction_speed_kmh": 24.0,
+      "following_time_s": 1.8,
+      "minimum_following_gap_m": 3.0,
+      "emergency_ttc_s": 1.0,
+      "traffic_margin_m": 0.25,
+      "obstacle_margin_m": 0.35,
+      "prediction_dt_s": 0.2,
+      "prediction_horizon_s": 3.0,
+      "junction_scan_m": 30.0,
+      "junction_conflict_radius_m": 12.0,
+      "yield_release_s": 0.5,
+      "lidar_range_m": 50.0,
+      "overflow_speed_kmh": 27.0,
+      "recovery_speed_kmh": 8.0,
+      "max_lateral_accel_mps2": 1.5,
+      "k_speed": 0.12,
+      "max_throttle": 0.55,
+      "safety_margin_m": 0.3,
+      "observation_max_speed_kmh": 80.0,
+      "observation_max_lane_width_m": 4.5,
+      "observation_road_scale_m": 18.0,
+      "vehicle_width_m": 1.852,
+      "vehicle_length_m": 4.515
+    },
+    "configuration_sha256": "b1392bf83a6909dac6391cf6aa0d83c97479c2e87c0628cf74603b2fdeb131ce",
+    "source_sha256": {
+      "policy.py": "03f51ec69127dedffec62bb04032f2d27bcdb15d10121dbca7a8b10b23e029fc",
+      "agent_input.py": "5f7fc106087ed1145c649cdbcb28498d403c74b15a747314c447707d6e96ea83",
+      "agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+      "agents/rule_based_agent.py": "03f51ec69127dedffec62bb04032f2d27bcdb15d10121dbca7a8b10b23e029fc",
+      "agents/rule_based_traffic.py": "958bcf07e6f9afd4ccab2d6adaba8b7f36fcb742861b3482032b69a5f2283760",
+      "agents/__init__.py": "de2af9150878aec49ba843f77291a8ca410944908e6b04ce27610d6678b29f02",
+      "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+      "agent_experiment.py": "199fe831f70e820e7ed7a910139834a2f093e9c7b7a5c1e5c5d05eb2f2d3a45b"
+    }
+  },
+  "verified_trace_hashes": {
+    "baseline": {
+      "sandbox/Easy/SCCS/0/0": {
+        "rows": 597,
+        "sha256": "5d5d07dba87d8195265171111811fc4aeefb35e61df6b9e0afcaaea8b43262ec"
+      },
+      "sandbox/Easy/SCS/0/0": {
+        "rows": 418,
+        "sha256": "aa074ae56d4989df51f66d0d0667092b6680e44720d4e7e85bf03d29730392fd"
+      },
+      "sandbox/Easy/SCSS/0/0": {
+        "rows": 450,
+        "sha256": "a508b03abbef0ce7011ccb85788d9aae78993643696873430434ec7cd7210dfb"
+      },
+      "sandbox/Medium/SCTCS/2/0": {
+        "rows": 674,
+        "sha256": "cb8e51be59241538cb7c06111dfd0464cf7af56df281e2f6bc1a4d47375c6448"
+      },
+      "sandbox/Medium/SCXCCS/0/0": {
+        "rows": 367,
+        "sha256": "a57b1f3ad6ce335bc453fa234601ed75d264200ecf2c906827ceabb5c26b5591"
+      },
+      "sandbox/Medium/SCXCS/14/0": {
+        "rows": 538,
+        "sha256": "353a5a408c2c220f1222330cb222bd6b73d5fbaa8b216251251bb17a0b1818e2"
+      },
+      "sandbox/Hard/SCTXrCS/2/0": {
+        "rows": 294,
+        "sha256": "bc6b2bd7eaf9ce9cde945f2dd06fee3739b6b74cb252ddab8abc4c055fcf729f"
+      },
+      "sandbox/Hard/SCXOCS/0/0": {
+        "rows": 642,
+        "sha256": "64190446d8b83d1e56652c182b1efb8f44c89e6bb74cc5fe8f4528fd357157e8"
+      },
+      "sandbox/Hard/XTOCS/0/0": {
+        "rows": 123,
+        "sha256": "39764ab73593a9d5a88d6416d640f32a9408b422a381629f0e0a925a145ad558"
+      },
+      "sandbox/Extreme/CrXROSTR/0/0": {
+        "rows": 3188,
+        "sha256": "da37e3ac48b764a0c899130b8c0357ab58e55e1ef4a48a561de8845afecedc7c"
+      },
+      "sandbox/Extreme/SCTXORyCCS/0/0": {
+        "rows": 200,
+        "sha256": "7b0985abc4a915125fc323410046093012838445d830fee66f706684da87219f"
+      },
+      "sandbox/Extreme/SCXOCrTYCS/0/0": {
+        "rows": 200,
+        "sha256": "389995149a116c110f7774ea06b23fd11ea00269ae534653d84c0f0c0ad1e894"
+      }
+    },
+    "candidate": {
+      "sandbox/Easy/SCCS/0/0": {
+        "rows": 597,
+        "sha256": "b86b1e67d65be392d4a8a409dc1e731eaa0cd381b5b6748a2298477cb8bbbf77"
+      },
+      "sandbox/Easy/SCS/0/0": {
+        "rows": 418,
+        "sha256": "f11c654b64ac5931b9a507365458709d4c191fbf473c5a22f31f01b96c8ffd02"
+      },
+      "sandbox/Easy/SCSS/0/0": {
+        "rows": 450,
+        "sha256": "0a2f6884043e4aa6d170eb4ad82cccb0589d013a65b4e37eb2c6ef2c2d1b396c"
+      },
+      "sandbox/Medium/SCTCS/2/0": {
+        "rows": 674,
+        "sha256": "24e5a9365100974ffd5b78142d30eb3b84e8ee42ce5f7b1bbb47c4f2e83e0049"
+      },
+      "sandbox/Medium/SCXCCS/0/0": {
+        "rows": 865,
+        "sha256": "3b59649e92ae9d01c06ad6c589567eb31839de7cfe902b1147fe1418d9b0bdc3"
+      },
+      "sandbox/Medium/SCXCS/14/0": {
+        "rows": 541,
+        "sha256": "eb7f0c4e924850341e1afbcab1ff80350056e79cf1f5090cc75fe15a131bc0e5"
+      },
+      "sandbox/Hard/SCTXrCS/2/0": {
+        "rows": 1607,
+        "sha256": "0a67ed43b385a9a0fdaec157eb0343ad6c2d9679ca2ae8c5e98610e2cbb6c308"
+      },
+      "sandbox/Hard/SCXOCS/0/0": {
+        "rows": 508,
+        "sha256": "4fb0ede74d9efed0d7f2a57b9c5b558e19b42caf4d5de0eda6f2801fb7f13d03"
+      },
+      "sandbox/Hard/XTOCS/0/0": {
+        "rows": 123,
+        "sha256": "8fec2d56355698baceddb9cf39ee2a6e13a14e6cdcf06233d1b89ae515a4322e"
+      }
+    }
+  },
+  "comparison_scope": "Policy plus shared input-extractor change; not a policy-only ablation"
+}

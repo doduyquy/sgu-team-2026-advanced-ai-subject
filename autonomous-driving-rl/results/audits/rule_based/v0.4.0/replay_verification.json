@@ -1,0 +1,12 @@
+{
+  "case": "sandbox/Easy/SCCS/0/0",
+  "release_run": "rule_based_v040_regression9_20261030",
+  "replay_run": "rule_based_v040_snapshot_replay_20261030",
+  "steps": 597,
+  "equal_step_counts": true,
+  "equal_public_inputs": true,
+  "equal_actions_and_diagnostics": true,
+  "excluded_from_equality": [
+    "act_latency_ms"
+  ]
+}
