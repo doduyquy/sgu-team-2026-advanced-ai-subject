@@ -1,0 +1,31 @@
+{
+  "recorded_at_utc": "2026-10-30T16:31:03.088028+00:00",
+  "variant_dir": "runs\\rule_based_v060_probe08_20261030\\mandatory_route",
+  "case_id": "sandbox/Easy/SCS/0/0/mandatory_route",
+  "controlled_scenario": true,
+  "configuration_sha256": "6255e872d7c94f9a80c8df9949bde0e933dea44dfd0b8fba097ee607133496ee",
+  "source_sha256": {
+    "policy.py": "001d1875af3709a1ff8f061bd02f3b4c447f3cf6ea206c48a19add0523a9fd06",
+    "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+    "agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+    "agents/rule_based_agent.py": "001d1875af3709a1ff8f061bd02f3b4c447f3cf6ea206c48a19add0523a9fd06",
+    "agents/rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+    "agents/rule_based_lane_change.py": "1886ac1022b3b21c88ddf2c84850e936bf0772c4eaac478efb86ed728e661e17",
+    "agents/rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+    "agents/rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9",
+    "agents/__init__.py": "de2af9150878aec49ba843f77291a8ca410944908e6b04ce27610d6678b29f02",
+    "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+    "agent_experiment.py": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5"
+  },
+  "trace_sha256": "b9cba395f57c237f1a8b13efede37cc5ed4a1e42a4f2d8e488ee5bdf1adb3c61",
+  "shared_platform_api_sha256": "76231d80e1ac269f3c6c3bfcb054f5f810ed866615f7598a5629984b88fd3dd0",
+  "adapter_sha256": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+  "excluded_from_comparison": [
+    "act_latency_ms"
+  ],
+  "scope": "Frozen policy/helpers/input types; live unchanged shared AgentDecision API and verified adapter",
+  "completed_replay": true,
+  "steps": 171,
+  "decision_mismatches": [],
+  "action_mismatches": []
+}

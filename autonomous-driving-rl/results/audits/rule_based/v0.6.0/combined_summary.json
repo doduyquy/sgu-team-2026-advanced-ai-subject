@@ -1,0 +1,40 @@
+{
+  "noncanonical": true,
+  "split": "TRAIN",
+  "unique_cases": 16,
+  "baseline_successes": 13,
+  "candidate_successes": 13,
+  "candidate_crashes": 0,
+  "candidate_out_of_road": 0,
+  "candidate_solid_boundary_contacts": 0,
+  "timeouts": [
+    "sandbox/Extreme/CrXROSTR/0/0",
+    "sandbox/Extreme/SCTXORyCCS/0/0",
+    "sandbox/Extreme/SCXOCrTYCS/0/0"
+  ],
+  "lost_successes": [],
+  "new_successes": [],
+  "physical_scenarios_passed": 6,
+  "physical_replay_steps": 929,
+  "tests_passed": 279,
+  "source_sha256": {
+    "policy.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+    "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+    "platform_agent.py": "76231d80e1ac269f3c6c3bfcb054f5f810ed866615f7598a5629984b88fd3dd0",
+    "platform_init.py": "36c2140052470e2daaa2c15b42a9763385e4bf12b270265e5b04dc4fbf4680dc",
+    "agent_registry.py": "a31d50009a5e12f11f8bedacf5d8807aa9ffa33dffa430e19fc6e3a39abc06cc",
+    "agent_contract_v1.json": "c487d1310fa817b7c4cd42ccef6cb1e382d932536c4832fca956df286216571d",
+    "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+    "agent_experiment.py": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5",
+    "verified_runner.py": "2c9433ab34d356a221ffc707c6d0120bb513e2c7a7390f4ee5b554dad39573f0",
+    "physical_probe_runner.py": "cb1bd09c33854bae13697ee6dcbb7368507ace0b152de6a943f9d8b78c2c5d12",
+    "replay_runner.py": "7fffb6ca356f320c476dcad70a1f8450ce2e4c13bb658783fc81b9260b7662cf",
+    "summarize_runner.py": "7809071ef00dba88569df6fb6989c5448211a074642ad1d5aea45a1fad6670e7",
+    "evidence_collector.py": "c87bbc36f321853bdfed8b0e70d65b845384021a290fef49bfaa63b567dd019c",
+    "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9",
+    "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+    "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+    "rule_based_lane_change.py": "07fec91d228965f5ebd571ecfd76364115a4b6bd3d304612598a96272d030b5d"
+  },
+  "note": "Policy + public extractor change; same locked physical cases/config; reuse original verified v050 current-variant baseline; no canonical benchmark claim"
+}

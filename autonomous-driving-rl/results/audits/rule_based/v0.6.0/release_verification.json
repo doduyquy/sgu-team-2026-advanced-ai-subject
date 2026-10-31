@@ -1,0 +1,85 @@
+{
+  "recorded_at_utc": "2026-10-30T17:05:52.131095+00:00",
+  "archives": {
+    "0.5.0": {
+      "snapshot_sha256": "e153c8c64fa479e02342b4c7c7ae400f777fa4f86e3e3f336b228dc53bbcad7d",
+      "files_match": {
+        "policy.py": true,
+        "agent_input.py": true,
+        "rule_based_traffic.py": true,
+        "rule_based_memory.py": true,
+        "rule_based_junction.py": true,
+        "platform_agent.py": true,
+        "agent_contract_v1.json": true,
+        "action_adapter.py": true,
+        "agent_experiment.py": true,
+        "verified_runner.py": true
+      }
+    },
+    "0.6.0": {
+      "snapshot_sha256": "ea1f70c74de7c68852a70aeda99f856bd52d3e594b1b7579f2c3f41ca25c5b14",
+      "files_match": {
+        "policy.py": true,
+        "agent_input.py": true,
+        "platform_agent.py": true,
+        "platform_init.py": true,
+        "agent_registry.py": true,
+        "agent_contract_v1.json": true,
+        "action_adapter.py": true,
+        "agent_experiment.py": true,
+        "verified_runner.py": true,
+        "physical_probe_runner.py": true,
+        "replay_runner.py": true,
+        "summarize_runner.py": true,
+        "evidence_collector.py": true,
+        "rule_based_traffic.py": true,
+        "rule_based_memory.py": true,
+        "rule_based_junction.py": true,
+        "rule_based_lane_change.py": true
+      }
+    }
+  },
+  "archive_flat_package_replays": [
+    {
+      "scenario": "safe_overtake",
+      "steps": 150,
+      "trace_sha256": "d632654ce6466c45c8dea812ec7bff5d09ba2ddf403f83bb7ae3ebb001f53dbd",
+      "exact_match": true
+    },
+    {
+      "scenario": "fast_rear",
+      "steps": 170,
+      "trace_sha256": "63ede03259a7cd892f674865ac6b43dcd870fb6ed51bb9224d9658c7526fef1a",
+      "exact_match": true
+    },
+    {
+      "scenario": "mandatory_route",
+      "steps": 171,
+      "trace_sha256": "e360242fce36376c06c73410a3310ec1caba0516a3bed35d98827bc74204db62",
+      "exact_match": true
+    },
+    {
+      "scenario": "mandatory_left",
+      "steps": 171,
+      "trace_sha256": "a87760ebe928d3e21f31f69fc99ab26ebbdf50b7fac85a7c83ef8576b3c25b95",
+      "exact_match": true
+    },
+    {
+      "scenario": "precommit_abort",
+      "steps": 95,
+      "trace_sha256": "2edf34ab29cf6b8a012af9d757485afb21464797155f21c1ababfc99c3fea16e",
+      "exact_match": true
+    },
+    {
+      "scenario": "postcommit_front_block",
+      "steps": 172,
+      "trace_sha256": "7aefd26218e15995c87547a1401e7da967c32478d949c78e337ad10c76d4f520",
+      "exact_match": true
+    }
+  ],
+  "total_exact_steps": 929,
+  "scope": "Verbatim archives plus actual import of flat archived policy/helpers/input; live shared API/adapter hashes recorded; latency excluded",
+  "shared_api_sha256": "76231d80e1ac269f3c6c3bfcb054f5f810ed866615f7598a5629984b88fd3dd0",
+  "adapter_sha256": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+  "verification_script_sha256": "6627fba17fc68415595f061f9864751679cea0c8d7dd2534eec277ba7190b3fc"
+}
