@@ -10,7 +10,6 @@ from enum import Enum
 import csv
 import hashlib
 import json
-import math
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from src.platform.metrics import AggregateMetrics

@@ -7,7 +7,7 @@ Pure, unit-testable module independent of Panda3D / simulator engine state.
 
 import math
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 def compute_route_aware_horizon(

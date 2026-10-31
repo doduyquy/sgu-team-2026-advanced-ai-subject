@@ -7,7 +7,7 @@ Pure, unit-testable module independent of Panda3D / simulator engine state.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 class TerminalReason(str, Enum):

@@ -9,7 +9,7 @@ This module defines standard observer events emitted by ExperimentExecutor:
 
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict
 
 from src.platform import get_utc_now_iso
 
