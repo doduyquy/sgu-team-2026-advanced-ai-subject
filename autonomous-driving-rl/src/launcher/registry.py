@@ -130,6 +130,11 @@ def _factory_stage2_hybrid_astar() -> HybridAStarAgent:
     return HybridAStarAgent()
 
 
+def _factory_stage5_sac():
+    from src.agents.stage5_sac_agent import Stage5SacAgent
+    return Stage5SacAgent()
+
+
 HISTORICAL_FIXTURE_REGISTRY_SHA256 = "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f"
 
 
@@ -294,6 +299,29 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True, requires_checkpoint=learned,
             description=description,
         ), factory)
+
+    from src.agents.stage5_sac_agent import Stage5SacAgent
+    registry.register(
+        AgentRegistrationV1(
+            agent_id="stage5_sac",
+            agent_version="0.1.0",
+            stage_label="STAGE_5",
+            method_family="MODEL_FREE_RL",
+            purpose="CANDIDATE",
+            implementation_ref=f"{Stage5SacAgent.__module__}:{Stage5SacAgent.__qualname__}",
+            input_profile_id="STATE_DECISION_V1",
+            action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic",
+            stateful_within_episode=False,
+            benchmark_eligible=False,
+            sandbox_eligible=True,
+            audit_eligible=True,
+            requires_checkpoint=False,
+            description="Stage 5 Soft Actor-Critic (SAC) baseline continuous driving policy.",
+        ),
+        factory=_factory_stage5_sac,
+    )
+
     return registry
 
 

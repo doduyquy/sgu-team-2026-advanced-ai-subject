@@ -7,6 +7,12 @@ This module implements a thin CLI adapter over the Launcher Core:
 - Zero duplicate scientific or resolution logic; delegates strictly to models, resolver, preflight, and executor.
 """
 
+# Ensure torch loads before Panda3D C++ runtime on Windows if present
+try:
+    import torch
+except ImportError:
+    pass
+
 import argparse
 import json
 import sys
