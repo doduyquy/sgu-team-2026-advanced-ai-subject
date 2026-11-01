@@ -8,7 +8,8 @@ This module implements AgentRegistryV1:
 - Provides algorithm-neutral registration interface for future Stage 0 through Stage 7 agents.
 """
 
-from typing import Any, Callable, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from src.launcher.models import AgentRegistrationV1
 from src.agents import Stage0RandomNaiveAgent
@@ -128,6 +129,49 @@ def _factory_stage2_dijkstra() -> DijkstraAgent:
 
 def _factory_stage2_hybrid_astar() -> HybridAStarAgent:
     return HybridAStarAgent()
+
+
+def _factory_stage5_sac():
+    from src.agents.stage5_sac_agent import Stage5SacAgent
+    return Stage5SacAgent()
+
+
+def make_sac_agent_factory(checkpoint_path: Union[Path, str]):
+    """
+    Creates a configured runtime factory for Stage5SacAgent with verified checkpoint provenance.
+
+    Scientific Provenance & Checkpoint Binding Notice:
+    - Binds the cryptographically verified model_sha256 as expected_sha256 into the factory,
+      guaranteeing that actual inference cannot execute an altered or substituted model.zip.
+    - Captures verified checkpoint metadata to embed into run_manifest.json algorithm_hyperparameters.
+    - For candidate Stage 5, resolved_plan_sha256 does not bind SAC checkpoint identity;
+      run_manifest.algorithm_hyperparameters.sac_checkpoint serves as the authoritative provenance source.
+    - Prior to official benchmark eligibility, a dedicated SAC checkpoint binding contract must
+      be formally designed and reviewed.
+    """
+    from src.agents.stage5_sac_agent import Stage5SacAgent
+    from src.training.stage5.checkpoint import verify_checkpoint_integrity
+    from src.training.stage5.observation_encoder import Stage5ObservationEncoder
+
+    ckpt_path = Path(checkpoint_path).resolve()
+    encoder = Stage5ObservationEncoder(core_only=False)
+    meta = verify_checkpoint_integrity(ckpt_path, expected_encoder_fingerprint=encoder.get_schema_fingerprint())
+    bound_model_sha = str(meta["model_sha256"])
+
+    def _factory() -> Stage5SacAgent:
+        return Stage5SacAgent(checkpoint_path=ckpt_path, expected_sha256=bound_model_sha)
+
+    _factory.experiment_parameters = lambda: {
+        "model_name": meta.get("model_name", "stage5_sac"),
+        "algorithm": meta.get("algorithm", "SAC"),
+        "checkpoint_path": str(ckpt_path),
+        "model_sha256": bound_model_sha,
+        "encoder_fingerprint": meta.get("encoder_fingerprint"),
+        "encoder_id": meta.get("encoder_id"),
+        "total_timesteps": meta.get("total_timesteps"),
+        "training_root_seed": meta.get("training_root_seed"),
+    }
+    return _factory
 
 
 HISTORICAL_FIXTURE_REGISTRY_SHA256 = "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f"
@@ -294,6 +338,29 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True, requires_checkpoint=learned,
             description=description,
         ), factory)
+
+    from src.agents.stage5_sac_agent import Stage5SacAgent
+    registry.register(
+        AgentRegistrationV1(
+            agent_id="stage5_sac",
+            agent_version="0.1.0",
+            stage_label="STAGE_5",
+            method_family="MODEL_FREE_RL",
+            purpose="CANDIDATE",
+            implementation_ref=f"{Stage5SacAgent.__module__}:{Stage5SacAgent.__qualname__}",
+            input_profile_id="STATE_DECISION_V1",
+            action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic",
+            stateful_within_episode=False,
+            benchmark_eligible=False,
+            sandbox_eligible=True,
+            audit_eligible=True,
+            requires_checkpoint=False,
+            description="Stage 5 Soft Actor-Critic (SAC) baseline continuous driving policy.",
+        ),
+        factory=_factory_stage5_sac,
+    )
+
     return registry
 
 

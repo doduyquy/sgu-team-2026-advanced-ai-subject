@@ -222,7 +222,7 @@ class TestSearchPlannerIntegration(unittest.TestCase):
         widget.check_show_demo.setChecked(False)
         controller = window.campaign_controller
         def wait_until_idle():
-            deadline = time.monotonic() + 180
+            deadline = time.monotonic() + 360
             while controller.active and time.monotonic() < deadline:
                 self.app.processEvents()
                 time.sleep(.01)

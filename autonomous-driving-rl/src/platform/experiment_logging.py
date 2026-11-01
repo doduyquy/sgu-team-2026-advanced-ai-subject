@@ -256,7 +256,7 @@ def capture_environment_provenance(repo_root: Optional[Path] = None) -> Dict[str
         env_info["cuda_available"] = torch.cuda.is_available()
         if torch.cuda.is_available():
             env_info["cuda_device_name"] = torch.cuda.get_device_name(0)
-    except ImportError:
+    except (ImportError, OSError):
         pass
 
     return env_info

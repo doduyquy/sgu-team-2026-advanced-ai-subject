@@ -5,6 +5,12 @@ Public API exports for experiment orchestration, resolution, safety preflight,
 and generic simulation execution across Stages 0 through 7.
 """
 
+# Ensure PyTorch C++ runtime initializes before Panda3D on Windows if torch is installed
+try:
+    import torch
+except (ImportError, OSError):
+    pass
+
 from src.launcher.cases import (
     load_locked_geometry_block_sequence,
     resolve_audit_cases,
