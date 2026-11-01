@@ -171,7 +171,7 @@ def train_astar_heuristic(project_root, preset="smoke", progress=None, *, publis
     manifest["source_sha256"] = {
         relative: file_sha256(project_root / relative) for relative in (
             "src/agents/planning_graph.py", "src/agents/astar_agent.py", "src/agents/heuristic_model.py",
-            "src/training/astar_heuristic.py",
+            "src/agents/path_following.py", "src/training/astar_heuristic.py",
         )
     }
     manifest_path = output / "training_manifest.json"
