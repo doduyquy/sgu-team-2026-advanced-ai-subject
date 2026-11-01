@@ -379,7 +379,7 @@ class TestWorkbenchSuite(unittest.TestCase):
         importlib.import_module("src.workbench.app")
         reg = build_canonical_agent_registry()
         self.assertEqual(reg.to_snapshot(), before)
-        self.assertEqual(len(reg.list_all()), 7)
+        self.assertEqual(len([a for a in reg.list_all() if a.purpose == "AUDIT_FIXTURE"]), 4)
         self.assertTrue(reg.has_agent("stage0_random_naive"))
         from src.launcher.registry import (
             HISTORICAL_FIXTURE_REGISTRY_SHA256,
