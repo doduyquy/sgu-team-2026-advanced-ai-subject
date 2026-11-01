@@ -7,6 +7,10 @@ TRAIN and fits a Stage 6 cost-to-go heuristic. `--plan` shows its budget without
 starting the simulator. Fixed settings live in `configs/experiments/astar_learning_v1.json`.
 See [A* learning workflow](../docs/ASTAR_LEARNED_HEURISTIC.md).
 
+`compare_search_planners.py` previews a fixed four-planner TRAIN schedule; `--run`
+executes BFS, Dijkstra, A* and Hybrid A* and verifies their saved Gate-7 results.
+See [search comparison](../docs/SEARCH_PLANNERS.md).
+
 Canonical evaluation is orchestrated by `src/launcher` and the Research Workbench.
 Learned stages produce frozen agents/checkpoints evaluated through the same Platform V1 contracts.
 
