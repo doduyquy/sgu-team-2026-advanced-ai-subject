@@ -60,6 +60,9 @@ class BenchmarkWidget(QWidget):
         self.btn_training.clicked.connect(self.trainingRequested.emit)
         training_row.addWidget(self.btn_training)
         layout.addLayout(training_row)
+        self.btn_search_group = QPushButton("Chọn nhóm tìm kiếm trên TRAIN · BFS / Dijkstra / A* / Hybrid A*")
+        self.btn_search_group.clicked.connect(self._select_search_group)
+        layout.addWidget(self.btn_search_group)
 
         agents_group = QGroupBox("Thuật toán đã triển khai · cấu hình theo phiên bản đăng ký")
         agents_layout = QVBoxLayout(agents_group)
@@ -79,10 +82,11 @@ class BenchmarkWidget(QWidget):
                                          "Benchmark eligible" if agent.benchmark_eligible else "TRAIN / AUDIT"), 1):
                 self.table_agents.setItem(row, col, QTableWidgetItem(value))
         self.table_agents.resizeRowsToContents()
-        self.table_agents.setFixedHeight(min(160, self.table_agents.horizontalHeader().height()
+        self.table_agents.setFixedHeight(min(320, self.table_agents.horizontalHeader().height()
                                             + self.table_agents.verticalHeader().length() + 4))
         agents_layout.addWidget(self.table_agents)
-        note = QLabel("Fixture kiểm tra hạ tầng được giữ ở phần nâng cao. Giai đoạn chưa có agent sẽ chưa xuất hiện như một phương pháp đã chạy.")
+        note = QLabel("Stage 2 · Graph search: BFS, Dijkstra, A*, Hybrid A*. BFS tối ưu số cạnh; Dijkstra/A* tối ưu chi phí trên cùng đồ thị. "
+                      "Hybrid A* dùng mô hình chuyển động riêng. Stage 6 cần checkpoint đã train.")
         note.setWordWrap(True)
         note.setStyleSheet("color: #58636d;")
         agents_layout.addWidget(note)
@@ -137,6 +141,21 @@ class BenchmarkWidget(QWidget):
         controller.changed.connect(self._controller_changed)
         controller.resultsReady.connect(self._show_results)
         self.reload_training_bindings()
+
+    def _select_search_group(self):
+        if self._busy:
+            return
+        self.combo_profile.blockSignals(True)
+        self.combo_profile.setCurrentIndex(self.combo_profile.findData("train_demo_v1"))
+        self.combo_profile.blockSignals(False)
+        self.table_agents.blockSignals(True)
+        for row, agent in enumerate(self.agents):
+            self.table_agents.item(row, 0).setCheckState(
+                Qt.CheckState.Checked if agent.agent_id in (
+                    "stage2_bfs", "stage2_dijkstra", "stage2_astar", "stage2_hybrid_astar"
+                ) else Qt.CheckState.Unchecked)
+        self.table_agents.blockSignals(False)
+        self._selection_changed()
 
     def reload_training_bindings(self, select_pair=False):
         try:
@@ -215,6 +234,7 @@ class BenchmarkWidget(QWidget):
         self.table_agents.setEnabled(not busy)
         self.check_show_demo.setEnabled(not busy)
         self.btn_training.setEnabled(not busy)
+        self.btn_search_group.setEnabled(not busy)
         self._update_buttons()
 
     def _update_buttons(self):
