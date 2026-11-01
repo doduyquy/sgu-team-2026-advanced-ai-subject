@@ -26,6 +26,18 @@ from src.platform import (
 class Stage5SacAgent(AgentPolicy):
     """
     Inference policy for Stage 5 Soft Actor-Critic (SAC) models.
+
+    Scientific Provenance & Checkpoint Identity Notice:
+    - Stage 5 SAC is currently registered as a research CANDIDATE (benchmark_eligible=False).
+    - Under the frozen Platform V1 launcher contract, resolved_plan_sha256 does not bind the
+      SAC checkpoint identity (unlike Stage 6 which has planner_fingerprint in CheckpointBindingV1).
+      Two different SAC checkpoints evaluated under the same parameters produce the same
+      resolved_plan_sha256 fingerprint in the current plan schema.
+    - Instead, full checkpoint provenance (model_sha256, encoder_fingerprint, checkpoint_path,
+      total_timesteps, training_root_seed) is durably recorded in run_manifest.json under
+      config.algorithm_hyperparameters.sac_checkpoint.
+    - Before any future official benchmark eligibility is considered, a dedicated Stage 5
+      checkpoint binding schema must be formally designed, reviewed, and cryptographically locked.
     """
 
     agent_id = "stage5_sac"

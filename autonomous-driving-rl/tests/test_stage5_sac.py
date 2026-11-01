@@ -353,6 +353,76 @@ class TestStage5Sac(unittest.TestCase):
         self.assertIsInstance(agent, Stage5SacAgent)
         self.assertIsNotNone(agent.checkpoint_provenance)
 
+    def test_14_factory_binds_model_sha_and_rejects_substituted_checkpoint(self):
+        """make_sac_agent_factory binds verified SHA-256 and rejects post-creation model substitutions."""
+        ckpt_a_dir = self.temp_dir / "ckpt_factory_a"
+        shutil.copytree(self.fixture_ckpt_dir, ckpt_a_dir)
+
+        # 1. Create factory from checkpoint A
+        factory = make_sac_agent_factory(ckpt_a_dir)
+        agent_initial = factory()
+        self.assertIsInstance(agent_initial, Stage5SacAgent)
+
+        # 2. Substitute model.zip in directory with a different model bundle B
+        model_b_dir = self.temp_dir / "ckpt_b_source"
+        trainer_b = SacBaselineTrainer(
+            config_overrides={"sac_hyperparameters": {"buffer_size": 200, "batch_size": 16, "learning_starts": 5}},
+            training_root_seed=999,
+            project_root=self.project_root,
+            device="cpu",
+        )
+        try:
+            trainer_b.save_checkpoint(model_b_dir, save_replay_buffer=False)
+        finally:
+            trainer_b.close()
+
+        # Copy model B's model.zip, metadata.json, and CHECKSUMS.sha256 into ckpt_a_dir
+        shutil.copy(model_b_dir / "model.zip", ckpt_a_dir / "model.zip")
+        shutil.copy(model_b_dir / "metadata.json", ckpt_a_dir / "metadata.json")
+        shutil.copy(model_b_dir / "CHECKSUMS.sha256", ckpt_a_dir / "CHECKSUMS.sha256")
+
+        # 3. Even though directory A now contains a valid bundle B, the factory must reject loading
+        # because the factory bound expected_sha256 from model A!
+        with self.assertRaises(CheckpointIntegrityError) as ctx:
+            factory()
+        self.assertIn("Checkpoint digest does not match expected trusted anchor", str(ctx.exception))
+
+    def test_15_stale_replay_buffer_purged_and_unverified_loading_rejected(self):
+        """Saving with save_replay_buffer=False purges prior replay buffers and load fails loudly."""
+        ckpt_rb_dir = self.temp_dir / "ckpt_replay_purge_test"
+        trainer = SacBaselineTrainer(
+            config_overrides={"sac_hyperparameters": {"buffer_size": 200, "batch_size": 16, "learning_starts": 5}},
+            training_root_seed=404,
+            project_root=self.project_root,
+            device="cpu",
+        )
+        try:
+            # Step 1: Save checkpoint WITH replay buffer
+            trainer.save_checkpoint(ckpt_rb_dir, save_replay_buffer=True)
+            self.assertTrue((ckpt_rb_dir / "replay_buffer.pkl").exists())
+
+            # Verify load_replay_buffer=True succeeds
+            _, meta1 = load_sac_checkpoint(ckpt_rb_dir, load_replay_buffer=True, device="cpu")
+            self.assertTrue(meta1["replay_buffer_saved"])
+
+            # Step 2: Save again to the SAME directory with save_replay_buffer=False
+            trainer.save_checkpoint(ckpt_rb_dir, save_replay_buffer=False)
+            # Must be completely purged from disk
+            self.assertFalse((ckpt_rb_dir / "replay_buffer.pkl").exists())
+            self.assertNotIn("replay_buffer.pkl", (ckpt_rb_dir / "CHECKSUMS.sha256").read_text(encoding="utf-8"))
+
+            # Step 3: load_replay_buffer=True must fail loudly
+            with self.assertRaises(CheckpointIntegrityError) as ctx:
+                load_sac_checkpoint(ckpt_rb_dir, load_replay_buffer=True, device="cpu")
+            self.assertIn("replay_buffer_saved=False", str(ctx.exception))
+
+            # Step 4: Dummy file placement without metadata declaration must still fail
+            (ckpt_rb_dir / "replay_buffer.pkl").write_bytes(b"dummy_stale_data")
+            with self.assertRaises(CheckpointIntegrityError):
+                load_sac_checkpoint(ckpt_rb_dir, load_replay_buffer=True, device="cpu")
+        finally:
+            trainer.close()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -137,7 +137,18 @@ def _factory_stage5_sac():
 
 
 def make_sac_agent_factory(checkpoint_path: Union[Path, str]):
-    """Creates a configured runtime factory for Stage5SacAgent with verified checkpoint provenance."""
+    """
+    Creates a configured runtime factory for Stage5SacAgent with verified checkpoint provenance.
+
+    Scientific Provenance & Checkpoint Binding Notice:
+    - Binds the cryptographically verified model_sha256 as expected_sha256 into the factory,
+      guaranteeing that actual inference cannot execute an altered or substituted model.zip.
+    - Captures verified checkpoint metadata to embed into run_manifest.json algorithm_hyperparameters.
+    - For candidate Stage 5, resolved_plan_sha256 does not bind SAC checkpoint identity;
+      run_manifest.algorithm_hyperparameters.sac_checkpoint serves as the authoritative provenance source.
+    - Prior to official benchmark eligibility, a dedicated SAC checkpoint binding contract must
+      be formally designed and reviewed.
+    """
     from src.agents.stage5_sac_agent import Stage5SacAgent
     from src.training.stage5.checkpoint import verify_checkpoint_integrity
     from src.training.stage5.observation_encoder import Stage5ObservationEncoder
@@ -145,15 +156,16 @@ def make_sac_agent_factory(checkpoint_path: Union[Path, str]):
     ckpt_path = Path(checkpoint_path).resolve()
     encoder = Stage5ObservationEncoder(core_only=False)
     meta = verify_checkpoint_integrity(ckpt_path, expected_encoder_fingerprint=encoder.get_schema_fingerprint())
+    bound_model_sha = str(meta["model_sha256"])
 
     def _factory() -> Stage5SacAgent:
-        return Stage5SacAgent(checkpoint_path=ckpt_path)
+        return Stage5SacAgent(checkpoint_path=ckpt_path, expected_sha256=bound_model_sha)
 
     _factory.experiment_parameters = lambda: {
         "model_name": meta.get("model_name", "stage5_sac"),
         "algorithm": meta.get("algorithm", "SAC"),
         "checkpoint_path": str(ckpt_path),
-        "model_sha256": meta.get("model_sha256"),
+        "model_sha256": bound_model_sha,
         "encoder_fingerprint": meta.get("encoder_fingerprint"),
         "encoder_id": meta.get("encoder_id"),
         "total_timesteps": meta.get("total_timesteps"),

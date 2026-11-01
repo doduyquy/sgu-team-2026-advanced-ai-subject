@@ -111,6 +111,10 @@ def save_sac_checkpoint(
             if rb_path.exists():
                 rb_path.unlink()
             raise CheckpointIntegrityError(f"Failed to persist replay buffer: {e}") from e
+    else:
+        # If save_replay_buffer is False, ensure no stale replay buffer exists from a prior checkpoint
+        if rb_path.exists():
+            rb_path.unlink()
 
     # 4. Construct comprehensive metadata dictionary
     now_utc = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -323,10 +327,24 @@ def load_sac_checkpoint(
     model_path = checkpoint_dir / "model.zip"
     model = SAC.load(str(model_path), env=env, device=device)
 
-    # Optional replay buffer loading for resume workflows
+    # Replay buffer loading for resume workflows
     if load_replay_buffer:
+        if not metadata.get("replay_buffer_saved"):
+            raise CheckpointIntegrityError(
+                f"Cannot load replay buffer: metadata in {checkpoint_dir} specifies replay_buffer_saved=False. "
+                "This checkpoint bundle was saved without an experience replay buffer."
+            )
         rb_path = checkpoint_dir / "replay_buffer.pkl"
-        if rb_path.exists():
-            model.load_replay_buffer(str(rb_path))
+        if not rb_path.exists():
+            raise CheckpointIntegrityError(
+                f"Cannot load replay buffer: file does not exist on disk: {rb_path}"
+            )
+        actual_rb_sha = compute_file_sha256(rb_path)
+        expected_rb_sha = metadata.get("replay_buffer_sha256")
+        if actual_rb_sha != expected_rb_sha:
+            raise CheckpointIntegrityError(
+                f"Replay buffer digest mismatch! Actual={actual_rb_sha} != Recorded={expected_rb_sha}"
+            )
+        model.load_replay_buffer(str(rb_path))
 
     return model, metadata
