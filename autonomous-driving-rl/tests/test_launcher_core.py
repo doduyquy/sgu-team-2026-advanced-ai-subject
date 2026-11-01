@@ -137,7 +137,7 @@ class TestAgentRegistry(unittest.TestCase):
         for fid in expected_fixtures:
             self.assertIn(fid, agent_ids)
         self.assertIn("stage0_random_naive", agent_ids)
-        self.assertEqual(len(agent_ids), 7)
+        self.assertEqual({a.agent_id for a in agents if a.purpose == "AUDIT_FIXTURE"}, set(expected_fixtures))
         self.assertIn("stage2_astar", agent_ids)
         self.assertIn("stage6_astar_learned", agent_ids)
 
@@ -1601,7 +1601,7 @@ class TestLauncherCoreBlockerRegressions(unittest.TestCase):
         self.assertEqual(src.launcher.compute_canonical_registry_sha256(hist_reg), src.launcher.HISTORICAL_FIXTURE_REGISTRY_SHA256)
 
         canon_reg = src.launcher.build_canonical_agent_registry()
-        self.assertEqual(len(canon_reg.list_all()), 7)
+        self.assertEqual(len([a for a in canon_reg.list_all() if a.purpose == "AUDIT_FIXTURE"]), 4)
         self.assertTrue(canon_reg.has_agent("stage0_random_naive"))
 
 

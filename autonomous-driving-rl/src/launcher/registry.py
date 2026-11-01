@@ -13,6 +13,8 @@ from typing import Any, Callable, Dict, List, Optional
 from src.launcher.models import AgentRegistrationV1
 from src.agents import Stage0RandomNaiveAgent
 from src.agents.astar_agent import AStarAgent, LearnedAStarAgent
+from src.agents.graph_search_agents import BFSAgent, DijkstraAgent
+from src.agents.hybrid_astar_agent import HybridAStarAgent
 from src.platform import (
     AgentPolicy,
     DeterministicConstantFixtureAgent,
@@ -114,6 +116,18 @@ def _factory_stage2_astar() -> AStarAgent:
 
 def _factory_stage6_astar_learned() -> LearnedAStarAgent:
     return LearnedAStarAgent()
+
+
+def _factory_stage2_bfs() -> BFSAgent:
+    return BFSAgent()
+
+
+def _factory_stage2_dijkstra() -> DijkstraAgent:
+    return DijkstraAgent()
+
+
+def _factory_stage2_hybrid_astar() -> HybridAStarAgent:
+    return HybridAStarAgent()
 
 
 HISTORICAL_FIXTURE_REGISTRY_SHA256 = "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f"
@@ -220,7 +234,7 @@ def build_historical_fixture_registry() -> AgentRegistryV1:
 def build_canonical_agent_registry() -> AgentRegistryV1:
     """
     Initializes and populates canonical AgentRegistryV1 with the four historical Gate-6 fixture agents
-    plus Stage 0 and the Stage 2/6 A* comparison pair.
+    plus Stage 0, Stage 2 search methods and Stage 6 learned A*.
     This function represents the authoritative registry for Platform V1 launcher execution.
     NOTE: All registered methods currently have benchmark_eligible = False.
     """
@@ -257,10 +271,20 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
         factory=_factory_stage0_random_naive
     )
 
-    for policy_class, factory, stage, learned in (
-        (AStarAgent, _factory_stage2_astar, "STAGE_2", False),
-        (LearnedAStarAgent, _factory_stage6_astar_learned, "STAGE_6", True),
+    for policy_class, factory, stage, learned, description in (
+        (BFSAgent, _factory_stage2_bfs, "STAGE_2", False,
+         "BFS on the public local route graph; minimizes edge count, ignoring edge weights."),
+        (DijkstraAgent, _factory_stage2_dijkstra, "STAGE_2", False,
+         "Dijkstra on the public local route graph; minimizes accumulated edge cost without a heuristic."),
+        (AStarAgent, _factory_stage2_astar, "STAGE_2", False,
+         "A* on the public local route lattice with Euclidean heuristic."),
+        (HybridAStarAgent, _factory_stage2_hybrid_astar, "STAGE_2", False,
+         "Forward Hybrid A* over continuous bicycle poses with heading bins and vehicle-footprint checks."),
+        (LearnedAStarAgent, _factory_stage6_astar_learned, "STAGE_6", True,
+         "A* on the public local route lattice with a trained cost-to-go heuristic."),
     ):
+        # Optional pure metadata hook; the executor remains independent of planner types.
+        factory.experiment_parameters = policy_class.experiment_parameters
         registry.register(AgentRegistrationV1(
             agent_id=policy_class.agent_id, agent_version="0.1.0", stage_label=stage,
             method_family=policy_class.method_family, purpose="CANDIDATE",
@@ -268,8 +292,7 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             input_profile_id="STATE_DECISION_V1", action_adapter_id="discrete9_lowbranch_v1",
             inference_stochasticity="deterministic", stateful_within_episode=False,
             benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True, requires_checkpoint=learned,
-            description=("A* on the public local route lattice with a trained cost-to-go heuristic."
-                         if learned else "A* on the public local route lattice with Euclidean heuristic.")
+            description=description,
         ), factory)
     return registry
 
