@@ -23,6 +23,10 @@ Trong tab **1. Experiment Setup**, màn hình mặc định là **Bộ đánh gi
 
 Form cũ nằm trong **Nâng cao · chạy thủ công**, phục vụ phát triển và debug.
 
+Nút **Chọn nhóm tìm kiếm trên TRAIN** chọn sẵn BFS, Dijkstra, A*, Hybrid A* và
+case demo cố định. Cả bốn không cần train. Xem [khác biệt giữa các planner](SEARCH_PLANNERS.md)
+trước khi diễn giải chi phí đường đi hoặc kết quả lái xe.
+
 ## Các bộ chạy
 
 Định nghĩa tập trung tại `configs/experiments/workbench_profiles_v1.json`:

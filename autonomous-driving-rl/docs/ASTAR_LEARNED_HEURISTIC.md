@@ -4,6 +4,9 @@ Mục tiêu của cặp này là đo ảnh hưởng của heuristic học đư�
 đầu vào, đồ thị, chi phí cạnh, ngân sách tìm kiếm, bộ điều khiển và action adapter.
 Stage 2 không cập nhật trọng số. Stage 6 có một bước huấn luyện riêng trước khi đánh giá.
 
+Stage 2 còn có BFS, Dijkstra và forward Hybrid A*. Xem [nhóm tìm kiếm](SEARCH_PLANNERS.md)
+để chạy cả bốn planner; Hybrid A* dùng mô hình chuyển động riêng, không dùng checkpoint này.
+
 ## Chạy trong Workbench
 
 Từ thư mục `autonomous-driving-rl/`:

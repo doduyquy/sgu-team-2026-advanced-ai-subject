@@ -13,6 +13,15 @@ local planning graph and controller. Stage 6 has a real supervised heuristic tra
 fixed presets, checkpoint provenance and paired TRAIN evaluation in the Workbench.
 Both remain benchmark-ineligible candidates. See [train and compare A*](docs/ASTAR_LEARNED_HEURISTIC.md).
 
+**Stage 2 search methods:** BFS, Dijkstra, A* and forward Hybrid A* are implemented
+with a shared public input/action interface and path follower. The Workbench can
+select and run all four on the same fixed TRAIN case. See
+[search planners and comparison commands](docs/SEARCH_PLANNERS.md).
+
+The [624-episode evaluation report](results/search_planners_20261101/README.md)
+records the frozen run results and their evidence hashes, including the current
+zero clean-success rate on TEST.
+
 **Known MapSuite V1 metadata erratum:** `declared_base_lane_num = 2`, but `effective_base_lane_num = 3` for the frozen geometry. See the [dedicated erratum](docs/environment/MAPSUITE_V1_LANE_METADATA_ERRATUM.md); do not apply a two-lane override based on the historical description.
 
 The repository currently contains several fixture agents used to test the platform. They are intentionally **not benchmark agents** and are blocked from canonical VALIDATION/TEST runs. The old `CourseEnvV1` + `src/evaluation/evaluate_random.py` path is retained only as a legacy prototype/compatibility path; it is not the current scientific benchmark.

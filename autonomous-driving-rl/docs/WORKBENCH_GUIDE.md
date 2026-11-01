@@ -9,6 +9,10 @@ Setup; the manual controls below remain under **Nâng cao · chạy thủ công*
 Stage 2 A* and Stage 6 learned-heuristic A* now have a separate TRAIN workflow under
 Experiment Setup. See [training, checkpoints and paired comparison](ASTAR_LEARNED_HEURISTIC.md).
 
+To run all Stage 2 methods together, use **Chọn nhóm tìm kiếm trên TRAIN**. This
+selects BFS, Dijkstra, A* and Hybrid A* with a fixed TRAIN case; see
+[search planner comparison](SEARCH_PLANNERS.md).
+
 Launch it from `autonomous-driving-rl/`:
 
 ```powershell
