@@ -125,7 +125,28 @@ class TrainCaseSampler:
             if r["split"].upper() == "TRAIN"
         }
 
-        # 5. Initialize sampling state
+        # 5. Fixed strategy validation: must unambiguously resolve to exactly ONE geometry
+        if self.strategy == SamplerStrategy.FIXED:
+            matches = list(self._records)
+            if self.fixed_geometry_seed is not None:
+                matches = [r for r in matches if int(r["geometry_generation_seed"]) == self.fixed_geometry_seed]
+
+            if len(matches) == 0:
+                raise ValueError(
+                    f"Fixed strategy failed: No TRAIN geometry matches filters "
+                    f"(tier={self.tier_filter}, sequence={self.sequence_filter}, seed={self.fixed_geometry_seed})"
+                )
+            if len(matches) > 1:
+                matching_ids = [m["geometry_id"] for m in matches]
+                raise ValueError(
+                    f"Ambiguous fixed geometry request: seed {self.fixed_geometry_seed} matches {len(matches)} TRAIN geometries ({matching_ids}). "
+                    f"Please specify tier_filter and sequence_filter to unambiguously identify exactly one geometry."
+                )
+            self._fixed_record = matches[0]
+        else:
+            self._fixed_record = None
+
+        # 6. Initialize sampling state
         self._rng = random.Random(self.training_root_seed)
         self._np_rng = np.random.RandomState(self.training_root_seed)
         self._cycle_index = 0
@@ -187,41 +208,82 @@ class TrainCaseSampler:
                 f"expected={expected_horizon}, got={case.horizon_steps}"
             )
 
-    def get_case_for_geometry_seed(self, geom_seed: int, environment_seed: Optional[int] = None) -> ResolvedCaseV1:
+    def get_case(
+        self,
+        geometry_seed: int,
+        tier: Optional[str] = None,
+        sequence: Optional[str] = None,
+        environment_seed: Optional[int] = None,
+    ) -> ResolvedCaseV1:
         """
-        Explicitly constructs a ResolvedCaseV1 for a specific TRAIN geometry generation seed.
-        Used for targeted test fixtures and debugging without mutating the sampler schedule.
+        Unambiguously retrieves an authentic TRAIN case by (tier, sequence, geometry_seed).
+        Raises ValueError if the specification matches multiple geometries or zero geometries.
         """
-        target_seed = int(geom_seed)
-        matches = [r for r in self._records if int(r["geometry_generation_seed"]) == target_seed]
-        if not matches:
-            matches = [r for r in self._train_manifest_lookup.values() if int(r["geometry_generation_seed"]) == target_seed]
-            if not matches:
-                raise ValueError(f"Geometry seed {target_seed} not found in MapSuite V1 TRAIN manifest.")
-        record = matches[0]
+        target_seed = int(geometry_seed)
+        matches = [
+            r for r in self._train_manifest_lookup.values()
+            if int(r["geometry_generation_seed"]) == target_seed
+        ]
 
+        if tier is not None:
+            matches = [r for r in matches if r["tier"].lower() == tier.lower()]
+        elif self.tier_filter is not None:
+            matches = [r for r in matches if r["tier"].lower() == self.tier_filter]
+
+        if sequence is not None:
+            matches = [r for r in matches if r["sequence"] == sequence]
+        elif self.sequence_filter is not None:
+            matches = [r for r in matches if r["sequence"] == self.sequence_filter]
+
+        if len(matches) == 0:
+            raise ValueError(
+                f"No TRAIN geometry found matching (tier={tier or self.tier_filter}, sequence={sequence or self.sequence_filter}, seed={target_seed})."
+            )
+        if len(matches) > 1:
+            matching_ids = [m["geometry_id"] for m in matches]
+            raise ValueError(
+                f"Ambiguous geometry request: seed {target_seed} matches {len(matches)} TRAIN geometries ({matching_ids}). "
+                f"Please supply 'tier' and 'sequence' to specify an exact geometry."
+            )
+
+        record = matches[0]
         env_seed = int(environment_seed) if environment_seed is not None else 0
-        tier = record["tier"]
-        sequence = record["sequence"]
+        tier_str = record["tier"]
+        seq_str = record["sequence"]
         geom_hash = record["geometry_sha256"]
         traffic_density = float(record["traffic_density"])
         route_len = float(record["route_length_m"])
         horizon_steps = compute_route_aware_horizon(route_len)
 
-        case_id = f"train/{tier}/{sequence}/geom-{target_seed}/env-{env_seed}"
+        case_id = f"train/{tier_str}/{seq_str}/geom-{target_seed}/env-{env_seed}"
 
         return ResolvedCaseV1(
             case_id=case_id,
             case_index=1,
             protocol_order_index=1,
             split="TRAIN",
-            tier=tier,
-            sequence=sequence,
+            tier=tier_str,
+            sequence=seq_str,
             geometry_generation_seed=target_seed,
             geometry_sha256=geom_hash,
             environment_seed=env_seed,
             traffic_density=traffic_density,
             horizon_steps=horizon_steps,
+        )
+
+    def get_case_for_geometry_seed(
+        self,
+        geom_seed: int,
+        environment_seed: Optional[int] = None,
+        tier: Optional[str] = None,
+        sequence: Optional[str] = None,
+    ) -> ResolvedCaseV1:
+        """Forwarding alias to get_case() ensuring backwards compatibility with ambiguity validation."""
+        return self.get_case(
+            geometry_seed=geom_seed,
+            tier=tier,
+            sequence=sequence,
+            environment_seed=environment_seed,
         )
 
     def reset_seed(self, seed: int) -> None:
@@ -295,13 +357,8 @@ class TrainCaseSampler:
         record: Dict[str, str]
 
         if self.strategy == SamplerStrategy.FIXED:
-            if self.fixed_geometry_seed is not None:
-                matches = [r for r in self._records if int(r["geometry_generation_seed"]) == self.fixed_geometry_seed]
-                if not matches:
-                    raise ValueError(f"Fixed geometry seed {self.fixed_geometry_seed} not found in eligible TRAIN pool")
-                record = matches[0]
-            else:
-                record = self._records[0]
+            assert self._fixed_record is not None
+            record = self._fixed_record
 
         elif self.strategy == SamplerStrategy.ROUND_ROBIN:
             record = self._records[self._cycle_index % len(self._records)]

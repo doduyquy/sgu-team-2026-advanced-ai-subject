@@ -54,6 +54,9 @@ def run_training_smoke(
     steps_per_episode: int = 60,
     episodes: int = 2,
     tier: str = "Easy",
+    strategy: str = "ROUND_ROBIN",
+    sequence: Optional[str] = None,
+    fixed_seed: Optional[int] = None,
     run_checker: bool = True,
 ) -> bool:
     """Executes the Stage 5 RL training environment smoke test."""
@@ -67,6 +70,7 @@ def run_training_smoke(
     print(f"  System RAM:      {hw['total_ram_gb']} GB")
     print(f"  Target Split:    TRAIN only (strictly holdout-isolated)")
     print(f"  Target Tier:     {tier}")
+    print(f"  Sampler Strategy:{strategy}")
     print(f"  Episodes:        {episodes}")
     print(f"  Steps / Episode: {steps_per_episode}")
 
@@ -75,10 +79,16 @@ def run_training_smoke(
 
     env = None
     try:
+        strat_enum = SamplerStrategy(strategy)
+        fixed_geom_seed = fixed_seed if strat_enum == SamplerStrategy.FIXED else None
+        seq_filter = sequence if (sequence or strat_enum == SamplerStrategy.FIXED) else None
+
         sampler = TrainCaseSampler(
             training_root_seed=101,
-            strategy=SamplerStrategy.ROUND_ROBIN,
+            strategy=strat_enum,
             tier_filter=tier,
+            sequence_filter=seq_filter,
+            fixed_geometry_seed=fixed_geom_seed,
             project_root=PROJECT_ROOT,
         )
         encoder = Stage5ObservationEncoder(core_only=False)
@@ -188,6 +198,9 @@ def main():
     parser.add_argument("--steps", type=int, default=60, help="Steps per episode")
     parser.add_argument("--episodes", type=int, default=2, help="Number of episodes")
     parser.add_argument("--tier", type=str, default="Easy", help="Difficulty tier filter")
+    parser.add_argument("--strategy", type=str, default="ROUND_ROBIN", choices=["ROUND_ROBIN", "UNIFORM_RANDOM", "TIER_BALANCED", "FIXED"], help="Sampling strategy")
+    parser.add_argument("--sequence", type=str, default=None, help="Sequence filter (e.g. SCS)")
+    parser.add_argument("--fixed-seed", type=int, default=0, help="Fixed geometry seed if strategy=FIXED")
     parser.add_argument("--no-checker", action="store_true", help="Skip gymnasium check_env")
     args = parser.parse_args()
 
@@ -195,6 +208,9 @@ def main():
         steps_per_episode=args.steps,
         episodes=args.episodes,
         tier=args.tier,
+        strategy=args.strategy,
+        sequence=args.sequence,
+        fixed_seed=args.fixed_seed,
         run_checker=not args.no_checker,
     )
     sys.exit(0 if success else 1)

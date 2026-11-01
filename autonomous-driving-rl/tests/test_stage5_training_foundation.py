@@ -324,9 +324,11 @@ class TestStage5TrainingFoundation(unittest.TestCase):
         # Different root seed produces different sequence
         self.assertNotEqual(cases_1, cases_3)
 
-        # Separate get_case_for_geometry_seed API
-        case_g0 = s1.get_case_for_geometry_seed(0, environment_seed=42)
+        # Separate get_case_for_geometry_seed API with unambiguous specification
+        case_g0 = s1.get_case_for_geometry_seed(0, tier="Easy", sequence="SCS", environment_seed=42)
         self.assertEqual(case_g0.geometry_generation_seed, 0)
+        self.assertEqual(case_g0.tier, "Easy")
+        self.assertEqual(case_g0.sequence, "SCS")
         self.assertEqual(case_g0.environment_seed, 42)
 
         # Seed separation assertion: env_seed != geom_seed != training_root_seed
@@ -360,6 +362,7 @@ class TestStage5TrainingFoundation(unittest.TestCase):
             sampler_strategy=SamplerStrategy.FIXED,
             fixed_geometry_seed=0,
             tier_filter="Easy",
+            sequence_filter="SCS",
         )
         try:
             # Action and observation space checks
@@ -379,6 +382,7 @@ class TestStage5TrainingFoundation(unittest.TestCase):
             sampler_strategy=SamplerStrategy.FIXED,
             fixed_geometry_seed=0,
             tier_filter="Easy",
+            sequence_filter="SCS",
         )
         try:
             obs, info = env.reset()
@@ -406,6 +410,7 @@ class TestStage5TrainingFoundation(unittest.TestCase):
             sampler_strategy=SamplerStrategy.FIXED,
             fixed_geometry_seed=0,
             tier_filter="Easy",
+            sequence_filter="SCS",
         )
         try:
             obs, info = env.reset()
@@ -490,7 +495,12 @@ class TestStage5TrainingFoundation(unittest.TestCase):
             horizon_steps=val_case.horizon_steps,
         )
 
-        env = Stage5TrainingEnv(sampler_strategy=SamplerStrategy.FIXED, fixed_geometry_seed=0)
+        env = Stage5TrainingEnv(
+            sampler_strategy=SamplerStrategy.FIXED,
+            tier_filter="Easy",
+            sequence_filter="SCS",
+            fixed_geometry_seed=0,
+        )
         try:
             # Must reject forged validation case before creating simulator
             with self.assertRaises(ValueError) as ctx1:
@@ -553,7 +563,12 @@ class TestStage5TrainingFoundation(unittest.TestCase):
 
     def test_14_exception_safe_lifecycle_failure_injection(self):
         """14. Exceptions in _build_agent_input or encoder.encode during reset or step close simulator safely."""
-        env = Stage5TrainingEnv(sampler_strategy=SamplerStrategy.FIXED, fixed_geometry_seed=0)
+        env = Stage5TrainingEnv(
+            sampler_strategy=SamplerStrategy.FIXED,
+            tier_filter="Easy",
+            sequence_filter="SCS",
+            fixed_geometry_seed=0,
+        )
         try:
             # 1. Failure in _build_agent_input during reset()
             with patch.object(env, "_build_agent_input", side_effect=RuntimeError("Simulated reset input error")):
@@ -634,6 +649,60 @@ class TestStage5TrainingFoundation(unittest.TestCase):
         _, _, b_dual = compute_step_route_progress_and_reward(spec, 1.0, 0.9, horizon, dual_outcome)
         # Terminal reward must be penalty (-1.0), NOT success (+1.0)
         self.assertEqual(b_dual.terminal_reward, -1.0)
+
+        # E. Unknown Termination -> -1.0 penalty
+        unk_outcome = classify_episode_outcome(raw_flags={}, terminated=True, truncated=False)
+        self.assertEqual(unk_outcome.primary_reason, TerminalReason.UNKNOWN_TERMINATION)
+        self.assertFalse(unk_outcome.clean_success)
+        _, _, b_unk = compute_step_route_progress_and_reward(spec, 0.5, 0.5, horizon, unk_outcome)
+        self.assertEqual(b_unk.terminal_reward, -1.0)
+        expected_unk_total = 1.0 * (0.5 - 0.5) - (0.25 / 1000) - 1.0
+        self.assertAlmostEqual(b_unk.total_reward, expected_unk_total)
+
+    def test_16_geometry_seed_ambiguity_and_unambiguous_resolution(self):
+        """16. Seed 0 appears in multiple TRAIN geometries; sampler requires unambiguous (tier, sequence, seed)."""
+        sampler = TrainCaseSampler()
+
+        # A. Prove seed 0 appears in multiple TRAIN geometries (10 across universe, 3 in Easy)
+        seed0_records = [r for r in sampler._train_manifest_lookup.values() if int(r["geometry_generation_seed"]) == 0]
+        self.assertEqual(len(seed0_records), 10)
+        easy_seed0 = [r for r in seed0_records if r["tier"].lower() == "easy"]
+        self.assertEqual(len(easy_seed0), 3)
+
+        # B. Ambiguous request without tier/sequence must be rejected loudly
+        with self.assertRaises(ValueError) as ctx1:
+            sampler.get_case(geometry_seed=0)
+        self.assertIn("Ambiguous geometry request: seed 0 matches 10 TRAIN geometries", str(ctx1.exception))
+
+        # C. Ambiguous request with only tier must be rejected loudly
+        with self.assertRaises(ValueError) as ctx2:
+            sampler.get_case(geometry_seed=0, tier="Easy")
+        self.assertIn("Ambiguous geometry request: seed 0 matches 3 TRAIN geometries", str(ctx2.exception))
+
+        # D. Fully qualified request (tier, sequence, seed) succeeds unambiguously
+        case_scs = sampler.get_case(geometry_seed=0, tier="Easy", sequence="SCS", environment_seed=123)
+        self.assertEqual(case_scs.geometry_generation_seed, 0)
+        self.assertEqual(case_scs.tier, "Easy")
+        self.assertEqual(case_scs.sequence, "SCS")
+        self.assertEqual(case_scs.environment_seed, 123)
+        self.assertEqual(case_scs.case_id, "train/Easy/SCS/geom-0/env-123")
+
+        # E. Fixed sampler strategy without sequence raises ValueError on ambiguous seed 0
+        with self.assertRaises(ValueError) as ctx3:
+            TrainCaseSampler(strategy=SamplerStrategy.FIXED, fixed_geometry_seed=0, tier_filter="Easy")
+        self.assertIn("Ambiguous fixed geometry request", str(ctx3.exception))
+
+        # F. Fixed sampler strategy with full triple succeeds unambiguously
+        fixed_sampler = TrainCaseSampler(
+            strategy=SamplerStrategy.FIXED,
+            tier_filter="Easy",
+            sequence_filter="SCS",
+            fixed_geometry_seed=0,
+        )
+        c_fixed = fixed_sampler.sample_case()
+        self.assertEqual(c_fixed.geometry_generation_seed, 0)
+        self.assertEqual(c_fixed.sequence, "SCS")
+        self.assertEqual(c_fixed.tier, "Easy")
 
 
 if __name__ == "__main__":

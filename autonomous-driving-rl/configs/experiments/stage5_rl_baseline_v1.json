@@ -28,6 +28,16 @@
     "unknown_termination_penalty": 1.0,
     "timeout_penalty": 0.0
   },
+  "dependency_compatibility_notes": {
+    "python_version": "3.10.21",
+    "gymnasium_version": "1.3.0",
+    "metadrive_version": "0.4.3 (commit 85e5dadc)",
+    "proposed_framework": "Stable-Baselines3",
+    "proposed_sb3_version": "2.9.0",
+    "proposed_torch_version": ">=2.8.0",
+    "status": "NOT_INSTALLED / PROPOSED_FOR_S5.2",
+    "compatibility_rationale": "Gymnasium 1.3.0 officially requires Stable-Baselines3 2.9.x, which in turn requires PyTorch >=2.8.0. Pinned MetaDrive and Panda3D must remain untouched."
+  },
   "sac_hyperparameters": {
     "learning_rate": 0.0003,
     "buffer_size": 100000,
