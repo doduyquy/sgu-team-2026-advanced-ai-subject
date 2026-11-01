@@ -8,7 +8,8 @@ This module implements AgentRegistryV1:
 - Provides algorithm-neutral registration interface for future Stage 0 through Stage 7 agents.
 """
 
-from typing import Any, Callable, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from src.launcher.models import AgentRegistrationV1
 from src.agents import Stage0RandomNaiveAgent
@@ -133,6 +134,32 @@ def _factory_stage2_hybrid_astar() -> HybridAStarAgent:
 def _factory_stage5_sac():
     from src.agents.stage5_sac_agent import Stage5SacAgent
     return Stage5SacAgent()
+
+
+def make_sac_agent_factory(checkpoint_path: Union[Path, str]):
+    """Creates a configured runtime factory for Stage5SacAgent with verified checkpoint provenance."""
+    from src.agents.stage5_sac_agent import Stage5SacAgent
+    from src.training.stage5.checkpoint import verify_checkpoint_integrity
+    from src.training.stage5.observation_encoder import Stage5ObservationEncoder
+
+    ckpt_path = Path(checkpoint_path).resolve()
+    encoder = Stage5ObservationEncoder(core_only=False)
+    meta = verify_checkpoint_integrity(ckpt_path, expected_encoder_fingerprint=encoder.get_schema_fingerprint())
+
+    def _factory() -> Stage5SacAgent:
+        return Stage5SacAgent(checkpoint_path=ckpt_path)
+
+    _factory.experiment_parameters = lambda: {
+        "model_name": meta.get("model_name", "stage5_sac"),
+        "algorithm": meta.get("algorithm", "SAC"),
+        "checkpoint_path": str(ckpt_path),
+        "model_sha256": meta.get("model_sha256"),
+        "encoder_fingerprint": meta.get("encoder_fingerprint"),
+        "encoder_id": meta.get("encoder_id"),
+        "total_timesteps": meta.get("total_timesteps"),
+        "training_root_seed": meta.get("training_root_seed"),
+    }
+    return _factory
 
 
 HISTORICAL_FIXTURE_REGISTRY_SHA256 = "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f"

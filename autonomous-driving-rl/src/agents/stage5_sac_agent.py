@@ -7,12 +7,6 @@ AgentPolicy consuming public AgentInputV1 and emitting continuous Box(2) actions
 
 from __future__ import annotations
 
-# Windows DLL initialization order: import torch before Panda3D
-try:
-    import torch
-except ImportError:
-    pass
-
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -57,14 +51,8 @@ class Stage5SacAgent(AgentPolicy):
         self.action_adapter = get_action_adapter("continuous_box2_v1")
         self._model = None
         self._metadata: Optional[Dict[str, Any]] = None
+        self._checkpoint_path: Optional[Path] = None
         self._ready = False
-
-        if checkpoint_path is None:
-            # Check default candidate checkpoint path if present
-            from src.launcher.cases import get_default_project_root
-            default_ckpt = get_default_project_root() / "runs" / "checkpoints" / "stage5_sac_smoke"
-            if default_ckpt.exists() and (default_ckpt / "model.zip").exists():
-                checkpoint_path = default_ckpt
 
         if checkpoint_path is not None:
             self.load_checkpoint(checkpoint_path, expected_sha256=expected_sha256)
@@ -72,6 +60,21 @@ class Stage5SacAgent(AgentPolicy):
     @property
     def descriptor(self) -> AgentDescriptor:
         return self._descriptor
+
+    @property
+    def checkpoint_provenance(self) -> Optional[Dict[str, Any]]:
+        """Returns verified scientific provenance of the loaded checkpoint bundle."""
+        if self._metadata is None:
+            return None
+        return {
+            "checkpoint_path": str(self._checkpoint_path) if self._checkpoint_path else None,
+            "model_sha256": self._metadata.get("model_sha256"),
+            "encoder_fingerprint": self._metadata.get("encoder_fingerprint"),
+            "encoder_id": self._metadata.get("encoder_id"),
+            "total_timesteps": self._metadata.get("total_timesteps"),
+            "training_root_seed": self._metadata.get("training_root_seed"),
+            "algorithm": self._metadata.get("algorithm", "SAC"),
+        }
 
     def load_checkpoint(self, path: Union[Path, str], expected_sha256: Optional[str] = None) -> None:
         """
@@ -90,13 +93,14 @@ class Stage5SacAgent(AgentPolicy):
         )
         self._model = model
         self._metadata = metadata
+        self._checkpoint_path = ckpt_path
 
     def reset(self, public_context: AgentPublicEpisodeContext, agent_seed: Optional[int] = None) -> None:
         """Resets the agent before a new episode begins."""
         if self._model is None:
             raise RuntimeError(
                 f"Agent '{self.agent_id}' requires a loaded checkpoint before inference. "
-                "Call load_checkpoint() before reset()."
+                "Provide an explicit checkpoint bundle directory via load_checkpoint()."
             )
         self._ready = True
 

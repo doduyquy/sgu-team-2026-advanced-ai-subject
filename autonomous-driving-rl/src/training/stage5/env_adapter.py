@@ -20,8 +20,6 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 
-from metadrive.envs.metadrive_env import MetaDriveEnv
-
 from src.launcher.cases import (
     get_default_project_root,
     load_locked_geometry_block_sequence,
@@ -195,6 +193,7 @@ class Stage5TrainingEnv(gym.Env):
                     self._env.close()
                     self._env = None
 
+                from metadrive.envs.metadrive_env import MetaDriveEnv
                 env_config = build_metadrive_case_config(case, blocks, render_mode="OFF")
                 self._env = MetaDriveEnv(env_config)
                 self._current_sim_key = sim_key
@@ -305,6 +304,10 @@ class Stage5TrainingEnv(gym.Env):
             speed_kmh = read_vehicle_speed_kmh(self._env.agent)
             info_dict: Dict[str, Any] = {
                 "step_index": self._step_idx,
+                "case_id": self._current_case.case_id,
+                "tier": self._current_case.tier,
+                "geometry_generation_seed": int(self._current_case.geometry_generation_seed),
+                "environment_seed": int(self._current_case.environment_seed),
                 "speed_km_h": speed_kmh,
                 "route_completion": curr_route,
                 "delta_route": delta_route,

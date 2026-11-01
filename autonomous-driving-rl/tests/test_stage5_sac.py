@@ -4,11 +4,11 @@ Unit and Integration Test Suite for Stage 5 Soft Actor-Critic (SAC) Baseline (Ga
 Verifies:
 1. SAC initialization with MlpPolicy, 409D observation space, Box(2) action space, and config parameters.
 2. Checkpoint bundle persistence: model.zip, metadata.json, CHECKSUMS.sha256, cryptographic verification.
-3. Cryptographic rejection: corrupted model.zip, tampered checksum file, or metadata discrepancy.
+3. Cryptographic rejection: corrupted model.zip, corrupted CHECKSUMS.sha256 manifest, missing checksums, malformed format.
 4. Schema fingerprint rejection: rejection when encoder schema fingerprint does not match loaded checkpoint.
-5. Save/load bit-for-bit prediction parity on identical observation vectors.
-6. Stage5SacAgent lifecycle: descriptor compliance, reset(), deterministic act(), and valid action bounds.
-7. Stage5SacAgent unready behavior: safe braking fallback prior to checkpoint loading.
+5. Save/load bit-for-bit prediction parity on identical observation vectors using clean test fixtures.
+6. Stage5SacAgent lifecycle: explicit checkpoint loading, descriptor compliance, reset(), deterministic act(), and valid action bounds.
+7. Stage5SacAgent unready behavior: rejection of uninitialized inference without explicit checkpoint.
 8. Training harness holdout isolation: 100% TRAIN split containment, zero holdout leakage.
 9. Platform contract hashes: strict immutability of GATE5, GATE6, GATE7, Launcher, and Execution contracts.
 10. Canonical Agent Registry integration: candidate registration, eligibility, and factory instantiation.
@@ -16,15 +16,9 @@ Verifies:
 
 from __future__ import annotations
 
-# Windows DLL initialization order: import torch before Panda3D
-try:
-    import torch
-except ImportError:
-    pass
-
-import hashlib
 import json
 from pathlib import Path
+import re
 import shutil
 import tempfile
 import unittest
@@ -33,7 +27,7 @@ import numpy as np
 
 from src.agents.stage5_sac_agent import Stage5SacAgent
 from src.launcher.cases import get_default_project_root
-from src.launcher.registry import build_canonical_agent_registry
+from src.launcher.registry import build_canonical_agent_registry, make_sac_agent_factory
 from src.launcher.resolver import (
     DEFAULT_LAUNCHER_CONTRACT_HASH,
     DEFAULT_PLATFORM_EXECUTION_HASH,
@@ -72,6 +66,19 @@ class TestStage5Sac(unittest.TestCase):
     def setUpClass(cls):
         cls.project_root = get_default_project_root()
         cls.temp_dir = Path(tempfile.mkdtemp(prefix="sac_test_"))
+        cls.fixture_ckpt_dir = cls.temp_dir / "fixture_sac_checkpoint"
+
+        # Create a self-contained SAC checkpoint fixture for test isolation (zero dependency on local runs/)
+        trainer = SacBaselineTrainer(
+            config_overrides={"sac_hyperparameters": {"buffer_size": 200, "batch_size": 16, "learning_starts": 5}},
+            training_root_seed=101,
+            project_root=cls.project_root,
+            device="cpu",
+        )
+        try:
+            trainer.save_checkpoint(cls.fixture_ckpt_dir, save_replay_buffer=False)
+        finally:
+            trainer.close()
 
     @classmethod
     def tearDownClass(cls):
@@ -130,60 +137,87 @@ class TestStage5Sac(unittest.TestCase):
             self.assertEqual(metadata["observation_dim"], 409)
             self.assertEqual(metadata["action_dim"], 2)
             self.assertIn("model_sha256", metadata)
+            self.assertIn("training_resume_notice", metadata)
         finally:
             trainer.close()
 
     def test_03_checkpoint_rejection_corrupted_model(self):
         """Tampering with model.zip raises CheckpointIntegrityError."""
-        ckpt_dir = self.temp_dir / "ckpt_corrupt_test"
-        trainer = SacBaselineTrainer(
-            config_overrides={"sac_hyperparameters": {"buffer_size": 500, "batch_size": 32, "learning_starts": 5}},
-            training_root_seed=303,
-            project_root=self.project_root,
-            device="cpu",
-        )
-        try:
-            saved_path = trainer.save_checkpoint(ckpt_dir, save_replay_buffer=False)
-            model_file = saved_path / "model.zip"
+        corrupt_dir = self.temp_dir / "ckpt_corrupt_model"
+        shutil.copytree(self.fixture_ckpt_dir, corrupt_dir)
 
-            # Corrupt model.zip by flipping trailing bytes
-            content = bytearray(model_file.read_bytes())
-            content[-1] ^= 0xFF
-            model_file.write_bytes(bytes(content))
+        model_file = corrupt_dir / "model.zip"
+        content = bytearray(model_file.read_bytes())
+        content[-1] ^= 0xFF
+        model_file.write_bytes(bytes(content))
 
-            encoder = Stage5ObservationEncoder(core_only=False)
-            with self.assertRaises(CheckpointIntegrityError):
-                load_sac_checkpoint(
-                    saved_path,
-                    expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
-                    device="cpu",
-                )
-        finally:
-            trainer.close()
+        encoder = Stage5ObservationEncoder(core_only=False)
+        with self.assertRaises(CheckpointIntegrityError):
+            load_sac_checkpoint(
+                corrupt_dir,
+                expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
+                device="cpu",
+            )
 
-    def test_04_checkpoint_rejection_encoder_fingerprint_mismatch(self):
+    def test_04_checkpoint_rejection_corrupted_checksums(self):
+        """Altering a digest in CHECKSUMS.sha256 raises CheckpointIntegrityError."""
+        tamper_dir = self.temp_dir / "ckpt_tamper_checksums"
+        shutil.copytree(self.fixture_ckpt_dir, tamper_dir)
+
+        chk_file = tamper_dir / "CHECKSUMS.sha256"
+        lines = chk_file.read_text(encoding="utf-8").splitlines()
+        # Tamper the first hash in the manifest
+        modified_lines = []
+        for line in lines:
+            if "model.zip" in line:
+                modified_lines.append("0" * 64 + "  model.zip")
+            else:
+                modified_lines.append(line)
+        chk_file.write_text("\n".join(modified_lines) + "\n", encoding="utf-8")
+
+        encoder = Stage5ObservationEncoder(core_only=False)
+        with self.assertRaises(CheckpointIntegrityError) as ctx:
+            verify_checkpoint_integrity(
+                tamper_dir,
+                expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
+            )
+        self.assertIn("Checksum verification failed", str(ctx.exception))
+
+    def test_05_checkpoint_rejection_missing_checksums(self):
+        """Missing CHECKSUMS.sha256 raises CheckpointIntegrityError."""
+        missing_dir = self.temp_dir / "ckpt_missing_checksums"
+        shutil.copytree(self.fixture_ckpt_dir, missing_dir)
+        (missing_dir / "CHECKSUMS.sha256").unlink()
+
+        with self.assertRaises(CheckpointIntegrityError) as ctx:
+            verify_checkpoint_integrity(missing_dir)
+        self.assertIn("Missing checksum manifest", str(ctx.exception))
+
+    def test_06_checkpoint_rejection_malformed_checksums(self):
+        """Malformed line in CHECKSUMS.sha256 raises CheckpointIntegrityError."""
+        malformed_dir = self.temp_dir / "ckpt_malformed_checksums"
+        shutil.copytree(self.fixture_ckpt_dir, malformed_dir)
+        (malformed_dir / "CHECKSUMS.sha256").write_text("invalid_hash_and_line\n", encoding="utf-8")
+
+        with self.assertRaises(CheckpointIntegrityError) as ctx:
+            verify_checkpoint_integrity(malformed_dir)
+        self.assertIn("Malformed line", str(ctx.exception))
+
+    def test_07_checkpoint_rejection_encoder_fingerprint_mismatch(self):
         """Mismatched encoder schema fingerprint raises CheckpointIntegrityError."""
-        smoke_dir = self.project_root / "runs" / "checkpoints" / "stage5_sac_smoke"
-        if not smoke_dir.exists():
-            self.skipTest("Smoke checkpoint directory does not exist")
-
         bogus_fingerprint = "0000000000000000000000000000000000000000000000000000000000000000"
         with self.assertRaises(CheckpointIntegrityError) as ctx:
             load_sac_checkpoint(
-                smoke_dir,
+                self.fixture_ckpt_dir,
                 expected_encoder_fingerprint=bogus_fingerprint,
                 device="cpu",
             )
         self.assertIn("Observation encoder schema mismatch", str(ctx.exception))
 
-    def test_05_save_load_prediction_parity(self):
+    def test_08_save_load_prediction_parity(self):
         """Model loaded from checkpoint reproduces bit-for-bit identical actions on arbitrary input."""
-        smoke_dir = self.project_root / "runs" / "checkpoints" / "stage5_sac_smoke"
-        if not smoke_dir.exists():
-            self.skipTest("Smoke checkpoint directory does not exist")
-
-        loaded_model_1, _ = load_sac_checkpoint(smoke_dir, device="cpu")
-        loaded_model_2, _ = load_sac_checkpoint(smoke_dir, device="cpu")
+        loaded_model_1, _ = load_sac_checkpoint(self.fixture_ckpt_dir, device="cpu")
+        loaded_model_2, _ = load_sac_checkpoint(self.fixture_ckpt_dir, device="cpu")
 
         rng = np.random.RandomState(42)
         test_obs = rng.uniform(-1.0, 1.0, size=(STAGE5_FULL_OBSERVATION_DIM,)).astype(np.float32)
@@ -195,9 +229,9 @@ class TestStage5Sac(unittest.TestCase):
         self.assertTrue(np.all(action_1 >= -1.0))
         self.assertTrue(np.all(action_1 <= 1.0))
 
-    def test_06_stage5_sac_agent_lifecycle(self):
-        """Stage5SacAgent conforms to Platform V1 lifecycle and produces valid continuous decisions."""
-        agent = Stage5SacAgent()
+    def test_09_stage5_sac_agent_lifecycle(self):
+        """Stage5SacAgent conforms to Platform V1 lifecycle with explicit checkpoint loading."""
+        agent = Stage5SacAgent(checkpoint_path=self.fixture_ckpt_dir)
         desc = agent.descriptor
 
         self.assertEqual(desc.agent_id, "stage5_sac")
@@ -205,6 +239,12 @@ class TestStage5Sac(unittest.TestCase):
         self.assertEqual(desc.action_adapter_id, "continuous_box2_v1")
         self.assertEqual(desc.inference_stochasticity, "deterministic")
         self.assertFalse(desc.stateful_within_episode)
+
+        prov = agent.checkpoint_provenance
+        self.assertIsNotNone(prov)
+        self.assertEqual(prov["algorithm"], "SAC")
+        self.assertIn("model_sha256", prov)
+        self.assertIn("encoder_fingerprint", prov)
 
         ctx = AgentPublicEpisodeContext()
         agent.reset(ctx)
@@ -228,14 +268,14 @@ class TestStage5Sac(unittest.TestCase):
         self.assertTrue(-1.0 <= decision.action_payload[1] <= 1.0)
         self.assertTrue(decision.diagnostics.get("deterministic"))
 
-    def test_07_stage5_sac_agent_unready_behavior(self):
-        """Calling act() prior to model loading raises RuntimeError."""
-        agent = Stage5SacAgent.__new__(Stage5SacAgent)
-        agent.agent_id = "stage5_sac"
-        agent.agent_version = "0.1.0"
-        agent._descriptor = None
-        agent._model = None
-        agent._ready = False
+    def test_10_stage5_sac_agent_unready_behavior(self):
+        """Calling reset() or act() without loaded checkpoint raises RuntimeError."""
+        agent = Stage5SacAgent(checkpoint_path=None)
+        ctx = AgentPublicEpisodeContext()
+
+        with self.assertRaises(RuntimeError) as ctx_err:
+            agent.reset(ctx)
+        self.assertIn("requires a loaded checkpoint before inference", str(ctx_err.exception))
 
         agent_input = AgentInputV1(
             profile_id=InputProfileId.STATE_DECISION_V1,
@@ -244,11 +284,11 @@ class TestStage5Sac(unittest.TestCase):
             task_context=TaskContextV1.empty(),
             step_index=0,
         )
-        with self.assertRaises(RuntimeError) as ctx:
+        with self.assertRaises(RuntimeError) as ctx_act:
             agent.act(agent_input)
-        self.assertIn("must be reset with a loaded model before act()", str(ctx.exception))
+        self.assertIn("must be reset with a loaded model before act()", str(ctx_act.exception))
 
-    def test_08_train_sampler_strict_isolation_in_training(self):
+    def test_11_train_sampler_strict_isolation_in_training(self):
         """TrainCaseSampler strictly contains only the 180 TRAIN split geometries."""
         sampler = TrainCaseSampler(project_root=self.project_root)
         self.assertEqual(sampler.total_eligible_geometries, 180)
@@ -259,7 +299,7 @@ class TestStage5Sac(unittest.TestCase):
             self.assertEqual(case.split, "TRAIN")
             sampler.validate_train_case(case)
 
-    def test_09_platform_contract_hashes_immutability(self):
+    def test_12_platform_contract_hashes_immutability(self):
         """Platform, Launcher, and Benchmark contract hashes remain 100% immutable."""
         self.assertEqual(
             GATE5_LOCKED_BENCHMARK_HASH,
@@ -290,8 +330,8 @@ class TestStage5Sac(unittest.TestCase):
             "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
         )
 
-    def test_10_agent_registry_stage5_sac(self):
-        """Canonical agent registry correctly includes candidate stage5_sac."""
+    def test_13_agent_registry_stage5_sac(self):
+        """Canonical agent registry correctly includes candidate stage5_sac and factory maker."""
         reg = build_canonical_agent_registry()
         self.assertTrue(reg.has_agent("stage5_sac"))
 
@@ -307,6 +347,11 @@ class TestStage5Sac(unittest.TestCase):
         self.assertTrue(entry.sandbox_eligible)
         self.assertTrue(entry.audit_eligible)
         self.assertFalse(entry.benchmark_eligible)
+
+        factory = make_sac_agent_factory(self.fixture_ckpt_dir)
+        agent = factory()
+        self.assertIsInstance(agent, Stage5SacAgent)
+        self.assertIsNotNone(agent.checkpoint_provenance)
 
 
 if __name__ == "__main__":

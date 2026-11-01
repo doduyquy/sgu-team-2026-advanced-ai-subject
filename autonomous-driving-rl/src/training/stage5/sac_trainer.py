@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import psutil
+import torch
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback
 
@@ -66,6 +67,9 @@ class SacDiagnosticsCallback(BaseCallback):
                     "total_timesteps": int(self.num_timesteps),
                     "step_index": int(info.get("step_index", 0)),
                     "case_id": str(info.get("case_id", "unknown")),
+                    "tier": str(info.get("tier", "unknown")),
+                    "geometry_generation_seed": info.get("geometry_generation_seed"),
+                    "environment_seed": info.get("environment_seed"),
                     "speed_km_h": float(info.get("speed_km_h", 0.0)),
                     "route_completion": float(info.get("route_completion", 0.0)),
                     "cumulative_reward": float(info.get("cumulative_reward", 0.0)),
@@ -80,6 +84,7 @@ class SacDiagnosticsCallback(BaseCallback):
                     print(
                         f"  [EPISODE {len(self.episode_records):3d}] "
                         f"Timestep={self.num_timesteps:6d} | "
+                        f"Case={record['case_id']} | "
                         f"Steps={record['step_index']:3d} | "
                         f"Return={record['cumulative_reward']:+7.3f} | "
                         f"Route={record['route_completion']:5.1%} | "

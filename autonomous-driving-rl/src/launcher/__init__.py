@@ -5,10 +5,10 @@ Public API exports for experiment orchestration, resolution, safety preflight,
 and generic simulation execution across Stages 0 through 7.
 """
 
-# Ensure torch loads before Panda3D C++ runtime on Windows if present
+# Ensure PyTorch C++ runtime initializes before Panda3D on Windows if torch is installed
 try:
     import torch
-except ImportError:
+except (ImportError, OSError):
     pass
 
 from src.launcher.cases import (

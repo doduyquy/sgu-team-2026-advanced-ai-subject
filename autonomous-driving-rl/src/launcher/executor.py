@@ -258,7 +258,8 @@ class ExperimentExecutor:
         algorithm_parameters = {"launcher": launcher_prov}
         parameter_provider = getattr(self.agent_factory, "experiment_parameters", None)
         if parameter_provider is not None:
-            algorithm_parameters["planner"] = parameter_provider()
+            param_key = "sac_checkpoint" if self.plan.agent_registration.method_family == "MODEL_FREE_RL" else "planner"
+            algorithm_parameters[param_key] = parameter_provider()
         if checkpoint is not None:
             algorithm_parameters["checkpoint"] = checkpoint.semantic_identity()
 

@@ -18,6 +18,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 from typing import Any, Dict, Optional, Tuple
 
@@ -98,13 +99,18 @@ def save_sac_checkpoint(
     rb_path = checkpoint_dir / "replay_buffer.pkl"
     rb_sha256 = None
     if save_replay_buffer:
+        # Never leave or reuse a stale replay buffer from a previous attempt
+        if rb_path.exists():
+            rb_path.unlink()
         try:
             model.save_replay_buffer(str(rb_path))
-            if rb_path.exists():
-                rb_sha256 = compute_file_sha256(rb_path)
+            if not rb_path.exists():
+                raise CheckpointIntegrityError(f"Replay buffer file was not created: {rb_path}")
+            rb_sha256 = compute_file_sha256(rb_path)
         except Exception as e:
-            # Replay buffer save failure should not corrupt model checkpoint
-            pass
+            if rb_path.exists():
+                rb_path.unlink()
+            raise CheckpointIntegrityError(f"Failed to persist replay buffer: {e}") from e
 
     # 4. Construct comprehensive metadata dictionary
     now_utc = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -129,6 +135,11 @@ def save_sac_checkpoint(
         "replay_buffer_sha256": rb_sha256,
         "git_commit": git_sha,
         "created_at_utc": now_utc,
+        "training_resume_notice": (
+            "model.zip and replay_buffer.pkl preserve neural network parameters and transition buffers. "
+            "They do NOT guarantee bit-for-bit deterministic training resume because PRNG seeds, case sampler cursor, "
+            "optimizer momentum/hyperparameter schedules, and MetaDrive simulator internal states are not fully restored."
+        ),
         "training_config": training_config or {},
         "training_summary": training_summary or {},
     }
@@ -161,8 +172,15 @@ def verify_checkpoint_integrity(
     """
     Verifies that a checkpoint directory is structurally complete and cryptographically valid.
 
+    Enforces:
+    1. CHECKSUMS.sha256 existence, syntax format, and coverage of all required artifacts.
+    2. Exact bitwise match for model.zip, metadata.json, and replay_buffer.pkl against CHECKSUMS.sha256.
+    3. Exact match between CHECKSUMS.sha256 and metadata.json internal fields.
+    4. Optional verification against trusted external expected_sha256 anchor.
+    5. Observation schema fingerprint matching to prevent evaluating on mismatched state representations.
+
     Args:
-        checkpoint_dir: Directory containing model.zip and metadata.json.
+        checkpoint_dir: Directory containing model.zip, metadata.json, and CHECKSUMS.sha256.
         expected_sha256: Optional expected SHA-256 of model.zip.
         expected_encoder_fingerprint: Optional expected schema fingerprint.
 
@@ -173,38 +191,94 @@ def verify_checkpoint_integrity(
     if not checkpoint_dir.is_dir():
         raise FileNotFoundError(f"Checkpoint directory not found: {checkpoint_dir}")
 
+    checksums_path = checkpoint_dir / "CHECKSUMS.sha256"
     model_path = checkpoint_dir / "model.zip"
     metadata_path = checkpoint_dir / "metadata.json"
 
-    if not model_path.exists():
-        raise FileNotFoundError(f"Missing required model artifact: {model_path}")
-    if not metadata_path.exists():
-        raise FileNotFoundError(f"Missing required metadata artifact: {metadata_path}")
+    # 1. Verify existence of manifest
+    if not checksums_path.exists():
+        raise CheckpointIntegrityError(f"Missing checksum manifest: {checksums_path}")
 
-    # 1. Load metadata
+    # 2. Parse CHECKSUMS.sha256 manifest
+    manifest_checksums: Dict[str, str] = {}
+    with open(checksums_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    if not lines:
+        raise CheckpointIntegrityError(f"Checksum manifest {checksums_path} is empty")
+
+    manifest_regex = re.compile(r"^([0-9a-f]{64})\s\s(\S+)$")
+    for line_idx, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        m = manifest_regex.match(stripped)
+        if not m:
+            raise CheckpointIntegrityError(
+                f"Malformed line {line_idx} in {checksums_path}: '{stripped}'. "
+                "Expected '<sha256_hex>  <filename>'."
+            )
+        digest, fname = m.group(1), m.group(2)
+        manifest_checksums[fname] = digest
+
+    # 3. Verify required entries in CHECKSUMS.sha256
+    for required_file in ("model.zip", "metadata.json"):
+        if required_file not in manifest_checksums:
+            raise CheckpointIntegrityError(
+                f"Checksum manifest {checksums_path} missing required entry '{required_file}'"
+            )
+
+    # 4. Verify physical files on disk against manifest digests
+    for fname, declared_hash in manifest_checksums.items():
+        fpath = checkpoint_dir / fname
+        if not fpath.exists():
+            raise CheckpointIntegrityError(
+                f"Artifact '{fname}' declared in {checksums_path} is missing from disk: {fpath}"
+            )
+        computed_hash = compute_file_sha256(fpath)
+        if computed_hash != declared_hash:
+            raise CheckpointIntegrityError(
+                f"Checksum verification failed for '{fname}': "
+                f"computed={computed_hash} != declared={declared_hash}"
+            )
+
+    # 5. Load and verify metadata.json
     with open(metadata_path, "r", encoding="utf-8") as f:
         try:
             metadata = json.load(f)
         except json.JSONDecodeError as e:
             raise CheckpointIntegrityError(f"Corrupt checkpoint metadata in {metadata_path}: {e}") from e
 
-    # 2. Verify model SHA-256 against recorded and expected hash
-    actual_model_sha256 = compute_file_sha256(model_path)
-    recorded_sha256 = metadata.get("model_sha256")
-
-    if actual_model_sha256 != recorded_sha256:
+    # 6. Verify internal consistency between metadata and manifest
+    recorded_model_sha = metadata.get("model_sha256")
+    manifest_model_sha = manifest_checksums["model.zip"]
+    if recorded_model_sha != manifest_model_sha:
         raise CheckpointIntegrityError(
-            f"FATAL: Checkpoint digest mismatch! "
-            f"Actual={actual_model_sha256} != Recorded={recorded_sha256}"
+            f"Model digest discrepancy! metadata.json={recorded_model_sha} != CHECKSUMS.sha256={manifest_model_sha}"
         )
 
+    # 7. Verify replay buffer if declared
+    if metadata.get("replay_buffer_saved"):
+        if "replay_buffer.pkl" not in manifest_checksums:
+            raise CheckpointIntegrityError(
+                "metadata.json declares replay_buffer_saved=True, but replay_buffer.pkl is not in CHECKSUMS.sha256"
+            )
+        recorded_rb_sha = metadata.get("replay_buffer_sha256")
+        manifest_rb_sha = manifest_checksums["replay_buffer.pkl"]
+        if recorded_rb_sha != manifest_rb_sha:
+            raise CheckpointIntegrityError(
+                f"Replay buffer digest discrepancy! metadata.json={recorded_rb_sha} != CHECKSUMS.sha256={manifest_rb_sha}"
+            )
+
+    # 8. Verify against trusted external expected_sha256 anchor if supplied
+    actual_model_sha256 = manifest_checksums["model.zip"]
     if expected_sha256 and actual_model_sha256 != expected_sha256:
         raise CheckpointIntegrityError(
-            f"FATAL: Checkpoint digest does not match expected hash! "
+            f"FATAL: Checkpoint digest does not match expected trusted anchor! "
             f"Actual={actual_model_sha256} != Expected={expected_sha256}"
         )
 
-    # 3. Verify encoder schema fingerprint if requested
+    # 9. Verify encoder schema fingerprint if requested
     if expected_encoder_fingerprint:
         actual_fingerprint = metadata.get("encoder_fingerprint")
         if actual_fingerprint != expected_encoder_fingerprint:
