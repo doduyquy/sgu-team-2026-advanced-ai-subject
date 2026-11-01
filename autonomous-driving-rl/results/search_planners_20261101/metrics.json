@@ -1,0 +1,514 @@
+{
+  "format_version": "search_evaluation_summary_v1",
+  "status": "COMPLETE",
+  "total_episodes": 624,
+  "recorded_at_utc": "2026-10-31T20:09:28.993132+00:00",
+  "campaign_progress_sha256": "e9f04148251ca27c1070f34c3c4dd5cd8b67c3b00e38aa070c229f19de1c98f5",
+  "frozen_commit": "63b36c851f7a4bb2c246705573ba5268c61fa8b1",
+  "frozen_tree": "1d5393bc90c3726276854d7f0ee23758d0b3de86",
+  "input_profile_id": "STATE_DECISION_V1",
+  "action_adapter_id": "discrete9_lowbranch_v1",
+  "platform_contracts": {
+    "agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+    "benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+    "logging_contract_sha256": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+    "platform_observability_contract_sha256": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+    "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad"
+  },
+  "metadrive": {
+    "version": "0.4.3",
+    "commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db"
+  },
+  "raw_artifacts_included": false,
+  "runs": [
+    {
+      "split": "VALIDATION",
+      "agent_id": "stage2_astar",
+      "agent_version": "0.1.0",
+      "run_id": "fullsearch_validation_stage2_astar_20261101",
+      "episodes": 96,
+      "integrity": "VERIFIED",
+      "canonical_run": true,
+      "started_at_utc": "2026-10-31T17:37:42.442389+00:00",
+      "finished_at_utc": "2026-10-31T17:40:21.248102+00:00",
+      "metrics": {
+        "clean_success_rate": 0.0,
+        "safety_failure_rate": 1.0,
+        "mean_final_route_completion": 0.04847182067009258,
+        "median_final_route_completion": 0.0436283618439392,
+        "mean_time_to_clean_success_s": null
+      },
+      "planner": {
+        "config_sha256": "7a5865c1b55dcc7249829982fb398213c58948c5018fe8de3a09282185b65778",
+        "controller": {
+          "max_steering_deg": 59.99999999999999,
+          "wheelbase_m": 2.5
+        },
+        "heuristic": "euclidean",
+        "objective": "sum_edge_cost",
+        "schema_version": "search_planner_parameters_v1",
+        "search_method": "astar",
+        "shared_planner": {
+          "clearance_cost": 0.2,
+          "control_lookahead_m": 6.0,
+          "feature_scale_m": 50.0,
+          "lateral_change_cost": 0.5,
+          "lateral_samples": [
+            -0.8,
+            0.0,
+            0.8
+          ],
+          "lookahead_points": 10,
+          "max_expansions": 256,
+          "obstacle_margin_m": 0.5,
+          "steering_deadband": 0.12,
+          "target_normalized_speed": 0.15
+        },
+        "state_space": "local_route_lattice_v1"
+      },
+      "evidence_sha256": {
+        "run_manifest.json": "1302e7a06eb88ae5cee2eb70ae2c526259e22a5a3ad21fa418bef831af2bde83",
+        "run_state.json": "0389519db921d3b8ab361f435bbaa41adebe5d73ade78ce549c344fe3493025e",
+        "episodes.csv": "cf78eff52b7b5e593bfa77cbcf82865366c92fcb6adb3eef073a3912e9d6abb1",
+        "timing.csv": "0e4aa5324e36580f48a86869f339a3c6a4c2b4e203cdca4580ee9a1e035c2556",
+        "summary.json": "0e613ec55f779ed4694a1722cb7ddb026084b72c02f02f3ef15eb2dc92829d8b",
+        "run_integrity.json": "dcd3d51f6492910c5042242084e59fdfe2107bb608a9601bf986418944604b38"
+      }
+    },
+    {
+      "split": "VALIDATION",
+      "agent_id": "stage2_bfs",
+      "agent_version": "0.1.0",
+      "run_id": "fullsearch_validation_stage2_bfs_20261101",
+      "episodes": 96,
+      "integrity": "VERIFIED",
+      "canonical_run": true,
+      "started_at_utc": "2026-10-31T17:40:24.868983+00:00",
+      "finished_at_utc": "2026-10-31T18:19:59.563177+00:00",
+      "metrics": {
+        "clean_success_rate": 0.08333333333333333,
+        "safety_failure_rate": 0.11458333333333333,
+        "mean_final_route_completion": 0.7631540191517091,
+        "median_final_route_completion": 0.9426431938637719,
+        "mean_time_to_clean_success_s": 91.775
+      },
+      "planner": {
+        "config_sha256": "6b0995a4757116a30a345c35a9bcd72a2fc541c27b1a2bae6d09a83c56841152",
+        "controller": {
+          "max_steering_deg": 59.99999999999999,
+          "wheelbase_m": 2.5
+        },
+        "heuristic": "none_breadth_first",
+        "objective": "minimum_edge_count",
+        "schema_version": "search_planner_parameters_v1",
+        "search_method": "bfs",
+        "shared_planner": {
+          "clearance_cost": 0.2,
+          "control_lookahead_m": 6.0,
+          "feature_scale_m": 50.0,
+          "lateral_change_cost": 0.5,
+          "lateral_samples": [
+            -0.8,
+            0.0,
+            0.8
+          ],
+          "lookahead_points": 10,
+          "max_expansions": 256,
+          "obstacle_margin_m": 0.5,
+          "steering_deadband": 0.12,
+          "target_normalized_speed": 0.15
+        },
+        "state_space": "local_route_lattice_v1"
+      },
+      "evidence_sha256": {
+        "run_manifest.json": "b4bf63ff27a8436eece85a9f81e1f6c38061e540ba5f68b8508a2fcb5e8255b0",
+        "run_state.json": "a16e62b0b1c0b29a9700acf8af02fb3c6842b0fed16517c3c25ca883535be06f",
+        "episodes.csv": "23c8a4eccbb7fca7f0be6f701d949eed20188a8a861bc08b6d119db875199a90",
+        "timing.csv": "14a03d208d971516c8e68117c594d983c48522e86473e7509fe7286c52871baa",
+        "summary.json": "48ef6c126cba8a3bf41a1ca3973d523d3b13bdf52c5aefe58c090c5018368ef5",
+        "run_integrity.json": "8eb936029ef0c68ce29e21b3364781315a4635f9447db875ea4c4bcbb8b20930"
+      }
+    },
+    {
+      "split": "VALIDATION",
+      "agent_id": "stage2_dijkstra",
+      "agent_version": "0.1.0",
+      "run_id": "fullsearch_validation_stage2_dijkstra_20261101",
+      "episodes": 96,
+      "integrity": "VERIFIED",
+      "canonical_run": true,
+      "started_at_utc": "2026-10-31T18:20:03.167358+00:00",
+      "finished_at_utc": "2026-10-31T18:22:37.648095+00:00",
+      "metrics": {
+        "clean_success_rate": 0.0,
+        "safety_failure_rate": 1.0,
+        "mean_final_route_completion": 0.04847182067009258,
+        "median_final_route_completion": 0.0436283618439392,
+        "mean_time_to_clean_success_s": null
+      },
+      "planner": {
+        "config_sha256": "917cd2b196a6f647f0d5573317129edd59e3bf7c1f07f5124696c891b35d84b1",
+        "controller": {
+          "max_steering_deg": 59.99999999999999,
+          "wheelbase_m": 2.5
+        },
+        "heuristic": "none_uniform_cost",
+        "objective": "sum_edge_cost",
+        "schema_version": "search_planner_parameters_v1",
+        "search_method": "dijkstra",
+        "shared_planner": {
+          "clearance_cost": 0.2,
+          "control_lookahead_m": 6.0,
+          "feature_scale_m": 50.0,
+          "lateral_change_cost": 0.5,
+          "lateral_samples": [
+            -0.8,
+            0.0,
+            0.8
+          ],
+          "lookahead_points": 10,
+          "max_expansions": 256,
+          "obstacle_margin_m": 0.5,
+          "steering_deadband": 0.12,
+          "target_normalized_speed": 0.15
+        },
+        "state_space": "local_route_lattice_v1"
+      },
+      "evidence_sha256": {
+        "run_manifest.json": "1c04e71f73aa2ade2973c70be2dfc3f1e6ab292028f5b2eb95484583f75a25b1",
+        "run_state.json": "4ed4297474597a9ad695d8012fec6e117d183d5791487b1db91a063850716441",
+        "episodes.csv": "cf78eff52b7b5e593bfa77cbcf82865366c92fcb6adb3eef073a3912e9d6abb1",
+        "timing.csv": "f14ec428a230102e42f9db769781bb22fc95027fb738397bbced25f50b5fd1e4",
+        "summary.json": "3974bd83af415a0a85a0daf65328aa8fb8ef07e79fbf0c7fedb4bcb1d6157a19",
+        "run_integrity.json": "db9bc829311777eccc2b6d543fc56b5e237660ed640b86231f8f8f36be511ac2"
+      }
+    },
+    {
+      "split": "VALIDATION",
+      "agent_id": "stage2_hybrid_astar",
+      "agent_version": "0.1.0",
+      "run_id": "fullsearch_validation_stage2_hybrid_astar_20261101",
+      "episodes": 96,
+      "integrity": "VERIFIED",
+      "canonical_run": true,
+      "started_at_utc": "2026-10-31T18:22:41.404007+00:00",
+      "finished_at_utc": "2026-10-31T18:42:30.046636+00:00",
+      "metrics": {
+        "clean_success_rate": 0.0,
+        "safety_failure_rate": 0.0,
+        "mean_final_route_completion": 0.0093105401149122,
+        "median_final_route_completion": 0.008399924752459284,
+        "mean_time_to_clean_success_s": null
+      },
+      "planner": {
+        "config_sha256": "1b1bbdd5e1f7d4fb7228ead745b9adb2950f07e1d86534f167ab3dc7c4d37fdd",
+        "controller": {
+          "max_steering_deg": 59.99999999999999,
+          "wheelbase_m": 2.5
+        },
+        "heuristic": "hybrid_euclidean_goal_region",
+        "hybrid_astar": {
+          "collision_sample_spacing_m": 0.25,
+          "goal_heading_tolerance_deg": 20.0,
+          "goal_position_tolerance_m": 1.2,
+          "heading_bins": 72,
+          "lane_margin_m": 0.1,
+          "max_steering_deg": 60.0,
+          "obstacle_margin_m": 0.25,
+          "primitive_length_m": 1.5,
+          "steering_cost_per_m": 0.1,
+          "steering_levels": [
+            0.0,
+            -0.3,
+            0.3,
+            -0.6,
+            0.6
+          ],
+          "vehicle_length_m": 4.6,
+          "vehicle_width_m": 1.9,
+          "wheelbase_m": 2.5,
+          "xy_resolution_m": 0.5
+        },
+        "objective": "sum_bicycle_arc_cost",
+        "schema_version": "search_planner_parameters_v1",
+        "search_method": "hybrid_astar",
+        "shared_planner": {
+          "clearance_cost": 0.2,
+          "control_lookahead_m": 6.0,
+          "feature_scale_m": 50.0,
+          "lateral_change_cost": 0.5,
+          "lateral_samples": [
+            -0.8,
+            0.0,
+            0.8
+          ],
+          "lookahead_points": 10,
+          "max_expansions": 256,
+          "obstacle_margin_m": 0.5,
+          "steering_deadband": 0.12,
+          "target_normalized_speed": 0.15
+        },
+        "state_space": "continuous_bicycle_poses_v1"
+      },
+      "evidence_sha256": {
+        "run_manifest.json": "135f1c25c2794ba7587d4f2d01c73ecbd6d7019ef16baef03c40324c06c12ef6",
+        "run_state.json": "95c14b432526de7d64b031c264047820a31ede771a67e1e95e4ddb2ba63e7dbc",
+        "episodes.csv": "ce929f254da33411d849459fd4e71bc424ee3fe90a7c6379002f68c33424cb9f",
+        "timing.csv": "b608c0852284fcfcb2b94f30d1ed0f1af70694215fd5e828fb3a6e77506d0090",
+        "summary.json": "82ee2b8c59aef6ae7b7581bfc02a467eded38a9036be1cd5a897a73e5afe597b",
+        "run_integrity.json": "f6e825ef0b8223175a6cfe1a7b7c15809a1975f8b7286b053438756d35f75eb8"
+      }
+    },
+    {
+      "split": "TEST",
+      "agent_id": "stage2_astar",
+      "agent_version": "0.1.0",
+      "run_id": "fullsearch_test_stage2_astar_20261101",
+      "episodes": 60,
+      "integrity": "VERIFIED",
+      "canonical_run": true,
+      "started_at_utc": "2026-10-31T18:42:33.863326+00:00",
+      "finished_at_utc": "2026-10-31T18:47:07.574025+00:00",
+      "metrics": {
+        "clean_success_rate": 0.0,
+        "safety_failure_rate": 1.0,
+        "mean_final_route_completion": 0.22866514753925615,
+        "median_final_route_completion": 0.1709306450205578,
+        "mean_time_to_clean_success_s": null
+      },
+      "planner": {
+        "config_sha256": "7a5865c1b55dcc7249829982fb398213c58948c5018fe8de3a09282185b65778",
+        "controller": {
+          "max_steering_deg": 59.99999999999999,
+          "wheelbase_m": 2.5
+        },
+        "heuristic": "euclidean",
+        "objective": "sum_edge_cost",
+        "schema_version": "search_planner_parameters_v1",
+        "search_method": "astar",
+        "shared_planner": {
+          "clearance_cost": 0.2,
+          "control_lookahead_m": 6.0,
+          "feature_scale_m": 50.0,
+          "lateral_change_cost": 0.5,
+          "lateral_samples": [
+            -0.8,
+            0.0,
+            0.8
+          ],
+          "lookahead_points": 10,
+          "max_expansions": 256,
+          "obstacle_margin_m": 0.5,
+          "steering_deadband": 0.12,
+          "target_normalized_speed": 0.15
+        },
+        "state_space": "local_route_lattice_v1"
+      },
+      "evidence_sha256": {
+        "run_manifest.json": "6ed1037d261c332c52577f50ebfb2477089289a997fde67330eae69537b5fe23",
+        "run_state.json": "4c845c75012e56b624e2fcf5b162d31e306bccc13a3311fbccd5f05dd193d5ed",
+        "episodes.csv": "f3b58f48e2fd18398fd1839e3ca3194497496243b0b05873b26aec525615e117",
+        "timing.csv": "e027b5cbcf81e357c89a9aefa9b4d50b6e353754aede0a8914a56171bcbfc698",
+        "summary.json": "6e0f3cc9f3ba1d988b93c5b823cafa4e44cfb837adb8173a91f1845358bf2ff3",
+        "run_integrity.json": "79a2b5896b7a7a69398c84d65c30d459ad2e8f110f8bf98fba0890ec93482caf"
+      }
+    },
+    {
+      "split": "TEST",
+      "agent_id": "stage2_bfs",
+      "agent_version": "0.1.0",
+      "run_id": "fullsearch_test_stage2_bfs_20261101",
+      "episodes": 60,
+      "integrity": "VERIFIED",
+      "canonical_run": true,
+      "started_at_utc": "2026-10-31T18:47:11.212496+00:00",
+      "finished_at_utc": "2026-10-31T19:14:29.059955+00:00",
+      "metrics": {
+        "clean_success_rate": 0.0,
+        "safety_failure_rate": 0.06666666666666667,
+        "mean_final_route_completion": 0.7866613473388412,
+        "median_final_route_completion": 0.9430873613312805,
+        "mean_time_to_clean_success_s": null
+      },
+      "planner": {
+        "config_sha256": "6b0995a4757116a30a345c35a9bcd72a2fc541c27b1a2bae6d09a83c56841152",
+        "controller": {
+          "max_steering_deg": 59.99999999999999,
+          "wheelbase_m": 2.5
+        },
+        "heuristic": "none_breadth_first",
+        "objective": "minimum_edge_count",
+        "schema_version": "search_planner_parameters_v1",
+        "search_method": "bfs",
+        "shared_planner": {
+          "clearance_cost": 0.2,
+          "control_lookahead_m": 6.0,
+          "feature_scale_m": 50.0,
+          "lateral_change_cost": 0.5,
+          "lateral_samples": [
+            -0.8,
+            0.0,
+            0.8
+          ],
+          "lookahead_points": 10,
+          "max_expansions": 256,
+          "obstacle_margin_m": 0.5,
+          "steering_deadband": 0.12,
+          "target_normalized_speed": 0.15
+        },
+        "state_space": "local_route_lattice_v1"
+      },
+      "evidence_sha256": {
+        "run_manifest.json": "ff26e552b13c2e718865b1b561fb64e18def97b7ecee6131477055c73ce33c29",
+        "run_state.json": "43ba555ebffe884dcac6d56563202c3b85ed53c72a26cac9a963585f8c321749",
+        "episodes.csv": "7cf04bea2b1741750bad855f8fc18bf30c8962fd9f69202d10b5e218b069fe05",
+        "timing.csv": "01f23d17bacf36e57856e95cae38ccfbff80da6b6087050bb2e1031b8e3f4e81",
+        "summary.json": "45113f9b431ea1fad2998ba308f739ca35b6e18e2ab5ff206980d53afb3492d8",
+        "run_integrity.json": "45583603e005fcc3a3c0589a4a509c2e70e35ef8d6367f2f18b9f3ba994b6408"
+      }
+    },
+    {
+      "split": "TEST",
+      "agent_id": "stage2_dijkstra",
+      "agent_version": "0.1.0",
+      "run_id": "fullsearch_test_stage2_dijkstra_20261101",
+      "episodes": 60,
+      "integrity": "VERIFIED",
+      "canonical_run": true,
+      "started_at_utc": "2026-10-31T19:14:32.550357+00:00",
+      "finished_at_utc": "2026-10-31T19:19:15.266688+00:00",
+      "metrics": {
+        "clean_success_rate": 0.0,
+        "safety_failure_rate": 1.0,
+        "mean_final_route_completion": 0.22866514753925615,
+        "median_final_route_completion": 0.1709306450205578,
+        "mean_time_to_clean_success_s": null
+      },
+      "planner": {
+        "config_sha256": "917cd2b196a6f647f0d5573317129edd59e3bf7c1f07f5124696c891b35d84b1",
+        "controller": {
+          "max_steering_deg": 59.99999999999999,
+          "wheelbase_m": 2.5
+        },
+        "heuristic": "none_uniform_cost",
+        "objective": "sum_edge_cost",
+        "schema_version": "search_planner_parameters_v1",
+        "search_method": "dijkstra",
+        "shared_planner": {
+          "clearance_cost": 0.2,
+          "control_lookahead_m": 6.0,
+          "feature_scale_m": 50.0,
+          "lateral_change_cost": 0.5,
+          "lateral_samples": [
+            -0.8,
+            0.0,
+            0.8
+          ],
+          "lookahead_points": 10,
+          "max_expansions": 256,
+          "obstacle_margin_m": 0.5,
+          "steering_deadband": 0.12,
+          "target_normalized_speed": 0.15
+        },
+        "state_space": "local_route_lattice_v1"
+      },
+      "evidence_sha256": {
+        "run_manifest.json": "1f57fcf745908ba80fdf18aa7db6a6d62c5f5ca487a844beb5795d7636ecd37e",
+        "run_state.json": "4cb55a7bfb70e748e24ca884ecf979542b66cc6a643898d6d49644e517b1fbfc",
+        "episodes.csv": "f3b58f48e2fd18398fd1839e3ca3194497496243b0b05873b26aec525615e117",
+        "timing.csv": "f9a994eab4e0e7f6b3098401eba5b239aa58463014183a3a1c1a132285cf1656",
+        "summary.json": "924bbe510df6219309bd5bae8fcdeee2fc04211cf9cb81d0cc881ce93175d46a",
+        "run_integrity.json": "4e0acd0ae9bdfe31d32745737eb904e9f97f5148e6e8c7c146551f76808e089b"
+      }
+    },
+    {
+      "split": "TEST",
+      "agent_id": "stage2_hybrid_astar",
+      "agent_version": "0.1.0",
+      "run_id": "fullsearch_test_stage2_hybrid_astar_20261101",
+      "episodes": 60,
+      "integrity": "VERIFIED",
+      "canonical_run": true,
+      "started_at_utc": "2026-10-31T19:19:18.853083+00:00",
+      "finished_at_utc": "2026-10-31T20:09:28.467136+00:00",
+      "metrics": {
+        "clean_success_rate": 0.0,
+        "safety_failure_rate": 0.25,
+        "mean_final_route_completion": 0.32295524640878803,
+        "median_final_route_completion": 0.19318210916951117,
+        "mean_time_to_clean_success_s": null
+      },
+      "planner": {
+        "config_sha256": "1b1bbdd5e1f7d4fb7228ead745b9adb2950f07e1d86534f167ab3dc7c4d37fdd",
+        "controller": {
+          "max_steering_deg": 59.99999999999999,
+          "wheelbase_m": 2.5
+        },
+        "heuristic": "hybrid_euclidean_goal_region",
+        "hybrid_astar": {
+          "collision_sample_spacing_m": 0.25,
+          "goal_heading_tolerance_deg": 20.0,
+          "goal_position_tolerance_m": 1.2,
+          "heading_bins": 72,
+          "lane_margin_m": 0.1,
+          "max_steering_deg": 60.0,
+          "obstacle_margin_m": 0.25,
+          "primitive_length_m": 1.5,
+          "steering_cost_per_m": 0.1,
+          "steering_levels": [
+            0.0,
+            -0.3,
+            0.3,
+            -0.6,
+            0.6
+          ],
+          "vehicle_length_m": 4.6,
+          "vehicle_width_m": 1.9,
+          "wheelbase_m": 2.5,
+          "xy_resolution_m": 0.5
+        },
+        "objective": "sum_bicycle_arc_cost",
+        "schema_version": "search_planner_parameters_v1",
+        "search_method": "hybrid_astar",
+        "shared_planner": {
+          "clearance_cost": 0.2,
+          "control_lookahead_m": 6.0,
+          "feature_scale_m": 50.0,
+          "lateral_change_cost": 0.5,
+          "lateral_samples": [
+            -0.8,
+            0.0,
+            0.8
+          ],
+          "lookahead_points": 10,
+          "max_expansions": 256,
+          "obstacle_margin_m": 0.5,
+          "steering_deadband": 0.12,
+          "target_normalized_speed": 0.15
+        },
+        "state_space": "continuous_bicycle_poses_v1"
+      },
+      "evidence_sha256": {
+        "run_manifest.json": "4301f653017f91a8a3304d88dec7ab37621b98bf5d18708164fb9ad254847179",
+        "run_state.json": "358d5fcd6dd2bcf94115f89612e49cbc6a2b9e8fd3dde285e1c41deb3365bf10",
+        "episodes.csv": "6c6a4e07243c74c1bb8a975efc9770d50d1f2dc38ebdb96af904dfc63e58103d",
+        "timing.csv": "d10b6c5b66051355c66778121e9c9c4e0d0943b5977eb74379228cd4d4bc718a",
+        "summary.json": "632abe71b1a8aed649aebfdfe58f7001fa85e97e71af1d5161160a0e0a655df7",
+        "run_integrity.json": "c6ef2271545af00510f26e165fb7faf59dcaffa5d909f18b79bdeb6d4b7d5b8e"
+      }
+    }
+  ],
+  "frozen_source_sha256_lf": {
+    "src/agents/graph_search.py": "4ce4a7216253802f0c1c203800065f5acd8585a63c2720bb09f7e7a99064361e",
+    "src/agents/planning_graph.py": "e8ed11c73d2bc7e785e5e2ccbe0ee4f24c69c63ed6fd8d15d4f92b54d61ad12f",
+    "src/agents/astar_agent.py": "a89dc814205036177e7903f08f4cd234c8c39a0c424398407538c6a15cd5d1f2",
+    "src/agents/graph_search_agents.py": "2c86845f2e2b2c1fd4579a8b3359b3013204318d31a2b7c099e80ad1cbccd0be",
+    "src/agents/hybrid_astar.py": "ce4643d6d5bbc7a63e925e4f46c911c1bf11ff370ad6c62c908401fb6fc5e7c5",
+    "src/agents/hybrid_astar_agent.py": "4e3e9a30d401f62a97e9cc5a8487ce7d1caa979a18ae70d15b23f7374d4d1508",
+    "src/agents/path_following.py": "16859ff1d53a9b68162395c8181791867576c85d19abddee5ff61f169c3f6512",
+    "src/launcher/registry.py": "7df90a31aede0118e5b0ba12b29da4c1b189c49fbc34fbb32ea1e4e68f752846",
+    "src/launcher/executor.py": "24a85ef419cd1d05792f1e83bfb5a64b8895d8922baf5d310238405185159866",
+    "configs/experiments/astar_learning_v1.json": "e203918f0d00bf376ea2e83e59d5db7710590890511f5d9d2d45296fd07e359e",
+    "configs/experiments/search_planners_v1.json": "ad3b8bed37de59888aaf18db16ee80f7bdfa53bf476cb7c11bf931a2e134028e"
+  }
+}
