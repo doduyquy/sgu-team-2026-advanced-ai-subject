@@ -642,6 +642,9 @@ class ResultsWidget(QWidget):
             manifest = json.loads((Path(snap.run_dir) / "run_manifest.json").read_text(encoding="utf-8"))
             config = manifest.get("config", {})
             checkpoint = config.get("algorithm_hyperparameters", {}).get("checkpoint")
+            planner = config.get("algorithm_hyperparameters", {}).get("planner")
+            if planner:
+                lines.extend(["", "--- Stored Planner Settings ---", json.dumps(planner, ensure_ascii=False, indent=2)])
             if checkpoint:
                 lines.extend(["", "--- Trained Heuristic (stored manifest) ---",
                               f"Training Seed: {config.get('training_run_seed')}"])
