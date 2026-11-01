@@ -105,23 +105,23 @@ def run_racing_hud_demo(
         while not (terminated or truncated) and step_idx < steps:
             # Multi-phase scripted action for comprehensive UI state verification:
             # - Phase 1 (0..24): Straight acceleration (throttle=0.6, steering=0.0)
-            # - Phase 2 (25..44): Gentle left turn (steering=-0.25, throttle=0.2)
-            # - Phase 3 (45..64): Gentle right turn (steering=+0.25, throttle=0.2)
-            # - Phase 4 (65..85): Combined Left Steering + Braking (steering=-0.30, throttle=-0.75)
+            # - Phase 2 (25..44): Left turn (steering=+0.25, throttle=0.2)
+            # - Phase 3 (45..64): Right turn (steering=-0.25, throttle=0.2)
+            # - Phase 4 (65..85): Combined Left Steering + Braking (steering=+0.30, throttle=-0.75)
             if step_idx < 25:
                 steer_cmd = 0.0
                 tb_cmd = 0.6
                 phase_name = "ACCEL"
             elif step_idx < 45:
-                steer_cmd = -0.25
+                steer_cmd = 0.25
                 tb_cmd = 0.2
                 phase_name = "LEFT"
             elif step_idx < 65:
-                steer_cmd = 0.25
+                steer_cmd = -0.25
                 tb_cmd = 0.2
                 phase_name = "RIGHT"
             else:
-                steer_cmd = -0.30
+                steer_cmd = 0.30
                 tb_cmd = -0.75
                 phase_name = "BRK+LEFT"
 

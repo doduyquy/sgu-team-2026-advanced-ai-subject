@@ -35,10 +35,10 @@ COLOR_ACCENT_CYAN = p3d.Vec4(0.000, 0.898, 1.000, 1.00)       # #00E5FF
 COLOR_THROTTLE = p3d.Vec4(0.000, 0.902, 0.463, 0.85)          # #00E676 @ 0.85
 COLOR_BRAKE = p3d.Vec4(1.000, 0.090, 0.267, 0.85)             # #FF1744 @ 0.85
 COLOR_INDICATOR_ACTIVE = p3d.Vec4(1.000, 0.839, 0.000, 1.00)  # #FFD600
-COLOR_INDICATOR_IDLE = p3d.Vec4(0.216, 0.278, 0.310, 0.40)    # #37474F @ 0.40
-COLOR_INDICATOR_DISABLED = p3d.Vec4(0.118, 0.149, 0.169, 0.20) # #1E262B @ 0.20
-COLOR_TEXT_PRIMARY = p3d.Vec4(1.000, 1.000, 1.000, 0.95)      # #FFFFFF @ 0.95
-COLOR_TEXT_DIM = p3d.Vec4(0.600, 0.650, 0.700, 0.60)          # Dim text for "---"
+COLOR_INDICATOR_IDLE = p3d.Vec4(0.350, 0.420, 0.480, 0.65)    # Visible slate-blue when inactive
+COLOR_INDICATOR_DISABLED = p3d.Vec4(0.150, 0.180, 0.200, 0.25) # Dim gray when unavailable
+COLOR_TEXT_PRIMARY = p3d.Vec4(1.000, 1.000, 1.000, 0.95)      # Crisp white
+COLOR_TEXT_DIM = p3d.Vec4(0.650, 0.720, 0.800, 0.70)          # Readable dim text for "---" and units
 COLOR_FRAME_DISABLED = p3d.Vec4(0.150, 0.180, 0.200, 0.30)    # Disabled border
 
 
@@ -85,6 +85,8 @@ class RacingHud:
 
         # 2. Node references for clean teardown and exception safety
         self.progress_root: Optional[p3d.NodePath] = None
+        self.progress_bar_root: Optional[p3d.NodePath] = None
+        self._last_aspect_ratio: float = 16.0 / 9.0
         self.speed_root: Optional[p3d.NodePath] = None
         self.pedals_root: Optional[p3d.NodePath] = None
         self.indicators_root: Optional[p3d.NodePath] = None
@@ -122,56 +124,86 @@ class RacingHud:
     # Widget Construction
     # ==========================================================================
 
+    def _get_viewport_aspect_ratio(self) -> float:
+        """Returns the current viewport aspect ratio (width / height)."""
+        if self.engine is not None and getattr(self.engine, "win", None) is not None:
+            try:
+                w = float(self.engine.win.getXSize())
+                h = float(self.engine.win.getYSize())
+                if w > 0 and h > 0:
+                    return w / h
+            except Exception:
+                pass
+        if (
+            hasattr(self, "a2d_bottom_right")
+            and self.a2d_bottom_right is not None
+            and hasattr(self, "aspect2d")
+            and self.aspect2d is not None
+        ):
+            try:
+                x = abs(float(self.a2d_bottom_right.getPos(self.aspect2d).x))
+                if x > 0.1:
+                    return x
+            except Exception:
+                pass
+        return 16.0 / 9.0
+
     def _configure_node_rendering(self, np: p3d.NodePath) -> None:
-        """Applies fixed 2D overlay render states to prevent 3D lighting or depth artifacts."""
+        """
+        Applies fixed 2D overlay render states to prevent 3D lighting or depth artifacts.
+        Notice: setTextureOff is deliberately omitted so child TextNodes can sample font glyph textures!
+        """
         np.setLightOff()
         np.setShaderOff(1)
         np.setFogOff(1)
-        np.setTextureOff(1)
         np.setDepthTest(False)
         np.setDepthWrite(False)
         np.setTwoSided(True)
         np.setBin("fixed", 230)
 
     def _build_progress_widget(self) -> None:
-        """Constructs the slender top-center route progress bar (width ~35% of 16:9)."""
+        """Constructs the responsive top-center route progress bar (width ~35% of viewport)."""
         self.progress_root = self.a2d_top_center.attachNewNode("hud_progress_root")
         self.progress_root.setPos(0.0, 0.0, -0.07)
         self._configure_node_rendering(self.progress_root)
 
-        w = 1.244  # 35% of 16:9 width
+        self._last_aspect_ratio = self._get_viewport_aspect_ratio()
+        target_w = 0.70 * self._last_aspect_ratio  # 35% of 2*alpha
         h = 0.024
-        half_w = w / 2.0
         half_h = h / 2.0
 
-        # Background card
+        # Bar geometry root scaled horizontally by target_w
+        self.progress_bar_root = self.progress_root.attachNewNode("hud_progress_bar_root")
+        self.progress_bar_root.setScale(target_w, 1.0, 1.0)
+
+        # Background card (normalized width [-0.5, 0.5])
         cm = p3d.CardMaker("progress_bg")
-        cm.setFrame(-half_w, half_w, -half_h, half_h)
-        bg = self.progress_root.attachNewNode(cm.generate())
+        cm.setFrame(-0.5, 0.5, -half_h, half_h)
+        bg = self.progress_bar_root.attachNewNode(cm.generate())
         bg.setColor(COLOR_BG_GLASS)
         bg.setTransparency(p3d.TransparencyAttrib.MAlpha)
 
-        # Subtle border frame
+        # Subtle border frame (normalized width [-0.5, 0.5])
         ls = p3d.LineSegs("progress_border")
         ls.setThickness(1.5)
         ls.setColor(COLOR_BORDER_GLASS)
-        ls.moveTo(-half_w, 0.0, -half_h)
-        ls.drawTo(half_w, 0.0, -half_h)
-        ls.drawTo(half_w, 0.0, half_h)
-        ls.drawTo(-half_w, 0.0, half_h)
-        ls.drawTo(-half_w, 0.0, -half_h)
-        self.progress_root.attachNewNode(ls.create())
+        ls.moveTo(-0.5, 0.0, -half_h)
+        ls.drawTo(0.5, 0.0, -half_h)
+        ls.drawTo(0.5, 0.0, half_h)
+        ls.drawTo(-0.5, 0.0, half_h)
+        ls.drawTo(-0.5, 0.0, -half_h)
+        self.progress_bar_root.attachNewNode(ls.create())
 
-        # Active cyan fill bar (spans [0, w] along +X, placed at -half_w)
+        # Active cyan fill bar (spans [0.0, 1.0] along +X, placed at X = -0.5)
         cm_fill = p3d.CardMaker("progress_fill")
-        cm_fill.setFrame(0.0, w, -half_h + 0.003, half_h - 0.003)
-        self.progress_fill = self.progress_root.attachNewNode(cm_fill.generate())
-        self.progress_fill.setPos(-half_w, 0.0, 0.0)
+        cm_fill.setFrame(0.0, 1.0, -half_h + 0.003, half_h - 0.003)
+        self.progress_fill = self.progress_bar_root.attachNewNode(cm_fill.generate())
+        self.progress_fill.setPos(-0.5, 0.0, 0.0)
         self.progress_fill.setColor(COLOR_ACCENT_CYAN)
         self.progress_fill.setScale(0.001, 1.0, 1.0)
         self.progress_fill.hide()
 
-        # Percentage text readout
+        # Percentage text readout (unscaled horizontally, attached directly to progress_root)
         self.progress_text_node = p3d.TextNode("progress_text")
         self.progress_text_node.setText("---")
         self.progress_text_node.setTextColor(COLOR_TEXT_DIM)
@@ -297,11 +329,11 @@ class RacingHud:
 
         b_lbl = p3d.TextNode("brake_label")
         b_lbl.setText("B")
-        b_lbl.setTextColor(COLOR_TEXT_DIM)
+        b_lbl.setTextColor(COLOR_TEXT_PRIMARY)
         b_lbl.setAlign(p3d.TextNode.ACenter)
         b_lbl_np = self.pedals_root.attachNewNode(b_lbl)
         b_lbl_np.setPos(bx, 0.0, -half_h - 0.035)
-        b_lbl_np.setScale(0.024)
+        b_lbl_np.setScale(0.028)
 
         # --- B. Throttle Meter (Right, X = +0.025) ---
         tx = 0.025
@@ -332,11 +364,11 @@ class RacingHud:
 
         t_lbl = p3d.TextNode("throttle_label")
         t_lbl.setText("T")
-        t_lbl.setTextColor(COLOR_TEXT_DIM)
+        t_lbl.setTextColor(COLOR_TEXT_PRIMARY)
         t_lbl.setAlign(p3d.TextNode.ACenter)
         t_lbl_np = self.pedals_root.attachNewNode(t_lbl)
         t_lbl_np.setPos(tx, 0.0, -half_h - 0.035)
-        t_lbl_np.setScale(0.024)
+        t_lbl_np.setScale(0.028)
 
     def _build_indicators_widget(self) -> None:
         """Constructs the bottom-left Left and Right turn indicator chevrons."""
@@ -344,25 +376,25 @@ class RacingHud:
         self.indicators_root.setPos(0.22, 0.0, 0.20)
         self._configure_node_rendering(self.indicators_root)
 
-        # Left Chevron (<) at X = -0.04
+        # Left Chevron (<) at X = -0.045
         ls_left = p3d.LineSegs("indicator_left")
-        ls_left.setThickness(3.0)
+        ls_left.setThickness(3.5)
         ls_left.setColor(COLOR_INDICATOR_IDLE)
-        ls_left.moveTo(+0.018, 0.0, +0.025)
-        ls_left.drawTo(-0.018, 0.0, 0.0)
-        ls_left.drawTo(+0.018, 0.0, -0.025)
+        ls_left.moveTo(+0.024, 0.0, +0.032)
+        ls_left.drawTo(-0.024, 0.0, 0.0)
+        ls_left.drawTo(+0.024, 0.0, -0.032)
         self.indicator_left_np = self.indicators_root.attachNewNode(ls_left.create())
-        self.indicator_left_np.setPos(-0.04, 0.0, 0.0)
+        self.indicator_left_np.setPos(-0.045, 0.0, 0.0)
 
-        # Right Chevron (>) at X = +0.04
+        # Right Chevron (>) at X = +0.045
         ls_right = p3d.LineSegs("indicator_right")
-        ls_right.setThickness(3.0)
+        ls_right.setThickness(3.5)
         ls_right.setColor(COLOR_INDICATOR_IDLE)
-        ls_right.moveTo(-0.018, 0.0, +0.025)
-        ls_right.drawTo(+0.018, 0.0, 0.0)
-        ls_right.drawTo(-0.018, 0.0, -0.025)
+        ls_right.moveTo(-0.024, 0.0, +0.032)
+        ls_right.drawTo(+0.024, 0.0, 0.0)
+        ls_right.drawTo(-0.024, 0.0, -0.032)
         self.indicator_right_np = self.indicators_root.attachNewNode(ls_right.create())
-        self.indicator_right_np.setPos(+0.04, 0.0, 0.0)
+        self.indicator_right_np.setPos(+0.045, 0.0, 0.0)
 
     # ==========================================================================
     # Step-Driven Update Interface
@@ -379,6 +411,13 @@ class RacingHud:
         # ----------------------------------------------------------------------
         # 1. Route Progress Bar
         # ----------------------------------------------------------------------
+        # Dynamically adapt progress bar width on window resize without node reallocations
+        current_alpha = self._get_viewport_aspect_ratio()
+        if abs(current_alpha - self._last_aspect_ratio) > 1e-4:
+            self._last_aspect_ratio = current_alpha
+            if self.progress_bar_root is not None:
+                self.progress_bar_root.setScale(0.70 * current_alpha, 1.0, 1.0)
+
         if snapshot.route_completion is not None:
             pct = max(0.0, min(1.0, float(snapshot.route_completion)))
             if self.progress_fill is not None:
@@ -415,12 +454,13 @@ class RacingHud:
             self._update_speedometer_arc(0.0)
 
         # ----------------------------------------------------------------------
-        # 3. Turn Indicators (Steering Thresholds -0.15 / +0.15)
+        # 3. Turn Indicators (Steering Thresholds: > +0.15 Left, < -0.15 Right)
         # ----------------------------------------------------------------------
         st = snapshot.canonical_steering
         if st is not None:
-            left_active = bool(st < -0.15)
-            right_active = bool(st > 0.15)
+            # Verified in MetaDrive: positive steering turns Left, negative turns Right
+            left_active = bool(st > 0.15)
+            right_active = bool(st < -0.15)
             if self.indicator_left_np is not None:
                 self.indicator_left_np.setColor(COLOR_INDICATOR_ACTIVE if left_active else COLOR_INDICATOR_IDLE)
             if self.indicator_right_np is not None:
@@ -544,6 +584,7 @@ class RacingHud:
                 pass
             self.speed_active_arc_np = None
 
+        self.progress_bar_root = None
         self.progress_fill = None
         self.progress_text_node = None
         self.speed_text_node = None
