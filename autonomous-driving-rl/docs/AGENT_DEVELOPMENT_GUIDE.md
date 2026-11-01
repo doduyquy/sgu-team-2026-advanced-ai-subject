@@ -105,6 +105,10 @@ For learned agents, also test checkpoint loading and frozen inference behavior.
 
 ## 8. Training vs evaluation
 
+Stage 2 now includes BFS, Dijkstra, A* and forward Hybrid A*. These are checkpoint-free
+search planners. Their shared information/action/controller boundary and method-specific
+search objectives are documented in [Search planners](SEARCH_PLANNERS.md).
+
 The launcher handles frozen inference. The Workbench also exposes a separate,
 stage-specific supervised trainer for Stage 6's learned A* heuristic; this is not
 a general RL trainer. Stage 2 and Stage 6 share the public local graph and path

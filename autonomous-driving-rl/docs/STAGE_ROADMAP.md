@@ -52,6 +52,9 @@ The exact heuristic should be explainable and parameterized. It must not use eva
 
 ## Stage 2 — Planning / Search
 
+BFS, Dijkstra, A* and forward Hybrid A* are now registered as development candidates.
+Graph search is the family name. See [implementations, fixed settings and comparison](SEARCH_PLANNERS.md).
+
 **Purpose:** choose actions by explicitly searching/planning ahead rather than applying a fixed reactive rule.
 
 The low-branching certified discrete adapter is available for this family. Search state must still be built from allowed information.

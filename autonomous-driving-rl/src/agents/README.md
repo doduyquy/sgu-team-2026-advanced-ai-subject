@@ -11,6 +11,11 @@ This package is the intended home for real Stage 0+ agent implementations.
 graph. Stage 6 requires a trained MLP heuristic checkpoint; see the
 [training and comparison workflow](../../docs/ASTAR_LEARNED_HEURISTIC.md).
 
+`BFSAgent`, `DijkstraAgent` and `HybridAStarAgent` add checkpoint-free Stage 2
+alternatives. BFS/Dijkstra share A*'s local graph; Hybrid A* expands continuous
+bicycle poses and checks the vehicle footprint. All use the same public input and
+discrete9 path follower. See [fixed settings and comparison](../../docs/SEARCH_PLANNERS.md).
+
 ## Stage 0 policy
 
 The agent uses `STATE_DECISION_V1` and the certified `discrete9_lowbranch_v1` adapter.
