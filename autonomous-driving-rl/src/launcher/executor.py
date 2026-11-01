@@ -146,7 +146,7 @@ def build_metadrive_case_config(
 
     from metadrive.manager.traffic_manager import TrafficMode
 
-    return {
+    cfg = {
         "use_render": (render_mode.upper() == "NATIVE"),
         "num_scenarios": 1,
         "start_seed": int(case.environment_seed),
@@ -158,6 +158,13 @@ def build_metadrive_case_config(
         "decision_repeat": decision_repeat,
         "truncate_as_terminate": False
     }
+
+    if render_mode.upper() == "NATIVE":
+        cfg["show_interface"] = False
+        cfg["show_logo"] = False
+        cfg["show_fps"] = False
+
+    return cfg
 
 
 @dataclass(frozen=True)

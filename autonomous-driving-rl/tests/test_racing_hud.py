@@ -214,7 +214,7 @@ class TestRacingHudUnitSuite(unittest.TestCase):
             hud.destroy()
 
     def test_07_turn_indicators_thresholds_and_boundaries(self):
-        """7. Turn indicator steering threshold precision at -0.15 and +0.15."""
+        """7. Turn indicator steering threshold precision at -0.15 and +0.15 with verified MetaDrive direction."""
         engine = _create_mock_racing_engine()
         hud = RacingHud(engine)
         try:
@@ -228,20 +228,20 @@ class TestRacingHudUnitSuite(unittest.TestCase):
             self.assert_color_almost_equal(hud.indicator_left_np.getColor(), COLOR_INDICATOR_IDLE)
             self.assert_color_almost_equal(hud.indicator_right_np.getColor(), COLOR_INDICATOR_IDLE)
 
-            # Active Left: -0.151 -> Left active, Right idle
+            # Active Right: -0.151 -> Right active (amber), Left idle (MetaDrive negative turns Right)
             hud.update(create_telemetry_snapshot(canonical_steering=-0.151))
-            self.assert_color_almost_equal(hud.indicator_left_np.getColor(), COLOR_INDICATOR_ACTIVE)
-            self.assert_color_almost_equal(hud.indicator_right_np.getColor(), COLOR_INDICATOR_IDLE)
+            self.assert_color_almost_equal(hud.indicator_left_np.getColor(), COLOR_INDICATOR_IDLE)
+            self.assert_color_almost_equal(hud.indicator_right_np.getColor(), COLOR_INDICATOR_ACTIVE)
 
             # Exact Boundary +0.150 -> Still idle (not strictly > +0.15)
             hud.update(create_telemetry_snapshot(canonical_steering=0.150))
             self.assert_color_almost_equal(hud.indicator_left_np.getColor(), COLOR_INDICATOR_IDLE)
             self.assert_color_almost_equal(hud.indicator_right_np.getColor(), COLOR_INDICATOR_IDLE)
 
-            # Active Right: +0.151 -> Right active, Left idle
+            # Active Left: +0.151 -> Left active (amber), Right idle (MetaDrive positive turns Left)
             hud.update(create_telemetry_snapshot(canonical_steering=0.151))
-            self.assert_color_almost_equal(hud.indicator_left_np.getColor(), COLOR_INDICATOR_IDLE)
-            self.assert_color_almost_equal(hud.indicator_right_np.getColor(), COLOR_INDICATOR_ACTIVE)
+            self.assert_color_almost_equal(hud.indicator_left_np.getColor(), COLOR_INDICATOR_ACTIVE)
+            self.assert_color_almost_equal(hud.indicator_right_np.getColor(), COLOR_INDICATOR_IDLE)
         finally:
             hud.destroy()
 
@@ -511,10 +511,10 @@ class TestRacingHudUnitSuite(unittest.TestCase):
         engine = _create_mock_racing_engine()
         hud = RacingHud(engine)
         try:
-            # Scripted maneuver: Steer Left (-0.30) AND Brake (-0.75)
+            # Scripted maneuver: Steer Left (+0.30) AND Brake (-0.75)
             snap = create_telemetry_snapshot(
                 speed_kmh=25.0,
-                canonical_steering=-0.30,
+                canonical_steering=0.30,
                 canonical_throttle_brake=-0.75,
             )
             hud.update(snap)
@@ -529,6 +529,45 @@ class TestRacingHudUnitSuite(unittest.TestCase):
 
             # Throttle meter is inactive (0 fill)
             self.assertTrue(hud.throttle_fill.isHidden())
+        finally:
+            hud.destroy()
+
+    def test_25_route_progress_responsive_aspect_scaling(self):
+        """25. Route progress bar width dynamically adapts to 35% of actual viewport width across aspect ratios."""
+        engine = _create_mock_racing_engine()
+        hud = RacingHud(engine)
+        try:
+            # At 16:9 (alpha ~ 1.7778), target width is 0.70 * 1.7778 ~ 1.244
+            engine.win.getXSize.return_value = 1600
+            engine.win.getYSize.return_value = 900
+            hud.update(create_telemetry_snapshot(route_completion=0.5))
+            self.assertAlmostEqual(hud.progress_bar_root.getScale().x, 0.70 * (1600.0 / 900.0), places=3)
+
+            # At 4:3 (alpha ~ 1.3333), target width is 0.70 * 1.3333 ~ 0.933
+            engine.win.getXSize.return_value = 1200
+            engine.win.getYSize.return_value = 900
+            hud.update(create_telemetry_snapshot(route_completion=0.5))
+            self.assertAlmostEqual(hud.progress_bar_root.getScale().x, 0.70 * (1200.0 / 900.0), places=3)
+
+            # At 1024x768 (alpha = 1.3333)
+            engine.win.getXSize.return_value = 1024
+            engine.win.getYSize.return_value = 768
+            hud.update(create_telemetry_snapshot(route_completion=0.5))
+            self.assertAlmostEqual(hud.progress_bar_root.getScale().x, 0.70 * (1024.0 / 768.0), places=3)
+        finally:
+            hud.destroy()
+
+    def test_26_text_nodes_have_unimpaired_glyph_texturing(self):
+        """26. Verifies that root nodes do not disable texture inheritance, allowing TextNode glyph rendering."""
+        engine = _create_mock_racing_engine()
+        hud = RacingHud(engine)
+        try:
+            # Check net render state for speed_root, progress_root, pedals_root
+            for root_np in (hud.speed_root, hud.progress_root, hud.pedals_root):
+                net_state = root_np.getNetState()
+                if net_state.hasAttrib(p3d.TextureAttrib.getClassType()):
+                    tex_attrib = net_state.getAttrib(p3d.TextureAttrib.getClassType())
+                    self.assertFalse(tex_attrib.isOff(), f"Texture must not be forced off on {root_np}")
         finally:
             hud.destroy()
 

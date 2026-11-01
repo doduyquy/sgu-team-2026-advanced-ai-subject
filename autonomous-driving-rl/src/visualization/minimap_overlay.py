@@ -79,6 +79,7 @@ class MiniMapOverlay:
         self.marker_dot = None
         self.trail_root = None
         self.trail_np = None
+        self.border_np = None
         self._trail_buffer = TrajectoryTrailBuffer(max_capacity=500)
         self._last_win_size = (1.0, 1.0)
         self._initial_film_size = (100.0, 100.0)
@@ -255,6 +256,22 @@ class MiniMapOverlay:
         self.marker_dot.hide()
 
         self.marker_root.hide()
+
+        # 3. Subtle glass frame border in render2d framing DisplayRegion
+        screen_l = left * 2.0 - 1.0
+        screen_r = right * 2.0 - 1.0
+        screen_b = bottom * 2.0 - 1.0
+        screen_t = top * 2.0 - 1.0
+        ls_border = LineSegs("minimap_glass_border")
+        ls_border.setThickness(1.5)
+        ls_border.setColor(0.878, 0.941, 1.000, 0.35)
+        ls_border.moveTo(screen_l, 0.0, screen_b)
+        ls_border.drawTo(screen_r, 0.0, screen_b)
+        ls_border.drawTo(screen_r, 0.0, screen_t)
+        ls_border.drawTo(screen_l, 0.0, screen_t)
+        ls_border.drawTo(screen_l, 0.0, screen_b)
+        self.border_np = self.engine.render2d.attachNewNode(ls_border.create())
+        self.border_np.setBin("fixed", 226)
 
     def _build_arrow_geom(self, rx: float, rz: float, theta: float) -> Geom:
         """
@@ -532,6 +549,13 @@ class MiniMapOverlay:
             self.marker_root = None
             self.marker_arrow = None
             self.marker_dot = None
+
+        if self.border_np is not None:
+            try:
+                self.border_np.removeNode()
+            except Exception:
+                pass
+            self.border_np = None
 
         if self.background is not None:
             try:
