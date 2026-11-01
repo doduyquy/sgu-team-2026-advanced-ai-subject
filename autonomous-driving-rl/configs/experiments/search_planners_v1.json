@@ -1,0 +1,19 @@
+{
+  "version": "search_planners_v1",
+  "hybrid_astar": {
+    "primitive_length_m": 1.5,
+    "collision_sample_spacing_m": 0.25,
+    "xy_resolution_m": 0.5,
+    "heading_bins": 72,
+    "goal_position_tolerance_m": 1.2,
+    "goal_heading_tolerance_deg": 20.0,
+    "steering_levels": [0.0, -0.3, 0.3, -0.6, 0.6],
+    "wheelbase_m": 2.5,
+    "max_steering_deg": 60.0,
+    "vehicle_length_m": 4.6,
+    "vehicle_width_m": 1.9,
+    "lane_margin_m": 0.1,
+    "obstacle_margin_m": 0.25,
+    "steering_cost_per_m": 0.1
+  }
+}
