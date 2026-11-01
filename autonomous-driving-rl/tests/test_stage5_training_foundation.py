@@ -237,19 +237,35 @@ class TestStage5TrainingFoundation(unittest.TestCase):
         with self.assertRaises(TypeError):
             enc.encode("not_an_input")  # type: ignore
 
-        # Verify that encoder accesses only public contract fields
-        class SpiedInput:
+        # Spied input verifying that encoder never reads forbidden evaluator fields
+        sample = _build_sample_agent_input()
+
+        class SpiedAgentInput(AgentInputV1):
             def __getattribute__(self, name):
                 if name in (
                     "route_completion", "clean_success", "reward", "case_id",
-                    "environment_seed", "tier", "split", "ground_truth_trajectory"
+                    "environment_seed", "tier", "split", "ground_truth_trajectory",
+                    "is_clean_success", "terminal_outcome_status",
                 ):
                     raise AssertionError(f"Forbidden evaluator-private property accessed: {name}")
                 return super().__getattribute__(name)
 
-        agent_input = _build_sample_agent_input()
-        vec = enc.encode(agent_input)
+        spied = SpiedAgentInput(
+            profile_id=sample.profile_id,
+            core_observation=sample.core_observation,
+            traffic_context=sample.traffic_context,
+            task_context=sample.task_context,
+            step_index=sample.step_index,
+        )
+
+        # Verify spy intercepts forbidden attribute accesses
+        with self.assertRaises(AssertionError):
+            _ = spied.route_completion
+
+        # Verify encode consumes strictly permitted fields without triggering spy assertions
+        vec = enc.encode(spied)
         self.assertIsInstance(vec, np.ndarray)
+        self.assertEqual(vec.shape, (409,))
 
     def test_05_train_case_sampler_strict_holdout_isolation(self):
         """5. TrainCaseSampler contains strictly 180 TRAIN geometries with 0 holdout leakage."""
@@ -273,6 +289,26 @@ class TestStage5TrainingFoundation(unittest.TestCase):
         for rec in easy_sampler._records:
             self.assertEqual(rec["tier"].lower(), "easy")
 
+        # Verify holdout validation rejects forged validation case
+        from src.launcher.cases import get_default_project_root, resolve_validation_cases
+        val_case = resolve_validation_cases(get_default_project_root())[0]
+        forged_val_case = ResolvedCaseV1(
+            case_id=val_case.case_id.replace("val", "train"),
+            case_index=1,
+            protocol_order_index=1,
+            split="TRAIN",  # Forged label
+            tier=val_case.tier,
+            sequence=val_case.sequence,
+            geometry_generation_seed=val_case.geometry_generation_seed,
+            geometry_sha256=val_case.geometry_sha256,
+            environment_seed=val_case.environment_seed,
+            traffic_density=val_case.traffic_density,
+            horizon_steps=val_case.horizon_steps,
+        )
+        with self.assertRaises(ValueError) as ctx:
+            sampler.validate_train_case(forged_val_case)
+        self.assertIn("does not exist in verified MapSuite V1 TRAIN manifest", str(ctx.exception))
+
     def test_06_train_case_sampler_reproducibility_and_seed_separation(self):
         """6. TrainCaseSampler guarantees seed reproducibility, deterministic case mapping, and seed separation."""
         s1 = TrainCaseSampler(training_root_seed=777, strategy=SamplerStrategy.UNIFORM_RANDOM)
@@ -288,18 +324,35 @@ class TestStage5TrainingFoundation(unittest.TestCase):
         # Different root seed produces different sequence
         self.assertNotEqual(cases_1, cases_3)
 
-        # Deterministic get_case_for_seed contract (for Gymnasium reset(seed=...))
-        c_det1 = s1.get_case_for_seed(12345)
-        c_det2 = s2.get_case_for_seed(12345)
-        self.assertEqual(c_det1.case_id, c_det2.case_id)
-        self.assertEqual(c_det1.geometry_generation_seed, c_det2.geometry_generation_seed)
-        self.assertEqual(c_det1.horizon_steps, c_det2.horizon_steps)
+        # Separate get_case_for_geometry_seed API
+        case_g0 = s1.get_case_for_geometry_seed(0, environment_seed=42)
+        self.assertEqual(case_g0.geometry_generation_seed, 0)
+        self.assertEqual(case_g0.environment_seed, 42)
 
         # Seed separation assertion: env_seed != geom_seed != training_root_seed
         case = s1.sample_case()
         self.assertEqual(case.split, "TRAIN")
         self.assertIsInstance(case.environment_seed, int)
         self.assertIsInstance(case.geometry_generation_seed, int)
+
+        # Test calling Stage5TrainingEnv.reset(seed=X) reseeds sampling sequence
+        env_rr1 = Stage5TrainingEnv(sampler_strategy=SamplerStrategy.ROUND_ROBIN, tier_filter="Easy")
+        try:
+            obs1_a, info1_a = env_rr1.reset(seed=101)
+            obs1_b, info1_b = env_rr1.reset()
+        finally:
+            env_rr1.close()
+
+        env_rr2 = Stage5TrainingEnv(sampler_strategy=SamplerStrategy.ROUND_ROBIN, tier_filter="Easy")
+        try:
+            obs2_a, info2_a = env_rr2.reset(seed=101)
+            obs2_b, info2_b = env_rr2.reset()
+        finally:
+            env_rr2.close()
+
+        self.assertEqual(info1_a["case_id"], info2_a["case_id"])
+        self.assertEqual(info1_b["case_id"], info2_b["case_id"])
+        self.assertNotEqual(info1_a["case_id"], info1_b["case_id"])
 
     def test_07_gymnasium_api_and_check_env_compliance(self):
         """7. Stage5TrainingEnv fully complies with standard Gymnasium API and passes check_env()."""
@@ -416,6 +469,171 @@ class TestStage5TrainingFoundation(unittest.TestCase):
         self.assertEqual(GATE7_LOCKED_OBSERVABILITY_HASH, "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581")
         self.assertEqual(DEFAULT_LAUNCHER_CONTRACT_HASH, "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04")
         self.assertEqual(DEFAULT_PLATFORM_EXECUTION_HASH, "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d")
+
+    def test_12_holdout_rejection_in_env_reset_options(self):
+        """12. Stage5TrainingEnv.reset(options={'case': ...}) strictly rejects holdouts and invalid types."""
+        from src.launcher.cases import get_default_project_root, resolve_validation_cases
+        val_case = resolve_validation_cases(get_default_project_root())[0]
+
+        # Forged validation case with split='TRAIN'
+        forged_case = ResolvedCaseV1(
+            case_id=val_case.case_id.replace("val", "train"),
+            case_index=1,
+            protocol_order_index=1,
+            split="TRAIN",
+            tier=val_case.tier,
+            sequence=val_case.sequence,
+            geometry_generation_seed=val_case.geometry_generation_seed,
+            geometry_sha256=val_case.geometry_sha256,
+            environment_seed=val_case.environment_seed,
+            traffic_density=val_case.traffic_density,
+            horizon_steps=val_case.horizon_steps,
+        )
+
+        env = Stage5TrainingEnv(sampler_strategy=SamplerStrategy.FIXED, fixed_geometry_seed=0)
+        try:
+            # Must reject forged validation case before creating simulator
+            with self.assertRaises(ValueError) as ctx1:
+                env.reset(options={"case": forged_case})
+            self.assertIn("does not exist in verified MapSuite V1 TRAIN manifest", str(ctx1.exception))
+
+            # Must reject non-ResolvedCaseV1 instance
+            with self.assertRaises(TypeError) as ctx2:
+                env.reset(options={"case": "not_a_case"})
+            self.assertIn("must be a ResolvedCaseV1 instance", str(ctx2.exception))
+        finally:
+            env.close()
+
+    def test_13_observation_bounds_allows_values_exceeding_100(self):
+        """13. Observation space contains valid continuous waypoint and actor coordinates > 100 without clipping."""
+        enc = Stage5ObservationEncoder(core_only=False)
+
+        # Build input with waypoint coordinate > 100m (e.g. 150m) and actor position > 100m (e.g. 120m)
+        core = CoreObservationV1(np.full(259, 0.5, dtype=np.float32))
+
+        # Actor at 120m
+        act = TrafficActorV1(120.0, 15.0, 25.0, 0.0, 0.2, 4.8, 2.0)
+        actors_list = [act] + [TrafficActorV1(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) for _ in range(7)]
+        actors_arr = np.zeros((8, 7), dtype=np.float32)
+        actors_arr[0] = act.to_tuple()
+        val_mask = np.zeros(8, dtype=bool)
+        val_mask[0] = True
+
+        traffic = TrafficContextV1(
+            capacity=8, radius_m=50.0, actors=tuple(actors_list),
+            actors_array=actors_arr, validity_mask=val_mask,
+            active_count=1, overflow_count=0
+        )
+
+        # Waypoint at 150m
+        wp = RouteWaypointV1(150.0, 150.0, 20.0, 0.5)
+        wps_list = [wp] + [RouteWaypointV1(0.0, 0.0, 0.0, 0.0) for _ in range(19)]
+        wps_arr = np.zeros((20, 3), dtype=np.float32)
+        wps_arr[0] = wp.to_tuple()
+        task_mask = np.zeros(20, dtype=bool)
+        task_mask[0] = True
+
+        task = TaskContextV1(
+            lookahead_count=20, lookahead_spacing_m=2.5, lookahead_range_m=50.0,
+            current_lane_width=3.5, navigation_goal_direction=(1.0, 0.0),
+            waypoints=tuple(wps_list), waypoints_array=wps_arr, validity_mask=task_mask,
+            route_end_within_lookahead=False
+        )
+
+        inp = AgentInputV1(InputProfileId.STATE_DECISION_V1, core, traffic, task, step_index=0)
+        vec = enc.encode(inp)
+
+        # Must not be clipped to 100
+        self.assertEqual(vec[259], 120.0)  # Actor x
+        self.assertEqual(vec[325], 150.0)  # Waypoint x
+        self.assertTrue(np.all(np.isfinite(vec)))
+
+        # Observation space must contain the observation without rejection
+        self.assertTrue(enc.observation_space.contains(vec))
+
+    def test_14_exception_safe_lifecycle_failure_injection(self):
+        """14. Exceptions in _build_agent_input or encoder.encode during reset or step close simulator safely."""
+        env = Stage5TrainingEnv(sampler_strategy=SamplerStrategy.FIXED, fixed_geometry_seed=0)
+        try:
+            # 1. Failure in _build_agent_input during reset()
+            with patch.object(env, "_build_agent_input", side_effect=RuntimeError("Simulated reset input error")):
+                with self.assertRaises(RuntimeError) as ctx1:
+                    env.reset()
+                self.assertIn("Simulated reset input error", str(ctx1.exception))
+                self.assertIsNone(env._env, "Simulator must be closed on reset input failure")
+
+            # 2. Failure in encoder.encode during reset()
+            with patch.object(env.encoder, "encode", side_effect=RuntimeError("Simulated reset encode error")):
+                with self.assertRaises(RuntimeError) as ctx2:
+                    env.reset()
+                self.assertIn("Simulated reset encode error", str(ctx2.exception))
+                self.assertIsNone(env._env, "Simulator must be closed on reset encode failure")
+
+            # 3. Failure in _build_agent_input during step()
+            env.reset()
+            self.assertIsNotNone(env._env)
+            with patch.object(env, "_build_agent_input", side_effect=RuntimeError("Simulated step input error")):
+                with self.assertRaises(RuntimeError) as ctx3:
+                    env.step([0.0, 0.5])
+                self.assertIn("Simulated step input error", str(ctx3.exception))
+                self.assertIsNone(env._env, "Simulator must be closed on step input failure")
+
+            # 4. Failure in encoder.encode during step()
+            env.reset()
+            self.assertIsNotNone(env._env)
+            with patch.object(env.encoder, "encode", side_effect=RuntimeError("Simulated step encode error")):
+                with self.assertRaises(RuntimeError) as ctx4:
+                    env.step([0.0, 0.5])
+                self.assertIn("Simulated step encode error", str(ctx4.exception))
+                self.assertIsNone(env._env, "Simulator must be closed on step encode failure")
+        finally:
+            env.close()
+
+    def test_15_reward_spec_outcomes_and_safety_first_precedence(self):
+        """15. Verifies RewardSpecV1 step reward, terminal bonuses, penalties, and safety-first precedence."""
+        from src.platform.episode import classify_episode_outcome
+        from src.launcher.executor import compute_step_route_progress_and_reward
+
+        spec = RewardSpecV1(
+            progress_weight=1.0,
+            time_penalty_budget=0.25,
+            success_bonus=1.0,
+            safety_penalty=1.0,
+            unknown_termination_penalty=1.0,
+            timeout_penalty=0.0
+        )
+        horizon = 1000
+
+        # A. Clean Success (+1.0 bonus)
+        succ_outcome = classify_episode_outcome(raw_flags={"arrive_dest": True}, terminated=True, truncated=False)
+        self.assertTrue(succ_outcome.clean_success)
+        self.assertEqual(succ_outcome.primary_reason, TerminalReason.SUCCESS)
+        _, _, b_succ = compute_step_route_progress_and_reward(spec, 1.0, 0.9, horizon, succ_outcome)
+        self.assertEqual(b_succ.terminal_reward, 1.0)
+        expected_total = 1.0 * (1.0 - 0.9) - (0.25 / 1000) + 1.0
+        self.assertAlmostEqual(b_succ.total_reward, expected_total)
+
+        # B. Safety Failure (Crash Vehicle) -> -1.0 penalty
+        crash_outcome = classify_episode_outcome(raw_flags={"crash_vehicle": True}, terminated=True, truncated=False)
+        self.assertFalse(crash_outcome.clean_success)
+        self.assertEqual(crash_outcome.primary_reason, TerminalReason.CRASH_VEHICLE)
+        _, _, b_crash = compute_step_route_progress_and_reward(spec, 0.5, 0.5, horizon, crash_outcome)
+        self.assertEqual(b_crash.terminal_reward, -1.0)
+
+        # C. Timeout -> 0.0 penalty
+        timeout_outcome = classify_episode_outcome(raw_flags={}, terminated=False, truncated=True)
+        self.assertEqual(timeout_outcome.primary_reason, TerminalReason.TIMEOUT)
+        _, _, b_timeout = compute_step_route_progress_and_reward(spec, 0.8, 0.8, horizon, timeout_outcome)
+        self.assertEqual(b_timeout.terminal_reward, 0.0)
+
+        # D. Simultaneous Safety Violation + Arrival -> Safety takes absolute precedence!
+        both_flags = {"crash_vehicle": True, "arrive_dest": True}
+        dual_outcome = classify_episode_outcome(raw_flags=both_flags, terminated=True, truncated=False)
+        self.assertEqual(dual_outcome.primary_reason, TerminalReason.CRASH_VEHICLE)
+        self.assertFalse(dual_outcome.clean_success)
+        _, _, b_dual = compute_step_route_progress_and_reward(spec, 1.0, 0.9, horizon, dual_outcome)
+        # Terminal reward must be penalty (-1.0), NOT success (+1.0)
+        self.assertEqual(b_dual.terminal_reward, -1.0)
 
 
 if __name__ == "__main__":

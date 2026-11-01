@@ -154,14 +154,19 @@ class Stage5TrainingEnv(gym.Env):
         """
         super().reset(seed=seed)
 
-        # 1. Determine target case
-        if options and "case" in options and isinstance(options["case"], ResolvedCaseV1):
-            case = options["case"]
-            if case.split.upper() != "TRAIN":
-                raise ValueError(f"FATAL: Provided case split '{case.split}' violates TRAIN constraint!")
-        elif seed is not None:
-            # Deterministic case mapping satisfying Gymnasium reset(seed=...) reproducibility
-            case = self.sampler.get_case_for_seed(seed)
+        # 1. Reseed sampler if explicit seed is provided
+        if seed is not None:
+            self.sampler.reset_seed(seed)
+
+        # 2. Determine target case with strict holdout verification
+        if options and "case" in options:
+            raw_case = options["case"]
+            if not isinstance(raw_case, ResolvedCaseV1):
+                raise TypeError(
+                    f"options['case'] must be a ResolvedCaseV1 instance, got {type(raw_case).__name__}"
+                )
+            self.sampler.validate_train_case(raw_case)
+            case = raw_case
         else:
             case = self.sampler.sample_case()
 
@@ -181,7 +186,7 @@ class Stage5TrainingEnv(gym.Env):
             self._blocks_cache[cache_key] = blocks
         blocks = self._blocks_cache[cache_key]
 
-        # 3. Simulator instance management
+        # 3. Simulator instance management and initial step observation in exception-safe block
         sim_key = (case.tier, case.sequence, case.geometry_generation_seed, case.environment_seed)
         try:
             # Recreate simulator if simulator is None or if geometry/environment seed changed
@@ -195,37 +200,37 @@ class Stage5TrainingEnv(gym.Env):
                 self._current_sim_key = sim_key
 
             raw_obs, info = self._env.reset(seed=case.environment_seed)
+
+            # 4. Reset episodic tracking variables
+            self._step_idx = 0
+            self._last_route_completion = 0.0
+            self._max_route_completion = 0.0
+            self._cumulative_reward = 0.0
+            self._terminated = False
+            self._truncated = False
+            self._env_flags = {}
+            self._last_outcome = None
+
+            # 5. Build public AgentInputV1 and encode observation
+            agent_input = self._build_agent_input(raw_obs, step_idx=0)
+            obs = self.encoder.encode(agent_input)
+
+            # 6. Diagnostic info (strictly for training instrumentation, not passed to policy)
+            info_dict: Dict[str, Any] = {
+                "step_index": 0,
+                "case_id": case.case_id,
+                "tier": case.tier,
+                "sequence": case.sequence,
+                "geometry_seed": case.geometry_generation_seed,
+                "environment_seed": case.environment_seed,
+                "horizon_steps": case.horizon_steps,
+                "traffic_density": case.traffic_density,
+            }
+
+            return obs, info_dict
         except Exception:
             self.close()
             raise
-
-        # 4. Reset episodic tracking variables
-        self._step_idx = 0
-        self._last_route_completion = 0.0
-        self._max_route_completion = 0.0
-        self._cumulative_reward = 0.0
-        self._terminated = False
-        self._truncated = False
-        self._env_flags = {}
-        self._last_outcome = None
-
-        # 5. Build public AgentInputV1 and encode observation
-        agent_input = self._build_agent_input(raw_obs, step_idx=0)
-        obs = self.encoder.encode(agent_input)
-
-        # 6. Diagnostic info (strictly for training instrumentation, not passed to policy)
-        info_dict: Dict[str, Any] = {
-            "step_index": 0,
-            "case_id": case.case_id,
-            "tier": case.tier,
-            "sequence": case.sequence,
-            "geometry_seed": case.geometry_generation_seed,
-            "environment_seed": case.environment_seed,
-            "horizon_steps": case.horizon_steps,
-            "traffic_density": case.traffic_density,
-        }
-
-        return obs, info_dict
 
     # ==========================================================================
     # Gymnasium API: step()
@@ -254,76 +259,75 @@ class Stage5TrainingEnv(gym.Env):
         # Raises InvalidActionError on NaN, Inf, wrong shape, or out-of-bounds (no silent clipping!)
         canonical_act = self.action_adapter.to_canonical(action)
 
-        # 2. Simulator physics step (10 Hz decision cycle = 5 repeats x 0.02s world step)
+        # 2. Simulator physics step, outcome, reward, and observation encoding in exception-safe block
         try:
             raw_obs, r_env, term_step, trunc_step, step_info = self._env.step(canonical_act.to_numpy())
+            self._step_idx += 1
+
+            # 3. Update safety and task flags from step_info
+            for k in (
+                "arrive_dest", "out_of_road", "crash_vehicle", "crash_object",
+                "crash_building", "crash_human", "crash_sidewalk", "max_step"
+            ):
+                if bool(step_info.get(k, False)):
+                    self._env_flags[k] = True
+
+            # 4. Classify outcome adhering strictly to safety-first precedence
+            outcome = classify_episode_outcome(
+                raw_flags=self._env_flags,
+                terminated=term_step,
+                truncated=trunc_step or (self._step_idx >= self._current_case.horizon_steps),
+            )
+            self._last_outcome = outcome
+            self._terminated = outcome.terminated
+            self._truncated = outcome.truncated
+
+            # 5. Compute authoritative step reward via Platform V1 RewardSpecV1
+            curr_route = float(step_info.get("route_completion", 0.0))
+            if curr_route > self._max_route_completion:
+                self._max_route_completion = curr_route
+
+            delta_route, self._last_route_completion, breakdown = compute_step_route_progress_and_reward(
+                reward_spec=self.reward_spec,
+                current_route_completion=curr_route,
+                last_route_completion=self._last_route_completion,
+                horizon_steps=self._current_case.horizon_steps,
+                outcome=outcome if (self._terminated or self._truncated) else None,
+            )
+            step_reward = float(breakdown.total_reward)
+            self._cumulative_reward += step_reward
+
+            # 6. Build authoritative AgentInputV1 and encode observation
+            agent_input = self._build_agent_input(raw_obs, step_idx=self._step_idx)
+            obs = self.encoder.encode(agent_input)
+
+            # 7. Construct info dictionary
+            speed_kmh = read_vehicle_speed_kmh(self._env.agent)
+            info_dict: Dict[str, Any] = {
+                "step_index": self._step_idx,
+                "speed_km_h": speed_kmh,
+                "route_completion": curr_route,
+                "delta_route": delta_route,
+                "reward_breakdown": breakdown.to_dict(),
+            }
+
+            if self._terminated or self._truncated:
+                info_dict["outcome"] = {
+                    "terminated": outcome.terminated,
+                    "truncated": outcome.truncated,
+                    "primary_reason": outcome.primary_reason.value,
+                    "clean_success": bool(outcome.clean_success),
+                    "raw_flags": dict(outcome.raw_flags),
+                }
+                info_dict["clean_success"] = bool(outcome.clean_success)
+                info_dict["primary_reason"] = outcome.primary_reason.value
+                info_dict["cumulative_reward"] = self._cumulative_reward
+                info_dict["total_steps"] = self._step_idx
+
+            return obs, step_reward, self._terminated, self._truncated, info_dict
         except Exception:
             self.close()
             raise
-
-        self._step_idx += 1
-
-        # 3. Update safety and task flags from step_info
-        for k in (
-            "arrive_dest", "out_of_road", "crash_vehicle", "crash_object",
-            "crash_building", "crash_human", "crash_sidewalk", "max_step"
-        ):
-            if bool(step_info.get(k, False)):
-                self._env_flags[k] = True
-
-        # 4. Classify outcome adhering strictly to safety-first precedence
-        outcome = classify_episode_outcome(
-            raw_flags=self._env_flags,
-            terminated=term_step,
-            truncated=trunc_step or (self._step_idx >= self._current_case.horizon_steps),
-        )
-        self._last_outcome = outcome
-        self._terminated = outcome.terminated
-        self._truncated = outcome.truncated
-
-        # 5. Compute authoritative step reward via Platform V1 RewardSpecV1
-        curr_route = float(step_info.get("route_completion", 0.0))
-        if curr_route > self._max_route_completion:
-            self._max_route_completion = curr_route
-
-        delta_route, self._last_route_completion, breakdown = compute_step_route_progress_and_reward(
-            reward_spec=self.reward_spec,
-            current_route_completion=curr_route,
-            last_route_completion=self._last_route_completion,
-            horizon_steps=self._current_case.horizon_steps,
-            outcome=outcome if (self._terminated or self._truncated) else None,
-        )
-        step_reward = float(breakdown.total_reward)
-        self._cumulative_reward += step_reward
-
-        # 6. Build authoritative AgentInputV1 and encode observation
-        agent_input = self._build_agent_input(raw_obs, step_idx=self._step_idx)
-        obs = self.encoder.encode(agent_input)
-
-        # 7. Construct info dictionary
-        speed_kmh = read_vehicle_speed_kmh(self._env.agent)
-        info_dict: Dict[str, Any] = {
-            "step_index": self._step_idx,
-            "speed_km_h": speed_kmh,
-            "route_completion": curr_route,
-            "delta_route": delta_route,
-            "reward_breakdown": breakdown.to_dict(),
-        }
-
-        if self._terminated or self._truncated:
-            info_dict["outcome"] = {
-                "terminated": outcome.terminated,
-                "truncated": outcome.truncated,
-                "primary_reason": outcome.primary_reason.value,
-                "clean_success": bool(outcome.clean_success),
-                "raw_flags": dict(outcome.raw_flags),
-            }
-            info_dict["clean_success"] = bool(outcome.clean_success)
-            info_dict["primary_reason"] = outcome.primary_reason.value
-            info_dict["cumulative_reward"] = self._cumulative_reward
-            info_dict["total_steps"] = self._step_idx
-
-        return obs, step_reward, self._terminated, self._truncated, info_dict
 
     # ==========================================================================
     # Private Simulator Helpers

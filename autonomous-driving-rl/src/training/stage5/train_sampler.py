@@ -118,7 +118,14 @@ class TrainCaseSampler:
             t = r["tier"].lower()
             self._records_by_tier.setdefault(t, []).append(r)
 
-        # 4. Initialize sampling state
+        # 4. Comprehensive TRAIN manifest lookup for holdout protection (unfiltered 180 records)
+        self._train_manifest_lookup: Dict[Tuple[str, str, int], Dict[str, str]] = {
+            (r["tier"].lower(), r["sequence"], int(r["geometry_generation_seed"])): r
+            for r in all_records
+            if r["split"].upper() == "TRAIN"
+        }
+
+        # 5. Initialize sampling state
         self._rng = random.Random(self.training_root_seed)
         self._np_rng = np.random.RandomState(self.training_root_seed)
         self._cycle_index = 0
@@ -139,6 +146,83 @@ class TrainCaseSampler:
     def last_sampled_case(self) -> Optional[ResolvedCaseV1]:
         """Most recently sampled ResolvedCaseV1."""
         return self._last_sampled_case
+
+    def validate_train_case(self, case: Any) -> None:
+        """
+        Validates that a given case matches an authentic, verified MapSuite V1 TRAIN geometry.
+        Loudly rejects forged split labels, holdout geometries (VALIDATION, TEST), and mismatched parameters.
+        """
+        if not isinstance(case, ResolvedCaseV1):
+            raise TypeError(f"Expected ResolvedCaseV1 instance, got {type(case).__name__}")
+
+        if str(case.split).upper() != "TRAIN":
+            raise ValueError(f"FATAL HOLDOUT VIOLATION: Case '{case.case_id}' split '{case.split}' is not TRAIN!")
+
+        geom_seed = int(case.geometry_generation_seed)
+        key = (case.tier.lower(), case.sequence, geom_seed)
+        if key not in self._train_manifest_lookup:
+            raise ValueError(
+                f"FATAL HOLDOUT VIOLATION: Case '{case.case_id}' geometry "
+                f"(tier='{case.tier}', sequence='{case.sequence}', geom_seed={geom_seed}) "
+                f"does not exist in verified MapSuite V1 TRAIN manifest!"
+            )
+
+        record = self._train_manifest_lookup[key]
+        if case.geometry_sha256 != record["geometry_sha256"]:
+            raise ValueError(
+                f"FATAL GEOMETRY HASH MISMATCH for case '{case.case_id}': "
+                f"expected={record['geometry_sha256']}, got={case.geometry_sha256}"
+            )
+
+        if abs(float(case.traffic_density) - float(record["traffic_density"])) > 1e-4:
+            raise ValueError(
+                f"FATAL TRAFFIC DENSITY MISMATCH for case '{case.case_id}': "
+                f"expected={record['traffic_density']}, got={case.traffic_density}"
+            )
+
+        expected_horizon = compute_route_aware_horizon(float(record["route_length_m"]))
+        if case.horizon_steps != expected_horizon:
+            raise ValueError(
+                f"FATAL HORIZON STEPS MISMATCH for case '{case.case_id}': "
+                f"expected={expected_horizon}, got={case.horizon_steps}"
+            )
+
+    def get_case_for_geometry_seed(self, geom_seed: int, environment_seed: Optional[int] = None) -> ResolvedCaseV1:
+        """
+        Explicitly constructs a ResolvedCaseV1 for a specific TRAIN geometry generation seed.
+        Used for targeted test fixtures and debugging without mutating the sampler schedule.
+        """
+        target_seed = int(geom_seed)
+        matches = [r for r in self._records if int(r["geometry_generation_seed"]) == target_seed]
+        if not matches:
+            matches = [r for r in self._train_manifest_lookup.values() if int(r["geometry_generation_seed"]) == target_seed]
+            if not matches:
+                raise ValueError(f"Geometry seed {target_seed} not found in MapSuite V1 TRAIN manifest.")
+        record = matches[0]
+
+        env_seed = int(environment_seed) if environment_seed is not None else 0
+        tier = record["tier"]
+        sequence = record["sequence"]
+        geom_hash = record["geometry_sha256"]
+        traffic_density = float(record["traffic_density"])
+        route_len = float(record["route_length_m"])
+        horizon_steps = compute_route_aware_horizon(route_len)
+
+        case_id = f"train/{tier}/{sequence}/geom-{target_seed}/env-{env_seed}"
+
+        return ResolvedCaseV1(
+            case_id=case_id,
+            case_index=1,
+            protocol_order_index=1,
+            split="TRAIN",
+            tier=tier,
+            sequence=sequence,
+            geometry_generation_seed=target_seed,
+            geometry_sha256=geom_hash,
+            environment_seed=env_seed,
+            traffic_density=traffic_density,
+            horizon_steps=horizon_steps,
+        )
 
     def reset_seed(self, seed: int) -> None:
         """Resets the pseudorandom sampling sequence with a new training root seed."""

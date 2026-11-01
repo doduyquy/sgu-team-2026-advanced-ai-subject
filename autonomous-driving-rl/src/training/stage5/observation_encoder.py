@@ -74,13 +74,51 @@ class Stage5ObservationEncoder:
         self._core_only = bool(core_only)
         self._dimension = STAGE5_CORE_ONLY_OBSERVATION_DIM if self._core_only else STAGE5_FULL_OBSERVATION_DIM
 
-        # Define Gymnasium observation space
-        # Core features are in [0.0, 1.0]; relative distances, coordinates,
-        # velocities, and yaw angles are well within [-100.0, 100.0].
-        # Bounded Box prevents Gymnasium Box infinity warnings.
+        # Define Gymnasium observation space based strictly on Platform V1 schema:
+        # - Core features are normalized in [0.0, 1.0].
+        # - Traffic actor features and task waypoints are continuous physical coordinates
+        #   in (-inf, inf), avoiding arbitrary clipping or rejection of distant entities.
+        # - Validity masks and ratios are strictly in [0.0, 1.0].
+        # - Direction vector is in [-1.0, 1.0].
+        low = np.full(self._dimension, -np.inf, dtype=np.float32)
+        high = np.full(self._dimension, np.inf, dtype=np.float32)
+
+        if self._core_only:
+            low[0:CORE_OBSERVATION_DIM] = 0.0
+            high[0:CORE_OBSERVATION_DIM] = 1.0
+        else:
+            # 1. Core features [0:259]: strictly [0.0, 1.0]
+            low[0:CORE_OBSERVATION_DIM] = 0.0
+            high[0:CORE_OBSERVATION_DIM] = 1.0
+
+            # 2. Traffic actors [259:315]: continuous physical features in (-inf, inf)
+            # 3. Traffic validity mask [315:323]: strictly [0.0, 1.0]
+            low[315:323] = 0.0
+            high[315:323] = 1.0
+
+            # 4. Traffic metrics [323:325]: active_count_ratio and overflow_ratio in [0.0, 1.0]
+            low[323:325] = 0.0
+            high[323:325] = 1.0
+
+            # 5. Task waypoints [325:385]: continuous coordinates in (-inf, inf)
+            # 6. Task validity mask [385:405]: strictly [0.0, 1.0]
+            low[385:405] = 0.0
+            high[385:405] = 1.0
+
+            # 7. Task metrics [405:409]:
+            # lane_width_ratio >= 0.0
+            low[405] = 0.0
+            high[405] = np.inf
+            # 2D goal direction unit vector in [-1.0, 1.0]
+            low[406:408] = -1.0
+            high[406:408] = 1.0
+            # route_end_within_lookahead flag in [0.0, 1.0]
+            low[408] = 0.0
+            high[408] = 1.0
+
         self._observation_space = spaces.Box(
-            low=-100.0,
-            high=100.0,
+            low=low,
+            high=high,
             shape=(self._dimension,),
             dtype=np.float32,
         )
