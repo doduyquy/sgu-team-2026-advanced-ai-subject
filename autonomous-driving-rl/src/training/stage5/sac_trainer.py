@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 import psutil
@@ -67,6 +67,7 @@ class SacDiagnosticsCallback(BaseCallback):
                     "total_timesteps": int(self.num_timesteps),
                     "step_index": int(info.get("step_index", 0)),
                     "case_id": str(info.get("case_id", "unknown")),
+                    "geometry_id": str(info.get("geometry_id", "unknown")),
                     "tier": str(info.get("tier", "unknown")),
                     "geometry_generation_seed": info.get("geometry_generation_seed"),
                     "environment_seed": info.get("environment_seed"),
@@ -107,6 +108,7 @@ class SacDiagnosticsCallback(BaseCallback):
 
         episode_returns = [ep["cumulative_reward"] for ep in self.episode_records]
         mean_return = float(np.mean(episode_returns)) if episode_returns else 0.0
+        unique_geometry_ids = sorted({ep["geometry_id"] for ep in self.episode_records if ep.get("geometry_id") not in (None, "unknown")})
 
         # Retrieve training losses from SB3 logger if available
         model = getattr(self, "model", None)
@@ -119,6 +121,8 @@ class SacDiagnosticsCallback(BaseCallback):
         return {
             "total_timesteps": int(total_steps),
             "completed_episodes": completed_episodes,
+            "unique_training_geometries": len(unique_geometry_ids),
+            "training_geometry_ids": unique_geometry_ids,
             "clean_success_count": clean_success_count,
             "clean_success_rate": clean_success_rate,
             "mean_route_completion": mean_route_comp,
@@ -144,6 +148,7 @@ class SacBaselineTrainer:
         training_root_seed: int = 101,
         project_root: Optional[Path] = None,
         device: str = "cpu",
+        allowed_geometry_ids: Optional[Sequence[str]] = None,
     ) -> None:
         """
         Initializes the SAC Baseline Trainer.
@@ -187,6 +192,7 @@ class SacBaselineTrainer:
         self.sampler = TrainCaseSampler(
             training_root_seed=self.training_root_seed,
             strategy=SamplerStrategy(strategy),
+            allowed_geometry_ids=allowed_geometry_ids,
             project_root=self.project_root,
         )
 

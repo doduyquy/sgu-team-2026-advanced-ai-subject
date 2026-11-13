@@ -52,6 +52,7 @@ class TrainCaseSampler:
         tier_filter: Optional[str] = None,
         sequence_filter: Optional[str] = None,
         fixed_geometry_seed: Optional[int] = None,
+        allowed_geometry_ids: Optional[Sequence[str]] = None,
         project_root: Optional[Path] = None,
     ) -> None:
         """
@@ -71,6 +72,7 @@ class TrainCaseSampler:
         self.tier_filter = tier_filter.lower() if tier_filter else None
         self.sequence_filter = sequence_filter
         self.fixed_geometry_seed = int(fixed_geometry_seed) if fixed_geometry_seed is not None else None
+        self.allowed_geometry_ids = frozenset(str(value) for value in allowed_geometry_ids) if allowed_geometry_ids is not None else None
 
         # 1. Load and cryptographically verify geometry manifest
         manifest_path = self.project_root / "results" / "audits" / "evaluation_protocol" / "geometry_split_manifest.csv"
@@ -89,6 +91,15 @@ class TrainCaseSampler:
 
         if len(train_records) != 180:
             raise ValueError(f"Expected exactly 180 TRAIN split records, got {len(train_records)}")
+
+        self._train_geometry_lookup = {r["geometry_id"]: r for r in train_records}
+        if self.allowed_geometry_ids is not None:
+            unknown = self.allowed_geometry_ids - self._train_geometry_lookup.keys()
+            if unknown:
+                raise ValueError(f"Allowed geometry IDs are not verified TRAIN records: {sorted(unknown)}")
+            train_records = [r for r in train_records if r["geometry_id"] in self.allowed_geometry_ids]
+            if not train_records:
+                raise ValueError("Explicit allowed_geometry_ids leaves an empty TRAIN sampler pool")
 
         # 3. Apply optional tier and sequence filters
         if self.tier_filter is not None:
@@ -124,6 +135,11 @@ class TrainCaseSampler:
             for r in all_records
             if r["split"].upper() == "TRAIN"
         }
+        self._train_records_by_key: Dict[Tuple[str, str, int], List[Dict[str, str]]] = {}
+        for record in all_records:
+            if record["split"].upper() == "TRAIN":
+                key = (record["tier"].lower(), record["sequence"], int(record["geometry_generation_seed"]))
+                self._train_records_by_key.setdefault(key, []).append(record)
 
         # 5. Fixed strategy validation: must unambiguously resolve to exactly ONE geometry
         if self.strategy == SamplerStrategy.FIXED:
@@ -188,7 +204,18 @@ class TrainCaseSampler:
                 f"does not exist in verified MapSuite V1 TRAIN manifest!"
             )
 
-        record = self._train_manifest_lookup[key]
+        candidates = self._train_records_by_key[key]
+        matches = [candidate for candidate in candidates if candidate["geometry_sha256"] == case.geometry_sha256]
+        if len(matches) != 1:
+            raise ValueError(
+                f"FATAL GEOMETRY HASH MISMATCH for case '{case.case_id}': geometry tuple resolves to "
+                f"{len(matches)} manifest records with the supplied hash"
+            )
+        record = matches[0]
+        if self.allowed_geometry_ids is not None and record["geometry_id"] not in self.allowed_geometry_ids:
+            raise ValueError(
+                f"FATAL PILOT SPLIT VIOLATION: Geometry '{record['geometry_id']}' is outside the allowed TRAIN pool"
+            )
         if case.geometry_sha256 != record["geometry_sha256"]:
             raise ValueError(
                 f"FATAL GEOMETRY HASH MISMATCH for case '{case.case_id}': "
@@ -270,6 +297,31 @@ class TrainCaseSampler:
             traffic_density=traffic_density,
             horizon_steps=horizon_steps,
         )
+
+    def get_case_for_geometry_id(self, geometry_id: str, environment_seed: int = 0) -> ResolvedCaseV1:
+        """Resolves an explicitly allowed, verified TRAIN geometry by unique manifest ID."""
+        if self.allowed_geometry_ids is not None and geometry_id not in self.allowed_geometry_ids:
+            raise ValueError(f"Geometry '{geometry_id}' is outside the configured allowed geometry IDs")
+        try:
+            r = self._train_geometry_lookup[geometry_id]
+        except KeyError as exc:
+            raise ValueError(f"Unknown TRAIN geometry_id: {geometry_id}") from exc
+        env_seed = int(environment_seed)
+        return ResolvedCaseV1(
+            case_id=f"train/{r['tier']}/{r['sequence']}/geom-{r['geometry_generation_seed']}/env-{env_seed}",
+            case_index=1, protocol_order_index=1, split="TRAIN", tier=r["tier"],
+            sequence=r["sequence"], geometry_generation_seed=int(r["geometry_generation_seed"]),
+            geometry_sha256=r["geometry_sha256"], environment_seed=env_seed,
+            traffic_density=float(r["traffic_density"]),
+            horizon_steps=compute_route_aware_horizon(float(r["route_length_m"])),
+        )
+
+    def geometry_id_for_case(self, case: ResolvedCaseV1) -> str:
+        """Returns geometry_id after applying the authoritative TRAIN/hash checks."""
+        self.validate_train_case(case)
+        key = (case.tier.lower(), case.sequence, int(case.geometry_generation_seed))
+        return next(row["geometry_id"] for row in self._train_records_by_key[key]
+                    if row["geometry_sha256"] == case.geometry_sha256)
 
     def get_case_for_geometry_seed(
         self,

@@ -117,6 +117,7 @@ class Stage5TrainingEnv(gym.Env):
         # 5. Internal Simulator State
         self._env: Optional[MetaDriveEnv] = None
         self._current_case: Optional[ResolvedCaseV1] = None
+        self._current_geometry_id: Optional[str] = None
         self._current_sim_key: Optional[Tuple[str, str, int, int]] = None
         self._blocks_cache: Dict[Tuple[str, int], List[Any]] = {}
 
@@ -169,6 +170,7 @@ class Stage5TrainingEnv(gym.Env):
             case = self.sampler.sample_case()
 
         self._current_case = case
+        self._current_geometry_id = self.sampler.geometry_id_for_case(case)
         geom_key = (case.tier, case.sequence, case.geometry_generation_seed)
 
         # 2. Acquire locked block sequence (using cache to avoid repeated file extraction)
@@ -218,6 +220,7 @@ class Stage5TrainingEnv(gym.Env):
             info_dict: Dict[str, Any] = {
                 "step_index": 0,
                 "case_id": case.case_id,
+                "geometry_id": self._current_geometry_id,
                 "tier": case.tier,
                 "sequence": case.sequence,
                 "geometry_seed": case.geometry_generation_seed,
@@ -305,6 +308,7 @@ class Stage5TrainingEnv(gym.Env):
             info_dict: Dict[str, Any] = {
                 "step_index": self._step_idx,
                 "case_id": self._current_case.case_id,
+                "geometry_id": self._current_geometry_id,
                 "tier": self._current_case.tier,
                 "geometry_generation_seed": int(self._current_case.geometry_generation_seed),
                 "environment_seed": int(self._current_case.environment_seed),
@@ -389,6 +393,11 @@ class Stage5TrainingEnv(gym.Env):
     def cumulative_reward(self) -> float:
         """Returns total accumulated reward for the current episode."""
         return self._cumulative_reward
+
+    @property
+    def max_route_completion(self) -> float:
+        """Returns the maximum authoritative route_completion observed this episode."""
+        return self._max_route_completion
 
     @property
     def last_outcome(self) -> Optional[EpisodeOutcome]:
