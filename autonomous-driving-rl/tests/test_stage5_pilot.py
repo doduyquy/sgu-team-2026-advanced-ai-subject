@@ -15,6 +15,7 @@ from src.training.stage5.pilot_protocol import build_pilot_split, load_pilot_spl
 from src.training.stage5.train_sampler import SamplerStrategy, TrainCaseSampler
 from scripts.evaluate_stage5_pilot import evaluate_checkpoint, summarize
 from src.training.stage5.env_adapter import Stage5TrainingEnv
+from src.training.stage5.pilot_callbacks import PilotCheckpointCallback
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -73,6 +74,20 @@ class TestPilotProtocol(unittest.TestCase):
             self.assertTrue(env.observation_space.contains(observation))
             self.assertEqual(info["geometry_id"], train["geometry_id"])
             self.assertEqual(env.current_case.geometry_sha256, train["geometry_sha256"])
+            initial_progress = info["initial_route_completion"]
+            self.assertGreater(initial_progress, 0.0, "Chosen regression case must expose the reset route offset.")
+            _, _, terminated, truncated, step_info = env.step(np.asarray([0.0, 0.0], dtype=np.float32))
+            self.assertAlmostEqual(
+                step_info["delta_route"],
+                step_info["route_completion"] - initial_progress,
+                places=7,
+                msg="The reset-time route offset must not be counted as progress reward.",
+            )
+            self.assertAlmostEqual(
+                step_info["reward_breakdown"]["progress_reward"], step_info["delta_route"], places=7
+            )
+            self.assertEqual(step_info["action_steering"], 0.0)
+            self.assertEqual(step_info["action_throttle_brake"], 0.0)
         finally:
             env.close()
 
@@ -81,6 +96,33 @@ class TestPilotProtocol(unittest.TestCase):
         self.assertEqual(summary["episodes_completed"], 0)
         self.assertEqual(summary["episodes_interrupted"], 1)
         self.assertNotIn("timeout_rate", summary)
+
+    def test_training_callback_persists_step_actions_and_reward_components(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            callback = PilotCheckpointCallback(object(), Path(temp_dir), checkpoints=[])
+            callback.model = type("Model", (), {"num_timesteps": 1})()
+            callback.locals = {
+                "infos": [{
+                    "case_id": "case-a", "geometry_id": "geom-a", "tier": "Easy",
+                    "step_index": 3, "speed_km_h": 4.0, "route_completion": 0.2,
+                    "delta_route": 0.01,
+                    "reward_breakdown": {"progress_reward": 0.01, "time_cost": 0.001,
+                                         "terminal_reward": 0.0, "total_reward": 0.009},
+                }],
+                "actions": np.asarray([[0.25, -0.4]], dtype=np.float32),
+                "rewards": np.asarray([0.009], dtype=np.float32),
+                "dones": np.asarray([False]),
+            }
+            callback._on_training_start()
+            callback._on_step()
+            callback._on_training_end()
+            record = json.loads((Path(temp_dir) / "training_steps.jsonl").read_text().splitlines()[0])
+            self.assertEqual(record["steering"], 0.25)
+            self.assertAlmostEqual(record["throttle_brake"], -0.4, places=6)
+            self.assertEqual(record["progress_reward"], 0.01)
+            self.assertFalse(record["terminated_or_truncated"])
+            actions = json.loads((Path(temp_dir) / "training_action_summary.json").read_text())
+            self.assertEqual(actions["brake_fraction"], 1.0)
 
     def test_evaluator_does_not_update_model_or_sampler_and_writes_records(self):
         class FakePolicy(torch.nn.Module):

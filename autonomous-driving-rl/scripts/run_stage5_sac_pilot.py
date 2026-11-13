@@ -113,6 +113,9 @@ def main() -> int:
             "training_wall_time_s": elapsed,
             "training_steps_per_second": 10000 / max(elapsed, 0.001),
             "checkpoint_steps_saved": [0] + checkpoint_callback.saved_steps,
+            "training_action_summary": json.loads(
+                (checkpoints_dir / "training_action_summary.json").read_text(encoding="utf-8")
+            ),
         })
         (run_dir / "training_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         if int(trainer.model.num_timesteps) != 10000 or checkpoint_callback.saved_steps != [5000, 10000]:
