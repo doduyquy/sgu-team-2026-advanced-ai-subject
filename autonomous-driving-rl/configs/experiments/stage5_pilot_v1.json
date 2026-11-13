@@ -17,5 +17,7 @@
   "normalization": "none",
   "benchmark_eligible": false,
   "official_validation_or_test_access": false,
-  "reproducibility_note": "Seeds and pinned runtime constrain stochasticity but do not guarantee bit-for-bit MetaDrive or GPU training reproduction. Pilot checkpoints are independent of the historical S5.2 smoke checkpoint."
+  "reproducibility_note": "Seeds and pinned runtime constrain stochasticity but do not guarantee bit-for-bit MetaDrive or GPU training reproduction. Pilot checkpoints are independent of the historical S5.2 smoke checkpoint.",
+  "historical_s5_2_smoke_checkpoint_used": false,
+  "historical_s5_2_smoke_note": "The prior 5,000-step S5.2 artifact is a technical smoke only and was excluded because it had exposure to the full TRAIN split."
 }

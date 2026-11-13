@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import psutil
 import statistics
 import sys
 import time
@@ -70,7 +71,8 @@ def _episode_record(
     route = float(env._last_route_completion)
     return {
         "checkpoint_sha256": checkpoint_sha256, "training_step": int(training_step),
-        "geometry_id": schedule_item["geometry_id"], "case_id": getattr(case, "case_id", None),
+        "geometry_id": schedule_item["geometry_id"], "geometry_sha256": schedule_item["geometry_sha256"],
+        "case_id": getattr(case, "case_id", None),
         "tier": getattr(case, "tier", schedule_item["tier"]),
         "sequence": getattr(case, "sequence", schedule_item["sequence"]),
         "geometry_generation_seed": schedule_item["geometry_generation_seed"],
@@ -89,7 +91,9 @@ def _episode_record(
         "mean_steering": _mean(pair[0] for pair in controls),
         "steering_std": float(statistics.pstdev(pair[0] for pair in controls)) if controls else None,
         "steering_saturation_fraction": sum(abs(pair[0]) >= 0.95 for pair in controls) / len(controls) if controls else None,
-        "mean_inference_latency_ms": _mean(latencies_ms), "interrupted": bool(interrupted),
+        "mean_inference_latency_ms": _mean(latencies_ms),
+        "evaluation_rss_mb": psutil.Process().memory_info().rss / (1024 * 1024),
+        "interrupted": bool(interrupted),
         "diagnostic_metrics_label": "development diagnostic; not Platform V1 primary metrics",
     }
 
@@ -106,6 +110,8 @@ def evaluate_checkpoint(
     training_step = int(metadata["total_timesteps"])
     state_before = policy_state_sha256(model)
     update_count_before = int(getattr(model, "_n_updates", 0))
+    replay_buffer_before = getattr(model, "replay_buffer", None)
+    replay_size_before = replay_buffer_before.size() if replay_buffer_before is not None else None
     sampler = TrainCaseSampler(
         training_root_seed=101, strategy=SamplerStrategy.ROUND_ROBIN,
         allowed_geometry_ids=[x["geometry_id"] for x in load_pilot_split(split_path)["pilot_diagnostic"]],
@@ -158,12 +164,20 @@ def evaluate_checkpoint(
         raise AssertionError("Diagnostic evaluator mutated the training sampler state")
     if int(getattr(model, "_n_updates", 0)) != update_count_before or policy_state_sha256(model) != state_before:
         raise AssertionError("Evaluation changed policy parameters or ran optimizer updates")
+    replay_buffer_after = getattr(model, "replay_buffer", None)
+    replay_size_after = replay_buffer_after.size() if replay_buffer_after is not None else None
+    if replay_size_after != replay_size_before:
+        raise AssertionError("Evaluation changed checkpoint replay-buffer contents")
     result = {
         "protocol": "stage5_pilot_diagnostic_v1", "split_sha256": load_pilot_split(split_path)["split_sha256"],
         "checkpoint": str(checkpoint_dir), "checkpoint_sha256": checkpoint_sha,
         "training_step": training_step, "schedule_seed": schedule_seed,
         "planned_cases": len(schedule), "records_file": records_path.name,
         "aggregate": summarize(records), "evaluation_state_unchanged": True,
+        "optimizer_updates_before": update_count_before,
+        "optimizer_updates_after": int(getattr(model, "_n_updates", 0)),
+        "replay_buffer_size_before": replay_size_before,
+        "replay_buffer_size_after": replay_size_after,
         "training_sampler_sampled_count": sampler.sampled_count,
         "policy_state_sha256_before_after": state_before,
     }

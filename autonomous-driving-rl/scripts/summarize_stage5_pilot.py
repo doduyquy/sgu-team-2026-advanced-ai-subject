@@ -11,7 +11,7 @@ from typing import Any, Dict, List
 ROOT = Path(__file__).resolve().parents[1]
 
 METRICS = ("final_route_completion", "clean_success", "safety_failure", "timeout", "episode_return",
-           "stationary_fraction", "mean_moving_speed_km_h", "mean_throttle", "mean_brake",
+           "stationary_fraction", "mean_speed_km_h", "mean_moving_speed_km_h", "mean_throttle", "mean_brake",
            "mean_steering", "steering_std", "steering_saturation_fraction")
 
 def read_records(path: Path) -> List[Dict[str, Any]]:
@@ -44,6 +44,43 @@ def build_report(run_dir: Path, out_dir: Path) -> Dict[str, Any]:
         "classification": "internal PILOT_DIAGNOSTIC development data; not official VALIDATION or TEST",
         "checkpoints": {}, "paired_differences_vs_untrained": {}, "per_tier": {},
     }
+    training_summary = json.loads((run_dir / "training_summary.json").read_text(encoding="utf-8"))
+    resource_samples = json.loads((run_dir / "checkpoints/resource_samples.json").read_text(encoding="utf-8"))
+    run_status = json.loads((run_dir / "run_status.json").read_text(encoding="utf-8"))
+    checkpoint0 = json.loads((run_dir / "checkpoints/step_00000/metadata.json").read_text(encoding="utf-8"))
+    protocol = json.loads((run_dir / "pilot_protocol.json").read_text(encoding="utf-8"))
+    baseline_config = json.loads((ROOT / "configs/experiments/stage5_rl_baseline_v1.json").read_text(encoding="utf-8"))
+    ram_values = [float(item["rss_mb"]) for item in resource_samples if item.get("rss_mb") is not None]
+    report["training"] = {
+        "code_commit": run_status.get("code_commit"),
+        "python_version": run_status.get("python"),
+        "torch_version": checkpoint0.get("torch_version"),
+        "stable_baselines3_version": checkpoint0.get("framework_version"),
+        "gymnasium_version": checkpoint0.get("gymnasium_version"),
+        "metadrive_version": baseline_config.get("dependency_compatibility_notes", {}).get("metadrive_version"),
+        "encoder_fingerprint": checkpoint0.get("encoder_fingerprint"),
+        "split_sha256": run_status.get("split_sha256"),
+        "checkpoint_model_sha256": run_status.get("checkpoint_sha256", {}),
+        "baseline_config_sha256": protocol.get("baseline_config_sha256"),
+        "historical_s5_2_smoke_checkpoint_used": protocol.get("historical_s5_2_smoke_checkpoint_used"),
+        "requested_steps": training_summary.get("requested_timesteps"),
+        "actual_steps": training_summary.get("actual_num_timesteps"),
+        "training_root_seed": 101,
+        "optimizer_updates": training_summary.get("optimizer_updates"),
+        "completed_episodes": training_summary.get("completed_episodes"),
+        "unique_training_geometries": training_summary.get("unique_training_geometries"),
+        "training_geometry_ids": training_summary.get("training_geometry_ids", []),
+        "wall_time_s": training_summary.get("training_wall_time_s"),
+        "steps_per_second": training_summary.get("training_steps_per_second"),
+        "actor_loss_at_end": training_summary.get("actor_loss"),
+        "critic_loss_at_end": training_summary.get("critic_loss"),
+        "entropy_coefficient_at_end": training_summary.get("ent_coef"),
+        "ram_samples": len(ram_values),
+        "ram_min_mb": min(ram_values) if ram_values else None,
+        "ram_max_mb": max(ram_values) if ram_values else None,
+        "ram_first_mb": ram_values[0] if ram_values else None,
+        "ram_last_mb": ram_values[-1] if ram_values else None,
+    }
     for step, rows in series.items():
         report["checkpoints"][str(step)] = aggregate(rows)
     baseline = {r["geometry_id"]: r for r in series[0]}
@@ -65,7 +102,7 @@ def build_report(run_dir: Path, out_dir: Path) -> Dict[str, Any]:
             str(step): aggregate([r for r in rows if r["tier"] == tier])
             for step, rows in series.items()
         }
-    out_dir.mkdir(parents=True, exist_ok=False)
+    out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "scientific_summary.json").write_text(json.dumps(report, indent=2, sort_keys=True)+"\n", encoding="utf-8")
     with (out_dir / "learning_curve_route_completion.csv").open("w", newline="", encoding="utf-8") as f:
         w=csv.writer(f); w.writerow(["training_steps", "mean_route_completion", "median_route_completion", "clean_success_rate", "safety_failure_rate", "timeout_rate"])
