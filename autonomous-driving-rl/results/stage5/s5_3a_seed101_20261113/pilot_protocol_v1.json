@@ -1,0 +1,29 @@
+{
+  "allowed_training_split": "PILOT_TRAIN",
+  "architecture": "S5.2 MlpPolicy SAC",
+  "baseline_config_sha256": "7100195a8719f88fab5e6f19a9a4ca750e54ae6e28671a806f0866c615dd5443",
+  "benchmark_eligible": false,
+  "checkpoint_steps": [
+    0,
+    5000,
+    10000
+  ],
+  "diagnostic_environment_seed_policy": "sha256(stage5-diagnostic:{schedule_seed}:{geometry_id}) mod 1000000",
+  "diagnostic_policy": "deterministic",
+  "diagnostic_schedule_seed": 5302,
+  "diagnostic_split": "PILOT_DIAGNOSTIC",
+  "historical_s5_2_smoke_checkpoint_used": false,
+  "historical_s5_2_smoke_note": "The prior 5,000-step S5.2 artifact is a technical smoke only and was excluded because it had exposure to the full TRAIN split.",
+  "normalization": "none",
+  "official_validation_or_test_access": false,
+  "pilot_diagnostic_geometries": 24,
+  "pilot_train_geometries": 156,
+  "protocol": "stage5_pilot_v1",
+  "reproducibility_note": "Seeds and pinned runtime constrain stochasticity but do not guarantee bit-for-bit MetaDrive or GPU training reproduction. Pilot checkpoints are independent of the historical S5.2 smoke checkpoint.",
+  "reward": "unchanged RewardSpecV1 using stage5_rl_baseline_v1.json",
+  "split_seed": 5301,
+  "split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+  "status": "pre-registered-development-pilot",
+  "training_root_seed": 101,
+  "training_steps": 10000
+}

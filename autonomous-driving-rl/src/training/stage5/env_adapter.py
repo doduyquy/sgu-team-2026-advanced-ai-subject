@@ -55,7 +55,7 @@ class Stage5TrainingEnv(gym.Env):
     Standard Gymnasium RL training environment wrapping MetaDrive under Platform V1 contracts.
     """
 
-    metadata = {"render_modes": ["none"], "render_fps": 10}
+    metadata = {"render_modes": ["none", "human"], "render_fps": 10}
 
     def __init__(
         self,
@@ -69,6 +69,7 @@ class Stage5TrainingEnv(gym.Env):
         fixed_geometry_seed: Optional[int] = None,
         core_only: bool = False,
         project_root: Optional[Path] = None,
+        simulator_render_mode: str = "OFF",
     ) -> None:
         """
         Initializes the Stage 5 Training Environment.
@@ -87,6 +88,10 @@ class Stage5TrainingEnv(gym.Env):
         """
         super().__init__()
         self.project_root = project_root or get_default_project_root()
+        simulator_render_mode = str(simulator_render_mode).upper()
+        if simulator_render_mode not in {"OFF", "NATIVE"}:
+            raise ValueError("simulator_render_mode must be 'OFF' or 'NATIVE'")
+        self.simulator_render_mode = simulator_render_mode
 
         # 1. Sampler (strictly TRAIN split)
         self.sampler = sampler or TrainCaseSampler(
@@ -117,6 +122,7 @@ class Stage5TrainingEnv(gym.Env):
         # 5. Internal Simulator State
         self._env: Optional[MetaDriveEnv] = None
         self._current_case: Optional[ResolvedCaseV1] = None
+        self._current_geometry_id: Optional[str] = None
         self._current_sim_key: Optional[Tuple[str, str, int, int]] = None
         self._blocks_cache: Dict[Tuple[str, int], List[Any]] = {}
 
@@ -169,6 +175,7 @@ class Stage5TrainingEnv(gym.Env):
             case = self.sampler.sample_case()
 
         self._current_case = case
+        self._current_geometry_id = self.sampler.geometry_id_for_case(case)
         geom_key = (case.tier, case.sequence, case.geometry_generation_seed)
 
         # 2. Acquire locked block sequence (using cache to avoid repeated file extraction)
@@ -194,7 +201,7 @@ class Stage5TrainingEnv(gym.Env):
                     self._env = None
 
                 from metadrive.envs.metadrive_env import MetaDriveEnv
-                env_config = build_metadrive_case_config(case, blocks, render_mode="OFF")
+                env_config = build_metadrive_case_config(case, blocks, render_mode=self.simulator_render_mode)
                 self._env = MetaDriveEnv(env_config)
                 self._current_sim_key = sim_key
 
@@ -202,8 +209,9 @@ class Stage5TrainingEnv(gym.Env):
 
             # 4. Reset episodic tracking variables
             self._step_idx = 0
-            self._last_route_completion = 0.0
-            self._max_route_completion = 0.0
+            initial_route_completion = float(info.get("route_completion", 0.0))
+            self._last_route_completion = initial_route_completion
+            self._max_route_completion = initial_route_completion
             self._cumulative_reward = 0.0
             self._terminated = False
             self._truncated = False
@@ -218,12 +226,14 @@ class Stage5TrainingEnv(gym.Env):
             info_dict: Dict[str, Any] = {
                 "step_index": 0,
                 "case_id": case.case_id,
+                "geometry_id": self._current_geometry_id,
                 "tier": case.tier,
                 "sequence": case.sequence,
                 "geometry_seed": case.geometry_generation_seed,
                 "environment_seed": case.environment_seed,
                 "horizon_steps": case.horizon_steps,
                 "traffic_density": case.traffic_density,
+                "initial_route_completion": initial_route_completion,
             }
 
             return obs, info_dict
@@ -305,10 +315,13 @@ class Stage5TrainingEnv(gym.Env):
             info_dict: Dict[str, Any] = {
                 "step_index": self._step_idx,
                 "case_id": self._current_case.case_id,
+                "geometry_id": self._current_geometry_id,
                 "tier": self._current_case.tier,
                 "geometry_generation_seed": int(self._current_case.geometry_generation_seed),
                 "environment_seed": int(self._current_case.environment_seed),
                 "speed_km_h": speed_kmh,
+                "action_steering": float(canonical_act.steering),
+                "action_throttle_brake": float(canonical_act.throttle_brake),
                 "route_completion": curr_route,
                 "delta_route": delta_route,
                 "reward_breakdown": breakdown.to_dict(),
@@ -368,8 +381,12 @@ class Stage5TrainingEnv(gym.Env):
         self._current_sim_key = None
 
     def render(self) -> None:
-        """Render is disabled in training environment (strictly headless)."""
-        pass
+        """Render only when explicitly constructed with the native simulator window."""
+        if self._env is None or self.simulator_render_mode != "NATIVE":
+            return
+        graphics = getattr(getattr(self._env, "engine", None), "graphicsEngine", None)
+        if graphics is not None:
+            graphics.renderFrame()
 
     # ==========================================================================
     # Properties
@@ -389,6 +406,11 @@ class Stage5TrainingEnv(gym.Env):
     def cumulative_reward(self) -> float:
         """Returns total accumulated reward for the current episode."""
         return self._cumulative_reward
+
+    @property
+    def max_route_completion(self) -> float:
+        """Returns the maximum authoritative route_completion observed this episode."""
+        return self._max_route_completion
 
     @property
     def last_outcome(self) -> Optional[EpisodeOutcome]:
