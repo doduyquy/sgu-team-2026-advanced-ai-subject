@@ -72,6 +72,14 @@ def _mean(values: Iterable[float]) -> Optional[float]:
     return float(statistics.mean(seq)) if seq else None
 
 
+def discounted_return(rewards: Iterable[float], gamma: float) -> float:
+    """Return the reward-only discounted episode sum used by SAC's critic target."""
+    if not 0.0 < float(gamma) <= 1.0:
+        raise ValueError(f"gamma must be in (0, 1], got {gamma}")
+    return float(sum((float(gamma) ** step) * float(reward)
+                     for step, reward in enumerate(rewards)))
+
+
 def summarize(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Summarize completed episodes only; interrupted diagnostic probes are excluded."""
     complete = [row for row in records if not row.get("interrupted", False)]
@@ -79,7 +87,7 @@ def summarize(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     summary: Dict[str, Any] = {"episodes_completed": n, "episodes_interrupted": len(records) - n}
     if n == 0:
         return summary
-    for field in ("final_route_completion", "max_route_completion", "episode_return", "stationary_fraction",
+    for field in ("final_route_completion", "max_route_completion", "episode_return", "discounted_episode_return", "stationary_fraction",
                   "mean_moving_speed_km_h", "mean_throttle", "mean_brake", "mean_steering",
                   "steering_std", "steering_saturation_fraction", "mean_inference_latency_ms", "duration_s"):
         summary[field] = _mean(row[field] for row in complete if row.get(field) is not None)
@@ -93,7 +101,7 @@ def summarize(records: List[Dict[str, Any]]) -> Dict[str, Any]:
 def _episode_record(
     env: Stage5TrainingEnv, schedule_item: Dict[str, Any], checkpoint_sha256: str,
     training_step: int, speeds: List[float], controls: List[List[float]], latencies_ms: List[float],
-    rewards: List[float], duration_s: float, interrupted: bool,
+    rewards: List[float], duration_s: float, interrupted: bool, gamma: float,
 ) -> Dict[str, Any]:
     case = env.current_case
     outcome = env.last_outcome
@@ -113,6 +121,8 @@ def _episode_record(
         "timeout": bool(outcome and outcome.primary_reason.value == "TIMEOUT"),
         "final_route_completion": route, "max_route_completion": env.max_route_completion,
         "episode_return": float(sum(rewards)), "episode_steps": len(speeds),
+        "discount_factor": float(gamma),
+        "discounted_episode_return": discounted_return(rewards, gamma),
         "duration_s": duration_s, "mean_speed_km_h": _mean(speeds),
         "stationary_fraction": sum(speed < 1.0 for speed in speeds) / len(speeds) if speeds else None,
         "mean_moving_speed_km_h": _mean(speed for speed in speeds if speed >= 1.0),
@@ -149,6 +159,9 @@ def evaluate_checkpoint(
     )
     checkpoint_sha = metadata["model_sha256"]
     training_step = int(metadata["total_timesteps"])
+    gamma = float(getattr(model, "gamma", metadata.get("training_config", {}).get("sac_hyperparameters", {}).get("gamma", 0.99)))
+    if not 0.0 < gamma <= 1.0:
+        raise ValueError(f"Invalid checkpoint discount factor: {gamma}")
     state_before = policy_state_sha256(model)
     update_count_before = int(getattr(model, "_n_updates", 0))
     replay_buffer_before = getattr(model, "replay_buffer", None)
@@ -233,7 +246,7 @@ def evaluate_checkpoint(
                         break
                 record = _episode_record(
                     base_env, item, checkpoint_sha, training_step, speeds, controls, latencies, rewards,
-                    time.perf_counter() - started, interrupted,
+                    time.perf_counter() - started, interrupted, gamma,
                 )
                 records.append(record)
                 sink.write(json.dumps(record, sort_keys=True) + "\n")
@@ -271,6 +284,7 @@ def evaluate_checkpoint(
         "split_sha256": load_pilot_split(split_path)["split_sha256"],
         "checkpoint": str(checkpoint_dir), "checkpoint_sha256": checkpoint_sha,
         "training_step": training_step, "schedule_seed": schedule_seed,
+        "discount_factor": gamma,
         "planned_cases": len(schedule), "records_file": records_path.name,
         "aggregate": summarize(records), "evaluation_state_unchanged": True,
         "optimizer_updates_before": update_count_before,

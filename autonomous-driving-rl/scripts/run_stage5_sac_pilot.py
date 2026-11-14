@@ -30,6 +30,7 @@ from src.training.stage5.checkpoint import verify_checkpoint_integrity
 from src.training.stage5.pilot_callbacks import PilotCheckpointCallback
 from src.training.stage5.pilot_protocol import load_pilot_split, save_pilot_split
 from src.training.stage5.sac_trainer import SacBaselineTrainer
+from src.training.stage5.train_sampler import SamplerStrategy
 
 
 def sha256_file(path: Path) -> str:
@@ -77,6 +78,12 @@ def main() -> int:
                         help="Use LeakyReLU(0.01) in actor and critic MLPs; requires waypoint scaling for the registered comparison.")
     parser.add_argument("--skip-full-diagnostics", action="store_true",
                         help="Stop after the pre-registered 10k training run; diagnostics can be resumed manually.")
+    parser.add_argument("--sampler-strategy", choices=[strategy.value for strategy in SamplerStrategy],
+                        default=None, help="Optional controlled pilot override of TRAIN geometry sampling.")
+    parser.add_argument("--gamma", type=float, default=None,
+                        help="Optional controlled SAC discount-factor override in (0, 1].")
+    parser.add_argument("--balanced-long-horizon", action="store_true",
+                        help="Use the pilot-only tier-cycling sampler and gamma=0.9991 protocol; explicit flags can override either factor.")
     args = parser.parse_args()
     if args.leaky_relu_ablation and not args.waypoint_xy50_ablation:
         parser.error("--leaky-relu-ablation requires --waypoint-xy50-ablation for a controlled comparison")
@@ -86,9 +93,37 @@ def main() -> int:
     run_dir.mkdir(parents=True)
     split_path = save_pilot_split(ROOT, split_seed=5301)
     split = load_pilot_split(split_path)
-    config_path = ROOT / ("configs/experiments/stage5_pilot_leakyrelu_v1.json"
-                          if args.leaky_relu_ablation else "configs/experiments/stage5_pilot_v1.json")
+    if args.balanced_long_horizon:
+        config_path = ROOT / "configs/experiments/stage5_pilot_balanced_long_horizon_v1.json"
+    else:
+        config_path = ROOT / ("configs/experiments/stage5_pilot_leakyrelu_v1.json"
+                              if args.leaky_relu_ablation else "configs/experiments/stage5_pilot_v1.json")
     config = json.loads(config_path.read_text(encoding="utf-8"))
+    training_overrides = {}
+    selected_sampler = (args.sampler_strategy or
+                        ("TIER_ROUND_ROBIN" if args.balanced_long_horizon else None))
+    selected_gamma = (args.gamma if args.gamma is not None else
+                      (0.9991 if args.balanced_long_horizon else None))
+    if selected_sampler is not None:
+        training_overrides.setdefault("dataset_sampler", {})["default_strategy"] = selected_sampler
+    if selected_gamma is not None:
+        if not 0.0 < selected_gamma <= 1.0:
+            parser.error("--gamma must be in (0, 1]")
+        training_overrides.setdefault("sac_hyperparameters", {})["gamma"] = selected_gamma
+    baseline_config = json.loads(
+        (ROOT / "configs/experiments/stage5_rl_baseline_v1.json").read_text(encoding="utf-8")
+    )
+    effective_sampler = (selected_sampler or config.get("training_sampler_strategy")
+                         or baseline_config["dataset_sampler"]["default_strategy"])
+    effective_gamma = (selected_gamma if selected_gamma is not None else
+                       baseline_config["sac_hyperparameters"]["gamma"])
+    config["training_sampler_strategy"] = effective_sampler
+    config["sac_gamma"] = effective_gamma
+    config["discount_weight_at_horizon_1000"] = float(effective_gamma ** 1000)
+    config["discount_weight_at_horizon_1500"] = float(effective_gamma ** 1500)
+    config["discount_weight_at_horizon_1860"] = float(effective_gamma ** 1860)
+    if training_overrides:
+        config["protocol"] = f"{config['protocol']}_sampler_{effective_sampler.lower()}_gamma_{effective_gamma:g}"
     if args.waypoint_xy50_ablation:
         if not args.leaky_relu_ablation:
             config["protocol"] = "stage5_pilot_waypoint_xy50_ablation_v1"
@@ -103,6 +138,7 @@ def main() -> int:
     record = {
         "protocol": config["protocol"], "run_id": args.run_id, "status": "RUNNING",
         "training_root_seed": 101, "split_sha256": split["split_sha256"],
+        "training_sampler_strategy": effective_sampler, "sac_gamma": effective_gamma,
         "code_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
                                        capture_output=True, check=True).stdout.strip(),
         "python": platform.python_version(), "platform": platform.platform(),
@@ -116,6 +152,7 @@ def main() -> int:
     trainer = None
     try:
         trainer = SacBaselineTrainer(training_root_seed=101, project_root=ROOT,
+                                     config_overrides=training_overrides,
                                      allowed_geometry_ids=[x["geometry_id"] for x in split["pilot_train"]],
                                      pilot_observation_transform=("waypoint_xy_div50m_v1" if args.waypoint_xy50_ablation else None),
                                      pilot_actor_activation=("leaky_relu_0.01" if args.leaky_relu_ablation else "relu"),
@@ -123,6 +160,11 @@ def main() -> int:
         trainer.config["pilot_protocol"] = {
             "protocol": config["protocol"], "split_sha256": split["split_sha256"],
             "training_membership_count": 156, "diagnostic_membership_count": 24,
+            "training_sampler_strategy": trainer.sampler.strategy.value,
+            "sac_gamma": float(trainer.model.gamma),
+            "discount_weight_at_horizon_1000": float(trainer.model.gamma ** 1000),
+            "discount_weight_at_horizon_1500": float(trainer.model.gamma ** 1500),
+            "discount_weight_at_horizon_1860": float(trainer.model.gamma ** 1860),
             "training_allowed_geometry_ids_sha256": hashlib.sha256(
                 "\n".join(sorted(x["geometry_id"] for x in split["pilot_train"])).encode()).hexdigest(),
         }
@@ -168,6 +210,9 @@ def main() -> int:
             "checkpoint_steps_saved": [0] + checkpoint_callback.saved_steps,
             "training_action_summary": json.loads(
                 (checkpoints_dir / "training_action_summary.json").read_text(encoding="utf-8")
+            ),
+            "training_geometry_coverage": json.loads(
+                (checkpoints_dir / "training_geometry_coverage.json").read_text(encoding="utf-8")
             ),
         })
         (run_dir / "training_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -230,7 +275,7 @@ def main() -> int:
             if summary_process.returncode != 0:
                 raise RuntimeError(f"Empirical report builder failed with exit code {summary_process.returncode}")
             shutil.copy2(split_path, report_dir / "pilot_split_v1.json")
-            shutil.copy2(config_path, report_dir / "pilot_protocol_v1.json")
+            shutil.copy2(run_dir / "pilot_protocol.json", report_dir / "pilot_protocol_v1.json")
             record["status"] = "COMPLETE"
             write_progress(run_dir / "progress.json", status="COMPLETE", phase="COMPLETE",
                            training_step=10000, requested_timesteps=10000,

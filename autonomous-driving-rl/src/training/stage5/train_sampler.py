@@ -37,6 +37,7 @@ class SamplerStrategy(str, Enum):
     ROUND_ROBIN = "ROUND_ROBIN"        # Deterministic sequential cycle through TRAIN cases
     UNIFORM_RANDOM = "UNIFORM_RANDOM"  # Uniform pseudorandom selection across eligible TRAIN cases
     TIER_BALANCED = "TIER_BALANCED"    # Uniform selection across 4 tiers (Easy, Medium, Hard, Extreme)
+    TIER_ROUND_ROBIN = "TIER_ROUND_ROBIN"  # Cycle tiers, then geometries within each tier
 
 
 class TrainCaseSampler:
@@ -60,7 +61,7 @@ class TrainCaseSampler:
 
         Args:
             training_root_seed: Master seed governing pseudorandom sampling sequence.
-            strategy: SamplerStrategy enum or string ("FIXED", "ROUND_ROBIN", "UNIFORM_RANDOM", "TIER_BALANCED").
+            strategy: SamplerStrategy enum or string, including tier-random and tier-cycling modes.
             tier_filter: Optional difficulty filter ("Easy", "Medium", "Hard", "Extreme").
             sequence_filter: Optional scenario sequence family filter (e.g. "SCS", "SCXCCS").
             fixed_geometry_seed: Required if strategy == FIXED; specific geometry generation seed.
@@ -123,7 +124,11 @@ class TrainCaseSampler:
         )
         self._records = train_records
 
-        # Group by tier for TIER_BALANCED strategy
+        self._tier_order = ["easy", "medium", "hard", "extreme"]
+        self._tier_cycle_index = 0
+        self._tier_geometry_cycle_indices: Dict[str, int] = {}
+
+        # Group by tier for tier-balanced sampling strategies.
         self._records_by_tier: Dict[str, List[Dict[str, str]]] = {}
         for r in self._records:
             t = r["tier"].lower()
@@ -166,6 +171,8 @@ class TrainCaseSampler:
         self._rng = random.Random(self.training_root_seed)
         self._np_rng = np.random.RandomState(self.training_root_seed)
         self._cycle_index = 0
+        self._tier_cycle_index = 0
+        self._tier_geometry_cycle_indices = {}
         self._sampled_count = 0
         self._last_sampled_case: Optional[ResolvedCaseV1] = None
 
@@ -344,6 +351,8 @@ class TrainCaseSampler:
         self._rng = random.Random(self.training_root_seed)
         self._np_rng = np.random.RandomState(self.training_root_seed)
         self._cycle_index = 0
+        self._tier_cycle_index = 0
+        self._tier_geometry_cycle_indices = {}
         self._sampled_count = 0
 
     def derive_environment_seed(self, episode_index: int) -> int:
@@ -425,6 +434,17 @@ class TrainCaseSampler:
             chosen_tier = self._rng.choice(tiers)
             tier_recs = self._records_by_tier[chosen_tier]
             record = self._rng.choice(tier_recs)
+
+        elif self.strategy == SamplerStrategy.TIER_ROUND_ROBIN:
+            tiers = [tier for tier in self._tier_order if tier in self._records_by_tier]
+            if not tiers:
+                raise ValueError("TIER_ROUND_ROBIN sampler has no eligible TRAIN tiers")
+            chosen_tier = tiers[self._tier_cycle_index % len(tiers)]
+            self._tier_cycle_index += 1
+            tier_recs = self._records_by_tier[chosen_tier]
+            tier_index = self._tier_geometry_cycle_indices.get(chosen_tier, 0)
+            record = tier_recs[tier_index % len(tier_recs)]
+            self._tier_geometry_cycle_indices[chosen_tier] = tier_index + 1
 
         else:
             raise ValueError(f"Unsupported sampling strategy: '{self.strategy}'")

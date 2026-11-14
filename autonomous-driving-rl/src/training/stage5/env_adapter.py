@@ -79,7 +79,8 @@ class Stage5TrainingEnv(gym.Env):
             encoder: Optional pre-configured Stage5ObservationEncoder.
             reward_spec: Optional RewardSpecV1 contract (default: standard Platform V1 spec).
             training_root_seed: Master root seed for sampler reproducibility.
-            sampler_strategy: Case selection strategy (ROUND_ROBIN, UNIFORM_RANDOM, TIER_BALANCED, FIXED).
+            sampler_strategy: Case selection strategy; TIER_ROUND_ROBIN guarantees tier coverage over
+                successive episode resets when each tier is present in the allowed pool.
             tier_filter: Optional filter ("Easy", "Medium", "Hard", "Extreme").
             sequence_filter: Optional sequence filter.
             fixed_geometry_seed: Geometry seed if using FIXED strategy.

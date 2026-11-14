@@ -13,7 +13,7 @@ import torch
 from src.platform import EpisodeOutcome, TerminalReason
 from src.training.stage5.pilot_protocol import build_pilot_split, load_pilot_split, save_pilot_split
 from src.training.stage5.train_sampler import SamplerStrategy, TrainCaseSampler
-from scripts.evaluate_stage5_pilot import evaluate_checkpoint, summarize
+from scripts.evaluate_stage5_pilot import discounted_return, evaluate_checkpoint, summarize
 from src.training.stage5.env_adapter import Stage5TrainingEnv
 from src.training.stage5.pilot_callbacks import PilotCheckpointCallback
 
@@ -36,6 +36,30 @@ class TestPilotProtocol(unittest.TestCase):
             self.assertEqual(sum(r["tier"] == tier for r in first["pilot_train"]), 39)
             self.assertEqual(sum(r["tier"] == tier for r in first["pilot_diagnostic"]), 6)
         self.assertTrue(all(len(r["geometry_sha256"]) == 64 for r in first["pilot_train"] + first["pilot_diagnostic"]))
+
+    def test_tier_round_robin_covers_each_train_tier_and_resets_deterministically(self):
+        split = build_pilot_split(PROJECT_ROOT, split_seed=5301)
+        sampler = TrainCaseSampler(
+            101, SamplerStrategy.TIER_ROUND_ROBIN,
+            allowed_geometry_ids=[row["geometry_id"] for row in split["pilot_train"]],
+            project_root=PROJECT_ROOT,
+        )
+        first = [sampler.sample_case() for _ in range(8)]
+        self.assertEqual([case.tier for case in first],
+                         ["Easy", "Medium", "Hard", "Extreme"] * 2)
+        for tier in ("Easy", "Medium", "Hard", "Extreme"):
+            tier_ids = {sampler.geometry_id_for_case(case) for case in first if case.tier == tier}
+            self.assertEqual(len(tier_ids), 2)
+        sampler.reset_seed(101)
+        second = [sampler.sample_case() for _ in range(8)]
+        self.assertEqual([(sampler.geometry_id_for_case(case), case.environment_seed) for case in first],
+                         [(sampler.geometry_id_for_case(case), case.environment_seed) for case in second])
+
+    def test_discounted_return_applies_gamma_by_decision_step(self):
+        self.assertAlmostEqual(discounted_return([1.0, 1.0, 1.0], 0.5), 1.75)
+        self.assertAlmostEqual(discounted_return([-1.0], 0.9991), -1.0)
+        with self.assertRaisesRegex(ValueError, "gamma"):
+            discounted_return([1.0], 0.0)
 
     def test_sampler_rejects_diagnostic_case_in_pool_and_reset_path(self):
         split = build_pilot_split(PROJECT_ROOT)
@@ -123,6 +147,10 @@ class TestPilotProtocol(unittest.TestCase):
             self.assertFalse(record["terminated_or_truncated"])
             actions = json.loads((Path(temp_dir) / "training_action_summary.json").read_text())
             self.assertEqual(actions["brake_fraction"], 1.0)
+            coverage = json.loads((Path(temp_dir) / "training_geometry_coverage.json").read_text())
+            self.assertEqual(coverage["unique_geometry_count"], 1)
+            self.assertEqual(coverage["tier_unique_geometry_counts"], {"Easy": 1})
+            self.assertEqual(coverage["tier_step_counts"], {"Easy": 1})
 
     def test_training_callback_writes_live_heartbeat_and_honors_graceful_stop(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -193,6 +221,9 @@ class TestPilotProtocol(unittest.TestCase):
 
         split_path = Path(tempfile.mkdtemp()) / "split.json"
         split_path.write_text(json.dumps(build_pilot_split(PROJECT_ROOT)), encoding="utf-8")
+        checkpoint_dir = split_path.parent / "checkpoint"
+        checkpoint_dir.mkdir()
+        (checkpoint_dir / "metadata.json").write_text(json.dumps({"observation_transform": None}), encoding="utf-8")
         output = split_path.parent / "records"
         progress_path = split_path.parent / "progress.json"
         model = FakeModel()
@@ -200,7 +231,7 @@ class TestPilotProtocol(unittest.TestCase):
         with patch("scripts.evaluate_stage5_pilot.load_sac_checkpoint", return_value=(model, metadata)), \
              patch("scripts.evaluate_stage5_pilot.TrainCaseSampler", FakeSampler), \
              patch("scripts.evaluate_stage5_pilot.Stage5TrainingEnv", FakeEnv):
-            result = evaluate_checkpoint(Path("checkpoint"), split_path, output, max_cases=1,
+            result = evaluate_checkpoint(checkpoint_dir, split_path, output, max_cases=1,
                                          progress_file=progress_path, progress_phase="TECHNICAL_PROBE")
         self.assertTrue(result["evaluation_state_unchanged"])
         self.assertEqual(result["training_sampler_sampled_count"], 0)

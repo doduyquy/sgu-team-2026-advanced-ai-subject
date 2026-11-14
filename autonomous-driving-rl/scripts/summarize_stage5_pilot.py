@@ -11,6 +11,7 @@ from typing import Any, Dict, List
 ROOT = Path(__file__).resolve().parents[1]
 
 METRICS = ("final_route_completion", "clean_success", "safety_failure", "timeout", "episode_return",
+           "discounted_episode_return",
            "stationary_fraction", "mean_speed_km_h", "mean_moving_speed_km_h", "mean_throttle", "mean_brake",
            "mean_steering", "steering_std", "steering_saturation_fraction")
 
@@ -67,9 +68,15 @@ def build_report(run_dir: Path, out_dir: Path) -> Dict[str, Any]:
         "actual_steps": training_summary.get("actual_num_timesteps"),
         "training_root_seed": 101,
         "optimizer_updates": training_summary.get("optimizer_updates"),
+        "training_sampler_strategy": protocol.get("training_sampler_strategy"),
+        "sac_gamma": protocol.get("sac_gamma"),
+        "discount_weight_at_horizon_1000": protocol.get("discount_weight_at_horizon_1000"),
+        "discount_weight_at_horizon_1500": protocol.get("discount_weight_at_horizon_1500"),
+        "discount_weight_at_horizon_1860": protocol.get("discount_weight_at_horizon_1860"),
         "completed_episodes": training_summary.get("completed_episodes"),
         "unique_training_geometries": training_summary.get("unique_training_geometries"),
         "training_geometry_ids": training_summary.get("training_geometry_ids", []),
+        "training_geometry_coverage": training_summary.get("training_geometry_coverage"),
         "wall_time_s": training_summary.get("training_wall_time_s"),
         "steps_per_second": training_summary.get("training_steps_per_second"),
         "actor_loss_at_end": training_summary.get("actor_loss"),

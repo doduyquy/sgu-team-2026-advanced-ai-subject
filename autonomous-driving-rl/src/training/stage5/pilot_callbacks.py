@@ -32,6 +32,8 @@ class PilotCheckpointCallback(BaseCallback):
         self._step_sink = None
         self.action_counts = {"throttle": 0, "brake": 0, "near_zero": 0, "steps": 0}
         self.action_sums = {"steering": 0.0, "throttle_brake": 0.0}
+        self.geometry_step_counts: Dict[str, int] = {}
+        self.geometry_tiers: Dict[str, str] = {}
 
     def _on_training_start(self) -> None:
         self.started = time.perf_counter()
@@ -47,6 +49,13 @@ class PilotCheckpointCallback(BaseCallback):
         if actions.ndim == 1:
             actions = actions.reshape(1, -1)
         for idx, info in enumerate(infos):
+            geometry_id = info.get("geometry_id")
+            tier = info.get("tier")
+            if geometry_id:
+                geometry_id = str(geometry_id)
+                self.geometry_step_counts[geometry_id] = self.geometry_step_counts.get(geometry_id, 0) + 1
+                if tier is not None:
+                    self.geometry_tiers[geometry_id] = str(tier)
             action = actions[idx].reshape(-1).tolist() if idx < len(actions) else []
             steering = float(action[0]) if len(action) > 0 else info.get("action_steering")
             throttle_brake = float(action[1]) if len(action) > 1 else info.get("action_throttle_brake")
@@ -97,6 +106,12 @@ class PilotCheckpointCallback(BaseCallback):
         count = self.action_counts["steps"]
         episodes = getattr(self.trainer.callback, "episode_records", [])
         unique_geometries = sorted({row.get("geometry_id") for row in episodes if row.get("geometry_id")})
+        sampled_tier_steps: Dict[str, int] = {}
+        sampled_tier_geometries: Dict[str, set[str]] = {}
+        for geometry_id, step_count in self.geometry_step_counts.items():
+            tier = self.geometry_tiers.get(geometry_id, "unknown")
+            sampled_tier_steps[tier] = sampled_tier_steps.get(tier, 0) + step_count
+            sampled_tier_geometries.setdefault(tier, set()).add(geometry_id)
         episode_routes = [float(row["route_completion"]) for row in episodes if row.get("route_completion") is not None]
         episode_returns = [float(row["cumulative_reward"]) for row in episodes if row.get("cumulative_reward") is not None]
         payload = {
@@ -115,6 +130,11 @@ class PilotCheckpointCallback(BaseCallback):
             "mean_completed_episode_route": statistics.mean(episode_routes) if episode_routes else None,
             "mean_completed_episode_return": statistics.mean(episode_returns) if episode_returns else None,
             "unique_training_geometries": unique_geometries,
+            "unique_sampled_training_geometries": sorted(self.geometry_step_counts),
+            "sampled_training_tier_step_counts": sampled_tier_steps,
+            "sampled_training_tier_geometry_counts": {
+                tier: len(ids) for tier, ids in sorted(sampled_tier_geometries.items())
+            },
             "action_summary": {
                 "steps": count,
                 "throttle_fraction": self.action_counts["throttle"] / count if count else None,
@@ -161,6 +181,23 @@ class PilotCheckpointCallback(BaseCallback):
         }
         (self.output_root / "training_action_summary.json").write_text(
             json.dumps(action_summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        sampled_tiers: Dict[str, set[str]] = {}
+        tier_step_counts: Dict[str, int] = {}
+        for geometry_id, step_count in self.geometry_step_counts.items():
+            tier = self.geometry_tiers.get(geometry_id, "unknown")
+            sampled_tiers.setdefault(tier, set()).add(geometry_id)
+            tier_step_counts[tier] = tier_step_counts.get(tier, 0) + step_count
+        (self.output_root / "training_geometry_coverage.json").write_text(
+            json.dumps({
+                "unique_geometry_count": len(self.geometry_step_counts),
+                "geometry_step_counts": dict(sorted(self.geometry_step_counts.items())),
+                "geometry_tiers": dict(sorted(self.geometry_tiers.items())),
+                "tier_unique_geometry_counts": {
+                    tier: len(ids) for tier, ids in sorted(sampled_tiers.items())
+                },
+                "tier_step_counts": dict(sorted(tier_step_counts.items())),
+            }, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
         (self.output_root / "resource_samples.json").write_text(
             json.dumps(self.resource_samples, indent=2) + "\n", encoding="utf-8"
