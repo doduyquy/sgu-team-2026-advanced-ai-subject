@@ -153,6 +153,7 @@ class SacBaselineTrainer:
         device: str = "cpu",
         allowed_geometry_ids: Optional[Sequence[str]] = None,
         pilot_observation_transform: Optional[str] = None,
+        pilot_actor_activation: str = "relu",
     ) -> None:
         """
         Initializes the SAC Baseline Trainer.
@@ -193,6 +194,9 @@ class SacBaselineTrainer:
         if pilot_observation_transform not in (None, "waypoint_xy_div50m_v1"):
             raise ValueError(f"Unsupported pilot observation transform: {pilot_observation_transform}")
         self.observation_transform = pilot_observation_transform
+        if pilot_actor_activation not in ("relu", "leaky_relu_0.01"):
+            raise ValueError(f"Unsupported pilot actor activation: {pilot_actor_activation}")
+        self.actor_activation = pilot_actor_activation
         sampler_cfg = self.config.get("dataset_sampler", {})
         strategy = sampler_cfg.get("default_strategy", "ROUND_ROBIN")
 
@@ -224,6 +228,8 @@ class SacBaselineTrainer:
                      if pilot_observation_transform == "waypoint_xy_div50m_v1" else self.env)
 
         # 5. Instantiate Stable-Baselines3 SAC
+        policy_kwargs = ({"activation_fn": torch.nn.LeakyReLU}
+                         if pilot_actor_activation == "leaky_relu_0.01" else None)
         self.model = SAC(
             policy="MlpPolicy",
             env=model_env,
@@ -236,6 +242,7 @@ class SacBaselineTrainer:
             ent_coef=self.ent_coef,
             train_freq=self.train_freq,
             gradient_steps=self.gradient_steps,
+            policy_kwargs=policy_kwargs,
             seed=self.training_root_seed,
             device=self.device,
             verbose=0,

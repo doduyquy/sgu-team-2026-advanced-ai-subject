@@ -140,6 +140,12 @@ def save_sac_checkpoint(
         ).encode("utf-8")).hexdigest(),
         "observation_dim": int(encoder.dimension),
         "action_dim": 2,
+        "actor_critic_activation": getattr(
+            model.policy_kwargs.get("activation_fn"), "__name__", "ReLU"
+        ),
+        "activation_negative_slope": (
+            0.01 if getattr(model.policy_kwargs.get("activation_fn"), "__name__", "") == "LeakyReLU" else None
+        ),
         "total_timesteps": int(total_timesteps),
         "training_root_seed": int(training_root_seed),
         "model_sha256": model_sha256,

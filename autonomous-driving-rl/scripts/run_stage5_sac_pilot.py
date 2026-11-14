@@ -73,22 +73,30 @@ def main() -> int:
     parser.add_argument("--run-id", default=datetime.now(timezone.utc).strftime("s5_3a_%Y%m%dT%H%M%SZ"))
     parser.add_argument("--waypoint-xy50-ablation", action="store_true",
                         help="Run a separate internal ablation scaling waypoint relative x/y by 50m.")
+    parser.add_argument("--leaky-relu-ablation", action="store_true",
+                        help="Use LeakyReLU(0.01) in actor and critic MLPs; requires waypoint scaling for the registered comparison.")
     parser.add_argument("--skip-full-diagnostics", action="store_true",
                         help="Stop after the pre-registered 10k training run; diagnostics can be resumed manually.")
     args = parser.parse_args()
+    if args.leaky_relu_ablation and not args.waypoint_xy50_ablation:
+        parser.error("--leaky-relu-ablation requires --waypoint-xy50-ablation for a controlled comparison")
     run_dir = ROOT / "runs" / "stage5_pilot" / args.run_id
     if run_dir.exists():
         raise FileExistsError(f"Refusing to overwrite existing pilot run: {run_dir}")
     run_dir.mkdir(parents=True)
     split_path = save_pilot_split(ROOT, split_seed=5301)
     split = load_pilot_split(split_path)
-    config_path = ROOT / "configs/experiments/stage5_pilot_v1.json"
+    config_path = ROOT / ("configs/experiments/stage5_pilot_leakyrelu_v1.json"
+                          if args.leaky_relu_ablation else "configs/experiments/stage5_pilot_v1.json")
     config = json.loads(config_path.read_text(encoding="utf-8"))
     if args.waypoint_xy50_ablation:
-        config["protocol"] = "stage5_pilot_waypoint_xy50_ablation_v1"
-        config["parent_protocol"] = "stage5_pilot_v1"
+        if not args.leaky_relu_ablation:
+            config["protocol"] = "stage5_pilot_waypoint_xy50_ablation_v1"
+            config["parent_protocol"] = "stage5_pilot_v1"
         config["normalization"] = "fixed waypoint relative x/y divided by 50m; headings and all other features unchanged"
         config["single_factor_ablation"] = True
+    if args.leaky_relu_ablation:
+        config["protocol"] = "stage5_pilot_waypoint_xy50_leakyrelu_ablation_v1"
     config["split_sha256"] = split["split_sha256"]
     config["baseline_config_sha256"] = sha256_file(ROOT / "configs/experiments/stage5_rl_baseline_v1.json")
     (run_dir / "pilot_protocol.json").write_text(json.dumps(config, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -110,6 +118,7 @@ def main() -> int:
         trainer = SacBaselineTrainer(training_root_seed=101, project_root=ROOT,
                                      allowed_geometry_ids=[x["geometry_id"] for x in split["pilot_train"]],
                                      pilot_observation_transform=("waypoint_xy_div50m_v1" if args.waypoint_xy50_ablation else None),
+                                     pilot_actor_activation=("leaky_relu_0.01" if args.leaky_relu_ablation else "relu"),
                                      device="cpu")
         trainer.config["pilot_protocol"] = {
             "protocol": config["protocol"], "split_sha256": split["split_sha256"],
@@ -121,6 +130,9 @@ def main() -> int:
             from src.training.stage5.pilot_observation_transform import WAYPOINT_XY50_V1, transform_fingerprint
             trainer.config["pilot_protocol"]["observation_transform"] = WAYPOINT_XY50_V1
             trainer.config["pilot_protocol"]["observation_transform_fingerprint"] = transform_fingerprint()
+        if args.leaky_relu_ablation:
+            trainer.config["pilot_protocol"]["actor_critic_activation"] = "LeakyReLU"
+            trainer.config["pilot_protocol"]["leaky_relu_negative_slope"] = 0.01
         if trainer.sampler.total_eligible_geometries != 156:
             raise AssertionError("SAC training sampler did not restrict itself to 156 PILOT_TRAIN geometries")
         checkpoints_dir = run_dir / "checkpoints"

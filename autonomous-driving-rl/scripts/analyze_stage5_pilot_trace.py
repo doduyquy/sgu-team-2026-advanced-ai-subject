@@ -42,14 +42,18 @@ def analyze_trace(trace_path: Path, checkpoints: List[Path]) -> Dict[str, Any]:
         obs_tensor = torch.as_tensor(observations, dtype=torch.float32)
         with torch.no_grad():
             preactivation = model.policy.actor.latent_pi[0](obs_tensor)
-        active = (preactivation > 0).sum(dim=1).cpu().numpy()
+            postactivation = model.policy.actor.latent_pi[1](preactivation)
+        positive = (preactivation > 0).sum(dim=1).cpu().numpy()
+        nonzero = (postactivation != 0).sum(dim=1).cpu().numpy()
         result["checkpoints"][str(metadata["total_timesteps"])] = {
             "model_sha256": metadata["model_sha256"],
             "first_layer_units": int(preactivation.shape[1]),
-            "active_units_mean": float(active.mean()),
-            "active_units_min": int(active.min()),
-            "active_units_max": int(active.max()),
-            "zero_active_fraction": float(np.mean(active == 0)),
+            "positive_preactivation_units_mean": float(positive.mean()),
+            "positive_preactivation_units_min": int(positive.min()),
+            "positive_preactivation_units_max": int(positive.max()),
+            "zero_output_units_mean": float((postactivation == 0).sum(dim=1).float().mean().item()),
+            "zero_output_unit_fraction": float(1.0 - nonzero.mean() / postactivation.shape[1]),
+            "fully_dead_layer_fraction": float(np.mean(nonzero == 0)),
             "preactivation_positive_fraction": float(np.mean(preactivation.cpu().numpy() > 0)),
             "preactivation_mean": float(preactivation.mean().item()),
             "preactivation_std": float(preactivation.std(unbiased=False).item()),
