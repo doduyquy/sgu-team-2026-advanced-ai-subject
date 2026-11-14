@@ -122,7 +122,48 @@ Use the result views for:
 - artifact integrity;
 - W&B/technical diagnostics.
 
-## 8. Suggested first hands-on exercise
+## 8. Stage 5 SAC Training
+
+Open the **7. SAC Training** tab to inspect runs under `runs/stage5_pilot/`. The list
+refreshes automatically. Select an older run to see its saved summary and checkpoint
+diagnostics; historical runs without per-step action logs are labeled as such and are
+not modified.
+
+To start a new pilot, choose **Chạy pilot mới · 10k bước** and confirm. This starts a
+fresh 10,000-step SAC run and its fixed internal TRAIN diagnostics in a separate
+process. It does not resume or overwrite an earlier run. The confirmation dialog gives
+the approximate duration based on the prior pilot.
+
+While training, the page refreshes progress and action telemetry every few seconds:
+
+- **Training progress** reports environment steps. At 100%, check the phase label and
+  diagnostic count too; the evaluator still needs to finish the three checkpoints.
+- **Ga / phanh / gần 0**, the action plot, speed and route progress help answer what the
+  policy is doing. They are diagnostic signals, not success metrics.
+- **Clean successes, episodes and geometries** show how much driving experience has
+  actually completed. Actor/critic losses are shown for context and do not establish
+  that driving improved.
+- The checkpoint table appears after diagnostic results are written. It can show overall
+  or per-tier values for checkpoints 0, 5k and 10k. These cases are internal TRAIN
+  development data, never official VALIDATION or TEST results.
+
+During the **TRAINING** phase, **Yêu cầu dừng an toàn** asks SAC to stop at its next
+callback boundary, save the available telemetry and a partial checkpoint, mark the run
+`INTERRUPTED`, and skip unfinished diagnostics. During simulator evaluation, the safe
+stop control is unavailable so a case is not silently cut short and counted as a result.
+Closing the Workbench while a process is active requires explicit confirmation and
+force-kills it; that emergency path can leave a run incomplete.
+
+After training ends, select a saved checkpoint and choose **Mở simulator** to watch its
+deterministic policy on the fixed internal diagnostic schedule. This opens a separate
+simulator process; close it before starting another experiment. The viewer does not
+update the policy.
+
+The pilot dashboard is a Stage 5 development view, separate from the Gate-7 Results
+browser and its authoritative evaluation artifacts. Raw pilot logs/checkpoints remain
+under ignored `runs/`; compact summaries are written under `results/stage5/`.
+
+## 9. Suggested first hands-on exercise
 
 1. Select `SANDBOX`.
 2. Choose `fixture_seeded_random`.
