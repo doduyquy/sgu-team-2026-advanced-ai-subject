@@ -4,6 +4,7 @@ from dataclasses import replace
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -77,6 +78,34 @@ class TestPilotPairing(unittest.TestCase):
 
 
 class TestPilotAttemptIntegrity(unittest.TestCase):
+    def assert_partition_rejected_before_simulation(self, bad_hash=False):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp).resolve()
+            definition=root/"experiments/stage4/custom.json"
+            definition.parent.mkdir(parents=True)
+            partition=root/"datasets/partition/manifest.json"
+            partition.parent.mkdir(parents=True)
+            assignments=partition.parent/"geometry_assignments.csv"
+            assignments.write_text("geometry_sha256,partition\nmap,DEV\n",encoding="utf8")
+            partition.write_text(json.dumps({"status":"APPROVED_FROZEN","files":{"geometry_assignments.csv":sha256(assignments)}}))
+            definition.write_text(json.dumps({"scope":"FIT_CALIBRATION","agent_seed":42,"prerequisite":"unused","cases":[{}],
+                "required_partition":"FIT","partition_manifest":"datasets/partition/manifest.json",
+                "partition_manifest_sha256":"0"*64 if bad_hash else sha256(partition)}))
+            case=SimpleNamespace(geometry_sha256="map",to_dict=lambda:{"split":"TRAIN","geometry_sha256":"map"})
+            plan=SimpleNamespace(resolved_cases=[case])
+            with patch.object(collector,"ROOT",root),patch.object(collector,"verify_prerequisite"), \
+                 patch.object(collector,"resolve",return_value=plan),patch.object(collector,"train_geometries",return_value=([],None)), \
+                 patch.object(collector,"validate_case"),patch.object(collector.subprocess,"run") as launch:
+                with self.assertRaises(EvidenceError): collector.collect("rejected","experiments/stage4/custom.json")
+                launch.assert_not_called()
+            self.assertEqual(load_json(root/"runs/rejected/run_state.json")["status"],"FAILED")
+
+    def test_fit_collection_rejects_dev_before_launch(self):
+        self.assert_partition_rejected_before_simulation()
+
+    def test_custom_collection_rejects_modified_partition(self):
+        self.assert_partition_rejected_before_simulation(bad_hash=True)
+
     def test_runtime_configuration_keeps_class_reference_and_numpy_values(self):
         encoded = encode_runtime_config({"policy": EgoMotionV1, "nested": (np.array([1, 2]), np.float32(.5))})
         self.assertEqual(encoded["policy"], {"python_type": "src.platform.agent_input:EgoMotionV1"})

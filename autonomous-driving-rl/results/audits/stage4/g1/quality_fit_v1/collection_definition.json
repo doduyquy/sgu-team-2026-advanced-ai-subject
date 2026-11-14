@@ -1,0 +1,36 @@
+{
+  "schema_version": "stage4-pilot-collection/1.0.0",
+  "scope": "G1_STEP5_FIT_QUALITY_CALIBRATION_ONLY",
+  "purpose": "Small difficult FIT batch fixed before execution; retain every outcome. Calibrate quality rules without using DEV.",
+  "selection": "For SCXOCrTYCS and CrXROSTR choose the first FIT geometry by the frozen ranking_sha256, environment seed 0. No outcome-based substitution.",
+  "expert": "stage1_rule_based@0.6.1",
+  "agent_seed": 42,
+  "cases": [
+    {
+      "tier": "Extreme",
+      "sequence": "SCXOCrTYCS",
+      "geometry_seed": 14,
+      "environment_seed": 0
+    },
+    {
+      "tier": "Extreme",
+      "sequence": "CrXROSTR",
+      "geometry_seed": 15,
+      "environment_seed": 0
+    }
+  ],
+  "required_partition": "FIT",
+  "partition_manifest": "datasets/stage4_bc/fit_dev_v1/manifest.json",
+  "partition_manifest_sha256": "df244187a6c6ffa54308a776c3bd02a5d1705771717d9dd3c46d33e10ed45f90",
+  "prerequisite": "results/audits/stage4/g1/telemetry_v1/evidence_index.json",
+  "render": "OFF",
+  "wandb": "DISABLED",
+  "control_dt_s": 0.1,
+  "interventions": false,
+  "horizon_policy": "Unchanged route-aware horizon resolved by Platform V1",
+  "preserve_all_outcomes": true,
+  "geometry_partition_status": "APPROVED_FROZEN_FIT_ONLY",
+  "quality_status": "UNREVIEWED",
+  "bc_accepted_samples": 0,
+  "speed_tolerance_kmh": 1e-05
+}

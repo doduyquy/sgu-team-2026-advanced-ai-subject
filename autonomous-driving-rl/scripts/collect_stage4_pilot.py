@@ -1,6 +1,7 @@
 """Thu thử Stage 1 trên TRAIN, giữ mọi kết quả và kiểm tra ghép bước; chưa tạo BC."""
 
 import argparse
+import csv
 from collections import Counter
 from datetime import datetime, timezone
 import gzip
@@ -139,7 +140,7 @@ def worker(directory):
         write_record(directory / "episode_state.json", state, replace=True)
 
 
-def collect(run_id):
+def collect(run_id, definition_name="experiments/stage4/g1_pilot_v1.json"):
     validate_custom_run_id(run_id, ROOT / "runs")
     output = ROOT / "runs" / run_id
     output.mkdir(parents=True, exist_ok=False)
@@ -149,16 +150,33 @@ def collect(run_id):
     write_record(output / "run_state.json", state)
     started = time.perf_counter()
     try:
-        manifest = load_json(ROOT / "experiments/stage4/g1_pilot_v1.json")
+        definition = project_path(ROOT, definition_name)
+        if not definition.is_relative_to((ROOT / "experiments/stage4").resolve()) or definition.suffix != ".json":
+            raise EvidenceError("Định nghĩa thu phải là JSON dưới experiments/stage4/")
+        manifest = load_json(definition)
+        state["scope"] = manifest["scope"]
         prerequisite = verify_prerequisite(ROOT, manifest["prerequisite"])
         plans = [resolve(spec, manifest["agent_seed"]) for spec in manifest["cases"]]
         train, _ = train_geometries(ROOT, "results/audits/evaluation_protocol/geometry_split_manifest.csv")
         for plan in plans:
             validate_case(plan.resolved_cases[0].to_dict(), train)
+        if manifest.get("required_partition"):
+            partition_path = project_path(ROOT, manifest["partition_manifest"])
+            if sha256(partition_path) != manifest["partition_manifest_sha256"]:
+                raise EvidenceError("Manifest phân chia khác bản đã đóng băng")
+            partition = load_json(partition_path)
+            assignments = partition_path.parent / "geometry_assignments.csv"
+            if partition["status"] != "APPROVED_FROZEN" or sha256(assignments) != partition["files"][assignments.name]:
+                raise EvidenceError("Phân chia chưa đóng băng hoặc danh sách bị sửa")
+            with assignments.open(encoding="utf8", newline="") as stream:
+                sides = {r["geometry_sha256"]: r["partition"] for r in csv.DictReader(stream)}
+            if any(sides.get(p.resolved_cases[0].geometry_sha256) != manifest["required_partition"] for p in plans):
+                raise EvidenceError("Tình huống không thuộc phía được yêu cầu")
         if len({p.resolved_cases[0].case_id for p in plans}) != len(plans):
             raise EvidenceError("Lặp tình huống trong định nghĩa lần thu")
         protected = source_hashes(ROOT, PROTECTED)
-        sources = source_hashes(ROOT, SOURCE_DIRS, SOURCE_FILES)
+        source_files = list(dict.fromkeys([*SOURCE_FILES, definition.relative_to(ROOT).as_posix()]))
+        sources = source_hashes(ROOT, SOURCE_DIRS, source_files)
         for name in sources:
             target = output / "source_snapshot" / name
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -192,7 +210,8 @@ def collect(run_id):
             agent.close()
         if expert["descriptor"]["agent_version"] != "0.6.1":
             raise EvidenceError("Sai phiên bản tác nhân hướng dẫn")
-        write_record(output / "request.json", {"manifest": manifest, "manifest_sha256": sha256(ROOT / SOURCE_FILES[-2]),
+        write_record(output / "request.json", {"manifest": manifest, "manifest_path": definition.relative_to(ROOT).as_posix(),
+                     "manifest_sha256": sha256(definition),
                      "prerequisite": prerequisite, "source_sha256": sources, "simulator_source_sha256": simulator_hashes,
                      "command": sys.argv, "worker_isolation": "one subprocess per case, passive environment wrapper"})
         write_record(output / "resolved_plans.json", [p.to_dict() for p in plans])
@@ -232,7 +251,7 @@ def collect(run_id):
                               "steps": result.get("steps"), "outcome": result.get("terminal_reason")}), flush=True)
         after = source_hashes(ROOT, PROTECTED)
         write_record(output / "protected_after.json", after)
-        if protected != after or sources != source_hashes(ROOT, SOURCE_DIRS, SOURCE_FILES):
+        if protected != after or sources != source_hashes(ROOT, SOURCE_DIRS, source_files):
             raise EvidenceError("Nguồn/cấu hình hoặc bằng chứng được bảo vệ đã thay đổi trong lúc thu")
         complete = [r for r in reports if r["status"] == "COMPLETE"]
         with gzip.open(output / "raw_sample_index.jsonl.gz", "xt", encoding="utf8", compresslevel=3) as stream:
@@ -241,7 +260,7 @@ def collect(run_id):
                     stream.write(json.dumps({"run_id": run_id, "episode_id": result["episode_id"], "step_index": step,
                                  "case_id": result["case"]["case_id"], "trace_sha256": result["trace_sha256"],
                                  "quality_status": "UNREVIEWED", "bc_accepted": False}, separators=(",", ":")) + "\n")
-        summary = {"schema_version": "stage4-pilot-result/1.0.0", "run_id": run_id, "scope": "G1_STEP2_ONLY",
+        summary = {"schema_version": "stage4-pilot-result/1.0.0", "run_id": run_id, "scope": manifest["scope"],
                    "expected_episodes": len(plans), "completed_episodes": len(complete),
                    "failed_episodes": state["failed_episodes"], "raw_sample_count": sum(r["steps"] for r in complete),
                    "replay_steps": sum(r["replay_steps"] for r in complete),
@@ -250,7 +269,8 @@ def collect(run_id):
                    "protected_files_unchanged": len(protected), "source_files_unchanged": len(sources),
                    "collection_and_verification_wall_seconds": time.perf_counter() - started,
                    "quality_status": "UNREVIEWED", "bc_accepted_samples": 0, "g1_complete": False,
-                   "partition_status": "UNASSIGNED_PENDING_STEP4", "all_outcomes_preserved": True}
+                   "partition_status": manifest.get("geometry_partition_status", "UNASSIGNED_PENDING_STEP4"),
+                   "all_outcomes_preserved": True}
         write_record(output / "pilot_summary.json", summary)
         if len(complete) != len(plans):
             raise EvidenceError("Có lượt lỗi; giữ mọi hồ sơ, lần thu chưa được chứng nhận hoàn tất")
@@ -302,6 +322,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("collect", help="Thu thử và kiểm tra dữ liệu thô, chưa duyệt BC")
     run.add_argument("--run-id", required=True)
+    run.add_argument("--definition", default="experiments/stage4/g1_pilot_v1.json")
     export = sub.add_parser("publish", help="Kiểm tra mã băm rồi xuất tổng hợp vào thư mục mới")
     export.add_argument("--run-id", required=True)
     export.add_argument("--output", required=True)
@@ -310,7 +331,7 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == "collect":
-            result = collect(args.run_id)
+            result = collect(args.run_id, args.definition)
             print(json.dumps({k: result[k] for k in ("run_id", "completed_episodes", "raw_sample_count", "outcomes")}))
         elif args.command == "publish":
             print(json.dumps(publish(args.run_id, args.output)))
