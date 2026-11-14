@@ -1,0 +1,23 @@
+{
+  "schema": "AgentInputV1/STATE_DECISION_V1",
+  "core_dimensions": 259,
+  "label": "canonical float32 [steering, throttle_brake] before env.step",
+  "steering_forward": "positive_left_negative_right",
+  "history_frames_supported": [
+    1,
+    10
+  ],
+  "history_padding": null,
+  "history_mask_required": true,
+  "context_only_frames_are_labels": false,
+  "normalization": "NOT_FIT; valid FIT elements only in trainer",
+  "forbidden_features": [
+    "source IDs",
+    "geometry/lane/branch IDs",
+    "outcomes",
+    "rewards",
+    "teacher diagnostics",
+    "quality labels",
+    "future frames"
+  ]
+}

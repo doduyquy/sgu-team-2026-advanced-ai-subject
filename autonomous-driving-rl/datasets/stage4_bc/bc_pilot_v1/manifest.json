@@ -1,0 +1,65 @@
+{
+  "schema_version": "stage4-bc-pilot-registry/1.0.0",
+  "status": "BUILT_AND_VERIFIED_PILOT",
+  "dataset_id": "stage4-bc-pilot-v1",
+  "artifact_directory": "artifacts/stage4/bc_pilot_v1",
+  "source_run_id": "s4_g1_dataset_build_01",
+  "source_integrity_sha256": "2fb424ca5076a3e9bc459148a681f1e74f4f4145f535aefb46a066805268cdab",
+  "bundle_manifest_sha256": "68783b3eb5abbd8bfdfcafca2370ff06f3688b8727e968be5426de60e4f4911f",
+  "variants": {
+    "BC-A": {
+      "FIT": {
+        "samples": 566,
+        "observation_frames": 566,
+        "context_only_frames": 0,
+        "geometries": 1,
+        "episodes": 1
+      },
+      "DEV": {
+        "samples": 832,
+        "observation_frames": 832,
+        "context_only_frames": 0,
+        "geometries": 1,
+        "episodes": 2
+      }
+    },
+    "BC-B": {
+      "FIT": {
+        "samples": 666,
+        "observation_frames": 675,
+        "context_only_frames": 9,
+        "geometries": 2,
+        "episodes": 2
+      },
+      "DEV": {
+        "samples": 1332,
+        "observation_frames": 1341,
+        "context_only_frames": 9,
+        "geometries": 2,
+        "episodes": 3
+      }
+    }
+  },
+  "relation": {
+    "common_samples": 1398,
+    "timeout_added_samples": 600,
+    "bc_a_subset_of_bc_b": true
+  },
+  "files": {
+    "BC-A/CHECKSUMS.sha256": "12ac3e339f070465fed9c731c7626cb1b30f74fb07c2868f88782fe18918c234",
+    "BC-A/input_contract.json": "5764e6dea4e60f4b54b275f08860f731dd93dcfcbc533e06af0d579cbffb87b6",
+    "BC-A/manifest.json": "227f2f1f8ea43067134672f6107186bc9af64a818645317048502e8014993553",
+    "BC-A/provenance.json": "aaeace6b99f0513fd8163dd37dc3ed2296d3ce19f4d0c412ce2c778e9d6c0902",
+    "BC-A/quality_report.json": "7625f81e535f238407c5aa40d67592f5d77b16726abf28c6795d8f0237eecaa3",
+    "BC-A/sample_index.jsonl.gz": "cb66de9b0607576233534b341b53679c52ff3b1bd5a22992a15c82bb5dae5441",
+    "BC-B/CHECKSUMS.sha256": "7d68205012d2a590bbdab6ebfc23c324aaf2464016ed9c3d54014d8fdaec3d50",
+    "BC-B/input_contract.json": "5764e6dea4e60f4b54b275f08860f731dd93dcfcbc533e06af0d579cbffb87b6",
+    "BC-B/manifest.json": "975c1ac9c2066af8bc71603d718ca5752a34f6ca1d7f10af93820a4c8c4365f4",
+    "BC-B/provenance.json": "f3266032b91dd950d1c7d7b6f429c1d9a8aff709048fcce2ae89a887d172bb79",
+    "BC-B/quality_report.json": "b97896b12c8c017e140d81f1676791fd5831a9240cca47fecad64c86c8ceba24",
+    "BC-B/sample_index.jsonl.gz": "8e9f7de9455b62e58b0d8807388657c585f7f947829a591f2a715299dfbbf0de"
+  },
+  "raw_input_payloads_in_git": false,
+  "training_updates": 0,
+  "g1_complete": false
+}

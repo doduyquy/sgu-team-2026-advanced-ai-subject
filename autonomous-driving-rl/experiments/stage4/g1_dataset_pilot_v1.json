@@ -1,0 +1,14 @@
+{
+  "schema_version": "stage4-bc-build-definition/1.0.0",
+  "dataset_id": "stage4-bc-pilot-v1",
+  "quality_registry": "datasets/stage4_bc/quality_v1.json",
+  "quality_registry_sha256": "97b119f1b1a603bce0a7a11c9655315cc6b16e226a52dc265ac2c8b7b10be8c9",
+  "variants": ["BC-A", "BC-B"],
+  "history_frames_supported": [1, 10],
+  "history_storage_frames": 10,
+  "normalization": "NOT_FIT; future trainer uses valid FIT elements only",
+  "sampling_ratios": null,
+  "sample_weights": null,
+  "large_collection": false,
+  "training_updates": 0
+}

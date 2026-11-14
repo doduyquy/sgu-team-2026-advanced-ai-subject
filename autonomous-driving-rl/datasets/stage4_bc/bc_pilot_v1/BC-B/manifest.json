@@ -1,0 +1,49 @@
+{
+  "schema_version": "stage4-bc-dataset/1.0.0",
+  "status": "BUILT_AND_VERIFIED_PILOT",
+  "dataset_id": "stage4-bc-pilot-v1",
+  "variant": "BC-B",
+  "created_at_utc": "2026-11-14T12:22:11.403047+00:00",
+  "partitions": {
+    "FIT": {
+      "samples": 666,
+      "observation_frames": 675,
+      "context_only_frames": 9,
+      "geometries": 2,
+      "episodes": 2
+    },
+    "DEV": {
+      "samples": 1332,
+      "observation_frames": 1341,
+      "context_only_frames": 9,
+      "geometries": 2,
+      "episodes": 3
+    }
+  },
+  "lineage_sha256": {
+    "datasets/stage4_bc/quality_v1.json": "97b119f1b1a603bce0a7a11c9655315cc6b16e226a52dc265ac2c8b7b10be8c9",
+    "results/audits/stage4/g1/quality_rules_v1/freeze.json": "1956974d447e5575b1a3c0b17805f4405a7fb78758677917774d5d0a56f5c7dc",
+    "results/audits/stage4/g1/quality_v1/review.json": "66925c37b711570676d6442c24418b6f36f45be4544b34b0edf9ee44f9f9fed6",
+    "results/audits/stage4/g1/quality_v1/summary.json": "93231c59d920ae95a70a776e4519d5ef65b95479037579696b1f858663f3ef2c",
+    "results/audits/stage4/g1/quality_v1/evidence_index.json": "57167781adb2d183cfb6abb55b6e86a4fd520e29c255b57d34670745f4ae1570",
+    "results/audits/stage4/g1/quality_v1_checks.json": "4aede2fca7c18eb946b77db3df6e87fbe95abe2ea2353394473839cdcdad85e3",
+    "results/audits/stage4/g1/quality_rules_v1/fit_calibration.json": "447bdf0b01ed7e43ee5f45da6056d58c9f294ccd5be48e69360263967696f6ba",
+    "results/audits/stage4/g1/quality_rules_v1/reviewer_source.py": "606fb0de1a4fecd8b8d5b1f37c385d32c8a19a61c8ef1dd4f6635a634168bde0",
+    "results/audits/stage4/g1/quality_rules_v1/rules.json": "1d1a2728c4aae063e492d90d2019cc7d2531ce2edf89067821d328b850e74ce7",
+    "datasets/stage4_bc/fit_dev_v1/manifest.json": "df244187a6c6ffa54308a776c3bd02a5d1705771717d9dd3c46d33e10ed45f90",
+    "datasets/stage4_bc/fit_dev_v1/geometry_assignments.csv": "cbae3eb970fb10bf4f3be09584c404c21672d528d1a0eb71a80f49e7762ab30c",
+    "datasets/stage4_bc/fit_dev_v1/pilot_assignments.json": "754c0fdcf1bc979cd20757de5338e1dcf6bab9d77293ab216794410945871a7d"
+  },
+  "files": {
+    "frames_DEV.jsonl.gz": "958477d6ffe875c98413e2001110569353af039059cae71a48aad287889139dc",
+    "frames_FIT.jsonl.gz": "5fe6202abb2962616010080ee43e4ae9335be637edbe51d798e75ad728c2abf3",
+    "input_contract.json": "5764e6dea4e60f4b54b275f08860f731dd93dcfcbc533e06af0d579cbffb87b6",
+    "provenance.json": "f3266032b91dd950d1c7d7b6f429c1d9a8aff709048fcce2ae89a887d172bb79",
+    "quality_report.json": "b97896b12c8c017e140d81f1676791fd5831a9240cca47fecad64c86c8ceba24",
+    "sample_index.jsonl.gz": "8e9f7de9455b62e58b0d8807388657c585f7f947829a591f2a715299dfbbf0de",
+    "samples_DEV.jsonl.gz": "4dcac2b8fa0acb4afa991f60eb7ed7f698276d7c9f85d0ed1fbf199cc5d83b2a",
+    "samples_FIT.jsonl.gz": "11104725b0283d2ba34b57da19be1bdf41716498bb7fa85c8d73c743e75587f0"
+  },
+  "training_updates": 0,
+  "normalization_fitted": false
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": "stage4-g1-pilot-completion/1.0.0",
+  "status": "COMPLETE_PILOT_DATA_PREPARATION",
+  "completed_at_utc": "2026-11-14T12:29:44.150569+00:00",
+  "reviewer": "Codex verification; no owner sign-off claimed",
+  "dataset_manifest": "datasets/stage4_bc/bc_pilot_v1/manifest.json",
+  "dataset_manifest_sha256": "1dad9b76a3f698a6a6667f789cdc8c1337235570e90989dd2edbcd4331f139c3",
+  "verification_report": "results/audits/stage4/g1/dataset_pilot_v1_checks.json",
+  "verification_sha256": "5e89f0a3a511bd61f6412dbf9ebbd2f1f9b028abc71ee17bd8d9bec601997186",
+  "requirements": {
+    "step1_telemetry_verified": true,
+    "step2_raw_collection_paired": true,
+    "step3_resources_measured": true,
+    "step4_geometry_split_frozen": true,
+    "step5_quality_rules_frozen_and_applied": true,
+    "step6_bc_datasets_built_and_verified": true
+  },
+  "geometry_partition": {
+    "TRAIN": 180,
+    "FIT": 144,
+    "DEV": 36
+  },
+  "raw_collected_geometries": 6,
+  "raw_episodes": 7,
+  "variants": {
+    "BC-A": {
+      "FIT": {
+        "samples": 566,
+        "observation_frames": 566,
+        "context_only_frames": 0,
+        "geometries": 1,
+        "episodes": 1
+      },
+      "DEV": {
+        "samples": 832,
+        "observation_frames": 832,
+        "context_only_frames": 0,
+        "geometries": 1,
+        "episodes": 2
+      }
+    },
+    "BC-B": {
+      "FIT": {
+        "samples": 666,
+        "observation_frames": 675,
+        "context_only_frames": 9,
+        "geometries": 2,
+        "episodes": 2
+      },
+      "DEV": {
+        "samples": 1332,
+        "observation_frames": 1341,
+        "context_only_frames": 9,
+        "geometries": 2,
+        "episodes": 3
+      }
+    }
+  },
+  "full_180_collection_done": false,
+  "training_updates": 0,
+  "g2_open": false,
+  "next_work": "Design and implement shared encoder/model and portable training module, then package for Kaggle pilot training."
+}

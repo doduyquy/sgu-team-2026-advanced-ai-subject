@@ -1,0 +1,178 @@
+{
+  "schema_version": "stage4-bc-dataset-verification/1.0.0",
+  "status": "PASSED",
+  "verified_at_utc": "2026-11-14T12:29:44.124295+00:00",
+  "bundle_manifest_sha256": "68783b3eb5abbd8bfdfcafca2370ff06f3688b8727e968be5426de60e4f4911f",
+  "curated_manifest_sha256": "1dad9b76a3f698a6a6667f789cdc8c1337235570e90989dd2edbcd4331f139c3",
+  "relation": {
+    "common_samples": 1398,
+    "timeout_added_samples": 600,
+    "bc_a_subset_of_bc_b": true
+  },
+  "variants": {
+    "BC-A": {
+      "FIT": {
+        "samples": 566,
+        "observation_frames": 566,
+        "context_only_frames": 0,
+        "geometries": 1,
+        "episodes": 1
+      },
+      "DEV": {
+        "samples": 832,
+        "observation_frames": 832,
+        "context_only_frames": 0,
+        "geometries": 1,
+        "episodes": 2
+      }
+    },
+    "BC-B": {
+      "FIT": {
+        "samples": 666,
+        "observation_frames": 675,
+        "context_only_frames": 9,
+        "geometries": 2,
+        "episodes": 2
+      },
+      "DEV": {
+        "samples": 1332,
+        "observation_frames": 1341,
+        "context_only_frames": 9,
+        "geometries": 2,
+        "episodes": 3
+      }
+    }
+  },
+  "source_observation_copies_checked_including_variant_overlap": 3414,
+  "source_action_copies_checked_including_variant_overlap": 3396,
+  "unique_label_samples": 1998,
+  "raw_source_runs_unchanged": true,
+  "frozen_quality_and_split_unchanged": true,
+  "backend_tests": {
+    "status": "PASSED",
+    "finished_at_utc": "2026-11-14T12:26:01.539307+00:00",
+    "groups": [
+      {
+        "group": "backend",
+        "command": [
+          "C:\\Users\\DANG KHOA\\.conda\\envs\\metadrive\\python.exe",
+          "-B",
+          "-X",
+          "utf8",
+          "-X",
+          "faulthandler",
+          "-m",
+          "unittest",
+          "tests.test_agent_contract",
+          "tests.test_agent_experiment_logging",
+          "tests.test_episode_lifecycle",
+          "tests.test_evaluation_protocol",
+          "tests.test_finish_visual",
+          "tests.test_launcher_core",
+          "tests.test_logging_contract",
+          "tests.test_mapsuite_dataset",
+          "tests.test_mapsuite_preview_export",
+          "tests.test_random_naive_agent",
+          "tests.test_reward_metrics",
+          "tests.test_rule_based_agent",
+          "tests.test_rule_based_corridor",
+          "tests.test_rule_based_p2_p3",
+          "tests.test_rule_based_p4",
+          "tests.test_rule_based_replay",
+          "tests.test_rule_based_report",
+          "tests.test_source_layout",
+          "tests.test_stage4_audit",
+          "tests.test_stage4_dataset",
+          "tests.test_stage4_pilot",
+          "tests.test_stage4_quality",
+          "tests.test_stage4_resources",
+          "tests.test_stage4_telemetry",
+          "-q"
+        ],
+        "exit_code": 0,
+        "status": "PASSED",
+        "log": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\runs\\s4_g1_dataset_checks_01\\backend.log",
+        "tests": 536,
+        "seconds": 142.019,
+        "log_sha256": "fb41206908e9fc987c7c0f70942efeda8c9dc951db70e6c0b58a6f65603836f1"
+      }
+    ],
+    "total_tests": 536
+  },
+  "tests_request_sha256": "1b5391202e7f2aa4d66af0e1bae8f8a462b516e5ebb012f8a9190aadb5dad295",
+  "portable_reader": {
+    "status": "PASSED",
+    "python": "3.10.22 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:15:38) [MSC v.1942 64 bit (AMD64)]",
+    "site_packages_disabled": true,
+    "external_data_reads": 0,
+    "verified_variants": {
+      "BC-A": {
+        "partitions": {
+          "FIT": {
+            "samples": 566,
+            "observation_frames": 566,
+            "context_only_frames": 0,
+            "geometries": 1,
+            "episodes": 1
+          },
+          "DEV": {
+            "samples": 832,
+            "observation_frames": 832,
+            "context_only_frames": 0,
+            "geometries": 1,
+            "episodes": 2
+          }
+        },
+        "read_counts": {
+          "FIT": {
+            "1": 566,
+            "10": 566
+          },
+          "DEV": {
+            "1": 832,
+            "10": 832
+          }
+        }
+      },
+      "BC-B": {
+        "partitions": {
+          "FIT": {
+            "samples": 666,
+            "observation_frames": 675,
+            "context_only_frames": 9,
+            "geometries": 2,
+            "episodes": 2
+          },
+          "DEV": {
+            "samples": 1332,
+            "observation_frames": 1341,
+            "context_only_frames": 9,
+            "geometries": 2,
+            "episodes": 3
+          }
+        },
+        "read_counts": {
+          "FIT": {
+            "1": 666,
+            "10": 666
+          },
+          "DEV": {
+            "1": 1332,
+            "10": 1332
+          }
+        }
+      }
+    },
+    "relation": {
+      "common_samples": 1398,
+      "timeout_added_samples": 600,
+      "bc_a_subset_of_bc_b": true
+    },
+    "local_file_operations": 46
+  },
+  "portability_integrity_sha256": "05de192c5d2205e2c88fa287bbb5fa9c5e528b45ffea1a3a9dfde52de9c0ff92",
+  "artifact_total_bytes": 3201055,
+  "normalization_fitted": false,
+  "training_updates": 0,
+  "models_or_checkpoints_created": 0
+}

@@ -1,0 +1,247 @@
+{
+  "variant": "BC-A",
+  "partitions": {
+    "FIT": {
+      "samples": 566,
+      "observation_frames": 566,
+      "context_only_frames": 0,
+      "geometries": 1,
+      "episodes": 1
+    },
+    "DEV": {
+      "samples": 832,
+      "observation_frames": 832,
+      "context_only_frames": 0,
+      "geometries": 1,
+      "episodes": 2
+    }
+  },
+  "quality_rules_version": "1.0.0",
+  "source_decisions": [
+    {
+      "source_run_id": "s4_g1_pilot_02",
+      "episode_id": "episode_000",
+      "partition": "DEV",
+      "outcome": "SUCCESS",
+      "steps": 418,
+      "window_label_steps": {
+        "PROGRESS": 418
+      },
+      "intervals": [
+        {
+          "start": 0,
+          "end": 418,
+          "decision": "KEEP",
+          "destination": "BC_A_AND_B",
+          "reason": "REVIEWED_SUCCESS",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ]
+    },
+    {
+      "source_run_id": "s4_g1_pilot_02",
+      "episode_id": "episode_001",
+      "partition": "DEV",
+      "outcome": "SUCCESS",
+      "steps": 414,
+      "window_label_steps": {
+        "PROGRESS": 414
+      },
+      "intervals": [
+        {
+          "start": 0,
+          "end": 414,
+          "decision": "KEEP",
+          "destination": "BC_A_AND_B",
+          "reason": "REVIEWED_SUCCESS",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ]
+    },
+    {
+      "source_run_id": "s4_g1_pilot_02",
+      "episode_id": "episode_002",
+      "partition": "FIT",
+      "outcome": "SUCCESS",
+      "steps": 566,
+      "window_label_steps": {
+        "PROGRESS": 566
+      },
+      "intervals": [
+        {
+          "start": 0,
+          "end": 566,
+          "decision": "KEEP",
+          "destination": "BC_A_AND_B",
+          "reason": "REVIEWED_SUCCESS",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ]
+    },
+    {
+      "source_run_id": "s4_g1_pilot_02",
+      "episode_id": "episode_003",
+      "partition": "FIT",
+      "outcome": "SUCCESS",
+      "steps": 1432,
+      "window_label_steps": {
+        "PROGRESS": 1232,
+        "UNCERTAIN": 200
+      },
+      "intervals": [
+        {
+          "start": 0,
+          "end": 1432,
+          "decision": "EXCLUDE",
+          "destination": null,
+          "reason": "SUCCESS_NOT_APPROVED_AS_A_WHOLE",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ]
+    },
+    {
+      "source_run_id": "s4_g1_pilot_02",
+      "episode_id": "episode_004",
+      "partition": "DEV",
+      "outcome": "TIMEOUT",
+      "steps": 2914,
+      "window_label_steps": {
+        "PROGRESS": 650,
+        "UNCERTAIN": 2164,
+        "UNSAFE_OR_UNSTABLE": 100
+      },
+      "intervals": [
+        {
+          "start": 0,
+          "end": 450,
+          "decision": "KEEP",
+          "destination": "BC_B_ONLY",
+          "reason": "REVIEWED_TIMEOUT_PROGRESS_OR_WAIT",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        },
+        {
+          "start": 450,
+          "end": 800,
+          "decision": "EXCLUDE",
+          "destination": null,
+          "reason": "QUALITY_OR_BOUNDARY_OR_TAIL_OR_SHORT_SEGMENT_EXCLUSION",
+          "context_before_start": 441,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        },
+        {
+          "start": 800,
+          "end": 850,
+          "decision": "KEEP",
+          "destination": "BC_B_ONLY",
+          "reason": "REVIEWED_TIMEOUT_PROGRESS_OR_WAIT",
+          "context_before_start": 791,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        },
+        {
+          "start": 850,
+          "end": 2914,
+          "decision": "EXCLUDE",
+          "destination": null,
+          "reason": "QUALITY_OR_BOUNDARY_OR_TAIL_OR_SHORT_SEGMENT_EXCLUSION",
+          "context_before_start": 841,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ]
+    },
+    {
+      "source_run_id": "s4_g1_quality_fit_01",
+      "episode_id": "episode_000",
+      "partition": "FIT",
+      "outcome": "TIMEOUT",
+      "steps": 2655,
+      "window_label_steps": {
+        "PROGRESS": 650,
+        "UNCERTAIN": 1505,
+        "UNSAFE_OR_UNSTABLE": 500
+      },
+      "intervals": [
+        {
+          "start": 0,
+          "end": 1900,
+          "decision": "EXCLUDE",
+          "destination": null,
+          "reason": "QUALITY_OR_BOUNDARY_OR_TAIL_OR_SHORT_SEGMENT_EXCLUSION",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        },
+        {
+          "start": 1900,
+          "end": 2000,
+          "decision": "KEEP",
+          "destination": "BC_B_ONLY",
+          "reason": "REVIEWED_TIMEOUT_PROGRESS_OR_WAIT",
+          "context_before_start": 1891,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        },
+        {
+          "start": 2000,
+          "end": 2655,
+          "decision": "EXCLUDE",
+          "destination": null,
+          "reason": "QUALITY_OR_BOUNDARY_OR_TAIL_OR_SHORT_SEGMENT_EXCLUSION",
+          "context_before_start": 1991,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ]
+    },
+    {
+      "source_run_id": "s4_g1_quality_fit_01",
+      "episode_id": "episode_001",
+      "partition": "FIT",
+      "outcome": "CRASH_VEHICLE",
+      "steps": 948,
+      "window_label_steps": {
+        "PROGRESS": 400,
+        "UNCERTAIN": 400,
+        "UNSAFE_OR_UNSTABLE": 148
+      },
+      "intervals": [
+        {
+          "start": 0,
+          "end": 948,
+          "decision": "EXCLUDE",
+          "destination": null,
+          "reason": "QUALITY_OR_BOUNDARY_OR_TAIL_OR_SHORT_SEGMENT_EXCLUSION",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ]
+    },
+    {
+      "partition": "FIT",
+      "accepted_sample_outcomes": {
+        "SUCCESS": 566
+      },
+      "accepted_sample_tiers": {
+        "Medium": 566
+      }
+    },
+    {
+      "partition": "DEV",
+      "accepted_sample_outcomes": {
+        "SUCCESS": 832
+      },
+      "accepted_sample_tiers": {
+        "Easy": 832
+      }
+    }
+  ],
+  "normalization_fitted": false,
+  "sampling_ratios": null,
+  "sample_weights": null,
+  "limitations": [
+    "Very small pilot; BC-A FIT has only one Medium geometry.",
+    "No independently approved stationary-wait examples; conservative screens can exclude valid lane changes.",
+    "Keep DEV for evaluation; source identifiers, outcomes and diagnostics must never become model features."
+  ]
+}
