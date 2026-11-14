@@ -23,13 +23,14 @@ the normal CLI runs the implementations in `src/agents/`.
 **Chuẩn bị Stage 4:** [Báo cáo kiểm định và thiết kế BC](docs/STAGE4_G0_TECHNICAL_AUDIT_VI.md)
 cung cấp kiểm tra bằng chứng ngoại tuyến S4-G0 và kế hoạch theo cổng nghiệm thu.
 G0 đã nghiệm thu ngày 13/11/2026 theo [biên bản và giới hạn](docs/STAGE4_G0_REVIEW_VI.md).
-G1 đang thực hiện: [bước 1 đã kiểm chứng vận tốc và dấu lái](docs/STAGE4_G1_TELEMETRY_VI.md);
+G1 đã hoàn tất trong phạm vi dữ liệu thử: [bước 1 kiểm chứng vận tốc và dấu lái](docs/STAGE4_G1_TELEMETRY_VI.md);
 [bước 2 đã thu và kiểm tra 5,744 cặp dữ liệu thô trên TRAIN](docs/STAGE4_G1_PILOT_VI.md).
 [Bước 3 đã đo tài nguyên và kiểm tra môi trường](docs/STAGE4_G1_RESOURCES_VI.md);
 môi trường huấn luyện còn thiếu PyTorch và có vấn đề phụ thuộc.
 Đã [chốt 144 FIT / 36 DEV và đích huấn luyện Kaggle](docs/STAGE4_G1_SPLIT_KAGGLE_VI.md);
-bước tiếp theo là kiểm định chất lượng dữ liệu.
-Chưa có dữ liệu BC được nghiệm thu hoặc mô hình đã huấn luyện.
+đã [đóng băng quy tắc chất lượng pilot và kiểm định từng lượt/đoạn](docs/STAGE4_G1_QUALITY_VI.md).
+Đã [xây và kiểm định bộ thử BC-A/BC-B](docs/STAGE4_G1_DATASETS_VI.md).
+Tiếp theo là module huấn luyện; chưa có mô hình Stage 4 đã huấn luyện.
 
 **Known MapSuite V1 metadata erratum:** `declared_base_lane_num = 2`, but `effective_base_lane_num = 3` for the frozen geometry. See the [dedicated erratum](docs/environment/MAPSUITE_V1_LANE_METADATA_ERRATUM.md); do not apply a two-lane override based on the historical description.
 

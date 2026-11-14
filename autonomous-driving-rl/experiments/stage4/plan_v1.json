@@ -6,7 +6,7 @@
   "authorized_implementation_gate": "S4-G1",
   "gate_approved": true,
   "gate_approval_scope": "S4-G0",
-  "status": "G1_IN_PROGRESS_STEP4_PARTITION_FROZEN",
+  "status": "G1_COMPLETE_PILOT_DATA_READY",
   "approval": {
     "decision_id": "S4-G0-REVIEW-20261113",
     "gate_id": "S4-G0",
@@ -45,8 +45,18 @@
     "partition_manifest": "datasets/stage4_bc/fit_dev_v1/manifest.json",
     "partition_manifest_sha256": "df244187a6c6ffa54308a776c3bd02a5d1705771717d9dd3c46d33e10ed45f90",
     "partition_decision": "experiments/stage4/g1_decision_fit_dev_kaggle_v1.json",
-    "quality_thresholds": null,
-    "timeout_cut_rules": null,
+    "quality_thresholds": {
+      "version": "1.0.0",
+      "rules": "experiments/stage4/g1_quality_rules_v1.json",
+      "frozen_package": "results/audits/stage4/g1/quality_rules_v1/freeze.json",
+      "freeze_sha256": "1956974d447e5575b1a3c0b17805f4405a7fb78758677917774d5d0a56f5c7dc"
+    },
+    "timeout_cut_rules": {
+      "window_steps": 50,
+      "boundary_guard_steps": 50,
+      "tail_guard_steps": 100,
+      "minimum_segment_steps": 50
+    },
     "sampling_ratios": null,
     "sample_weights": null,
     "calibration_gate": "G1: khảo sát phân phối TRAIN và xem ngữ cảnh công khai trước khi đóng băng quy tắc chất lượng",
@@ -59,7 +69,47 @@
       "expert_hidden_state",
       "case_or_geometry_identity",
       "evaluator_private_fields"
-    ]
+    ],
+    "quality_registry": "datasets/stage4_bc/quality_v1.json",
+    "quality_registry_sha256": "97b119f1b1a603bce0a7a11c9655315cc6b16e226a52dc265ac2c8b7b10be8c9",
+    "bc_pilot_manifest": "datasets/stage4_bc/bc_pilot_v1/manifest.json",
+    "bc_pilot_manifest_sha256": "1dad9b76a3f698a6a6667f789cdc8c1337235570e90989dd2edbcd4331f139c3",
+    "storage_schema": "stage4-bc-dataset/1.0.0",
+    "bc_datasets_built": true,
+    "bc_pilot_counts": {
+      "BC-A": {
+        "FIT": {
+          "samples": 566,
+          "observation_frames": 566,
+          "context_only_frames": 0,
+          "geometries": 1,
+          "episodes": 1
+        },
+        "DEV": {
+          "samples": 832,
+          "observation_frames": 832,
+          "context_only_frames": 0,
+          "geometries": 1,
+          "episodes": 2
+        }
+      },
+      "BC-B": {
+        "FIT": {
+          "samples": 666,
+          "observation_frames": 675,
+          "context_only_frames": 9,
+          "geometries": 2,
+          "episodes": 2
+        },
+        "DEV": {
+          "samples": 1332,
+          "observation_frames": 1341,
+          "context_only_frames": 9,
+          "geometries": 2,
+          "episodes": 3
+        }
+      }
+    }
   },
   "execution_design": {
     "decision_record": "experiments/stage4/g1_decision_fit_dev_kaggle_v1.json",
@@ -147,7 +197,7 @@
     },
     {
       "id": "S4-G1",
-      "state": "IN_PROGRESS",
+      "state": "COMPLETE",
       "step1_telemetry": {
         "state": "VERIFIED_ON_THREE_TRAIN_GEOMETRIES",
         "record": "docs/STAGE4_G1_TELEMETRY_VI.md",
@@ -161,7 +211,9 @@
         "record": "docs/STAGE4_G1_PILOT_VI.md",
         "definition": "experiments/stage4/g1_pilot_v1.json",
         "run_id": "s4_g1_pilot_02",
-        "failed_attempts_preserved": ["s4_g1_pilot_01"],
+        "failed_attempts_preserved": [
+          "s4_g1_pilot_01"
+        ],
         "raw_registry": "datasets/stage4_bc/pilot_raw_v1.json",
         "episodes": 5,
         "geometries": 4,
@@ -182,7 +234,11 @@
         "minimum_system_available_bytes": 154914816,
         "logical_artifact_bytes": 29406223,
         "training_environment_status": "NOT_READY",
-        "findings": ["PyTorch chưa cài trong môi trường MetaDrive đang chọn", "pip check mã 1: thiếu/xung đột phụ thuộc", "Máy có tải nền cao và RAM khả dụng thấp trong lần đo"],
+        "findings": [
+          "PyTorch chưa cài trong môi trường MetaDrive đang chọn",
+          "pip check mã 1: thiếu/xung đột phụ thuộc",
+          "Máy có tải nền cao và RAM khả dụng thấp trong lần đo"
+        ],
         "training_time_and_vram_budget": "NOT_MEASURED",
         "training_updates": 0,
         "scope": "Đo thu dữ liệu và kiểm tra môi trường; ngoại suy chỉ là kịch bản lập ngân sách, G1 chưa nghiệm thu, G2 chưa mở"
@@ -192,16 +248,114 @@
         "record": "docs/STAGE4_G1_SPLIT_KAGGLE_VI.md",
         "decision_record": "experiments/stage4/g1_decision_fit_dev_kaggle_v1.json",
         "manifest": "datasets/stage4_bc/fit_dev_v1/manifest.json",
-        "counts": {"FIT": 144, "DEV": 36},
+        "counts": {
+          "FIT": 144,
+          "DEV": 36
+        },
         "matches_g0_proposal": true,
-        "pilot_episode_counts": {"FIT": 2, "DEV": 3},
-        "pilot_step_counts": {"FIT": 1998, "DEV": 3746},
+        "pilot_episode_counts": {
+          "FIT": 2,
+          "DEV": 3
+        },
+        "pilot_step_counts": {
+          "FIT": 1998,
+          "DEV": 3746
+        },
         "quality_calibration_finding": "Pilot FIT chỉ có hai hình học SUCCESS; TIMEOUT hiện nằm ở DEV. Cần bổ sung nhóm FIT khó để hiệu chỉnh quy tắc chất lượng; không đổi split hoặc đặt ngưỡng bằng DEV.",
         "quality_approval_status": "PENDING",
         "bc_accepted_samples": 0,
         "scope": "Chốt cách chia và đích huấn luyện Kaggle; G1 chưa nghiệm thu, G2 chưa mở"
       },
-      "acceptance": "Nguồn gốc dữ liệu được kiểm định; cách ly TRAIN; ghép đúng quan sát/hành động; có bằng chứng đoạn, đo tài nguyên thử nghiệm và quy tắc chất lượng được duyệt, đóng băng"
+      "acceptance": "Nguồn gốc dữ liệu được kiểm định; cách ly TRAIN; ghép đúng quan sát/hành động; có bằng chứng đoạn, đo tài nguyên thử nghiệm và quy tắc chất lượng được duyệt, đóng băng",
+      "step5_quality": {
+        "state": "PILOT_RULES_FROZEN_AND_APPLIED",
+        "record": "docs/STAGE4_G1_QUALITY_VI.md",
+        "calibration_definition": "experiments/stage4/g1_quality_calibration_v1.json",
+        "calibration_run_id": "s4_g1_quality_fit_01",
+        "fit_profile": "s4_g1_quality_profile_02",
+        "application_run_id": "s4_g1_quality_review_01",
+        "rules_version": "1.0.0",
+        "quality_registry": "datasets/stage4_bc/quality_v1.json",
+        "eligible_steps": {
+          "FIT": {
+            "episodes": 4,
+            "raw_steps": 5601,
+            "outcomes": {
+              "SUCCESS": 2,
+              "TIMEOUT": 1,
+              "CRASH_VEHICLE": 1
+            },
+            "approved_success_episodes": 1,
+            "bc_a_eligible_steps": 566,
+            "bc_b_additional_timeout_steps": 100,
+            "bc_b_eligible_steps": 666
+          },
+          "DEV": {
+            "episodes": 3,
+            "raw_steps": 3746,
+            "outcomes": {
+              "SUCCESS": 2,
+              "TIMEOUT": 1
+            },
+            "approved_success_episodes": 2,
+            "bc_a_eligible_steps": 832,
+            "bc_b_additional_timeout_steps": 500,
+            "bc_b_eligible_steps": 1332
+          }
+        },
+        "raw_steps_reviewed": 9347,
+        "bc_datasets_built": false,
+        "training_updates": 0,
+        "reviewer": "Codex evidence review; no human sign-off claimed",
+        "scope": "Step 5 pilot only; step 6 must build versioned BC-A/BC-B. G1 remains in progress; G2 not open."
+      },
+      "completion_scope": "Verified pilot data preparation only; no owner sign-off claimed",
+      "completion_record": "datasets/stage4_bc/g1_completion_v1.json",
+      "completion_record_sha256": "09ccfa08b716ac88ff24f5c38845c75dfff874d4036dc2dab84fa9970f17a92a",
+      "step6_datasets": {
+        "state": "BUILT_AND_VERIFIED_PILOT",
+        "record": "docs/STAGE4_G1_DATASETS_VI.md",
+        "definition": "experiments/stage4/g1_dataset_pilot_v1.json",
+        "build_run_id": "s4_g1_dataset_build_01",
+        "manifest": "datasets/stage4_bc/bc_pilot_v1/manifest.json",
+        "variants": {
+          "BC-A": {
+            "FIT": {
+              "samples": 566,
+              "observation_frames": 566,
+              "context_only_frames": 0,
+              "geometries": 1,
+              "episodes": 1
+            },
+            "DEV": {
+              "samples": 832,
+              "observation_frames": 832,
+              "context_only_frames": 0,
+              "geometries": 1,
+              "episodes": 2
+            }
+          },
+          "BC-B": {
+            "FIT": {
+              "samples": 666,
+              "observation_frames": 675,
+              "context_only_frames": 9,
+              "geometries": 2,
+              "episodes": 2
+            },
+            "DEV": {
+              "samples": 1332,
+              "observation_frames": 1341,
+              "context_only_frames": 9,
+              "geometries": 2,
+              "episodes": 3
+            }
+          }
+        },
+        "verification_report": "results/audits/stage4/g1/dataset_pilot_v1_checks.json",
+        "training_updates": 0,
+        "scope": "Small verified datasets only; no training module, checkpoint, Kaggle upload or large collection."
+      }
     },
     {
       "id": "S4-G2",

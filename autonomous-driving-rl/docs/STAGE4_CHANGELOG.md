@@ -1,5 +1,54 @@
 # Nhật ký nghiên cứu Stage 4
 
+## 2026-11-14 — G1 bước 6: dựng BC-A/BC-B thử và hoàn tất chuẩn bị G1
+
+- Thêm định nghĩa `g1_dataset_pilot_v1.json`, bộ dựng
+  `build_stage4_dataset.py build/publish/verify` và bộ đọc chỉ dùng thư viện
+  chuẩn `src/datasets/stage4_bc.py`. Không đổi các nguồn kiểm định chất lượng
+  v1 đã đóng băng, teacher 0.6.1 hoặc quy tắc FIT/DEV.
+- `s4_g1_dataset_build_01` COMPLETE: BC-A 566 mẫu FIT / 832 DEV; BC-B 666
+  mẫu FIT / 1.332 DEV. Mọi mẫu A có nguyên quan sát/nhãn/lịch sử trong B;
+  B chỉ thêm 100 mẫu TIMEOUT FIT và 500 DEV. Đơn vị là cặp quan sát–hành động.
+- Lịch sử chỉ nhìn quá khứ trong lượt, có mask; 9 khung context bổ sung mỗi
+  phía của B không trở thành nhãn học. Không fit chuẩn hóa, trọng số mẫu hoặc
+  tỷ lệ lấy mẫu. Chẩn đoán/kết quả/nguồn gốc tách khỏi đầu vào mô hình.
+- Dữ liệu đầy đủ tại `artifacts/stage4/bc_pilot_v1/`, tổng dung lượng tệp
+  khoảng 3,05 MiB. Manifest, sample index, provenance và báo cáo ở
+  `datasets/stage4_bc/bc_pilot_v1/`; gzip dữ liệu xác định byte, có SHA-256.
+- `s4_g1_dataset_checks_01`: **536/536 backend đạt**, gồm 24 kiểm thử mới.
+  `s4_g1_dataset_portability_01` đọc bản sao ở chế độ `-I -S`, không phụ thuộc
+  simulator/framework hoặc dữ liệu gốc. `s4_g1_dataset_finalcheck_01` đối
+  chiếu mọi quan sát/nhãn với nguồn, xác minh nguồn và split không thay đổi.
+- G1 COMPLETE ở phạm vi bộ thử theo `g1_completion_v1.json`, không ghi nhận
+  owner sign-off. Nguồn thử mới có 6 bản đồ/7 lượt, không phải đã thu đủ 180.
+  G2–G5 vẫn NOT_OPEN; bước tiếp theo là module huấn luyện rồi đóng gói Kaggle.
+
+Xem [báo cáo bước 6 và cách đọc dữ liệu](STAGE4_G1_DATASETS_VI.md).
+
+## 2026-11-14 — G1 bước 5: quy tắc chất lượng pilot v1.0.0
+
+- Giữ nguyên 144 FIT / 36 DEV. Định nghĩa trước hai hình học Extreme FIT;
+  `s4_g1_quality_fit_01` COMPLETE: 3.603 bước, một TIMEOUT và một va chạm,
+  đủ nguồn/cấu hình/seed/bản đồ, ghép bước và phát lại. Giữ mọi kết quả.
+- Mở rộng bộ thu nhận `--definition`, kiểm tra partition/hash trước chạy,
+  ghi đúng mã băm định nghĩa thực tế. Không đổi teacher Stage 1 0.6.1.
+- Thêm `review_stage4_quality.py`, quy tắc v1.0.0 và sổ quyết định riêng.
+  Khảo sát FIT trước, đóng băng nguồn/quy tắc rồi mới áp dụng lên DEV;
+  tái kiểm định 9.347 bước / 191 cửa sổ. Không sửa dữ liệu thô lịch sử.
+- FIT đủ điều kiện: BC-A 566 bước, BC-B thêm 100 bước TIMEOUT. Hard SUCCESS
+  chưa qua toàn bộ kiểm định vì 200 bước dừng thiếu bằng chứng; lượt va chạm
+  không được nhận. DEV: 832 bước BC-A, 500 bước TIMEOUT bổ sung; giữ đúng DEV.
+- Bỏ vùng đệm 5 giây quanh cửa sổ không đạt và 10 giây cuối TIMEOUT; không
+  lấy đoạn dưới 5 giây. Chờ chưa rõ không tự coi là tốt hoặc xấu. V1 có thể
+  loại chuyển làn hợp lệ vì chưa kiểm định hành lang; độ phủ pilot rất hẹp.
+- `s4_g1_quality_checks_01` giữ lỗi đường dẫn Windows trong thư mục tạm;
+  sửa chuẩn hóa rồi `s4_g1_quality_checks_02` đạt **512/512 backend**,
+  gồm 24 kiểm thử chất lượng và 2 kiểm thử bảo vệ collection mới.
+- Bước 5 hoàn tất cho pilot; bước 6 mới xây BC-A/BC-B. Chưa huấn luyện,
+  chưa đóng gói trainer Kaggle, G1 còn IN_PROGRESS, G2–G5 NOT_OPEN.
+
+Xem [báo cáo quy tắc, quyết định từng lượt và giới hạn](STAGE4_G1_QUALITY_VI.md).
+
 ## 2026-11-14 — G1 bước 4: chốt FIT/DEV và huấn luyện Kaggle
 
 Theo xác nhận trực tiếp của người dùng, ghi quyết định

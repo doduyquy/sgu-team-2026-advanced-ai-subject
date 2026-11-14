@@ -1,9 +1,15 @@
-# Cấu trúc dữ liệu hành vi mẫu Stage 4 — Đề xuất phiên bản 1
+# Cấu trúc dữ liệu hành vi mẫu Stage 4 — Phiên bản 1
 
-Trạng thái: **cấu trúc BC đề xuất, cần xem xét tại G1**. Tài liệu quy định yêu
+Trạng thái: **đã triển khai và kiểm định cho bộ thử BC v1**. Tài liệu quy định yêu
 cầu tối thiểu cho bộ xây dữ liệu. G1 bước 2 đã có [dữ liệu thô pilot](pilot_raw_v1.json)
 được kiểm tra ghép bước/nguồn gốc; chưa duyệt chất lượng. Cách chia theo hình
 học đã chốt tại [manifest FIT/DEV v1](fit_dev_v1/manifest.json).
+
+Trạng thái mới ở bước 5: [quy tắc chất lượng v1.0.0 và báo cáo](../../docs/STAGE4_G1_QUALITY_VI.md)
+được lưu thành lớp chú thích riêng; không sửa trạng thái UNREVIEWED trong sổ
+thu thô lịch sử. Quy tắc pilot nhận toàn bộ SUCCESS đủ điều kiện hoặc từng
+đoạn TIMEOUT đã qua sàng lọc và vùng đệm. Bước 6 đã dựng
+[BC-A/BC-B thử](bc_pilot_v1/manifest.json); xem [bố cục shard, lịch sử và cách đọc](../../docs/STAGE4_G1_DATASETS_VI.md).
 
 ## Ghép quan sát/hành động và truy xuất nguồn gốc
 

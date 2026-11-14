@@ -18,6 +18,8 @@ Scripts below are tools supporting that runtime.
 | G1 bước 1: kiểm chứng vận tốc và dấu lái trên TRAIN, hồ sơ nguồn/bản đồ/số đo từng bước | `audit_stage4_telemetry.py --run-id <new-id> --expected-logging corrected` |
 | G1 bước 2: thu thử Stage 1, kiểm tra nguồn gốc/ghép bước và phát lại; xuất tổng hợp có băm | `collect_stage4_pilot.py collect --run-id <new-id>`, `collect_stage4_pilot.py publish --run-id <id> --output results/audits/stage4/g1/<new-dir>` |
 | G1 bước 3: đo thời gian/RAM/dung lượng toàn cây collector, kiểm tra môi trường, ngoại suy theo tier | `profile_stage4_resources.py profile --run-id <new-id>`, `profile_stage4_resources.py publish --run-id <id> --output results/audits/stage4/g1/<new-dir>` |
+| G1 bước 5: thu FIT khó theo định nghĩa; kiểm định chất lượng, đóng băng rồi áp dụng lên DEV và xuất sổ quyết định | `collect_stage4_pilot.py collect --definition experiments/stage4/g1_quality_calibration_v1.json --run-id <new-id>`; `review_stage4_quality.py profile/freeze/apply/publish` |
+| G1 bước 6: dựng/kiểm tra hai bộ BC và xuất manifest, danh sách mẫu, nguồn gốc, checksum | `build_stage4_dataset.py build/publish/verify`; xem `docs/STAGE4_G1_DATASETS_VI.md` |
 
 Use a fresh run ID for every driving attempt. See the
 [experiment workflow](../experiments/rule_based/README.md).

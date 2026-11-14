@@ -1,6 +1,9 @@
 # Stage 4 — Nghiên cứu học bắt chước hành vi
 
-**G0 đã nghiệm thu ngày 13/11/2026; G1 đang thực hiện, bước 1–2 đã hoàn tất trong phạm vi thử nhỏ.**
+**G0 đã nghiệm thu ngày 13/11/2026; G1 đã hoàn tất chuẩn bị bộ thử, G2 chưa mở.**
+Xem [báo cáo BC-A/BC-B](../../docs/STAGE4_G1_DATASETS_VI.md),
+[định nghĩa dựng dữ liệu](g1_dataset_pilot_v1.json) và
+[hồ sơ hoàn tất G1](../../datasets/stage4_bc/g1_completion_v1.json).
 **Bước 3 đã đo tài nguyên; môi trường huấn luyện NOT_READY**, xem
 [báo cáo tài nguyên](../../docs/STAGE4_G1_RESOURCES_VI.md) và
 [định nghĩa đo](g1_resources_v1.json).
@@ -8,13 +11,18 @@
 [quyết định người dùng](g1_decision_fit_dev_kaggle_v1.json), xem
 [manifest](../../datasets/stage4_bc/fit_dev_v1/manifest.json) và
 [báo cáo/việc tiếp theo](../../docs/STAGE4_G1_SPLIT_KAGGLE_VI.md).
+**Bước 5 có quy tắc chất lượng v1 cho pilot**: xem
+[định nghĩa nhóm FIT khó](g1_quality_calibration_v1.json),
+[tham số](g1_quality_rules_v1.json) và [báo cáo](../../docs/STAGE4_G1_QUALITY_VI.md).
+Quy tắc đóng băng bằng FIT rồi áp dụng lên DEV; bước 6 đã xây BC-A/BC-B.
 Xem [vận tốc và dấu lái trên TRAIN](../../docs/STAGE4_G1_TELEMETRY_VI.md),
-định nghĩa [kiểm chứng bước 1](g1_telemetry_v1.json). Chưa thu bộ dữ liệu BC.
+định nghĩa [kiểm chứng bước 1](g1_telemetry_v1.json).
 Đã [thu và kiểm tra dữ liệu thô bước 2](../../docs/STAGE4_G1_PILOT_VI.md) theo
-[định nghĩa pilot](g1_pilot_v1.json): 5 lượt, 4 hình học, 5,744 cặp; chưa duyệt chất lượng.
+[định nghĩa pilot](g1_pilot_v1.json): 5 lượt, 4 hình học, 5,744 cặp;
+sổ thu gốc giữ UNREVIEWED, lớp kiểm định mới được ghi riêng ở bước 5.
 Xem [biên bản nghiệm thu và giới hạn](../../docs/STAGE4_G0_REVIEW_VI.md).
-Chưa có chính sách học được,
-bộ dữ liệu mẫu được nghiệm thu, vòng huấn luyện hoặc đăng ký đánh giá chuẩn cho Stage 4.
+Đã có bộ dữ liệu thử được kiểm định; chưa có chính sách học được,
+vòng huấn luyện hoặc đăng ký đánh giá chuẩn cho Stage 4.
 
 - [Kế hoạch nghiên cứu](plan_v1.json): thiết kế có phiên bản và điều kiện nghiệm thu từng cổng.
 - [Định nghĩa kiểm định](g0_audit_v1.json): các bằng chứng TRAIN lịch sử cần đối chiếu.
@@ -65,11 +73,11 @@ Bản ghi gốc vẫn có thẩm quyền và cần được bảo quản riêng.
 
 ## Chuyển cổng nghiệm thu
 
-G0 đã được chấp nhận theo biên bản ngày 13/11/2026. G1 hiện `IN_PROGRESS`;
+G0 đã được chấp nhận theo biên bản ngày 13/11/2026. G1 đã hoàn tất ở phạm vi pilot;
 bước 1 đã kiểm chứng vận tốc và dấu lái; bước 2 đã thu thử nhỏ và kiểm tra ghép
-bước/nguồn gốc. Bước 3 đã đo tài nguyên và ghi vấn đề môi trường. G1 còn phải
-chốt tiêu chí chất lượng và xây BC-A/BC-B trước khi nghiệm thu bộ dữ liệu;
-FIT/DEV đã đóng băng. Đích huấn luyện là Kaggle sau chuẩn bị dữ liệu, runtime
+bước/nguồn gốc. Bước 3 đã đo tài nguyên và ghi vấn đề môi trường. Bước 6
+đã xây và kiểm tra BC-A/BC-B từ các chú thích chất lượng;
+FIT/DEV đã đóng băng. Đích huấn luyện là Kaggle sau chuẩn bị module, runtime
 Kaggle và runtime suy luận local cần được kiểm tra trước các cổng sử dụng.
 Huấn luyện, tích hợp bản lưu mô hình, mô hình có lịch sử, DAgger và đánh giá chuẩn
 thuộc các cổng sau. G0 giữ nguyên đăng ký, hợp đồng nền tảng và mã tác nhân cũ.
