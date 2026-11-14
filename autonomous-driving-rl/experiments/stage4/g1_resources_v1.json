@@ -1,0 +1,18 @@
+{
+  "schema_version": "stage4-resource-profile/1.0.0",
+  "scope": "G1_STEP3_ONLY",
+  "workload": "scripts/collect_stage4_pilot.py collect",
+  "collection_definition": "experiments/stage4/g1_pilot_v1.json",
+  "reference_registry": "datasets/stage4_bc/pilot_raw_v1.json",
+  "sample_interval_s": 0.1,
+  "process_scope": "Collector and all live descendant processes; profiler RAM recorded separately",
+  "ram_metric": "Sampled sum of process RSS/working set; shared pages can be counted more than once",
+  "execution": "Sequential, headless, same five TRAIN cases and original horizons; no policy changes",
+  "projection_environment_seed_counts": [1, 2],
+  "projection_method": "Use actual TRAIN geometry counts per tier and mean measured per-case cost within tier; separate full-horizon scenario",
+  "projection_limit": "Four sampled families out of twelve; estimates are planning scenarios, not confidence bounds or guaranteed runtime",
+  "dependency_installation": false,
+  "optimizer_updates": 0,
+  "training_updates": 0,
+  "dataset_acceptance": false
+}

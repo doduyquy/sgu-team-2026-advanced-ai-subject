@@ -1,0 +1,15 @@
+{
+  "source_run_id": "s4_g1_partition_checks_01",
+  "source_integrity_sha256": "4b5c3f5d1d8c9ddda937c2bfc818ac9aeb5b2be02db79009084f4f834cbc867e",
+  "summary": {
+    "status": "PASSED",
+    "tests": 24,
+    "seconds": 0.965,
+    "exit_code": 0,
+    "log_sha256": "ae411624590db3514cb5c2133475a0ac226adb808191ab8d374212f9aa9cc229",
+    "partition_assets_and_plan_consistent": true
+  },
+  "partition_manifest_sha256": "df244187a6c6ffa54308a776c3bd02a5d1705771717d9dd3c46d33e10ed45f90",
+  "g1_complete": false,
+  "training_updates": 0
+}

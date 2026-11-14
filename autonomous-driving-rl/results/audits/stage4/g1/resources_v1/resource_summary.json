@@ -1,0 +1,261 @@
+{
+  "schema_version": "stage4-resource-result/1.0.0",
+  "run_id": "s4_g1_resources_01",
+  "workload_run_id": "s4_g1_resources_01_collect",
+  "workload_integrity_sha256": "8d5f278aa19c60f2d8756eae09969b438fe51edfe80af8850ab88eb14fd18205",
+  "verified_workload_files": 1020,
+  "workload_wall_seconds": 863.883854499989,
+  "workload_collector_reported_seconds": 858.0928278999927,
+  "sample_interval_requested_s": 0.1,
+  "ram": {
+    "samples": 6393,
+    "peak_tree_rss_bytes": 330387456,
+    "peak_profiler_rss_bytes": 125779968,
+    "minimum_system_available_bytes": 154914816,
+    "maximum_live_processes": 5,
+    "peak_tree_rss_by_episode": {
+      "setup_or_finalization": 138743808,
+      "episode_000": 303775744,
+      "episode_001": 306012160,
+      "episode_002": 308637696,
+      "episode_003": 317849600,
+      "episode_004": 330387456
+    },
+    "access_denied_observations": 0,
+    "vanished_process_observations": 2,
+    "maximum_sample_gap_s": 0.42813300000852905,
+    "metric_limit": "Sampled working-set sum; shared pages may be counted multiple times; profiler excluded from tree"
+  },
+  "timing": {
+    "case_wall_seconds": {
+      "episode_000": 29.921413099975325,
+      "episode_001": 23.907406000012998,
+      "episode_002": 18.873931600013748,
+      "episode_003": 107.17959839999094,
+      "episode_004": 625.6360202000069
+    },
+    "batch_setup_and_finalize_seconds": 58.36548519998905,
+    "boundary_limit": "Includes worker startup, simulation, recording and offline verification/replay; stdout observation adds sampling jitter"
+  },
+  "disk": {
+    "files": 1021,
+    "total_bytes": 29406223,
+    "bytes_by_category": {
+      "console_logs": 7217,
+      "other_metadata_and_integrity": 708231,
+      "decision_traces_gzip": 15603386,
+      "per_episode_source_copies": 962855,
+      "maps_gzip": 1262882,
+      "transition_traces_gzip": 4637977,
+      "shared_source_and_expert": 6202181,
+      "sample_index_gzip": 21494
+    },
+    "bytes_by_episode": {
+      "episode_000": 866019,
+      "episode_001": 910062,
+      "episode_002": 1250074,
+      "episode_003": 4974453,
+      "episode_004": 14852353
+    },
+    "size_kind": "logical file bytes, not filesystem allocation"
+  },
+  "reference_disk": {
+    "files": 1019,
+    "total_bytes": 29384039,
+    "bytes_by_category": {
+      "console_logs": 7217,
+      "other_metadata_and_integrity": 707209,
+      "decision_traces_gzip": 15601100,
+      "per_episode_source_copies": 962855,
+      "maps_gzip": 1262874,
+      "transition_traces_gzip": 4637977,
+      "shared_source_and_expert": 6184101,
+      "sample_index_gzip": 20706
+    },
+    "bytes_by_episode": {
+      "episode_000": 865061,
+      "episode_001": 910579,
+      "episode_002": 1249674,
+      "episode_003": 4976308,
+      "episode_004": 14848810
+    },
+    "size_kind": "logical file bytes, not filesystem allocation"
+  },
+  "reference_pilot_unchanged": true,
+  "workload_cases": [
+    {
+      "case_id": "sandbox/Easy/SCS/0/0",
+      "steps": 418,
+      "terminal_reason": "SUCCESS",
+      "reference_case_outcome_steps_match": true
+    },
+    {
+      "case_id": "sandbox/Easy/SCS/0/1",
+      "steps": 414,
+      "terminal_reason": "SUCCESS",
+      "reference_case_outcome_steps_match": true
+    },
+    {
+      "case_id": "sandbox/Medium/SCXCS/14/0",
+      "steps": 566,
+      "terminal_reason": "SUCCESS",
+      "reference_case_outcome_steps_match": true
+    },
+    {
+      "case_id": "sandbox/Hard/SCTXrCS/2/0",
+      "steps": 1432,
+      "terminal_reason": "SUCCESS",
+      "reference_case_outcome_steps_match": true
+    },
+    {
+      "case_id": "sandbox/Extreme/SCXOCrTYCS/0/0",
+      "steps": 2914,
+      "terminal_reason": "TIMEOUT",
+      "reference_case_outcome_steps_match": true
+    }
+  ],
+  "raw_steps": 5744,
+  "outcomes": {
+    "SUCCESS": 4,
+    "TIMEOUT": 1
+  },
+  "projections": {
+    "tier_assumptions": {
+      "Easy": {
+        "measured_cases": 2,
+        "measured_families": [
+          "SCS"
+        ],
+        "target_train_geometries": 45,
+        "mean_steps_per_measured_case": 416.0,
+        "mean_case_wall_seconds": 26.91440954999416,
+        "mean_episode_bytes": 888040.5,
+        "total_target_horizon_steps": 55488
+      },
+      "Medium": {
+        "measured_cases": 1,
+        "measured_families": [
+          "SCXCS"
+        ],
+        "target_train_geometries": 45,
+        "mean_steps_per_measured_case": 566.0,
+        "mean_case_wall_seconds": 18.873931600013748,
+        "mean_episode_bytes": 1250074.0,
+        "total_target_horizon_steps": 76190
+      },
+      "Hard": {
+        "measured_cases": 1,
+        "measured_families": [
+          "SCTXrCS"
+        ],
+        "target_train_geometries": 45,
+        "mean_steps_per_measured_case": 1432.0,
+        "mean_case_wall_seconds": 107.17959839999094,
+        "mean_episode_bytes": 4974453.0,
+        "total_target_horizon_steps": 85846
+      },
+      "Extreme": {
+        "measured_cases": 1,
+        "measured_families": [
+          "SCXOCrTYCS"
+        ],
+        "target_train_geometries": 45,
+        "mean_steps_per_measured_case": 2914.0,
+        "mean_case_wall_seconds": 625.6360202000069,
+        "mean_episode_bytes": 14852353.0,
+        "total_target_horizon_steps": 134323
+      }
+    },
+    "scenarios": [
+      {
+        "scenario": "observed_length_scenario",
+        "environment_seeds_per_geometry": 1,
+        "episodes": 180,
+        "estimated_steps": 239760.0,
+        "estimated_wall_seconds": 35095.54367395025,
+        "estimated_total_bytes": 995850370.4164346
+      },
+      {
+        "scenario": "all_cases_full_horizon_scenario",
+        "environment_seeds_per_geometry": 1,
+        "episodes": 180,
+        "estimated_steps": 351847.0,
+        "estimated_wall_seconds": 41453.373803923736,
+        "estimated_total_bytes": 1277413804.6604085
+      },
+      {
+        "scenario": "observed_length_scenario",
+        "environment_seeds_per_geometry": 2,
+        "episodes": 360,
+        "estimated_steps": 479520.0,
+        "estimated_wall_seconds": 70132.7218627005,
+        "estimated_total_bytes": 1985168972.8328693
+      },
+      {
+        "scenario": "all_cases_full_horizon_scenario",
+        "environment_seeds_per_geometry": 2,
+        "episodes": 360,
+        "estimated_steps": 703694.0,
+        "estimated_wall_seconds": 82848.38212264748,
+        "estimated_total_bytes": 2548295841.320817
+      }
+    ],
+    "parallelism": 1,
+    "limitations": [
+      "Only four sampled families of twelve; no statistical confidence bounds",
+      "Same machine, collector, compression and sequential execution assumed",
+      "Full-horizon scenario scales amortized case cost; not a guaranteed upper bound",
+      "Unmeasured traffic interactions and safety outcomes can change cost",
+      "Per-episode source/map copies retained; no deduplication assumed",
+      "No Stage 4 training time or training VRAM estimate has been measured"
+    ]
+  },
+  "environment_check": {
+    "python": "3.10.22 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:15:38) [MSC v.1942 64 bit (AMD64)]",
+    "packages": {
+      "numpy": "2.2.6",
+      "panda3d": "1.10.16",
+      "metadrive-simulator": "0.4.3",
+      "wandb": "0.30.0",
+      "psutil": "7.1.3",
+      "torch": null
+    },
+    "pip_check_exit_code": 1,
+    "tensor_smoke": {
+      "status": "NOT_INSTALLED",
+      "reason": "PyTorch is not installed in the selected MetaDrive environment",
+      "optimizer_updates": 0,
+      "stage4_training_updates": 0
+    },
+    "training_tensor_environment_status": "NOT_READY",
+    "stage4_training_pipeline_validated": false,
+    "dependency_installations": 0,
+    "training_updates": 0,
+    "note": "Hardware/driver visibility alone does not verify PyTorch CUDA compatibility"
+  },
+  "hardware": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "processor_identifier": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+    "physical_cpu_cores": 8,
+    "logical_cpu_cores": 12,
+    "physical_ram_bytes": 16869056512,
+    "available_ram_at_inspection_bytes": 2118115328,
+    "system_cpu_percent_before_workload": 84.2,
+    "disk_free_at_inspection_bytes": 21216972800,
+    "cpu_wmi": {
+      "Name": "12th Gen Intel(R) Core(TM) i5-12450H",
+      "NumberOfCores": 8,
+      "NumberOfLogicalProcessors": 12
+    },
+    "gpu_query": {
+      "exit_code": 0,
+      "stdout": "NVIDIA GeForce RTX 3050 Laptop GPU, 610.78, 4096, 0, 0\n",
+      "stderr": ""
+    }
+  },
+  "source_files_unchanged": 134,
+  "training_updates": 0,
+  "quality_status": "UNREVIEWED",
+  "bc_accepted_samples": 0,
+  "g1_complete": false
+}

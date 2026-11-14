@@ -1,0 +1,70 @@
+{
+  "schema_version": "stage4-pilot-partition-overlay/1.0.0",
+  "source_registry": "datasets/stage4_bc/pilot_raw_v1.json",
+  "source_registry_sha256": "2a0e141a2808ea9fc6da8061d5e41549191f3058b0cbc8d53f5c77d85a139de3",
+  "raw_records_policy": "Original raw registry and runs remain unchanged; resolve current geometry partitions through this overlay and the frozen manifest",
+  "episodes": [
+    {
+      "episode_id": "episode_000",
+      "case_id": "sandbox/Easy/SCS/0/0",
+      "geometry_id": "geom_easy_SCS_seed0",
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "environment_seed": 0,
+      "partition": "DEV",
+      "steps": 418,
+      "terminal_reason": "SUCCESS",
+      "quality_status": "UNREVIEWED",
+      "bc_accepted_samples": 0
+    },
+    {
+      "episode_id": "episode_001",
+      "case_id": "sandbox/Easy/SCS/0/1",
+      "geometry_id": "geom_easy_SCS_seed0",
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "environment_seed": 1,
+      "partition": "DEV",
+      "steps": 414,
+      "terminal_reason": "SUCCESS",
+      "quality_status": "UNREVIEWED",
+      "bc_accepted_samples": 0
+    },
+    {
+      "episode_id": "episode_002",
+      "case_id": "sandbox/Medium/SCXCS/14/0",
+      "geometry_id": "geom_medium_SCXCS_seed14",
+      "geometry_sha256": "281b1353d6ca897dda5c22baddabbb2d890860f22e7ff8e87c335f432ee5a426",
+      "environment_seed": 0,
+      "partition": "FIT",
+      "steps": 566,
+      "terminal_reason": "SUCCESS",
+      "quality_status": "UNREVIEWED",
+      "bc_accepted_samples": 0
+    },
+    {
+      "episode_id": "episode_003",
+      "case_id": "sandbox/Hard/SCTXrCS/2/0",
+      "geometry_id": "geom_hard_SCTXrCS_seed2",
+      "geometry_sha256": "84cc4ae49427ce5cde984c58a3f68d261abbd791768ac9aa79d5b44f22f08218",
+      "environment_seed": 0,
+      "partition": "FIT",
+      "steps": 1432,
+      "terminal_reason": "SUCCESS",
+      "quality_status": "UNREVIEWED",
+      "bc_accepted_samples": 0
+    },
+    {
+      "episode_id": "episode_004",
+      "case_id": "sandbox/Extreme/SCXOCrTYCS/0/0",
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed0",
+      "geometry_sha256": "73fb061319d5754a8cde93d461ffa06a61ad79f22fd775538caffe57e5782e34",
+      "environment_seed": 0,
+      "partition": "DEV",
+      "steps": 2914,
+      "terminal_reason": "TIMEOUT",
+      "quality_status": "UNREVIEWED",
+      "bc_accepted_samples": 0
+    }
+  ],
+  "quality_status": "UNREVIEWED",
+  "bc_accepted_samples": 0
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": "stage4-fit-dev-partition/1.0.0",
+  "partition_id": "stage4-fit-dev-v1",
+  "status": "APPROVED_FROZEN",
+  "created_at_utc": "2026-11-14T09:22:28.741210+00:00",
+  "decision_record": "experiments/stage4/g1_decision_fit_dev_kaggle_v1.json",
+  "decision_sha256": "0c9f46433700095b935b222f78a03bb5479eb46ac0fa9ab425230c6dfa5ee3c9",
+  "source_geometry_manifest": "results/audits/evaluation_protocol/geometry_split_manifest.csv",
+  "source_geometry_manifest_sha256": "ec1099eb93252f445d7afa95fd19270e72d5a8f37282701d6935e283a0997134",
+  "source_geometry_manifest_canonical_sha256": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481",
+  "g0_proposal": "results/audits/stage4/g0/attempt_01/proposed_fit_dev.json",
+  "g0_proposal_sha256": "430639bed3d08ee5f88c192f1788737e6ce61d91c0b644df2ab7355282938cbe",
+  "generator": "src.imitation.audit.propose_partition",
+  "generator_source_sha256": "8f944eee387ff718a7408a36dffa659364480537fe5758e0e2b7a648bf64c7e0",
+  "ranking": "SHA256(UTF8('stage4-fit-dev-v1|' + geometry_id)), sau đó dùng geometry_id để phân xử khi trùng",
+  "counts": {
+    "DEV": 36,
+    "FIT": 144
+  },
+  "families": 12,
+  "per_family": {
+    "FIT": 12,
+    "DEV": 3
+  },
+  "grouping_rule": "Every seed, episode, segment and history window of the same geometry stays in the same partition",
+  "normalization_fit_partition": "FIT_ONLY_VALID_ELEMENTS",
+  "canonical_validation_test_used_as_demonstrations": false,
+  "quality_approval_status": "PENDING",
+  "bc_accepted_samples": 0,
+  "files": {
+    "geometry_assignments.csv": "cbae3eb970fb10bf4f3be09584c404c21672d528d1a0eb71a80f49e7762ab30c",
+    "pilot_assignments.json": "754c0fdcf1bc979cd20757de5338e1dcf6bab9d77293ab216794410945871a7d"
+  }
+}

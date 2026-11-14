@@ -1,0 +1,109 @@
+{
+  "schema_version": "stage4-frozen-partition-verification/1.0.0",
+  "verified_at_utc": "2026-11-14T09:22:28.721163+00:00",
+  "status": "PASSED",
+  "checks": {
+    "canonical_geometry_manifest_matches": true,
+    "matches_g0_proposed_assignment_exactly": true,
+    "train_only": true,
+    "covers_all_180_train_geometries": true,
+    "geometry_ids_and_hashes_unique": true,
+    "fit_dev_geometry_hash_overlap_zero": true,
+    "validation_test_excluded": true,
+    "each_family_12_fit_3_dev": true,
+    "all_environment_seeds_geometry_grouped": true
+  },
+  "counts": {
+    "DEV": 36,
+    "FIT": 144
+  },
+  "by_family": {
+    "CrXROSTR": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "SCCS": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "SCS": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "SCSS": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "SCTCS": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "SCTXORyCCS": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "SCTXrCS": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "SCXCCS": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "SCXCS": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "SCXOCS": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "SCXOCrTYCS": {
+      "DEV": 3,
+      "FIT": 12
+    },
+    "XTOCS": {
+      "DEV": 3,
+      "FIT": 12
+    }
+  },
+  "by_tier": {
+    "Extreme": {
+      "DEV": 9,
+      "FIT": 36
+    },
+    "Easy": {
+      "DEV": 9,
+      "FIT": 36
+    },
+    "Medium": {
+      "DEV": 9,
+      "FIT": 36
+    },
+    "Hard": {
+      "DEV": 9,
+      "FIT": 36
+    }
+  },
+  "pilot_episode_counts": {
+    "DEV": 3,
+    "FIT": 2
+  },
+  "pilot_step_counts": {
+    "DEV": 3746,
+    "FIT": 1998
+  },
+  "pilot_outcomes_by_partition": {
+    "DEV": {
+      "SUCCESS": 2,
+      "TIMEOUT": 1
+    },
+    "FIT": {
+      "SUCCESS": 2
+    }
+  },
+  "pilot_limitation": "FIT currently has two SUCCESS geometries and no TIMEOUT; additional difficult FIT coverage is needed to calibrate timeout-quality rules. Do not change split or tune quality thresholds on DEV.",
+  "quality_status": "UNREVIEWED",
+  "bc_accepted_samples": 0,
+  "g1_complete": false
+}

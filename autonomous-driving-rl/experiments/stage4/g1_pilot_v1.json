@@ -1,0 +1,25 @@
+{
+  "schema_version": "stage4-pilot-collection/1.0.0",
+  "scope": "G1_STEP2_TRAIN_PILOT_ONLY",
+  "purpose": "Thu thử quy trình trên bốn mức khó, hai seed môi trường cho cùng một hình học; giữ mọi kết quả, không chọn theo SUCCESS",
+  "expert": "stage1_rule_based@0.6.1",
+  "agent_seed": 42,
+  "cases": [
+    {"tier": "Easy", "sequence": "SCS", "geometry_seed": 0, "environment_seed": 0},
+    {"tier": "Easy", "sequence": "SCS", "geometry_seed": 0, "environment_seed": 1},
+    {"tier": "Medium", "sequence": "SCXCS", "geometry_seed": 14, "environment_seed": 0},
+    {"tier": "Hard", "sequence": "SCTXrCS", "geometry_seed": 2, "environment_seed": 0},
+    {"tier": "Extreme", "sequence": "SCXOCrTYCS", "geometry_seed": 0, "environment_seed": 0}
+  ],
+  "prerequisite": "results/audits/stage4/g1/telemetry_v1/evidence_index.json",
+  "render": "OFF",
+  "wandb": "DISABLED",
+  "control_dt_s": 0.1,
+  "interventions": false,
+  "horizon_policy": "Unchanged route-aware horizon resolved by Platform V1",
+  "preserve_all_outcomes": true,
+  "geometry_partition_status": "UNASSIGNED_PENDING_STEP4",
+  "quality_status": "UNREVIEWED",
+  "bc_accepted_samples": 0,
+  "speed_tolerance_kmh": 0.00001
+}

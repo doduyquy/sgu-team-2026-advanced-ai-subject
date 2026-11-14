@@ -1,0 +1,30 @@
+{
+  "schema_version": "stage4-fit-dev-kaggle-decision/1.0.0",
+  "decision_id": "S4-G1-FITDEV-KAGGLE-20261114",
+  "recorded_at_utc": "2026-11-14T09:22:28.721163+00:00",
+  "approved_on": "2026-11-14",
+  "timezone": "Asia/Saigon",
+  "authority": "explicit_user_message",
+  "verbatim_user_decision": "vậy chốt sau khi chuẩn bị sẽ đóng gói module đưa lên kaggle huấn luyện để nhận checkpoint, còn 180 train sẽ chua thành 144 fit và 36 dev\nvậy tiếp theo chúng ta lmaf gì tiếp theo",
+  "approved_scope": {
+    "fit_geometries": 144,
+    "dev_geometries": 36,
+    "partition_unit": "geometry",
+    "training_execution_target": "KAGGLE_AFTER_DATA_PREPARATION",
+    "training_output": "checkpoint_bundle"
+  },
+  "mapping_basis": "Retain the deterministic G0 proposal without changes based on pilot outcomes",
+  "deployment_design": {
+    "data_collection": "LOCAL_METADRIVE",
+    "training": "KAGGLE",
+    "offline_dev_evaluation": "KAGGLE",
+    "closed_loop_evaluation": "LOCAL_METADRIVE",
+    "shared_encoder_required": true,
+    "simulator_free_trainer_required": true,
+    "local_inference_runtime_required": true,
+    "kaggle_runtime_status": "NOT_YET_VERIFIED"
+  },
+  "g1_complete": false,
+  "training_started": false,
+  "kaggle_upload_started": false
+}

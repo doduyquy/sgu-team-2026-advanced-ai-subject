@@ -1,0 +1,241 @@
+{
+  "schema_version": "stage4-research-plan/1.0.0",
+  "owner": "Đăng Khoa",
+  "branch": "khoa",
+  "method": "Stage 4 / Học bắt chước / Học bắt chước hành vi (BC)",
+  "authorized_implementation_gate": "S4-G1",
+  "gate_approved": true,
+  "gate_approval_scope": "S4-G0",
+  "status": "G1_IN_PROGRESS_STEP4_PARTITION_FROZEN",
+  "approval": {
+    "decision_id": "S4-G0-REVIEW-20261113",
+    "gate_id": "S4-G0",
+    "decision": "APPROVED_WITH_RECORDED_LIMITATIONS",
+    "approved_by": "Đăng Khoa",
+    "approved_on": "2026-11-13",
+    "timezone": "Asia/Saigon",
+    "review_record": "docs/STAGE4_G0_REVIEW_VI.md",
+    "scope": "Nghiệm thu bằng chứng và thiết kế G0; chuyển sang G1, chưa triển khai hoặc chạy G1",
+    "dataset_or_benchmark_approval": false
+  },
+  "expert": {
+    "candidate": "stage1_rule_based@0.6.1",
+    "historical_driving_evidence": "0.6.0 / P4 / TRAIN, chưa thuộc đánh giá chuẩn",
+    "candidate_snapshot": "runs/s4_g0_audit_02/candidate_expert/",
+    "candidate_review_status": "VERIFIED_FOR_G0_WITH_RECORDED_LIMITATIONS",
+    "historical_snapshot_policy": "Giữ nguyên byte và mã băm lịch sử; ghi riêng kết quả khớp byte gốc và tương đương sau đổi sang LF",
+    "p5_and_benchmark_audits": "PENDING"
+  },
+  "interfaces": {
+    "agent_policy": "Giữ nguyên giao thức descriptor/reset/act/close hiện có",
+    "input": "AgentInputV1 / STATE_DECISION_V1",
+    "action": "continuous_box2_v1 / hành động chuẩn float32 [steering, throttle_brake]",
+    "training_label": "Ghép canonical_action(t) với agent_input(t) trong cùng dòng vết quyết định trước env.step",
+    "inference_expert_calls": "PROHIBITED",
+    "evaluation_weight_or_normalizer_updates": "PROHIBITED"
+  },
+  "dataset": {
+    "policy": "Dữ liệu kết hợp có kiểm định chất lượng",
+    "BC-A": "Quỹ đạo SUCCESS sau khi kiểm định tính hợp lệ, nguồn gốc, độ ổn định và chất lượng",
+    "BC-B": "BC-A cộng những đoạn TIMEOUT được xem xét riêng",
+    "raw_trajectory_policy": "Bất biến; giữ mọi kết quả, đoạn bị loại và lần thử thất bại",
+    "controlled_probes": "Phân tích riêng; chưa đưa vào bộ dữ liệu lái tự nhiên ban đầu",
+    "fit_dev": "Trong mỗi họ, xếp 15 hình học TRAIN theo SHA256('stage4-fit-dev-v1|' + geometry_id); 3 đầu thuộc DEV, 12 còn lại thuộc FIT",
+    "partition_status": "APPROVED_FROZEN",
+    "partition_manifest": "datasets/stage4_bc/fit_dev_v1/manifest.json",
+    "partition_manifest_sha256": "df244187a6c6ffa54308a776c3bd02a5d1705771717d9dd3c46d33e10ed45f90",
+    "partition_decision": "experiments/stage4/g1_decision_fit_dev_kaggle_v1.json",
+    "quality_thresholds": null,
+    "timeout_cut_rules": null,
+    "sampling_ratios": null,
+    "sample_weights": null,
+    "calibration_gate": "G1: khảo sát phân phối TRAIN và xem ngữ cảnh công khai trước khi đóng băng quy tắc chất lượng",
+    "normalization_fit_partition": "Chỉ FIT, loại phần đệm theo mặt nạ",
+    "forbidden_policy_features": [
+      "outcome",
+      "reward",
+      "quality_label",
+      "expert_diagnostics",
+      "expert_hidden_state",
+      "case_or_geometry_identity",
+      "evaluator_private_fields"
+    ]
+  },
+  "execution_design": {
+    "decision_record": "experiments/stage4/g1_decision_fit_dev_kaggle_v1.json",
+    "data_collection": "LOCAL_METADRIVE",
+    "training": "KAGGLE_AFTER_DATA_PREPARATION",
+    "offline_dev_evaluation": "KAGGLE",
+    "closed_loop_evaluation": "LOCAL_METADRIVE",
+    "training_module": "PORTABLE_SIMULATOR_FREE_PACKAGE_WITH_SHARED_ENCODER",
+    "output": "CHECKPOINT_BUNDLE_WITH_ENCODER_NORMALIZATION_AND_PROVENANCE",
+    "kaggle_runtime_status": "NOT_YET_VERIFIED",
+    "local_inference_runtime_status": "PYTORCH_NOT_READY_IN_SELECTED_METADRIVE_ENVIRONMENT",
+    "packaging_status": "DESIGN_CONFIRMED_NOT_PACKAGED",
+    "full_collection": "AFTER_SMALL_TRAINING_AND_INDEPENDENT_DRIVING_CHECKS"
+  },
+  "architecture_design": {
+    "status": "DESIGN_ONLY",
+    "baseline": "MLP D->256->256->2; các lớp ẩn ReLU, đầu ra hành động tanh; hàm mất mát MSE",
+    "features": [
+      "Quan sát lõi 259 chiều",
+      "Các xe giao thông, mặt nạ hợp lệ và thông tin tràn dung lượng",
+      "Các đường khả dĩ công khai của xe và mặt nạ hợp lệ",
+      "Các điểm tuyến và mặt nạ hợp lệ",
+      "Điểm quyết định",
+      "Đoạn giao cắt trên tuyến",
+      "Hình học làn, loại biên và khả năng nối tuyến",
+      "Chuyển động xe đang điều khiển"
+    ],
+    "angles": "sin/cos",
+    "categories": "Mã hóa one-hot, có mặt nạ riêng cho giá trị thiếu và tính hợp lệ",
+    "identifiers": "Không nhúng định danh gốc hoặc mã băm bản đồ/làn/đoạn/nhánh",
+    "history_frames": [
+      1,
+      10
+    ],
+    "history_rule": "Chỉ quan sát hiện tại và quá khứ; đặt lại theo lượt và có mặt nạ lịch sử; không bổ sung nhãn hành động hướng dẫn từ vết",
+    "recurrent_or_dagger": "Chỉ quyết định ở cổng riêng khi có bằng chứng; chưa triển khai ban đầu",
+    "checkpoint_bundle": [
+      "state_dict",
+      "model_config",
+      "encoder_schema",
+      "normalization",
+      "dataset_and_annotation_hashes",
+      "source_and_training_config_hashes",
+      "training_seed",
+      "selection_record",
+      "runtime_versions",
+      "artifact_checksums"
+    ]
+  },
+  "experiments": {
+    "prototype": "Một seed, bộ dữ liệu TRAIN nhỏ đã kiểm định, đánh giá vòng hở rồi vòng kín độc lập",
+    "full_training_seeds": [
+      101,
+      202,
+      303
+    ],
+    "agent_seed": "Tách biệt seed huấn luyện; suy luận xác định khi đánh giá chuẩn dùng None",
+    "ablations": [
+      "BC-A so với BC-B",
+      "Chỉ quan sát lõi so với đầy đủ ngữ cảnh",
+      "Một khung so với lịch sử 10 khung"
+    ],
+    "controls": [
+      "Cùng kiến trúc",
+      "Ghép cặp tình huống và seed môi trường",
+      "Cùng số bước cập nhật",
+      "Bổ sung đối chứng theo số mẫu và phần hành vi có dữ liệu ở cả hai tập"
+    ],
+    "validation_cases": 96,
+    "test_cases_per_frozen_checkpoint": 60,
+    "selection": "Ưu tiên tỷ lệ đến đích an toàn cao, rồi tỷ lệ mất an toàn thấp, rồi tiến độ tuyến cao; không dùng điểm thưởng tổng hợp hoặc chọn seed đẹp nhất",
+    "test_release_conditions": [
+      "Kiểm định tác nhân và hợp đồng đầu vào chung",
+      "Cây làm việc sạch và phiên bản phụ thuộc được xác minh",
+      "Phương pháp và các bản lưu mô hình đã đóng băng",
+      "Ba mô hình huấn luyện độc lập để báo cáo đánh giá chuẩn"
+    ]
+  },
+  "gates": [
+    {
+      "id": "S4-G0",
+      "state": "APPROVED",
+      "review_record": "docs/STAGE4_G0_REVIEW_VI.md",
+      "acceptance": "Kiểm định mã nguồn/bằng chứng tái lập được; ghi giới hạn và phương án bản chụp tác nhân hướng dẫn; người phụ trách xem xét và chấp nhận G0"
+    },
+    {
+      "id": "S4-G1",
+      "state": "IN_PROGRESS",
+      "step1_telemetry": {
+        "state": "VERIFIED_ON_THREE_TRAIN_GEOMETRIES",
+        "record": "docs/STAGE4_G1_TELEMETRY_VI.md",
+        "definition": "experiments/stage4/g1_telemetry_v1.json",
+        "before_run": "s4_g1_telemetry_before_03",
+        "after_run": "s4_g1_telemetry_after_01",
+        "scope": "Kiểm chứng vận tốc và dấu lái; chưa nghiệm thu G1 hoặc dữ liệu BC"
+      },
+      "step2_collection": {
+        "state": "RAW_PILOT_COLLECTED_AND_PAIRING_VERIFIED",
+        "record": "docs/STAGE4_G1_PILOT_VI.md",
+        "definition": "experiments/stage4/g1_pilot_v1.json",
+        "run_id": "s4_g1_pilot_02",
+        "failed_attempts_preserved": ["s4_g1_pilot_01"],
+        "raw_registry": "datasets/stage4_bc/pilot_raw_v1.json",
+        "episodes": 5,
+        "geometries": 4,
+        "raw_samples": 5744,
+        "quality_status": "UNREVIEWED",
+        "bc_accepted_samples": 0,
+        "scope": "Thu thử dữ liệu thô; chưa đo ngân sách bước 3, chưa chốt FIT/DEV hoặc chất lượng, chưa nghiệm thu G1"
+      },
+      "step3_resources": {
+        "state": "MEASURED_WITH_TRAINING_ENV_FINDINGS",
+        "record": "docs/STAGE4_G1_RESOURCES_VI.md",
+        "definition": "experiments/stage4/g1_resources_v1.json",
+        "run_id": "s4_g1_resources_01",
+        "workload_run_id": "s4_g1_resources_01_collect",
+        "raw_steps": 5744,
+        "workload_wall_seconds": 863.883854499989,
+        "peak_sampled_tree_rss_bytes": 330387456,
+        "minimum_system_available_bytes": 154914816,
+        "logical_artifact_bytes": 29406223,
+        "training_environment_status": "NOT_READY",
+        "findings": ["PyTorch chưa cài trong môi trường MetaDrive đang chọn", "pip check mã 1: thiếu/xung đột phụ thuộc", "Máy có tải nền cao và RAM khả dụng thấp trong lần đo"],
+        "training_time_and_vram_budget": "NOT_MEASURED",
+        "training_updates": 0,
+        "scope": "Đo thu dữ liệu và kiểm tra môi trường; ngoại suy chỉ là kịch bản lập ngân sách, G1 chưa nghiệm thu, G2 chưa mở"
+      },
+      "step4_partition": {
+        "state": "APPROVED_FROZEN",
+        "record": "docs/STAGE4_G1_SPLIT_KAGGLE_VI.md",
+        "decision_record": "experiments/stage4/g1_decision_fit_dev_kaggle_v1.json",
+        "manifest": "datasets/stage4_bc/fit_dev_v1/manifest.json",
+        "counts": {"FIT": 144, "DEV": 36},
+        "matches_g0_proposal": true,
+        "pilot_episode_counts": {"FIT": 2, "DEV": 3},
+        "pilot_step_counts": {"FIT": 1998, "DEV": 3746},
+        "quality_calibration_finding": "Pilot FIT chỉ có hai hình học SUCCESS; TIMEOUT hiện nằm ở DEV. Cần bổ sung nhóm FIT khó để hiệu chỉnh quy tắc chất lượng; không đổi split hoặc đặt ngưỡng bằng DEV.",
+        "quality_approval_status": "PENDING",
+        "bc_accepted_samples": 0,
+        "scope": "Chốt cách chia và đích huấn luyện Kaggle; G1 chưa nghiệm thu, G2 chưa mở"
+      },
+      "acceptance": "Nguồn gốc dữ liệu được kiểm định; cách ly TRAIN; ghép đúng quan sát/hành động; có bằng chứng đoạn, đo tài nguyên thử nghiệm và quy tắc chất lượng được duyệt, đóng băng"
+    },
+    {
+      "id": "S4-G2",
+      "state": "NOT_OPEN",
+      "acceptance": "Môi trường huấn luyện tương thích đã cố định; học khớp FIT nhỏ; mất mát/gradient hữu hạn; so sánh bộ dự đoán hằng trên DEV; seed tái lập và kết quả khớp sau nạp mô hình"
+    },
+    {
+      "id": "S4-G3",
+      "state": "NOT_OPEN",
+      "acceptance": "Chính sách đóng băng chạy độc lập qua launcher; hành động/đặt lại/nhật ký đúng; đến đích an toàn ở tình huống TRAIN tác nhân hướng dẫn từng thành công; báo đầy đủ các cặp tình huống"
+    },
+    {
+      "id": "S4-G4",
+      "state": "NOT_OPEN",
+      "acceptance": "Thí nghiệm loại bỏ thành phần và phân tích lỗi có đối chứng để phân biệt ảnh hưởng chất lượng, số mẫu, độ phủ và lịch sử"
+    },
+    {
+      "id": "S4-G5",
+      "state": "NOT_OPEN",
+      "acceptance": "Đạt điều kiện và xác minh toàn bộ bộ đánh giá chuẩn; so sánh cuối Stage 0/1/4 với mọi lần lặp đã định"
+    }
+  ],
+  "versions": {
+    "audit_tool": "0.0.2",
+    "policy_0.1.0": "MLP dùng một khung quan sát",
+    "policy_0.2.0": "MLP dùng lịch sử sau khi có bằng chứng mô hình cơ sở",
+    "policy_1.0.0": "Phương pháp được chọn sau kiểm định"
+  },
+  "logging": {
+    "authoritative": "LOCAL",
+    "raw": "runs/<unique_attempt_id>/",
+    "curated": "results/audits/stage4/",
+    "definitions": "experiments/stage4/",
+    "development_wandb": "DISABLED",
+    "overwrite_or_append_old_runs": false
+  }
+}

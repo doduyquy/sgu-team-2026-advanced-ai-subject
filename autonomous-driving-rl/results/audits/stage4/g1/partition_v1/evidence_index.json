@@ -1,0 +1,17 @@
+{
+  "schema_version": "stage4-fit-dev-evidence/1.0.0",
+  "source_run_id": "s4_g1_partition_freeze_01",
+  "source_integrity_sha256": "eb09f4906e4b411be64a733a96fcbff7bacdef9a4c7a4fbd53eb2fdec4996754",
+  "verified_raw_files": 15,
+  "decision_record": "experiments/stage4/g1_decision_fit_dev_kaggle_v1.json",
+  "decision_sha256": "0c9f46433700095b935b222f78a03bb5479eb46ac0fa9ab425230c6dfa5ee3c9",
+  "partition_manifest": "datasets/stage4_bc/fit_dev_v1/manifest.json",
+  "partition_manifest_sha256": "df244187a6c6ffa54308a776c3bd02a5d1705771717d9dd3c46d33e10ed45f90",
+  "files": {
+    "verification.json": "c96da0752b98dca4d898e7f516d18041036230a7f5cecabe792f6454b1096903"
+  },
+  "step4_complete": true,
+  "g1_complete": false,
+  "quality_status": "UNREVIEWED",
+  "bc_accepted_samples": 0
+}

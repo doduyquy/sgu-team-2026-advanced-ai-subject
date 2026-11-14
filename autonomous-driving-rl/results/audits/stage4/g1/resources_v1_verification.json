@@ -1,0 +1,63 @@
+{
+  "schema_version": "stage4-resource-final-verification/1.0.0",
+  "verified_at_utc": "2026-11-14T08:50:04.204977+00:00",
+  "status": "PASSED",
+  "source_run_id": "s4_g1_resources_01",
+  "source_integrity_sha256": "973b4c93f9b80276ad8b32f8f8c4a6680995bc637feadfc045766defeac5fd7d",
+  "published_index_sha256": "fc5ff87f3e8734a819ca74687b453b87ef84bb773577e6e82537bff2a90a052f",
+  "resource_sample_count": 6393,
+  "recomputed_ram_phase_disk_and_projection_match": true,
+  "mean_actual_sample_gap_s": 0.13514667379536746,
+  "train_geometry_manifest_verified": true,
+  "train_geometries": 180,
+  "train_geometries_by_tier": {
+    "Easy": 45,
+    "Extreme": 45,
+    "Hard": 45,
+    "Medium": 45
+  },
+  "original_pilot_unchanged": true,
+  "reference_registry_sha256": "2a0e141a2808ea9fc6da8061d5e41549191f3058b0cbc8d53f5c77d85a139de3",
+  "repeated_workload_matches_reference_cases_steps_outcomes": true,
+  "tests": {
+    "status": "PASSED",
+    "total_tests": 486,
+    "groups": [
+      {
+        "group": "backend",
+        "exit_code": 0,
+        "status": "PASSED",
+        "tests": 486,
+        "seconds": 135.971,
+        "log_sha256": "bf0217f5f3c0557e8b0c920f774c9ec3a44de5f730fcd2b209fce7a34d6c2b9c"
+      }
+    ],
+    "source_summary_sha256": "33ea519c9a8d53f14a227a42b069c3565e9b984ca289964cedef5965894a6469",
+    "source_request_sha256": "02242705de17f70e3ca6c3e0dc717e4e2018df9d0aed68e60f77c73d5d381f56",
+    "tested_src_and_tests_match_current_bytes": true
+  },
+  "environment_findings": {
+    "torch": "NOT_INSTALLED_IN_SELECTED_ENVIRONMENT",
+    "pip_check_exit_code": 1,
+    "pip_check_findings": [
+      "cryptography 49.0.0 requires cffi, which is not installed.",
+      "google-api-python-client 2.197.0 requires uritemplate, which is not installed.",
+      "google-auth 2.55.0 requires pyasn1-modules, which is not installed.",
+      "openai 2.43.0 requires anyio, which is not installed.",
+      "openai 2.43.0 requires httpx, which is not installed.",
+      "openai 2.43.0 requires sniffio, which is not installed.",
+      "portalocker 3.2.0 requires pywin32, which is not installed.",
+      "qdrant-client 1.18.0 requires httpx, which is not installed.",
+      "spacy 3.8.11 requires jinja2, which is not installed.",
+      "google-ai-generativelanguage 0.6.15 has requirement protobuf!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<6.0.0dev,>=3.20.2, but you have protobuf 7.36.2.",
+      "grpcio-status 1.71.2 has requirement protobuf<6.0dev,>=5.26.1, but you have protobuf 7.36.2."
+    ],
+    "pip_freeze_exit_code": 0,
+    "training_tensor_environment_status": "NOT_READY",
+    "tensor_training_time_and_vram_measured": false,
+    "dependency_installations": 0
+  },
+  "training_updates": 0,
+  "bc_accepted_samples": 0,
+  "g1_complete": false
+}

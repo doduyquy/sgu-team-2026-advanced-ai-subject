@@ -1,0 +1,35 @@
+{
+  "schema_version": "stage4-pilot-evidence/1.0.0",
+  "published_at_utc": "2026-11-14T06:59:41.023206+00:00",
+  "source_run_id": "s4_g1_pilot_02",
+  "source_integrity_sha256": "bdc85094ddfa81be93840507495ea1bd7ee725d5d164e015ec18f0524e5c8367",
+  "verified_raw_files": 1018,
+  "prerequisite": {
+    "index": "results/audits/stage4/g1/telemetry_v1/evidence_index.json",
+    "index_sha256": "c157ff841fc8a052deab445ffa5b33bb0d0fca712d2376ac34428ac83080522d",
+    "step1_verified": true
+  },
+  "runtime": {
+    "python": "3.10.22 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:15:38) [MSC v.1942 64 bit (AMD64)]",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "packages": {
+      "numpy": "2.2.6",
+      "panda3d": "1.10.16",
+      "metadrive-simulator": "0.4.3",
+      "wandb": "0.30.0"
+    },
+    "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "project_commit": "5b303fdded3039ab021e7932406f3d3981784fe5"
+  },
+  "raw_sample_index_sha256": "adf46ccc791bd5865bcfcd4e48e44ae32b7acc0d4405c39717c4440f077ff324",
+  "quality_status": "UNREVIEWED",
+  "bc_accepted_samples": 0,
+  "g1_complete": false,
+  "raw_required": "Source snapshots, maps, observations/actions/transitions, simulator info and console logs remain under runs/<source_run_id>/; summaries alone are insufficient.",
+  "files": {
+    "collection_definition.json": "0c99f1a9b6ea8a8685afb55184ec78a0810d42b1d5ac4d3c564a96c654d91b21",
+    "expert_provenance.json": "08b1acc5ba05f51ddfeb6e2d53e0089200612c29f7d1aa6f5ac9ac0dff1a2fa6",
+    "pilot_summary.json": "a13f88b1bdb8faf0f1169a0870fc08e2fdebecffa92ccff1be2d5d224a653dc9",
+    "source_inventory.json": "39629e44156791dad4a2d00fafafb83354fc103ac2d7011008bd890650c9e4ed"
+  }
+}

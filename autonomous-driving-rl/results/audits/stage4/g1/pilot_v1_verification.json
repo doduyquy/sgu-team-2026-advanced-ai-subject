@@ -1,0 +1,99 @@
+{
+  "schema_version": "stage4-pilot-final-verification/1.0.0",
+  "verified_at_utc": "2026-11-14T07:02:30.116006+00:00",
+  "status": "PASSED",
+  "source_run_id": "s4_g1_pilot_02",
+  "source_integrity_sha256": "bdc85094ddfa81be93840507495ea1bd7ee725d5d164e015ec18f0524e5c8367",
+  "published_index_sha256": "4276eff3f3c77c477e8eda95f047a01935f344d463402f81bd526afb92d4e7a4",
+  "raw_sample_count": 5744,
+  "sample_counts_by_episode": {
+    "episode_000": 418,
+    "episode_001": 414,
+    "episode_002": 566,
+    "episode_003": 1432,
+    "episode_004": 2914
+  },
+  "sample_index_unique_contiguous_and_trace_bound": true,
+  "actual_runtime_control_and_case_config_match": true,
+  "progress_samples_checked": 572,
+  "reference_comparisons": [
+    {
+      "episode_id": "episode_000",
+      "reference_run_id": "s4_g1_telemetry_after_01",
+      "reference_episode": "natural_00",
+      "steps": 418,
+      "reference_trace_sha256": "4cb26e5ad7bcaf0f86231a97cd02085459f4abb40e22a820c6f536e0e7c57d2e",
+      "public_inputs_decisions_actions_equal": true,
+      "excluded": [
+        "act_latency_ms"
+      ]
+    },
+    {
+      "episode_id": "episode_002",
+      "reference_run_id": "s4_g1_telemetry_after_01",
+      "reference_episode": "natural_01",
+      "steps": 566,
+      "reference_trace_sha256": "7b213cc4f482006776c355e06e2a6f1233034c9f0cbfe4b52d3eefce044b0cf2",
+      "public_inputs_decisions_actions_equal": true,
+      "excluded": [
+        "act_latency_ms"
+      ]
+    },
+    {
+      "episode_id": "episode_003",
+      "reference_run_id": "s4_g1_telemetry_after_01",
+      "reference_episode": "natural_02",
+      "steps": 1432,
+      "reference_trace_sha256": "2bcb7ef021f60e04b2a8086bc09582d6fbd2dce493d8dcb48c5a4e0957070d22",
+      "public_inputs_decisions_actions_equal": true,
+      "excluded": [
+        "act_latency_ms"
+      ]
+    }
+  ],
+  "tests": {
+    "status": "PASSED",
+    "total_tests": 469,
+    "groups": [
+      {
+        "group": "backend",
+        "exit_code": 0,
+        "status": "PASSED",
+        "tests": 469,
+        "seconds": 74.587,
+        "log_sha256": "d8805a90171e8145157287a7252e264f9d22fcd14380b3a27e4c04e31d3cba5d"
+      }
+    ],
+    "source_summary_sha256": "434663a6b18045f6075ccd83a189e254490a5b8955eae51d7af9f476b90a7d70",
+    "source_request_sha256": "693430089d0c7e13156be01907a8feb3cf495a91de28d14078607b7e44d0f8ba",
+    "tested_src_and_tests_match_current_bytes": true
+  },
+  "failed_attempt": {
+    "state": {
+      "run_id": "s4_g1_pilot_01",
+      "status": "FAILED",
+      "started_at_utc": "2026-11-14T06:42:57.878244+00:00",
+      "scope": "G1_STEP2_ONLY",
+      "canonical_run": false,
+      "quality_status": "UNREVIEWED",
+      "bc_accepted_samples": 0,
+      "completed_episodes": 0,
+      "failed_episodes": 5,
+      "finished_at_utc": "2026-11-14T06:44:10.370387+00:00",
+      "error_type": "EvidenceError",
+      "error": "Có lượt lỗi; giữ mọi hồ sơ, lần thu chưa được chứng nhận hoàn tất"
+    },
+    "source_integrity_sha256": "11c550f7d64384bd8bdba9012779ad25fc9962fc0d88164462e211c7e3876730",
+    "verified_files": 998,
+    "completed_physics_steps_by_episode": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "quality_status": "UNREVIEWED",
+  "bc_accepted_samples": 0,
+  "g1_complete": false
+}

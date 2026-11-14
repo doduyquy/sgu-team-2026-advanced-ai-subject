@@ -1,0 +1,132 @@
+{
+  "schema_version": "stage4-raw-pilot-registry/1.0.0",
+  "status": "RAW_COMPLETE_PAIRING_VERIFIED_QUALITY_UNREVIEWED",
+  "path_base": "autonomous-driving-rl/",
+  "source_run_id": "s4_g1_pilot_02",
+  "source_integrity_sha256": "bdc85094ddfa81be93840507495ea1bd7ee725d5d164e015ec18f0524e5c8367",
+  "evidence_index": "results/audits/stage4/g1/pilot_v1/evidence_index.json",
+  "evidence_index_sha256": "4276eff3f3c77c477e8eda95f047a01935f344d463402f81bd526afb92d4e7a4",
+  "verification_report": "results/audits/stage4/g1/pilot_v1_verification.json",
+  "verification_sha256": "63086e5f77c22e060030927a7af845ab61c806c80635ab557c8b8641ab82665a",
+  "raw_sample_index": "runs/s4_g1_pilot_02/raw_sample_index.jsonl.gz",
+  "raw_sample_index_sha256": "adf46ccc791bd5865bcfcd4e48e44ae32b7acc0d4405c39717c4440f077ff324",
+  "raw_sample_count": 5744,
+  "expert_provenance_sha256": "08b1acc5ba05f51ddfeb6e2d53e0089200612c29f7d1aa6f5ac9ac0dff1a2fa6",
+  "partition_status": "UNASSIGNED_PENDING_STEP4",
+  "quality_status": "UNREVIEWED",
+  "bc_accepted_samples": 0,
+  "bc_a_built": false,
+  "bc_b_built": false,
+  "episodes": [
+    {
+      "episode_id": "episode_000",
+      "case": {
+        "case_id": "sandbox/Easy/SCS/0/0",
+        "case_index": 1,
+        "protocol_order_index": 1,
+        "split": "TRAIN",
+        "tier": "Easy",
+        "sequence": "SCS",
+        "geometry_generation_seed": 0,
+        "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+        "environment_seed": 0,
+        "traffic_density": 0.0,
+        "horizon_steps": 1224
+      },
+      "steps": 418,
+      "terminal_reason": "SUCCESS",
+      "raw_directory": "runs/s4_g1_pilot_02/episodes/episode_000",
+      "trace_sha256": "860ad8feff62717b257b0e8fd5bd729802fdaeace390f19d8cb7bf5e536a5e2b",
+      "transitions_sha256": "01c7cb60e637df317bcb7b54ff0dec7bd21a4148633bc99125f877512885b03d",
+      "map_sha256": "4dc70d1538167fc4a2ceb9b5503ee4e7cd70a7491843be2cea3e75d51ddda53e"
+    },
+    {
+      "episode_id": "episode_001",
+      "case": {
+        "case_id": "sandbox/Easy/SCS/0/1",
+        "case_index": 1,
+        "protocol_order_index": 1,
+        "split": "TRAIN",
+        "tier": "Easy",
+        "sequence": "SCS",
+        "geometry_generation_seed": 0,
+        "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+        "environment_seed": 1,
+        "traffic_density": 0.0,
+        "horizon_steps": 1224
+      },
+      "steps": 414,
+      "terminal_reason": "SUCCESS",
+      "raw_directory": "runs/s4_g1_pilot_02/episodes/episode_001",
+      "trace_sha256": "b2a8d2f1373eb9d9656eb00d744d21ba30faab497de596e747ebd971005081cb",
+      "transitions_sha256": "c142891c9185a732a5ad2670fd8c587de8ace2bd61843db52054e9ee5ac0f826",
+      "map_sha256": "875185b7e989751707de082546174f595c586964bcbcacbd2d6a1d51808cd1dd"
+    },
+    {
+      "episode_id": "episode_002",
+      "case": {
+        "case_id": "sandbox/Medium/SCXCS/14/0",
+        "case_index": 1,
+        "protocol_order_index": 1,
+        "split": "TRAIN",
+        "tier": "Medium",
+        "sequence": "SCXCS",
+        "geometry_generation_seed": 14,
+        "geometry_sha256": "281b1353d6ca897dda5c22baddabbb2d890860f22e7ff8e87c335f432ee5a426",
+        "environment_seed": 0,
+        "traffic_density": 0.08,
+        "horizon_steps": 1098
+      },
+      "steps": 566,
+      "terminal_reason": "SUCCESS",
+      "raw_directory": "runs/s4_g1_pilot_02/episodes/episode_002",
+      "trace_sha256": "d20fc527ba0eaae600d8de383b906285fc0142684ce6caa4811a88614d66512f",
+      "transitions_sha256": "72428f11129c206f556739b422ff1cb0691d4c7be17172f2842b4156fd02e5c1",
+      "map_sha256": "a33cc6f9d0ae3859fc0749a8f9d9b80de964090dd9c1ac49b2debcd5ed4a0d3e"
+    },
+    {
+      "episode_id": "episode_003",
+      "case": {
+        "case_id": "sandbox/Hard/SCTXrCS/2/0",
+        "case_index": 1,
+        "protocol_order_index": 1,
+        "split": "TRAIN",
+        "tier": "Hard",
+        "sequence": "SCTXrCS",
+        "geometry_generation_seed": 2,
+        "geometry_sha256": "84cc4ae49427ce5cde984c58a3f68d261abbd791768ac9aa79d5b44f22f08218",
+        "environment_seed": 0,
+        "traffic_density": 0.15,
+        "horizon_steps": 2208
+      },
+      "steps": 1432,
+      "terminal_reason": "SUCCESS",
+      "raw_directory": "runs/s4_g1_pilot_02/episodes/episode_003",
+      "trace_sha256": "4f4040eef8e01df8d66bfe9c0708943a628e83db8fd031af0be814664d6d1837",
+      "transitions_sha256": "fb5ab7e3117f46ca2441ec330d7c1cc26f9d7ebb96cbc4fb2ebc329638e63729",
+      "map_sha256": "1c5527f3767200ddd72a567412d3d798e2d2cae85ecbb6d173765b23e4b745b7"
+    },
+    {
+      "episode_id": "episode_004",
+      "case": {
+        "case_id": "sandbox/Extreme/SCXOCrTYCS/0/0",
+        "case_index": 1,
+        "protocol_order_index": 1,
+        "split": "TRAIN",
+        "tier": "Extreme",
+        "sequence": "SCXOCrTYCS",
+        "geometry_generation_seed": 0,
+        "geometry_sha256": "73fb061319d5754a8cde93d461ffa06a61ad79f22fd775538caffe57e5782e34",
+        "environment_seed": 0,
+        "traffic_density": 0.25,
+        "horizon_steps": 2914
+      },
+      "steps": 2914,
+      "terminal_reason": "TIMEOUT",
+      "raw_directory": "runs/s4_g1_pilot_02/episodes/episode_004",
+      "trace_sha256": "8f79b89e472f989369dc97538df36ca98027426007c0d4bb3189cd4535e53255",
+      "transitions_sha256": "aeaad6e5e80aa943df775fe49044f7dba6f1ff12dc9af5a7bdc2813720083354",
+      "map_sha256": "cbc27dafe7a0b0dd6ad3fc55b047b2caece40813a83ef09bb5dab57b870d72db"
+    }
+  ]
+}

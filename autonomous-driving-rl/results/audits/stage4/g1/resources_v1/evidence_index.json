@@ -1,0 +1,18 @@
+{
+  "schema_version": "stage4-resource-evidence/1.0.0",
+  "published_at_utc": "2026-11-14T08:47:41.433793+00:00",
+  "source_run_id": "s4_g1_resources_01",
+  "source_integrity_sha256": "973b4c93f9b80276ad8b32f8f8c4a6680995bc637feadfc045766defeac5fd7d",
+  "verified_raw_files": 146,
+  "workload_run_id": "s4_g1_resources_01_collect",
+  "workload_integrity_sha256": "8d5f278aa19c60f2d8756eae09969b438fe51edfe80af8850ab88eb14fd18205",
+  "training_environment_status": "NOT_READY",
+  "training_updates": 0,
+  "g1_complete": false,
+  "files": {
+    "measurement_definition.json": "0cf75c7a7760ceeafec7a1ad44c23b80db364790b00d825fb706586b121f6ef6",
+    "resource_summary.json": "b00408d0669f00991a19e923de8fafd141cc1474c76213d30cd3f341a0dd6ff4",
+    "source_inventory.json": "837aeda58e423b1a63b69618b129a25ac2ee0c89ded3f44ab543187bf6737c5a"
+  },
+  "raw_required": "Raw process samples, console logs, dependency checks, snapshots and full measured collection remain under runs/<run_id> and runs/<workload_run_id>."
+}
