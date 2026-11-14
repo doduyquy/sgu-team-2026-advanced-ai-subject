@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import statistics
 import time
+import uuid
 from typing import Any, Dict, Iterable, List
 
 import numpy as np
@@ -125,9 +126,16 @@ class PilotCheckpointCallback(BaseCallback):
             "updated_at_epoch_s": time.time(),
         }
         path = self.run_root / "progress.json"
-        temporary = path.with_suffix(".json.tmp")
+        temporary = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
         temporary.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
-        os.replace(temporary, path)
+        for attempt in range(8):
+            try:
+                os.replace(temporary, path)
+                break
+            except PermissionError:
+                if attempt == 7:
+                    raise
+                time.sleep(0.05 * (attempt + 1))
 
     def _save(self, step: int) -> None:
         target = self.output_root / f"step_{step:05d}"

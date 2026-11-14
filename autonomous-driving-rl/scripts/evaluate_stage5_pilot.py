@@ -11,6 +11,7 @@ import psutil
 import statistics
 import sys
 import time
+import uuid
 from typing import Any, Dict, Iterable, List, Optional
 
 try:  # Load torch before Panda3D on Windows.
@@ -44,9 +45,16 @@ def _write_progress(path: Optional[Path], **updates: Any) -> None:
             payload = {}
     payload.update(updates)
     payload["updated_at_epoch_s"] = time.time()
-    temporary = path.with_suffix(".json.tmp")
+    temporary = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
     temporary.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
-    os.replace(temporary, path)
+    for attempt in range(8):
+        try:
+            os.replace(temporary, path)
+            break
+        except PermissionError:
+            if attempt == 7:
+                raise
+            time.sleep(0.05 * (attempt + 1))
 
 
 def policy_state_sha256(model: Any) -> str:
