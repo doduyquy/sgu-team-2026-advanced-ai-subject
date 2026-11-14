@@ -34,4 +34,8 @@ autonomous-driving-rl/scripts/stage4.py -text
 autonomous-driving-rl/scripts/audit_stage4_telemetry.py -text
 autonomous-driving-rl/scripts/collect_stage4_pilot.py -text
 autonomous-driving-rl/scripts/profile_stage4_resources.py -text
+autonomous-driving-rl/scripts/review_stage4_quality.py -text
+autonomous-driving-rl/scripts/build_stage4_dataset.py -text
+autonomous-driving-rl/src/datasets/** -text
+autonomous-driving-rl/datasets/stage4_bc/bc_pilot_v1/** -text
 autonomous-driving-rl/tests/test_stage4_*.py -text
