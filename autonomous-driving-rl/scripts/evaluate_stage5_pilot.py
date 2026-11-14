@@ -147,9 +147,8 @@ def evaluate_checkpoint(
         allowed_geometry_ids=[x["geometry_id"] for x in load_pilot_split(split_path)["pilot_diagnostic"]],
         project_root=ROOT,
     )
-    env = Stage5TrainingEnv(sampler=sampler, encoder=encoder, project_root=ROOT)
-    if transform is not None:
-        env = transform(env)
+    base_env = Stage5TrainingEnv(sampler=sampler, encoder=encoder, project_root=ROOT)
+    env = transform(base_env) if transform is not None else base_env
     adapter = get_action_adapter("continuous_box2_v1")
     schedule = diagnostic_schedule(load_pilot_split(split_path), schedule_seed)
     if max_cases is not None:
@@ -199,7 +198,7 @@ def evaluate_checkpoint(
                         interrupted = True
                         break
                 record = _episode_record(
-                    env, item, checkpoint_sha, training_step, speeds, controls, latencies, rewards,
+                    base_env, item, checkpoint_sha, training_step, speeds, controls, latencies, rewards,
                     time.perf_counter() - started, interrupted,
                 )
                 records.append(record)
