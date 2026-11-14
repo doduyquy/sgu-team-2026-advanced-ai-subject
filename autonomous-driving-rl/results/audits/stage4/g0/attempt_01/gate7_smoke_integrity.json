@@ -1,0 +1,50 @@
+{
+  "run_directory": "runs/rule_based_v061_cleanup_smoke_20261031",
+  "status": "COMPLETE",
+  "checks": {
+    "run_manifest.json": true,
+    "run_state.json": true,
+    "episodes.csv": true,
+    "summary.json": true,
+    "timing.csv": true,
+    "wandb_sync.json": true,
+    "technical_failures.jsonl": true
+  },
+  "integrity_sha256": "c68a4004dbf1fc9844636d79c63faaf69c43c641253b000087a0cd37e481e445",
+  "episodes": [
+    {
+      "episode_index": "1",
+      "protocol_order_index": "1",
+      "case_id": "sandbox/Easy/SCS/0/0",
+      "split": "TRAIN",
+      "tier": "Easy",
+      "sequence": "SCS",
+      "geometry_generation_seed": "0",
+      "environment_seed": "0",
+      "horizon_steps": "1224",
+      "agent_seed": "42",
+      "primary_terminal_reason": "SUCCESS",
+      "terminal_reason": "SUCCESS",
+      "clean_success": "True",
+      "raw_arrival": "True",
+      "final_route_completion": "0.9877456768627388",
+      "max_route_completion": "0.9877456768627388",
+      "episode_steps": "418",
+      "episode_time_s": "41.800000000000004",
+      "time_to_clean_success_s": "41.800000000000004",
+      "mean_speed_kmh": "0.0",
+      "max_speed_kmh": "0.0",
+      "episode_return": "1.902369859869275",
+      "crash_human": "False",
+      "crash_vehicle": "False",
+      "crash_object": "False",
+      "crash_building": "False",
+      "crash_sidewalk": "False",
+      "out_of_road": "False",
+      "timeout": "False",
+      "has_technical_failure": "False",
+      "technical_failure_reason": ""
+    }
+  ],
+  "canonical_run": false
+}

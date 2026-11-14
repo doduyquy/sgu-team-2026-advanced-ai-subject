@@ -1,0 +1,97 @@
+{
+  "registrations": [
+    {
+      "agent_id": "stage0_random_naive",
+      "agent_version": "0.2.0",
+      "stage_label": "STAGE_0",
+      "method_family": "RANDOM",
+      "purpose": "RESEARCH_BASELINE",
+      "implementation_ref": "src.agents.random_naive_agent:Stage0RandomNaiveAgent",
+      "input_profile_id": "STATE_DECISION_V1",
+      "action_adapter_id": "discrete9_lowbranch_v1",
+      "inference_stochasticity": "stochastic",
+      "stateful_within_episode": true,
+      "benchmark_eligible": false,
+      "sandbox_eligible": true,
+      "audit_eligible": true,
+      "requires_checkpoint": false,
+      "description": "Stage 0 Random / Naive research baseline. Holds random controls for 2-4 seconds and resamples immediately at local road junctions, restarting the timer without learning."
+    },
+    {
+      "agent_id": "stage1_rule_based",
+      "agent_version": "0.6.1",
+      "stage_label": "STAGE_1",
+      "method_family": "RULE_BASED",
+      "purpose": "RESEARCH_BASELINE",
+      "implementation_ref": "src.agents.rule_based_agent:Stage1RuleBasedAgent",
+      "input_profile_id": "STATE_DECISION_V1",
+      "action_adapter_id": "continuous_box2_v1",
+      "inference_stochasticity": "deterministic",
+      "stateful_within_episode": true,
+      "benchmark_eligible": false,
+      "sandbox_eligible": true,
+      "audit_eligible": true,
+      "requires_checkpoint": false,
+      "description": "Rule-based lane following, tracked traffic/LiDAR braking, junction lifecycle and guarded adjacent lane changes."
+    }
+  ],
+  "agent_contract_metadata": {
+    "contract_name": "AgentContractV1",
+    "spec_version": "1.3.0",
+    "status": "SANDBOX-EXTENSION-PENDING-AUDIT",
+    "gate": "Gate 6 (Research Platform V1)",
+    "pinned_metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "pinned_metadrive_version": "0.4.3"
+  },
+  "launch_request_fields": [
+    "mode",
+    "agent_id",
+    "tier",
+    "sequence",
+    "geometry_generation_seed",
+    "environment_seed",
+    "agent_seed",
+    "render_mode",
+    "wandb_mode",
+    "runs_root",
+    "custom_run_id"
+  ],
+  "checkpoint_binding_in_launch_request": false,
+  "trace_opt_in": "executor enables DecisionTrace when agent.export_config is callable",
+  "stage0_exports_configuration": false,
+  "stage1_exports_configuration": true,
+  "speed_telemetry": {
+    "executor_uses_speed_kmh": true,
+    "installed_metadrive_defines_speed_km_h": true,
+    "installed_source_sha256": "cee11b4715010d84132324b1255bf1da46e85f52b0dd5f2b2b3147d0036b2bbb",
+    "status": "REQUIRES_FIX_AND_TRAIN_VERIFICATION",
+    "historical_logs_edited": false
+  },
+  "adapter_action_description": {
+    "type": "Box",
+    "shape": [
+      2
+    ],
+    "low": [
+      -1.0,
+      -1.0
+    ],
+    "high": [
+      1.0,
+      1.0
+    ],
+    "dtype": "float32",
+    "semantics": [
+      "steering (-1=left, +1=right)",
+      "throttle_brake (-1=brake, +1=throttle)"
+    ]
+  },
+  "steering_note": "Adapter label says positive=right; Stage0/Stage1 source/tests say positive=left. Keep canonical numeric labels; verify semantics before collection.",
+  "missing_trace_fields": [
+    "post-step observation",
+    "per-step evaluator route progress",
+    "per-step environment safety flags",
+    "explicit applied-step acknowledgment"
+  ],
+  "missing_fields_interpretation": "BC does not need transitions/reward. Completed run and row-count checks are required because traces are written before env.step. Observed displacement is not route progress or proof of segment safety."
+}

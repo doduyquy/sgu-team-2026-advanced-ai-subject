@@ -1,0 +1,53 @@
+{
+  "schema_version": "stage4-g0-audit/1.0.0",
+  "scope": "G0_ONLY",
+  "expected_branch": "khoa",
+  "expert_candidate": "stage1_rule_based@0.6.1",
+  "historical_expert": "stage1_rule_based@0.6.0",
+  "geometry_manifest": "results/audits/evaluation_protocol/geometry_split_manifest.csv",
+  "historical_snapshot": "experiments/rule_based/versions/0.6.1/snapshot.json",
+  "expert_source_reference": "results/audits/rule_based/v0.6.0/combined_summary.json",
+  "natural_train_runs": [
+    "runs/rule_based_v060_accept04_roads9_20261030",
+    "runs/rule_based_v060_accept04_extreme_cr_20261030",
+    "runs/rule_based_v060_accept04_extreme_sctx_20261030",
+    "runs/rule_based_v060_accept04_extreme_scxo_20261030",
+    "runs/rule_based_v060_accept04_env1_20261030"
+  ],
+  "gate7_smoke_run": "runs/rule_based_v061_cleanup_smoke_20261031",
+  "replay_evidence": "results/audits/source_cleanup/v0.6.1/decision_replay.json",
+  "expected_natural_cases": 16,
+  "expected_natural_steps": 22228,
+  "expected_replay_steps": 1992,
+  "protected_directories": [
+    "src/agents",
+    "src/platform",
+    "src/launcher",
+    "src/logging",
+    "configs/platform",
+    "datasets/mapsuite_v1",
+    "experiments/rule_based",
+    "experiments/legacy_source",
+    "results/audits/rule_based",
+    "results/audits/source_cleanup"
+  ],
+  "dataset_design": {
+    "status": "DESIGN_ONLY_NOT_BUILT",
+    "variants": {
+      "BC-A": "SUCCESS đã kiểm định",
+      "BC-B": "BC-A cộng đoạn TIMEOUT đã kiểm định"
+    },
+    "quality_policy": "Dữ liệu kết hợp có kiểm định chất lượng",
+    "quality_thresholds": null,
+    "sample_weights": null,
+    "sampling_ratios": null,
+    "history_frames_baseline": 1,
+    "history_frames_ablation": 10,
+    "training_seeds_full_research": [
+      101,
+      202,
+      303
+    ]
+  },
+  "next_gate": "G1 cần G0 được xem xét và chấp nhận rõ ràng; lệnh này chưa mở G1"
+}

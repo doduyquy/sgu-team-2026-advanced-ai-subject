@@ -1,0 +1,1144 @@
+{
+  "runs": [
+    {
+      "run_directory": "runs/rule_based_v060_accept04_roads9_20261030",
+      "status": "COMPLETED",
+      "runtime_sha256": "853d30c2f85c0ce41519fa6e7a0256f1da147c3f6bcae379b6b1f23f285c3d92",
+      "recorded_runtime": {
+        "python": "3.10.22 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:15:38) [MSC v.1942 64 bit (AMD64)]",
+        "packages": {
+          "numpy": "2.2.6",
+          "panda3d": "1.10.16",
+          "metadrive-simulator": "0.4.3"
+        },
+        "git_head": "0980bbde54cc17369a074973c379635b50bfad05",
+        "git_dirty": true,
+        "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+        "control_dt_s": 0.1
+      },
+      "state_sha256": "d101b965613593a57eccc096df4a0cf85a0312787c6c7cc3c0a3a8be2db1b9a4",
+      "resolved_cases_sha256": "ca388e7171c7ecdfb93834f1a5f67fad80f5dfbb74cf4307aa306804a99ad69d",
+      "provenance_sha256": "4b09e9db56a78f17a6005c962b6a9054935984491d57d12adab6f9b02bb9e164",
+      "configuration_sha256": "61a28354a10054a5351de7a7d45b6a5efcb6af21ef581a5ed33d14f36bb1489f",
+      "source_sha256": {
+        "policy.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+        "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+        "agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+        "agents/rule_based_agent.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+        "agents/rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+        "agents/rule_based_lane_change.py": "07fec91d228965f5ebd571ecfd76364115a4b6bd3d304612598a96272d030b5d",
+        "agents/rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+        "agents/rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9",
+        "agents/__init__.py": "de2af9150878aec49ba843f77291a8ca410944908e6b04ce27610d6678b29f02",
+        "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+        "agent_experiment.py": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5"
+      },
+      "source_reference_bindings": {
+        "policy.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "policy.py"
+        },
+        "agent_input.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "agent_input.py"
+        },
+        "agents/random_naive_agent.py": {
+          "role": "AUXILIARY_RECORDER_COPY_NOT_P4_REFERENCE"
+        },
+        "agents/rule_based_agent.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "policy.py"
+        },
+        "agents/rule_based_junction.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_junction.py"
+        },
+        "agents/rule_based_lane_change.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_lane_change.py"
+        },
+        "agents/rule_based_memory.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_memory.py"
+        },
+        "agents/rule_based_traffic.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_traffic.py"
+        },
+        "agents/__init__.py": {
+          "role": "AUXILIARY_RECORDER_COPY_NOT_P4_REFERENCE"
+        },
+        "action_adapter.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "action_adapter.py"
+        },
+        "agent_experiment.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "agent_experiment.py"
+        }
+      },
+      "episodes": [
+        {
+          "case": {
+            "case_id": "sandbox/Easy/SCCS/0/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Easy",
+            "sequence": "SCCS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "df9c8bb722fc6517de55dc18838470b91ec43b89767ede19d93b72dc94674f9b",
+            "environment_seed": 0,
+            "traffic_density": 0.0,
+            "horizon_steps": 1758
+          },
+          "expert_version": "0.6.0",
+          "steps": 597,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "821dd4a13427f397c73c550ea7d58b623310aff5d75806383805071f7bbfc355",
+          "result_sha256": "837ae8a0474cdb0d4a4f65327619d34d344897f584d70b525c39282e9205d802",
+          "environment_sha256": "15b04f611712aec0e7afd669558a0485873ed62954831403a2fd2e25a1778aea",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 28,
+            "turn_abs_gt_0_1": 0,
+            "route_passage_present": 0,
+            "actors_present": 0,
+            "motion_paths_present": 0
+          },
+          "behaviors": {
+            "CRUISE": 597
+          },
+          "max_payload_float32_rounding_error": 2.665535037138511e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_roads9_20261030/current/episode_000"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Easy/SCS/0/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Easy",
+            "sequence": "SCS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+            "environment_seed": 0,
+            "traffic_density": 0.0,
+            "horizon_steps": 1224
+          },
+          "expert_version": "0.6.0",
+          "steps": 418,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "a6e96481db09ceccec79ae5c33cfb56da7c07a70b535b52ebd03496749a8a5fa",
+          "result_sha256": "b2d313fafcf4efbf53f9fa5f300476e5c34f0cd944d3065cba49c4b887a16ed0",
+          "environment_sha256": "45d754cb4ed38f8ea2385b2fa47e78db7191f36fd924d8fb16d43ffc1c2d35e6",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 20,
+            "turn_abs_gt_0_1": 0,
+            "route_passage_present": 0,
+            "actors_present": 0,
+            "motion_paths_present": 0
+          },
+          "behaviors": {
+            "CRUISE": 418
+          },
+          "max_payload_float32_rounding_error": 2.1751493939348165e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_roads9_20261030/current/episode_001"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Easy/SCSS/0/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Easy",
+            "sequence": "SCSS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "f315580c575a221a020c9996f8c7c1ba64f936d0362f9eed316d08289feccf90",
+            "environment_seed": 0,
+            "traffic_density": 0.0,
+            "horizon_steps": 1345
+          },
+          "expert_version": "0.6.0",
+          "steps": 450,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "3813ec57b51ab0cc9d926a15bc32879c5ff332eccd6e146e7ef8ff6e1344ac6c",
+          "result_sha256": "02e574c02919e26f6e78ddbdfeeacc81195d01aeb05ce275bfffdb2327164be7",
+          "environment_sha256": "d7883e82202362609eb8293881e3c641e2b1a48f5c52ec3ee77b9c7bda3ded50",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 20,
+            "turn_abs_gt_0_1": 0,
+            "route_passage_present": 0,
+            "actors_present": 0,
+            "motion_paths_present": 0
+          },
+          "behaviors": {
+            "CRUISE": 450
+          },
+          "max_payload_float32_rounding_error": 2.2117789044706626e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_roads9_20261030/current/episode_002"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Medium/SCTCS/2/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Medium",
+            "sequence": "SCTCS",
+            "geometry_generation_seed": 2,
+            "geometry_sha256": "07d3816c5f08bb08dd0de9838feacb2b12d43f8b64086c1ae2470a7fe403bb2c",
+            "environment_seed": 0,
+            "traffic_density": 0.08,
+            "horizon_steps": 1642
+          },
+          "expert_version": "0.6.0",
+          "steps": 700,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "1697f2c56ea91889150f204be823411388efa87a047bcf4d4949355ec74719db",
+          "result_sha256": "d12bbb1e21e89c3890b0658f1354bceca4f84469ed3519093e77a4553b3217f8",
+          "environment_sha256": "79d9feaa1461cd6564b4ef2cec678974970d49bf590139657b8aeb5ba9d1cbe0",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 60,
+            "turn_abs_gt_0_1": 110,
+            "route_passage_present": 149,
+            "actors_present": 613,
+            "motion_paths_present": 611
+          },
+          "behaviors": {
+            "CRUISE": 516,
+            "FOLLOW": 17,
+            "YIELD": 43,
+            "APPROACH_JUNCTION": 28,
+            "COMMIT_JUNCTION": 12,
+            "TRAVERSE_JUNCTION": 61,
+            "RECOVER_LANE": 17,
+            "EXIT_JUNCTION": 6
+          },
+          "max_payload_float32_rounding_error": 2.5571107009625393e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_roads9_20261030/current/episode_003"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Medium/SCXCCS/0/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Medium",
+            "sequence": "SCXCCS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "66c3bfaaec42656edecc0ac161a9af79aacaeadd6ec6b032930089b0b22fe09b",
+            "environment_seed": 0,
+            "traffic_density": 0.08,
+            "horizon_steps": 2231
+          },
+          "expert_version": "0.6.0",
+          "steps": 895,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "574dfefbea0232ba1287413bf0b08def230805130dd7e0cbb09041d41da12daa",
+          "result_sha256": "5d4b3ad4a8c02a1ad095fa9c60deee0ebb1afe7ea36f5c3d2265952e196a9e25",
+          "environment_sha256": "5afcd24f157d8b86bd9a8ca2b90ce581dcdbfab77b557b0369dd7ff2859790ef",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 65,
+            "turn_abs_gt_0_1": 42,
+            "route_passage_present": 159,
+            "actors_present": 835,
+            "motion_paths_present": 826
+          },
+          "behaviors": {
+            "CRUISE": 680,
+            "APPROACH_JUNCTION": 16,
+            "YIELD": 60,
+            "COMMIT_JUNCTION": 24,
+            "TRAVERSE_JUNCTION": 65,
+            "EXIT_JUNCTION": 5,
+            "FOLLOW": 45
+          },
+          "max_payload_float32_rounding_error": 2.503395080122317e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_roads9_20261030/current/episode_004"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Medium/SCXCS/14/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Medium",
+            "sequence": "SCXCS",
+            "geometry_generation_seed": 14,
+            "geometry_sha256": "281b1353d6ca897dda5c22baddabbb2d890860f22e7ff8e87c335f432ee5a426",
+            "environment_seed": 0,
+            "traffic_density": 0.08,
+            "horizon_steps": 1098
+          },
+          "expert_version": "0.6.0",
+          "steps": 566,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "4778b4b2b5922a35edac3a1629bc7689d6ae997d6f2b3d32ba4e9158cd57fb32",
+          "result_sha256": "c82344d04e19adf6be7c5e5d7e0b7f10e1e78e79ab82d790fe38dc5662fee642",
+          "environment_sha256": "cab69c1ce8f427b4ca1bea3c0016b2faca1d95f74c84a6e2aceb6ead2dbbbdae",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 61,
+            "turn_abs_gt_0_1": 78,
+            "route_passage_present": 186,
+            "actors_present": 336,
+            "motion_paths_present": 324
+          },
+          "behaviors": {
+            "CRUISE": 250,
+            "RECOVER_LANE": 21,
+            "APPROACH_JUNCTION": 38,
+            "YIELD": 53,
+            "COMMIT_JUNCTION": 23,
+            "TRAVERSE_JUNCTION": 65,
+            "EXIT_JUNCTION": 5,
+            "FOLLOW": 111
+          },
+          "max_payload_float32_rounding_error": 2.9390174183241413e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_roads9_20261030/current/episode_005"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Hard/SCTXrCS/2/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Hard",
+            "sequence": "SCTXrCS",
+            "geometry_generation_seed": 2,
+            "geometry_sha256": "84cc4ae49427ce5cde984c58a3f68d261abbd791768ac9aa79d5b44f22f08218",
+            "environment_seed": 0,
+            "traffic_density": 0.15,
+            "horizon_steps": 2208
+          },
+          "expert_version": "0.6.0",
+          "steps": 1432,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "93ac72f23155d696e7bbdc27b0c38c427f621741f513b75a98c8ae00f92d101d",
+          "result_sha256": "75671bfdafcabec542db639aec98c97c74d8daa7e3a61cb91a21657588cdf93d",
+          "environment_sha256": "cfc8dd19d9e1368a9cc78c6079f81d73a299caa818c94b5358715a4a333dfa26",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 119,
+            "turn_abs_gt_0_1": 108,
+            "route_passage_present": 388,
+            "actors_present": 1303,
+            "motion_paths_present": 1288
+          },
+          "behaviors": {
+            "CRUISE": 355,
+            "FOLLOW": 618,
+            "APPROACH_JUNCTION": 26,
+            "YIELD": 216,
+            "EMERGENCY_BRAKE": 5,
+            "COMMIT_JUNCTION": 50,
+            "TRAVERSE_JUNCTION": 135,
+            "RECOVER_LANE": 4,
+            "EXIT_JUNCTION": 10,
+            "STOP_FOR_OBSTACLE": 13
+          },
+          "max_payload_float32_rounding_error": 2.791071040952886e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_roads9_20261030/current/episode_006"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Hard/SCXOCS/0/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Hard",
+            "sequence": "SCXOCS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "8d90dee7d34fb2f6e90572ec32897400af5f40ebac98f867bafec4bfc383680f",
+            "environment_seed": 0,
+            "traffic_density": 0.15,
+            "horizon_steps": 1860
+          },
+          "expert_version": "0.6.0",
+          "steps": 1485,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "29b45e8233c63bb8db95d71218221e6b79123bc7da5c801cdfa691d10f199e30",
+          "result_sha256": "81a073afd37ec8dac9fcc5e9ac322bd37156967bb34151f57ae5aaaef39d4deb",
+          "environment_sha256": "269e625d4d1d2a02cf0a4492fb0fd6816dbfab83a4fb99860700bd29799b017a",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 130,
+            "turn_abs_gt_0_1": 292,
+            "route_passage_present": 731,
+            "actors_present": 1416,
+            "motion_paths_present": 1399
+          },
+          "behaviors": {
+            "CRUISE": 386,
+            "YIELD": 349,
+            "APPROACH_JUNCTION": 17,
+            "EMERGENCY_BRAKE": 15,
+            "COMMIT_JUNCTION": 126,
+            "TRAVERSE_JUNCTION": 166,
+            "EXIT_JUNCTION": 28,
+            "RECOVER_LANE": 70,
+            "FOLLOW": 265,
+            "PREPARE_CHANGE": 14,
+            "CHANGE_LANE": 45,
+            "BLOCKED_CHANGE": 4
+          },
+          "max_payload_float32_rounding_error": 2.795423537094166e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_roads9_20261030/current/episode_007"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Hard/XTOCS/0/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Hard",
+            "sequence": "XTOCS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "ffb3ce5f655174fad30b5145dfdb3fae4fd7944d3f96c20579076c517fc5e2b3",
+            "environment_seed": 0,
+            "traffic_density": 0.15,
+            "horizon_steps": 1194
+          },
+          "expert_version": "0.6.0",
+          "steps": 1063,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "351c1bc6a97dd7020c274a41975ee2258d92f73942e7df888aad6a59b250bec2",
+          "result_sha256": "54646a6975173dcf6f3488d4f7bcfc4adb468bd65b0defa4e62621ea92ffb619",
+          "environment_sha256": "516c59d9fa6a5e8dcca1651df0dd553e8cc40662b162d1a257143606cecfbc57",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 118,
+            "turn_abs_gt_0_1": 222,
+            "route_passage_present": 811,
+            "actors_present": 772,
+            "motion_paths_present": 750
+          },
+          "behaviors": {
+            "APPROACH_JUNCTION": 51,
+            "YIELD": 317,
+            "EMERGENCY_BRAKE": 5,
+            "COMMIT_JUNCTION": 136,
+            "TRAVERSE_JUNCTION": 198,
+            "RECOVER_LANE": 93,
+            "EXIT_JUNCTION": 20,
+            "FOLLOW": 44,
+            "CRUISE": 161,
+            "PREPARE_CHANGE": 10,
+            "CHANGE_LANE": 27,
+            "BLOCKED_CHANGE": 1
+          },
+          "max_payload_float32_rounding_error": 2.7306218841616214e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_roads9_20261030/current/episode_008"
+        }
+      ]
+    },
+    {
+      "run_directory": "runs/rule_based_v060_accept04_extreme_cr_20261030",
+      "status": "COMPLETED",
+      "runtime_sha256": "853d30c2f85c0ce41519fa6e7a0256f1da147c3f6bcae379b6b1f23f285c3d92",
+      "recorded_runtime": {
+        "python": "3.10.22 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:15:38) [MSC v.1942 64 bit (AMD64)]",
+        "packages": {
+          "numpy": "2.2.6",
+          "panda3d": "1.10.16",
+          "metadrive-simulator": "0.4.3"
+        },
+        "git_head": "0980bbde54cc17369a074973c379635b50bfad05",
+        "git_dirty": true,
+        "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+        "control_dt_s": 0.1
+      },
+      "state_sha256": "4b7facf2df46b517a4d41af6a925bcbf12766952402ae09e43e4b5f5288518b2",
+      "resolved_cases_sha256": "7a9a00c6f69d6cfbddb5fb6a9a506609a01051caaef4a49ca95247648acb13a1",
+      "provenance_sha256": "4b09e9db56a78f17a6005c962b6a9054935984491d57d12adab6f9b02bb9e164",
+      "configuration_sha256": "61a28354a10054a5351de7a7d45b6a5efcb6af21ef581a5ed33d14f36bb1489f",
+      "source_sha256": {
+        "policy.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+        "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+        "agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+        "agents/rule_based_agent.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+        "agents/rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+        "agents/rule_based_lane_change.py": "07fec91d228965f5ebd571ecfd76364115a4b6bd3d304612598a96272d030b5d",
+        "agents/rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+        "agents/rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9",
+        "agents/__init__.py": "de2af9150878aec49ba843f77291a8ca410944908e6b04ce27610d6678b29f02",
+        "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+        "agent_experiment.py": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5"
+      },
+      "source_reference_bindings": {
+        "policy.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "policy.py"
+        },
+        "agent_input.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "agent_input.py"
+        },
+        "agents/random_naive_agent.py": {
+          "role": "AUXILIARY_RECORDER_COPY_NOT_P4_REFERENCE"
+        },
+        "agents/rule_based_agent.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "policy.py"
+        },
+        "agents/rule_based_junction.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_junction.py"
+        },
+        "agents/rule_based_lane_change.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_lane_change.py"
+        },
+        "agents/rule_based_memory.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_memory.py"
+        },
+        "agents/rule_based_traffic.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_traffic.py"
+        },
+        "agents/__init__.py": {
+          "role": "AUXILIARY_RECORDER_COPY_NOT_P4_REFERENCE"
+        },
+        "action_adapter.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "action_adapter.py"
+        },
+        "agent_experiment.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "agent_experiment.py"
+        }
+      },
+      "episodes": [
+        {
+          "case": {
+            "case_id": "sandbox/Extreme/CrXROSTR/0/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Extreme",
+            "sequence": "CrXROSTR",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "7c392abe573ca9823069ef1f88680be6222a9f6b6b6a9d8a065e270cc560db93",
+            "environment_seed": 0,
+            "traffic_density": 0.25,
+            "horizon_steps": 3188
+          },
+          "expert_version": "0.6.0",
+          "steps": 3188,
+          "terminal_reason": "TIMEOUT",
+          "trace_sha256": "5a6ac59cd66eb19af3f68bb8f1e60e6493fc67a4f6657b5238f8f6b9fb98d7e8",
+          "result_sha256": "84c0b5009a6195d549cb64968318fd9b6721bc8db20728a129f5a804469cbcb9",
+          "environment_sha256": "acad34ccf9261ea5a93d6432a24985e4e84c59dbd023ff04beea1be16a6901aa",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 68,
+            "turn_abs_gt_0_1": 0,
+            "route_passage_present": 2408,
+            "actors_present": 3160,
+            "motion_paths_present": 3156
+          },
+          "behaviors": {
+            "CRUISE": 87,
+            "FOLLOW": 669,
+            "YIELD": 377,
+            "APPROACH_JUNCTION": 63,
+            "BLOCKED": 587,
+            "COMMIT_JUNCTION": 35,
+            "TRAVERSE_JUNCTION": 1370
+          },
+          "max_payload_float32_rounding_error": 2.6721766133164238e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_extreme_cr_20261030/current/episode_000"
+        }
+      ]
+    },
+    {
+      "run_directory": "runs/rule_based_v060_accept04_extreme_sctx_20261030",
+      "status": "COMPLETED",
+      "runtime_sha256": "853d30c2f85c0ce41519fa6e7a0256f1da147c3f6bcae379b6b1f23f285c3d92",
+      "recorded_runtime": {
+        "python": "3.10.22 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:15:38) [MSC v.1942 64 bit (AMD64)]",
+        "packages": {
+          "numpy": "2.2.6",
+          "panda3d": "1.10.16",
+          "metadrive-simulator": "0.4.3"
+        },
+        "git_head": "0980bbde54cc17369a074973c379635b50bfad05",
+        "git_dirty": true,
+        "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+        "control_dt_s": 0.1
+      },
+      "state_sha256": "8fa57f7688748c015803ffdb49fde9ac01b1c55ecdab7edeb6e56d3560db1a75",
+      "resolved_cases_sha256": "7c1917650ca9342c8b3aacd93758d8a96ccec15522f7c976e335ac682d67bd19",
+      "provenance_sha256": "4b09e9db56a78f17a6005c962b6a9054935984491d57d12adab6f9b02bb9e164",
+      "configuration_sha256": "61a28354a10054a5351de7a7d45b6a5efcb6af21ef581a5ed33d14f36bb1489f",
+      "source_sha256": {
+        "policy.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+        "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+        "agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+        "agents/rule_based_agent.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+        "agents/rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+        "agents/rule_based_lane_change.py": "07fec91d228965f5ebd571ecfd76364115a4b6bd3d304612598a96272d030b5d",
+        "agents/rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+        "agents/rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9",
+        "agents/__init__.py": "de2af9150878aec49ba843f77291a8ca410944908e6b04ce27610d6678b29f02",
+        "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+        "agent_experiment.py": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5"
+      },
+      "source_reference_bindings": {
+        "policy.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "policy.py"
+        },
+        "agent_input.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "agent_input.py"
+        },
+        "agents/random_naive_agent.py": {
+          "role": "AUXILIARY_RECORDER_COPY_NOT_P4_REFERENCE"
+        },
+        "agents/rule_based_agent.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "policy.py"
+        },
+        "agents/rule_based_junction.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_junction.py"
+        },
+        "agents/rule_based_lane_change.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_lane_change.py"
+        },
+        "agents/rule_based_memory.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_memory.py"
+        },
+        "agents/rule_based_traffic.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_traffic.py"
+        },
+        "agents/__init__.py": {
+          "role": "AUXILIARY_RECORDER_COPY_NOT_P4_REFERENCE"
+        },
+        "action_adapter.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "action_adapter.py"
+        },
+        "agent_experiment.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "agent_experiment.py"
+        }
+      },
+      "episodes": [
+        {
+          "case": {
+            "case_id": "sandbox/Extreme/SCTXORyCCS/0/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Extreme",
+            "sequence": "SCTXORyCCS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "886a6ddc9850cb56b8d27ee1b17704e02add3e40f6040708cdbf492b470e35b2",
+            "environment_seed": 0,
+            "traffic_density": 0.25,
+            "horizon_steps": 3429
+          },
+          "expert_version": "0.6.0",
+          "steps": 3429,
+          "terminal_reason": "TIMEOUT",
+          "trace_sha256": "dfb1f59e534429187968aaf30f5c6a24e6c19e88b9443cb99b2504ac56e907e0",
+          "result_sha256": "73f7ab34b679287051253e57c94216092278f696473fe3a644f46a743d337130",
+          "environment_sha256": "4fdba95814a10e2ba442a97c43c56debf30347737b71fbc8098709f436b63c77",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 584,
+            "turn_abs_gt_0_1": 1919,
+            "route_passage_present": 2998,
+            "actors_present": 3401,
+            "motion_paths_present": 3401
+          },
+          "behaviors": {
+            "CRUISE": 314,
+            "FOLLOW": 101,
+            "YIELD": 523,
+            "APPROACH_JUNCTION": 24,
+            "EMERGENCY_BRAKE": 466,
+            "COMMIT_JUNCTION": 131,
+            "TRAVERSE_JUNCTION": 1458,
+            "EXIT_JUNCTION": 59,
+            "RECOVER_LANE": 87,
+            "BLOCKED": 266
+          },
+          "max_payload_float32_rounding_error": 2.772723550759082e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_extreme_sctx_20261030/current/episode_000"
+        }
+      ]
+    },
+    {
+      "run_directory": "runs/rule_based_v060_accept04_extreme_scxo_20261030",
+      "status": "COMPLETED",
+      "runtime_sha256": "853d30c2f85c0ce41519fa6e7a0256f1da147c3f6bcae379b6b1f23f285c3d92",
+      "recorded_runtime": {
+        "python": "3.10.22 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:15:38) [MSC v.1942 64 bit (AMD64)]",
+        "packages": {
+          "numpy": "2.2.6",
+          "panda3d": "1.10.16",
+          "metadrive-simulator": "0.4.3"
+        },
+        "git_head": "0980bbde54cc17369a074973c379635b50bfad05",
+        "git_dirty": true,
+        "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+        "control_dt_s": 0.1
+      },
+      "state_sha256": "0a74984ddc0f24145ff0344a3434e2eaecad0e31a1dc10690900c64a9b6f33c4",
+      "resolved_cases_sha256": "17a2de14d1a10a4b02df4f3c52b4fa96a14299b2518f4c78c59cb344fec968eb",
+      "provenance_sha256": "4b09e9db56a78f17a6005c962b6a9054935984491d57d12adab6f9b02bb9e164",
+      "configuration_sha256": "61a28354a10054a5351de7a7d45b6a5efcb6af21ef581a5ed33d14f36bb1489f",
+      "source_sha256": {
+        "policy.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+        "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+        "agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+        "agents/rule_based_agent.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+        "agents/rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+        "agents/rule_based_lane_change.py": "07fec91d228965f5ebd571ecfd76364115a4b6bd3d304612598a96272d030b5d",
+        "agents/rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+        "agents/rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9",
+        "agents/__init__.py": "de2af9150878aec49ba843f77291a8ca410944908e6b04ce27610d6678b29f02",
+        "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+        "agent_experiment.py": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5"
+      },
+      "source_reference_bindings": {
+        "policy.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "policy.py"
+        },
+        "agent_input.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "agent_input.py"
+        },
+        "agents/random_naive_agent.py": {
+          "role": "AUXILIARY_RECORDER_COPY_NOT_P4_REFERENCE"
+        },
+        "agents/rule_based_agent.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "policy.py"
+        },
+        "agents/rule_based_junction.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_junction.py"
+        },
+        "agents/rule_based_lane_change.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_lane_change.py"
+        },
+        "agents/rule_based_memory.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_memory.py"
+        },
+        "agents/rule_based_traffic.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_traffic.py"
+        },
+        "agents/__init__.py": {
+          "role": "AUXILIARY_RECORDER_COPY_NOT_P4_REFERENCE"
+        },
+        "action_adapter.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "action_adapter.py"
+        },
+        "agent_experiment.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "agent_experiment.py"
+        }
+      },
+      "episodes": [
+        {
+          "case": {
+            "case_id": "sandbox/Extreme/SCXOCrTYCS/0/0",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Extreme",
+            "sequence": "SCXOCrTYCS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "73fb061319d5754a8cde93d461ffa06a61ad79f22fd775538caffe57e5782e34",
+            "environment_seed": 0,
+            "traffic_density": 0.25,
+            "horizon_steps": 2914
+          },
+          "expert_version": "0.6.0",
+          "steps": 2914,
+          "terminal_reason": "TIMEOUT",
+          "trace_sha256": "bf057d027d3ed76856bff35411043cfb9ff7f7c4f36d588d28af7778fb6c1df9",
+          "result_sha256": "31bb8d0c1dad483a442e5c8f3bab10b5bc279ec4c0a2652d2ba2d83aae5f6cbb",
+          "environment_sha256": "c925eb00a00c7fa53320a77901cb48b367a128ddd8080951e9dc3a3b9e25f09d",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 104,
+            "turn_abs_gt_0_1": 224,
+            "route_passage_present": 2469,
+            "actors_present": 2872,
+            "motion_paths_present": 2778
+          },
+          "behaviors": {
+            "CRUISE": 247,
+            "FOLLOW": 182,
+            "YIELD": 403,
+            "APPROACH_JUNCTION": 45,
+            "EMERGENCY_BRAKE": 23,
+            "COMMIT_JUNCTION": 93,
+            "TRAVERSE_JUNCTION": 633,
+            "EXIT_JUNCTION": 1042,
+            "BLOCKED": 207,
+            "RECOVER_LANE": 39
+          },
+          "max_payload_float32_rounding_error": 2.56299972356544e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_extreme_scxo_20261030/current/episode_000"
+        }
+      ]
+    },
+    {
+      "run_directory": "runs/rule_based_v060_accept04_env1_20261030",
+      "status": "COMPLETED",
+      "runtime_sha256": "853d30c2f85c0ce41519fa6e7a0256f1da147c3f6bcae379b6b1f23f285c3d92",
+      "recorded_runtime": {
+        "python": "3.10.22 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:15:38) [MSC v.1942 64 bit (AMD64)]",
+        "packages": {
+          "numpy": "2.2.6",
+          "panda3d": "1.10.16",
+          "metadrive-simulator": "0.4.3"
+        },
+        "git_head": "0980bbde54cc17369a074973c379635b50bfad05",
+        "git_dirty": true,
+        "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+        "control_dt_s": 0.1
+      },
+      "state_sha256": "64f8bd88b341911446b1afabf5b369baa9a0a8846c727f048f98d7e7ba009557",
+      "resolved_cases_sha256": "73361d2c888679a8ebade10c4a2135179919ef4fd981268bd077eb5f13b125df",
+      "provenance_sha256": "4b09e9db56a78f17a6005c962b6a9054935984491d57d12adab6f9b02bb9e164",
+      "configuration_sha256": "61a28354a10054a5351de7a7d45b6a5efcb6af21ef581a5ed33d14f36bb1489f",
+      "source_sha256": {
+        "policy.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+        "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+        "agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+        "agents/rule_based_agent.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+        "agents/rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+        "agents/rule_based_lane_change.py": "07fec91d228965f5ebd571ecfd76364115a4b6bd3d304612598a96272d030b5d",
+        "agents/rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+        "agents/rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9",
+        "agents/__init__.py": "de2af9150878aec49ba843f77291a8ca410944908e6b04ce27610d6678b29f02",
+        "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+        "agent_experiment.py": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5"
+      },
+      "source_reference_bindings": {
+        "policy.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "policy.py"
+        },
+        "agent_input.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "agent_input.py"
+        },
+        "agents/random_naive_agent.py": {
+          "role": "AUXILIARY_RECORDER_COPY_NOT_P4_REFERENCE"
+        },
+        "agents/rule_based_agent.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "policy.py"
+        },
+        "agents/rule_based_junction.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_junction.py"
+        },
+        "agents/rule_based_lane_change.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_lane_change.py"
+        },
+        "agents/rule_based_memory.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_memory.py"
+        },
+        "agents/rule_based_traffic.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "rule_based_traffic.py"
+        },
+        "agents/__init__.py": {
+          "role": "AUXILIARY_RECORDER_COPY_NOT_P4_REFERENCE"
+        },
+        "action_adapter.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "action_adapter.py"
+        },
+        "agent_experiment.py": {
+          "role": "P4_REFERENCE_MATCH",
+          "reference_key": "agent_experiment.py"
+        }
+      },
+      "episodes": [
+        {
+          "case": {
+            "case_id": "sandbox/Medium/SCXCCS/0/1",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Medium",
+            "sequence": "SCXCCS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "66c3bfaaec42656edecc0ac161a9af79aacaeadd6ec6b032930089b0b22fe09b",
+            "environment_seed": 1,
+            "traffic_density": 0.08,
+            "horizon_steps": 2231
+          },
+          "expert_version": "0.6.0",
+          "steps": 1017,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "409bae9102113d3e77e2c4f19e0ba1208cf921172e20464177c122e7021192d5",
+          "result_sha256": "2f93e71c9ebdccf169b555b10e9b29487129ca490433860aa27ac8f609f0ffe2",
+          "environment_sha256": "8b9a5c716a07cdfa7ebf982842dd441ee689bd1ba1c206040a108cffb5e2d10e",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 39,
+            "turn_abs_gt_0_1": 41,
+            "route_passage_present": 166,
+            "actors_present": 901,
+            "motion_paths_present": 894
+          },
+          "behaviors": {
+            "CRUISE": 414,
+            "FOLLOW": 366,
+            "APPROACH_JUNCTION": 24,
+            "YIELD": 61,
+            "COMMIT_JUNCTION": 22,
+            "TRAVERSE_JUNCTION": 65,
+            "EXIT_JUNCTION": 5,
+            "PREPARE_CHANGE": 10,
+            "CHANGE_LANE": 46,
+            "BLOCKED_CHANGE": 4
+          },
+          "max_payload_float32_rounding_error": 2.7418136649970393e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_env1_20261030/current/episode_000"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Hard/SCTXrCS/2/1",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Hard",
+            "sequence": "SCTXrCS",
+            "geometry_generation_seed": 2,
+            "geometry_sha256": "84cc4ae49427ce5cde984c58a3f68d261abbd791768ac9aa79d5b44f22f08218",
+            "environment_seed": 1,
+            "traffic_density": 0.15,
+            "horizon_steps": 2208
+          },
+          "expert_version": "0.6.0",
+          "steps": 1640,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "822467701783dc4b1d606f7d5e715a3256095680d64d8fe1f59905ded12b203d",
+          "result_sha256": "f004051f573344580d401534843dab4cfd7afa878c83204bd428f518023ccc26",
+          "environment_sha256": "6a8ba28af9b38e37357f10ee518453056b508a2a567d20a5a88dd55c70580c0d",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 59,
+            "turn_abs_gt_0_1": 136,
+            "route_passage_present": 358,
+            "actors_present": 1460,
+            "motion_paths_present": 1421
+          },
+          "behaviors": {
+            "CRUISE": 319,
+            "YIELD": 183,
+            "FOLLOW": 859,
+            "APPROACH_JUNCTION": 23,
+            "COMMIT_JUNCTION": 48,
+            "TRAVERSE_JUNCTION": 135,
+            "EXIT_JUNCTION": 10,
+            "EMERGENCY_BRAKE": 3,
+            "PREPARE_CHANGE": 21,
+            "BLOCKED_CHANGE": 3,
+            "CHANGE_LANE": 36
+          },
+          "max_payload_float32_rounding_error": 2.848017932599589e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_env1_20261030/current/episode_001"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Hard/SCXOCS/0/1",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Hard",
+            "sequence": "SCXOCS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "8d90dee7d34fb2f6e90572ec32897400af5f40ebac98f867bafec4bfc383680f",
+            "environment_seed": 1,
+            "traffic_density": 0.15,
+            "horizon_steps": 1860
+          },
+          "expert_version": "0.6.0",
+          "steps": 1468,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "3958418267f3f96b21fba2bc6b2b3ddaf4e0b1033fcde2b145880673adf656aa",
+          "result_sha256": "4bfe50305ee1be6ab13ca3ffe71bec897a0c6d5a2b2ec8cbce3bc77fa6817c84",
+          "environment_sha256": "74e4d7e830b110919a3bd3708d148ed92935492ed3c6f806452db2858957de9b",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 84,
+            "turn_abs_gt_0_1": 229,
+            "route_passage_present": 562,
+            "actors_present": 1441,
+            "motion_paths_present": 1403
+          },
+          "behaviors": {
+            "CRUISE": 342,
+            "STOP_FOR_OBSTACLE": 4,
+            "FOLLOW": 413,
+            "PREPARE_CHANGE": 24,
+            "CHANGE_LANE": 59,
+            "APPROACH_JUNCTION": 24,
+            "YIELD": 245,
+            "COMMIT_JUNCTION": 104,
+            "TRAVERSE_JUNCTION": 154,
+            "EXIT_JUNCTION": 27,
+            "EMERGENCY_BRAKE": 3,
+            "BLOCKED": 2,
+            "RECOVER_LANE": 65,
+            "BLOCKED_CHANGE": 2
+          },
+          "max_payload_float32_rounding_error": 2.9802322387695312e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_env1_20261030/current/episode_002"
+        },
+        {
+          "case": {
+            "case_id": "sandbox/Hard/XTOCS/0/1",
+            "case_index": 1,
+            "protocol_order_index": 1,
+            "split": "TRAIN",
+            "tier": "Hard",
+            "sequence": "XTOCS",
+            "geometry_generation_seed": 0,
+            "geometry_sha256": "ffb3ce5f655174fad30b5145dfdb3fae4fd7944d3f96c20579076c517fc5e2b3",
+            "environment_seed": 1,
+            "traffic_density": 0.15,
+            "horizon_steps": 1194
+          },
+          "expert_version": "0.6.0",
+          "steps": 966,
+          "terminal_reason": "SUCCESS",
+          "trace_sha256": "c5aa830976ec3cefc12df1c70b80418a4587e5c99e1505e71f38745994a2a3bf",
+          "result_sha256": "1c31e9994fddf467e6f5b78febcecfb5513763c18acd01700014ac255a4ef813",
+          "environment_sha256": "b9630f2ef25346f172da717f97fe8055e138e117554f9063515562a9360b804c",
+          "recorded_safety": {
+            "crash": false,
+            "out_of_road": false,
+            "boundary_contact": false
+          },
+          "events": {
+            "brake_lt_minus_0_1": 34,
+            "turn_abs_gt_0_1": 222,
+            "route_passage_present": 744,
+            "actors_present": 650,
+            "motion_paths_present": 637
+          },
+          "behaviors": {
+            "APPROACH_JUNCTION": 57,
+            "YIELD": 291,
+            "COMMIT_JUNCTION": 75,
+            "TRAVERSE_JUNCTION": 169,
+            "EXIT_JUNCTION": 18,
+            "EMERGENCY_BRAKE": 6,
+            "BLOCKED": 27,
+            "RECOVER_LANE": 114,
+            "CRUISE": 175,
+            "FOLLOW": 34
+          },
+          "max_payload_float32_rounding_error": 2.8908252680537316e-08,
+          "trajectory_quality_status": "UNREVIEWED_NOT_A_DEMONSTRATION_DATASET",
+          "source_directory": "runs/rule_based_v060_accept04_env1_20261030/current/episode_003"
+        }
+      ]
+    }
+  ]
+}

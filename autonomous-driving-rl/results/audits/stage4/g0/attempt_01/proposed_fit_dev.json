@@ -1,0 +1,1271 @@
+{
+  "status": "PROPOSED_NOT_APPROVED",
+  "scope": "TRAIN geometries only",
+  "ranking": "SHA256(UTF8('stage4-fit-dev-v1|' + geometry_id)), then geometry_id",
+  "counts": {
+    "DEV": 36,
+    "FIT": 144
+  },
+  "geometries": [
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed4",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "312533ca14cb4faa2788143a053847e190c0e1b8a4094740d59d641b645a0b1b",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed18",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 18,
+      "geometry_sha256": "a4cf86a50429d7f33c48277a0c7d804cf88bc9521e23305c5f5cb40ea720edf6",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed1",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 1,
+      "geometry_sha256": "e3708d0406ed0df4be57706a90a98775429051df4df63a07eff8f7056f1303b0",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed15",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 15,
+      "geometry_sha256": "0d2cf498de4ce8248a6becb9a95b71244b14df5067b425db0c449e31e2af79bc",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed14",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 14,
+      "geometry_sha256": "badccf440906f18166e8c680c9cf5e41913535cc8876f211ef1e33f35241be46",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed3",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "333dc27d0597fa9560f5df63c703ec58ac8ad76efa5b5ed258764d35e9feb784",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed2",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "7192bb15f0104f6480c81e8a526ef05e48f11b48010d65acd55fe35d16e4ecdf",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed13",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 13,
+      "geometry_sha256": "a4885e87cfdea27f7d155457a4c3c8de8fb3b0703c58d8f771d2db36a1ea91ad",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed9",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 9,
+      "geometry_sha256": "f146750769563b9c387adf19c8e6af7cf647b4de6fdb1b7a8b9ead700361a174",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed11",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "57641f93a85d77871c482a055b6717afbc0aad5f8d58f8a89fa23df6f64e6c84",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed8",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 8,
+      "geometry_sha256": "7dd82b46a4c8f963754b8b9ff089079a62d7d237eb70c95013554f1c6cea3d80",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed17",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 17,
+      "geometry_sha256": "1bc16f716f9758795574deae5bc54b5b69b80e66ff3b6bf6cd57c97fb9677e91",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed7",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "41ab823dee931bee920dc27effe737a953d00a5365f0db165fb9aa7c409f44a5",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed16",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 16,
+      "geometry_sha256": "9ef57ada5ca897590dbc56c4e2fe4f14ae0257af6c9624826541996a4699adbe",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "sequence": "CrXROSTR",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "7c392abe573ca9823069ef1f88680be6222a9f6b6b6a9d8a065e270cc560db93",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed0",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "df9c8bb722fc6517de55dc18838470b91ec43b89767ede19d93b72dc94674f9b",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed8",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 8,
+      "geometry_sha256": "b9bf7f62dea5ae2a93d19b0ab206e1a4b109a8ffe5cd44047af6eb734e4dff3d",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed14",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 14,
+      "geometry_sha256": "51ff2edb1b926cea7a8e3dbfc3682252863df8e284742753621919c9d1b4ceb5",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed5",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "8a49b2e4fde67715b01a31b95e5b04026e693fcf0eb28bac99f9bb5b6f3b97cb",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed4",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed2",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "314a2830c26cf72879d740f97d450f1d657beeb050f602c1cbece838fd40d8f5",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 19,
+      "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed3",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "63cc884fe4ab7df2035db6e9ab3e08289f93caafd22304c7dbf71ab28ae6627e",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed10",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 10,
+      "geometry_sha256": "1b38f2bfcc8feb34cbc2f125c0651a872d676e0759fc5081e99636a09d9889c7",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed18",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 18,
+      "geometry_sha256": "23e00106409deb440570b829c306491e2d5cb8187ee1d4f94b898c5cb9278bf7",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed12",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "8809ec8f93b1970bcc783e800afc4953ac186abd19c3075e05486461a107c8b2",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed6",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "ef6f2e2470c423f2096b7dd6989b9984756691d3daa3a4f605764f924689595e",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed7",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "e2eaaf9a46f93881efaef26acb10cb9cdf3b5852784a94eaac2f2b470401cf71",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed15",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 15,
+      "geometry_sha256": "5368d438b7598f2556fa51dc3c511b5f7a6eeb29b43cf14c936f7a3814a42448",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed16",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 16,
+      "geometry_sha256": "87a63bc257046d800e4d9f4a75436fb5e1919cadf27aa06aeac1a077353fc04d",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed0",
+      "sequence": "SCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed8",
+      "sequence": "SCS",
+      "geometry_generation_seed": 8,
+      "geometry_sha256": "cce114f95febde8a5d3729865f7607b2e8b613edec9ae299d59934a05ffd5823",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed14",
+      "sequence": "SCS",
+      "geometry_generation_seed": 14,
+      "geometry_sha256": "d72b34587f996d473ff8ec41d961e9f8de67136814c5d53daaccdf300cc44798",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed4",
+      "sequence": "SCS",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "f5db5bc1e938409c2fbe7c4daf4409b20643a34a6253d8a6298882a90d35a059",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed2",
+      "sequence": "SCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "bec4c11dd9275f8d1be89669961b6ac611dbd2be2e11a701779c274ebd9de4db",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed16",
+      "sequence": "SCS",
+      "geometry_generation_seed": 16,
+      "geometry_sha256": "e47823d49334b770a839479b69babaae498f3b97c8d2dc2ed8e2587a346841d1",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed3",
+      "sequence": "SCS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "2f6f3269f1451de3d31389d3f0a0188ea4ad9c681185e246694a36f86e858a18",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed5",
+      "sequence": "SCS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "aa88e1c2e1dc3bc97fec59896079add7e70f1c9c758f380aa8fd4a03f82b24c3",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed7",
+      "sequence": "SCS",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "e17df3b5be19a33d762f501d2cd7a4e47bd47c3bb267a5ed1282d713bdfcd6d5",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed15",
+      "sequence": "SCS",
+      "geometry_generation_seed": 15,
+      "geometry_sha256": "715a4e993a8353bd7cec859de50dbadb7d70bad0111ac7f32628f405487724c4",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed17",
+      "sequence": "SCS",
+      "geometry_generation_seed": 17,
+      "geometry_sha256": "d506fb35a9176e7e334f1942ff033d1329ed936df70e989aa209e78a1d1e4601",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed19",
+      "sequence": "SCS",
+      "geometry_generation_seed": 19,
+      "geometry_sha256": "40624bda19a08ba5220d3136a515faeef92c1056b4798ca2f948d79d8a8191e7",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed12",
+      "sequence": "SCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed18",
+      "sequence": "SCS",
+      "geometry_generation_seed": 18,
+      "geometry_sha256": "cc39dff63479cba03a7598af9bb49860fc463c92694f0f44bcee93d7836158f9",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed1",
+      "sequence": "SCS",
+      "geometry_generation_seed": 1,
+      "geometry_sha256": "7b721ddea0699aeff3168ff3a9f5de5f11209a374d591a86a0eaaf08bcbb6bbb",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed11",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "09b72e2424d42c18e892503b610a7fce1f65753516fee3ad3f6d79465a20aa1d",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed14",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 14,
+      "geometry_sha256": "3d6b6f84904a2986e75cce96603c6b6e4e24283ca16d527e4530e071b2935f62",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed19",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 19,
+      "geometry_sha256": "b80f9e5c0ee4d573219feeb85e151eb3c6ae4ebae7feb4783db5a6ed23fa6b2b",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed10",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 10,
+      "geometry_sha256": "3318bcb60ff2f6a6bf565b903154e376abad9a653b0f16f73bda92e96ed706e0",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed5",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "be9e7f1e92ae8ee30eb9949152b6777bb63037267710a6ffe178bf7ff8d913a0",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed2",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "31004866d9c8401f88cb76ed9b289d9a7d60d056bb91c4c696aed307d87351f6",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed3",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "68fbae08cc6d34648bcc19bbb1ba0438430f4b2cd748927704d921969ae6b91c",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed16",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 16,
+      "geometry_sha256": "a2227871797561d8ffe3806eafdc14d799d101250fb775d90803fc900f24a4b6",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed6",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "57dc51d3fc61562452b693c8af3314e24745f9ddc45b5212e62d6e95629e89dc",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed13",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 13,
+      "geometry_sha256": "045626dd1cb38eed5e50dd9f50363d953753d7d2e4b2b512e30fbf8a55b96c96",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed0",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "f315580c575a221a020c9996f8c7c1ba64f936d0362f9eed316d08289feccf90",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed4",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "a6494d940761821e33150c767b561220d94586dba307df944131baa1e8457456",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed15",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 15,
+      "geometry_sha256": "d1ae30320ed6f0af02c7b83cc70d607dec31c012a85b4c27482e8f9e281d3a96",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed18",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 18,
+      "geometry_sha256": "38e304e7d4c97e9fc0ea21faade3f8982dcde2c38ca4afcde480cbe0aab281c2",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed7",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "a3d241fa3c0c49a2671aa0c16a5837f41ac0fff746f67b420eed0977e5429705",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed6",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "a8b356ade91c0d2583ff15c136422c25e4dada4eb410a5f68ec3dd6db5278703",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed13",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 13,
+      "geometry_sha256": "c4032c6365d8b900674fc655bc28f37140609b20e9bbfff11bd22a8a33339b8b",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed9",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 9,
+      "geometry_sha256": "9dbe4baf9f9ea786e6dcd297a06100064dc02cbd4a800ea218925d1eac88b294",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed16",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 16,
+      "geometry_sha256": "762494a33fb9981f64901931942639e36b40a71859bbbd05ae129c6d9dd153a1",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed15",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 15,
+      "geometry_sha256": "7638c8769d7e530d4bce563d0b02a6e19210368eba46670e15daa2855db5551d",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed18",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 18,
+      "geometry_sha256": "913e13f5c42b8ac2db7fc31c9f88f067fef733ad54744b79663cd72b248984ac",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed12",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "fa2aee1e5621d472fa8f07828c29a2f5ca0db711ec75ca8dcee2e6c222f70722",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed2",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "07d3816c5f08bb08dd0de9838feacb2b12d43f8b64086c1ae2470a7fe403bb2c",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed10",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 10,
+      "geometry_sha256": "d1f0d402930972b18bcf2c5fbc1d9dfb55a37d132798ec3bb64960f41286361d",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed3",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "3f65df25249c38773300301786d4d2caf1a8df3baf2d08313601ce1997faeb99",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed8",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 8,
+      "geometry_sha256": "8dcef0ca397147d467fd1e81d592bdd155bf611dfbb2a4557caa9e59a75464d9",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed17",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 17,
+      "geometry_sha256": "7cce15f0a07a5d38b4907787c5eced92d160ee3d2ac16602224e3ff162eb4dac",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed5",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "ec1131f7d49407ff8618f8b2ace7024ee02e09004e8a639d8261955d296a93a1",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "6c16b289525e50691cc0414d100e028b490281ee1a797c4f3fc3498c1f38bf09",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed7",
+      "sequence": "SCTCS",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "74b0ef4136c82ff9652d4a9647f33cefe4616bc10d5229a8eac6700138232539",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed17",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 17,
+      "geometry_sha256": "2be3195fd9a9632c8825c6a5be9e0ba62a059cd75be9dc49c548acc4c018c5da",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed7",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "971cc4e7f0638401f84feae25f7fd9fbc9ae41bb7bbe8766d6f51a9e1b737d6d",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed9",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 9,
+      "geometry_sha256": "1207c93b1b04245971e817938ed55281a624d0ac2e9c39d4fff3a4900ba80198",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed0",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "886a6ddc9850cb56b8d27ee1b17704e02add3e40f6040708cdbf492b470e35b2",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed12",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "fbde417aea76b9524bd11566e0b368c127de3728207e1aac7cfca1a06b2825b6",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed16",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 16,
+      "geometry_sha256": "e2e1c25eb2272fed2f6ab954a6a4e3b61c28941f0672519e5fe13679d990bf06",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed2",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "c6103a3d63559ccee289c6ff51b88a2700a1e9eb1622ddd18dd920e42e5e82cb",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed13",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 13,
+      "geometry_sha256": "4f7c49dc898a5a8af5f85bd2cc9e2b5aaf208c953b74208f81a709b15ae3cb9e",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed19",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 19,
+      "geometry_sha256": "7ad25d1fa947ee00b36034ca6ea47094cbd3e90bf21dc4215d1886c3ce999a7c",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed11",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "2c5dcca84146247bd9be8477d08a01af8c504ae9232ff4c41057e2e082940e29",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed8",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 8,
+      "geometry_sha256": "cdc3c573e32357cb019d5a25d7e30595d87d5ce676aa396f1883517ba2bdffdd",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed5",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "f6811b8169ef9ef884ef2e8d56d24937f739af0307f8ad2cbe2086314b3cd57e",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed1",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 1,
+      "geometry_sha256": "d93b633ea3d967c1684c85f800f2b3776f1f7898e648bf38bb4f719306ab3d87",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed14",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 14,
+      "geometry_sha256": "d854980b795dd5c07d3f2a65e2cc48786d783228bdcab45e92582140434979e9",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed6",
+      "sequence": "SCTXORyCCS",
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "5f1b3f962d202f45df734980bc511eedcbd0824d8285419dfb90e96549b2db0b",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed18",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 18,
+      "geometry_sha256": "3fbc8da36c301f6281a1d80e00237749f55fb910663119454943acc10c04e397",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 13,
+      "geometry_sha256": "6a10dceecff6119d87ee158263659b159de595ff862eac738877b2424f555ccc",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed3",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "0bf830b995b428973e60f7b5297b629a141bc442d27586cd2dd0e554b9f22dbc",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed5",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "4b46b5fb854e2d3c6370897165d3b8a6fc2f8ff839667ff2a1be2f7e6077b0c1",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed2",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "84cc4ae49427ce5cde984c58a3f68d261abbd791768ac9aa79d5b44f22f08218",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed4",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "fada8870cc2ead3ce7fd9b321fc45e9676ba00a0b32ec33fc9d1bb96d7ea49c5",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed15",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 15,
+      "geometry_sha256": "d9fb18c962685e99fe1e48dca40cb764c67596c78305c2b8b8423faea2736b2b",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed16",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 16,
+      "geometry_sha256": "27aa40c4bc9b516fc9ea480ec87df4c66e414820d5a7b3190faeb6770507d235",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed17",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 17,
+      "geometry_sha256": "0c8ed04d4d52511bed168e1ec54ce174e8c34eeff1ba8b8afd7335fd6cae7658",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed8",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 8,
+      "geometry_sha256": "f300ea7098269d818d8caa9e34abccc732a5fe4aa04d493e1899c9a104a94e7e",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed19",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 19,
+      "geometry_sha256": "96823e6ec8a0697da7ae775264f71cfb79cf6bb94fa0f2f98c714181cfe6d08c",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed7",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "6e82da7fed4650d09c37f1382af42745f687f47dde64f2f93ee2bea02c6a21d7",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed12",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "aae51113ae21007b6c00072495db9ea92d933012bb55a2eb3c59840fc3529815",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed10",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 10,
+      "geometry_sha256": "4ccd848fa6233e902347f9c10ca0f239dfed4e1e4729a62547a76134141c40a0",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed11",
+      "sequence": "SCTXrCS",
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "917014a321fbffd02aef34c375cdbc7f1a900922e97dcee2d9cea3904275fd86",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed12",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "db6aeef066cb6f91d2daa02156e017aeb9e5f550ccadc68f75398cfdce1850b7",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed3",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "8b430c3492abec39ba137c091f903d0a59afca54507001bf076cd76539a5d242",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed0",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "66c3bfaaec42656edecc0ac161a9af79aacaeadd6ec6b032930089b0b22fe09b",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed5",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "b6fee9670fa9bca919713420220975ae98275a415f3fc5813256d5e14695ecf8",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed2",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "5def89893c6656ad3b47e78a1bdee02b7f3d61911fcd96158ea1f195738d8bb1",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed4",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "5246d21aeb044ebc8366282475dec0fcfe3876a0ba8292e0b061318e931a9649",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed1",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 1,
+      "geometry_sha256": "8d28bd96746b1e24865ab8fb3f476e286c0e256325db932dacb95f17627c19aa",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed17",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 17,
+      "geometry_sha256": "cdbe6998006b897903be0fb2060ab08ff4ad87131c873008ef8f708856ce11e6",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed19",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 19,
+      "geometry_sha256": "eca36739e091370f54b7a756dc98339d1685f8d1e828977700288f524c203ee4",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed7",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "e2451285ac25c4b2f6989fd727ca5a28713ff578f469eced2e3d6b82b6253504",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed8",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 8,
+      "geometry_sha256": "5854ac7cccd3bb98c0c8baecedf83b919d2574137837d57f8d9f56383c734e15",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed10",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 10,
+      "geometry_sha256": "5b852c2a54f6e77e197a1cc0cde7d68d618db8889ac1629bfad5f99877837f5f",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed14",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 14,
+      "geometry_sha256": "e0ef4b4e05eeff1f370a220ea407c991ca405c10a917caea8b93f8a4170a5218",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed9",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 9,
+      "geometry_sha256": "4dfaa43ba5b29ec443d80bd0e9f3bd69bc572a397df7b5445b2275db41a10695",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCCS_seed6",
+      "sequence": "SCXCCS",
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "820dc75cc4119ee89229c863d96d5d023bb6cee747a7b0c7d47223160eb3884d",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed1",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 1,
+      "geometry_sha256": "b4ed88cf51c9430ac7df6e4160d04a5254516123908f4da8f22a2bd5df45a0c2",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed17",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 17,
+      "geometry_sha256": "5fcd1c87b147c0ad93d8659f97b5959c95ecb6f023cdb20c585506269bb62af4",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed7",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "31a6dcb76db2bac4429364e5e71c5768ddace473460e114bc24b27cc38d5b3c4",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed0",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "afa571795d37981fefdb30fc27e9f0f67141d4408754e95fc1453822c0d5454f",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed12",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "bf6e80fcf0a9019be5203968ab16aff3b86c82105795c5f1d06b2b717ea283ff",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed10",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 10,
+      "geometry_sha256": "2494bf696b2f70a9013b95f63f6eb5dbb734582c6dc67cd204905e85e141f797",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed14",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 14,
+      "geometry_sha256": "281b1353d6ca897dda5c22baddabbb2d890860f22e7ff8e87c335f432ee5a426",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed4",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "f2c526fb18c27d7217a41e5ebc58c9f893d782f85bbb6da03d3d21078034699b",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed15",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 15,
+      "geometry_sha256": "9a17d56922aad9773c2ed024654585609b1c1e715b3497c9ab867c14e547ce98",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed13",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 13,
+      "geometry_sha256": "bc6ede7b70c0f4ceeb66e43d1b3d72889841dd2959def9164da10222b8dc967b",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed2",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "692bfa6e6ecf8f52276f5e551bfd55c5279f21432f5bb57b7b72448dd6ef97d5",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed8",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 8,
+      "geometry_sha256": "a325e450cf9964dfde64f2cd78b7db226ff87091b3aa4afbdf870d73a10a6cb9",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed19",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 19,
+      "geometry_sha256": "663c21536dfa286abbca08bf114ee0a2e01bc2d0a60267344554de85d53c2c5a",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed5",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "2b7a706680fe176aa592406c0f72a4361b9deefcabd42917210542d2ca98c8ec",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_medium_SCXCS_seed9",
+      "sequence": "SCXCS",
+      "geometry_generation_seed": 9,
+      "geometry_sha256": "a084cc872948d64dd52a35aed6eed8c49691e07aa371de93253465c9a80cccc8",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed5",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "ce4cab83245174083a94b6a33423d17dbf067abdb6ff1cdb12eff5cf2078a7b0",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed4",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "c726bd6390d536f2ddae52b3294719d9a414e9f8cad9e10899c665d109f19c68",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed1",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 1,
+      "geometry_sha256": "8ee69679e41ffed29c79bbeff2816c0cfd0aa1173f1c0321de2dc61441d77356",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed10",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 10,
+      "geometry_sha256": "04c6c7d9789a282926bc28d4273be9e113e432a1a2098ff9cc492001cfcd28c2",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed14",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 14,
+      "geometry_sha256": "67408056cc71c30fbb9b81874e309fd2b728b9b69e65f71c7397305329d830b4",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed6",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "d3b658899cf73f6f3bbe735470617d470fb07963c4e67534529a64daf81359bf",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed9",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 9,
+      "geometry_sha256": "15b4994078a4a2bcfd05829dea791289092e68133b5db5b4dbfb7db58b164fd3",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed18",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 18,
+      "geometry_sha256": "c5b4e1bb9a6fa5bb5fc4fb72f6810b0a626f2dae33a60192dbad7752d9612a01",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed11",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "ab9f7bec7e9105c793a56d850fef09309529ebed877241a86b87252115b725c6",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed15",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 15,
+      "geometry_sha256": "18f6de87c2938019c6f96ee001e707a0ff4c5b9005282f3299b7cd240ae9900f",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed19",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 19,
+      "geometry_sha256": "991243c49fa50e6cb4f3a7731c06dc219e2c8bfb4842df0c1588cebea8bf2e74",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed16",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 16,
+      "geometry_sha256": "75dc56580f043f2494cb5ad2d0ac77cd2e57f3758ba9f4fb9c47f097a9d3c0fd",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed12",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "4601917e9ee31e2eafa17d055bdb752d5db5e411167b5ca6adf1da392d99dbd9",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed3",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "984a985086d612315692ae435d3ce4c9e219893b3b3ee7bb8f5d6bd366136298",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_SCXOCS_seed0",
+      "sequence": "SCXOCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "8d90dee7d34fb2f6e90572ec32897400af5f40ebac98f867bafec4bfc383680f",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed10",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 10,
+      "geometry_sha256": "3d95b8c61799d967493663ff64f82247c55d5522eb628f99a10a31e002db48b0",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed15",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 15,
+      "geometry_sha256": "a6c84a855163064d93d9d78c865d3c0e3f305ab5020b4bb12548beb4a7bb1f33",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed0",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "73fb061319d5754a8cde93d461ffa06a61ad79f22fd775538caffe57e5782e34",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed14",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 14,
+      "geometry_sha256": "f3524fcc947c48987af47d9e2da32098656d8670e9fe92fa5accc39752b986af",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed9",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 9,
+      "geometry_sha256": "12a3fcfebfaba918db19fad9550634c2a9e7f87c77add11a605e15ad7c375f40",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed5",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "3b2124bbc74c76fcafcc2060c61a3f7f6bb3a3e72f185aebc753a5e96c06412c",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed3",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "7dabe7cf4fd252ee4bb6bdbb5b959051e26ea293b110ffc682dae774f3fc164c",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed8",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 8,
+      "geometry_sha256": "cd51df4eabbb68b989bcd99843e3c43d408aee7e0e0c8110cec767b695c2c066",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed6",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "56f0562413dcc72cbf118d5756ad5e7f8148221983e305a9d4a42f11cdb2e05f",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed1",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 1,
+      "geometry_sha256": "f336e636169f25dd759a568c7c334d9daa901f2c6605e17b408f893de0422816",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed12",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "95906a225ee2e691fef8492f345c003b2b8fc4971ae7e6bab3e6b1021de5efa7",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed7",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "a0f6d2d4eba464351debd7181bf9433a3ea48f204778c5271a6b390922a54008",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed2",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "35d898b819e3299bddf5316b67b8af30e4030e45cad9f07b644e65d4b7d5fb79",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed13",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 13,
+      "geometry_sha256": "4aeeecbd41512d40e59ba66ee868e54a7c37305fc285533b6cb97bea34970d6e",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed4",
+      "sequence": "SCXOCrTYCS",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "2f1d7329b4c6ab20b85a6e15a7035439d72745fddb9e356e8acf70b5773055af",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed7",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "016ba23e9d78378246d2c207f20039247200da4f59cd6391b0227b9c359b15f0",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed10",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 10,
+      "geometry_sha256": "87cdba031e157a8cae7129f78175b5a4ae8fee366b8f08effb0b2368d095f963",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed5",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 5,
+      "geometry_sha256": "f79d23261dc038d3b08ac263e8d33b772e168d76124fe8b0e05d14cfde62c3f1",
+      "partition": "DEV"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed17",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 17,
+      "geometry_sha256": "32032c49a2685033647356657da7344ad23ee87948d67c5a41316ff046957737",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed16",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 16,
+      "geometry_sha256": "0c83c5fc4a0e8e95b8229591e64844474acf399c6cf47f4facd5f92567493663",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed2",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "eae1089c2a32426e1f2e3e77a13fae5f621a964f43463770c47bfc4c37d2330e",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed3",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "b75c611176b5745daf45ee45206cec34e13e2cb51bc4b193423bdcd7cf209918",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed11",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "5784107456e025a8c9d9f72bd7f9a1b17eb474fc0267948f31432084a3b472c8",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed12",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "d9125e89babdf51445d99e9492d57d8592018d1d62eab14452f64afe98ccf557",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed8",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 8,
+      "geometry_sha256": "a4b01a018b46c18698c862c1c6ca9008943ecb92abf83c04a69cea698fe7c028",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed15",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 15,
+      "geometry_sha256": "8c19943e2d3831868a35abe5d432c1a0fc595965b53b8abe2f0c3fdf952c4de9",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed1",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 1,
+      "geometry_sha256": "4557e13428079f44a419167efcc028cfe7e759b72088afeb240dc28de000953e",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed0",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "ffb3ce5f655174fad30b5145dfdb3fae4fd7944d3f96c20579076c517fc5e2b3",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed6",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "ccf9eacd17b11a1758ce3a87f2b5ffd73a7105affb783cbf7e1e885a10059b7e",
+      "partition": "FIT"
+    },
+    {
+      "geometry_id": "geom_hard_XTOCS_seed13",
+      "sequence": "XTOCS",
+      "geometry_generation_seed": 13,
+      "geometry_sha256": "2ac866e43e42502a0af002bee910141feb4d88ad7041cea77343ff81104b35ce",
+      "partition": "FIT"
+    }
+  ]
+}

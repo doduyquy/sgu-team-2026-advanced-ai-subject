@@ -1,0 +1,65 @@
+{
+  "scope": "Live policy replay; physical probes are NOT natural driving demonstrations",
+  "historical_evidence_sha256": "859ef0493f6052eeb0ab1698434a7097a700a5c653eddec7fbc985cf5c0b7118",
+  "steps": 1992,
+  "traces": [
+    {
+      "label": "safe_overtake",
+      "source_trace": "runs/rule_based_v060_probe10_20261030/safe_overtake/decisions.jsonl.gz",
+      "trace_sha256": "d632654ce6466c45c8dea812ec7bff5d09ba2ddf403f83bb7ae3ebb001f53dbd",
+      "steps": 150,
+      "decision_mismatches": 0,
+      "action_mismatches": 0
+    },
+    {
+      "label": "fast_rear",
+      "source_trace": "runs/rule_based_v060_probe10_20261030/fast_rear/decisions.jsonl.gz",
+      "trace_sha256": "63ede03259a7cd892f674865ac6b43dcd870fb6ed51bb9224d9658c7526fef1a",
+      "steps": 170,
+      "decision_mismatches": 0,
+      "action_mismatches": 0
+    },
+    {
+      "label": "mandatory_route",
+      "source_trace": "runs/rule_based_v060_probe10_20261030/mandatory_route/decisions.jsonl.gz",
+      "trace_sha256": "e360242fce36376c06c73410a3310ec1caba0516a3bed35d98827bc74204db62",
+      "steps": 171,
+      "decision_mismatches": 0,
+      "action_mismatches": 0
+    },
+    {
+      "label": "mandatory_left",
+      "source_trace": "runs/rule_based_v060_probe10_20261030/mandatory_left/decisions.jsonl.gz",
+      "trace_sha256": "a87760ebe928d3e21f31f69fc99ab26ebbdf50b7fac85a7c83ef8576b3c25b95",
+      "steps": 171,
+      "decision_mismatches": 0,
+      "action_mismatches": 0
+    },
+    {
+      "label": "precommit_abort",
+      "source_trace": "runs/rule_based_v060_probe10_20261030/precommit_abort/decisions.jsonl.gz",
+      "trace_sha256": "2edf34ab29cf6b8a012af9d757485afb21464797155f21c1ababfc99c3fea16e",
+      "steps": 95,
+      "decision_mismatches": 0,
+      "action_mismatches": 0
+    },
+    {
+      "label": "postcommit_front_block",
+      "source_trace": "runs/rule_based_v060_probe10_20261030/postcommit_front_block/decisions.jsonl.gz",
+      "trace_sha256": "7aefd26218e15995c87547a1401e7da967c32478d949c78e337ad10c76d4f520",
+      "steps": 172,
+      "decision_mismatches": 0,
+      "action_mismatches": 0
+    },
+    {
+      "label": "hard_xtocs",
+      "source_trace": "runs/rule_based_v060_accept04_roads9_20261030/current/episode_008/decisions.jsonl.gz",
+      "trace_sha256": "351c1bc6a97dd7020c274a41975ee2258d92f73942e7df888aad6a59b250bec2",
+      "steps": 1063,
+      "decision_mismatches": 0,
+      "action_mismatches": 0
+    }
+  ],
+  "status": "PASS",
+  "new_closed_loop_driving_score": false
+}

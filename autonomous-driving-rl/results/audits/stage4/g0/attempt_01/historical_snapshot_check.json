@@ -1,0 +1,376 @@
+{
+  "source": "experiments/rule_based/versions/0.6.1/snapshot.json",
+  "manifest_sha256": "2f11c797bba04c6d58bb2e0625afe190c4e31fb724d5b299aec0d9bf6e9d15f2",
+  "version": "0.6.1",
+  "files": [
+    {
+      "path": "policy.py",
+      "expected_sha256": "d7b287c8b9aa771de8d0c4691a62c36945c32aec392ff01154c9eb1e1098ce73",
+      "actual_sha256": "d7b287c8b9aa771de8d0c4691a62c36945c32aec392ff01154c9eb1e1098ce73",
+      "lf_sha256": "5a33b968020a05012f58b5cea3e2b3651ff4eae944176cb9a70ec7974af09199",
+      "status": "EXACT"
+    },
+    {
+      "path": "agent_input.py",
+      "expected_sha256": "1bf5f0415a3394f6ed0c48f927f35aaa6f7462da48f0705e46d43f589a3e2183",
+      "actual_sha256": "1bf5f0415a3394f6ed0c48f927f35aaa6f7462da48f0705e46d43f589a3e2183",
+      "lf_sha256": "8f5ff5d57e345900e61afe7161605ac261b68a3234d116b048d9e5f2951d41c7",
+      "status": "EXACT"
+    },
+    {
+      "path": "platform_agent.py",
+      "expected_sha256": "a111916966a6cfb0480d45e5642f55bcad375bc02e4f90e8e4796b8ea39375e1",
+      "actual_sha256": "a111916966a6cfb0480d45e5642f55bcad375bc02e4f90e8e4796b8ea39375e1",
+      "lf_sha256": "ca99f52842ff1ae4c262edcfebc47dd6f5263bec10be3d4a71e948768a967cb6",
+      "status": "EXACT"
+    },
+    {
+      "path": "platform_init.py",
+      "expected_sha256": "36c2140052470e2daaa2c15b42a9763385e4bf12b270265e5b04dc4fbf4680dc",
+      "actual_sha256": "36c2140052470e2daaa2c15b42a9763385e4bf12b270265e5b04dc4fbf4680dc",
+      "lf_sha256": "8ba905fde274154b92c2844343372276b268a43b1f060138a49afd99c3aa84dc",
+      "status": "EXACT"
+    },
+    {
+      "path": "agent_registry.py",
+      "expected_sha256": "4a3a2b22313cbf5fb1ec0c7d0fa8b9a704fc131ca6e89be881df9434139a1361",
+      "actual_sha256": "4a3a2b22313cbf5fb1ec0c7d0fa8b9a704fc131ca6e89be881df9434139a1361",
+      "lf_sha256": "a806012135346d06b6fe971d82bc01c929ac6b5a0493f3481c64e81a91009939",
+      "status": "EXACT"
+    },
+    {
+      "path": "action_adapter.py",
+      "expected_sha256": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+      "actual_sha256": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+      "lf_sha256": "6ba92aa83f2b6037e884491b1be8fabbbe39f89237e80afcea19e1949ac15ff6",
+      "status": "EXACT"
+    },
+    {
+      "path": "agent_contract_v1.json",
+      "expected_sha256": "c487d1310fa817b7c4cd42ccef6cb1e382d932536c4832fca956df286216571d",
+      "actual_sha256": "c487d1310fa817b7c4cd42ccef6cb1e382d932536c4832fca956df286216571d",
+      "lf_sha256": "29cf525baaa96a10891eff8763c379d53e6390e43fbe51281cdcb536bc349404",
+      "status": "EXACT"
+    },
+    {
+      "path": "agent_experiment.py",
+      "expected_sha256": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5",
+      "actual_sha256": "7f2c495751d08fcc95af05a7c2c1642fd76b47bf8791bd9fb091197127f24b04",
+      "lf_sha256": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "test_runner.py",
+      "expected_sha256": "5f06f46856a3a654c18782178ff52d17c8e0cbe48c358d21f209aaf7784981bc",
+      "actual_sha256": "7c69d4749a8415c1efb915fe2125a6402cc6ce709b17c52e68c44c0662744376",
+      "lf_sha256": "5f06f46856a3a654c18782178ff52d17c8e0cbe48c358d21f209aaf7784981bc",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "verified_runner.py",
+      "expected_sha256": "2c9433ab34d356a221ffc707c6d0120bb513e2c7a7390f4ee5b554dad39573f0",
+      "actual_sha256": "e672606ebde2ba94f8e4fb7c01eec376addfa5e0e6b985e6380f6a69519be745",
+      "lf_sha256": "2c9433ab34d356a221ffc707c6d0120bb513e2c7a7390f4ee5b554dad39573f0",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "replay_runner.py",
+      "expected_sha256": "7fffb6ca356f320c476dcad70a1f8450ce2e4c13bb658783fc81b9260b7662cf",
+      "actual_sha256": "58181a8421269f6699c157bb81cc7f92cc689805a8034ccef60e35d593a63ce3",
+      "lf_sha256": "7fffb6ca356f320c476dcad70a1f8450ce2e4c13bb658783fc81b9260b7662cf",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "cleanup_verifier.py",
+      "expected_sha256": "cd8b96f060f26f74ec0c6cd3898356a7fa95baad5595e622f30035103a29b9c2",
+      "actual_sha256": "9c980615efc22fc5b818ad1200cbcb1a6c630437dc5fe881abc868a673ae31c6",
+      "lf_sha256": "cd8b96f060f26f74ec0c6cd3898356a7fa95baad5595e622f30035103a29b9c2",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "rule_based_traffic.py",
+      "expected_sha256": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9",
+      "actual_sha256": "a912c753950a345045dbd06463f3e81c5f4ad5ff266d163cbb55f25f0992d517",
+      "lf_sha256": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "rule_based_memory.py",
+      "expected_sha256": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "actual_sha256": "4ceac7c3b08cafb72db710623dcecef84e8b2e021e2638a12c3468dc18a46de4",
+      "lf_sha256": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "rule_based_junction.py",
+      "expected_sha256": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "actual_sha256": "b345ba6277eed9eccd53f965c4d72d43f327e319fb6f2dc0d5ce16d7adf7bb16",
+      "lf_sha256": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "rule_based_lane_change.py",
+      "expected_sha256": "451657f2c1c9f0945bfa14431f1cfdbfdd5b99d0b16be4b05c968f6005f2a4ec",
+      "actual_sha256": "191518078edc6438c1f6c0f2c4f25484902fabca04b51f4acce7647cd1d32df8",
+      "lf_sha256": "451657f2c1c9f0945bfa14431f1cfdbfdd5b99d0b16be4b05c968f6005f2a4ec",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "maintenance_sources/src/agents/__init__.py",
+      "expected_sha256": "b7aef2752ee8012fe89ea807368676e4399ea29e15ec8074874659acda4c758f",
+      "actual_sha256": "b7aef2752ee8012fe89ea807368676e4399ea29e15ec8074874659acda4c758f",
+      "lf_sha256": "46f0278d17037f18f9cf047832125ff868487eacae6399b5bc060416d99f2eaa",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/evaluation/evaluate_random.py",
+      "expected_sha256": "2a94f51d574d39a492b4ecb14b70487caa56c5e8332ac8a414dd287504092121",
+      "actual_sha256": "2a94f51d574d39a492b4ecb14b70487caa56c5e8332ac8a414dd287504092121",
+      "lf_sha256": "9ef07ef15878ba215a6ec1b5c2ba4d69eb5009d6aabe53a07e660ab88c11a006",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/launcher/cases.py",
+      "expected_sha256": "ca65a4a9b2f29ad3d818c15b134339b1c5fe14b767869baefe98aac0a39717ae",
+      "actual_sha256": "ca65a4a9b2f29ad3d818c15b134339b1c5fe14b767869baefe98aac0a39717ae",
+      "lf_sha256": "207d8584cf5f16b62ef5e3acd7c44cf0302c60a01fa108037818ed9402466594",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/launcher/contracts.py",
+      "expected_sha256": "0fabf868ef44921e0a56afd9e6a92476187d2c0e3b1dabdcf1bfca3679a0ab17",
+      "actual_sha256": "0fabf868ef44921e0a56afd9e6a92476187d2c0e3b1dabdcf1bfca3679a0ab17",
+      "lf_sha256": "e3cfde29d06586206e9395c7c5a200186f713ee2d36f6608a162535b174550be",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/launcher/events.py",
+      "expected_sha256": "b426771288617a9950e1e64f02f0cde6fc192499e9fb5f1a235ebd3d404c160b",
+      "actual_sha256": "b426771288617a9950e1e64f02f0cde6fc192499e9fb5f1a235ebd3d404c160b",
+      "lf_sha256": "dddfadeb94fc8711da1928582e35c4aee0cebe36f3bcd35209df4a8d66674911",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/launcher/executor.py",
+      "expected_sha256": "d452ebaae7924ad6fcc1fb60790770a079021c8546ebbf3ad5ef203ec7d6d709",
+      "actual_sha256": "d452ebaae7924ad6fcc1fb60790770a079021c8546ebbf3ad5ef203ec7d6d709",
+      "lf_sha256": "5e9dc9826d990ea8e27b42c4ab67259df31c557bdbe40b6c89988b6693ff00d0",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/launcher/preflight.py",
+      "expected_sha256": "f0994f532acdb3ddcb27cd018ddef554673451a584f02a9f4762c21173a91e19",
+      "actual_sha256": "f0994f532acdb3ddcb27cd018ddef554673451a584f02a9f4762c21173a91e19",
+      "lf_sha256": "469b384c858a288300d9148f0c8b312f50fb010d633ea22b6efcc80c249b6813",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/launcher/resolver.py",
+      "expected_sha256": "8f0ebd322e29956d15fe085fa3f60c71baf08682b3f22f05156298fb55950395",
+      "actual_sha256": "8f0ebd322e29956d15fe085fa3f60c71baf08682b3f22f05156298fb55950395",
+      "lf_sha256": "331cfefe8e06a75a29c70db2cc211000e84d3b68d9942a5f967db084389b5853",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/platform/episode.py",
+      "expected_sha256": "50679dd877753f18c92f5107aae3d4dada7a629e8498e75d67031096a012716a",
+      "actual_sha256": "50679dd877753f18c92f5107aae3d4dada7a629e8498e75d67031096a012716a",
+      "lf_sha256": "1bb2e798224e85be2a89d5103a98775e73b940587467481c9873688e71b9aba5",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/platform/experiment_logging.py",
+      "expected_sha256": "9206331477748c59bed581bd5da66825dcc2286b7470e5fa0ccc278b3f038413",
+      "actual_sha256": "9206331477748c59bed581bd5da66825dcc2286b7470e5fa0ccc278b3f038413",
+      "lf_sha256": "5f3c9a3414f552efd64d6daab48229d4a722e3d68d67a7fb6645a603d90fbd54",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/platform/metrics.py",
+      "expected_sha256": "52616b4af845cd5d597e7c63fffb75297795cfa15a1e36e56946b241e28e869e",
+      "actual_sha256": "52616b4af845cd5d597e7c63fffb75297795cfa15a1e36e56946b241e28e869e",
+      "lf_sha256": "85c4d91f4ccd4211985aac99b8de64f2aa3d3e37ab3bdfdf1accfc1a8a5c21d8",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/platform/protocol.py",
+      "expected_sha256": "6621e8b9f3dc03b67292f34306e0245dcff0f09c9dc549ed4b9e7b03dd8e1a42",
+      "actual_sha256": "6621e8b9f3dc03b67292f34306e0245dcff0f09c9dc549ed4b9e7b03dd8e1a42",
+      "lf_sha256": "66fac3662a5ac5476ec8db8ea7f0c310f4f146ac1acb9b67f6b5ceacf5899760",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/platform/specs.py",
+      "expected_sha256": "9415fa5ece6868966522092ebb14299bdd7269cb888c397ab3a802eac1f9ec1b",
+      "actual_sha256": "9415fa5ece6868966522092ebb14299bdd7269cb888c397ab3a802eac1f9ec1b",
+      "lf_sha256": "0945fe7e2ec5fe60e7869497e820538d271db03458c47d5fb5675268e53a9767",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/platform/wandb_backend.py",
+      "expected_sha256": "aa289996dcfb7bf9856bfb046dac64098a0732f0580d6ba2f1c8fe458273d26f",
+      "actual_sha256": "aa289996dcfb7bf9856bfb046dac64098a0732f0580d6ba2f1c8fe458273d26f",
+      "lf_sha256": "074f0da320e02a62d26d45ba22d45271ec60b8d46beb9a1d38852e8b6eb0ca19",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/visualization/finish_floating_hologram.py",
+      "expected_sha256": "b1031702f31658f6336f23f7bc7bb6bee90eb916415636d025d797f03823a94d",
+      "actual_sha256": "3827cacbda82c1df1a4e358ca8d0a3f6c540e088e96a77424538b5359c2e527a",
+      "lf_sha256": "b1031702f31658f6336f23f7bc7bb6bee90eb916415636d025d797f03823a94d",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/app.py",
+      "expected_sha256": "c03994c255f6dbcd43de0e41f6995137efd458ee2acf8aad2281c47b23bf1844",
+      "actual_sha256": "c03994c255f6dbcd43de0e41f6995137efd458ee2acf8aad2281c47b23bf1844",
+      "lf_sha256": "c4d273f351ebc26dd77430e3b9d0f536e506f9a60b277a5e317230b9cc82eb9c",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/contracts.py",
+      "expected_sha256": "e786fd36fd7c5519509601155ab64419736629477aa2be11467f1977df602857",
+      "actual_sha256": "e786fd36fd7c5519509601155ab64419736629477aa2be11467f1977df602857",
+      "lf_sha256": "fd3bd1282e2dc2bb560cf46ada9709afcb62e5cd87131e4c9bd7ed5393721b27",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/hardening_contracts.py",
+      "expected_sha256": "9a24a6af5a34eb59aa25f841f8564fb4424dc59e8f6681321207b1b585032c14",
+      "actual_sha256": "9a24a6af5a34eb59aa25f841f8564fb4424dc59e8f6681321207b1b585032c14",
+      "lf_sha256": "e82f75513b3db28d9b465c1f7504de5f60543527b10d2aae6d6b3b76d8dde86f",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/live_telemetry.py",
+      "expected_sha256": "45324fd5c5bc97ba15c2befa5e8d4716cbc33251b70307018412beff3ee9b27d",
+      "actual_sha256": "45324fd5c5bc97ba15c2befa5e8d4716cbc33251b70307018412beff3ee9b27d",
+      "lf_sha256": "1b62f18ef23b0cee7d1400db807e5f0f978659e17b25746b412dbb18a28af016",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/main_window.py",
+      "expected_sha256": "a809bc276b2a12ad38ff1fed547672bb8e63432a3028d0f5dc0e3ca8da6af2b2",
+      "actual_sha256": "a809bc276b2a12ad38ff1fed547672bb8e63432a3028d0f5dc0e3ca8da6af2b2",
+      "lf_sha256": "b7d958086d69a627ab659ce195a00985f9683a0d893e65e12490df426c54ab9d",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/process_runner.py",
+      "expected_sha256": "789b621e979e5056c7b62dab87d804d0b81cbdf78e8da62118cf94da069a2462",
+      "actual_sha256": "789b621e979e5056c7b62dab87d804d0b81cbdf78e8da62118cf94da069a2462",
+      "lf_sha256": "c31bbb97a1a684f94be38cd9ee1e23419819563dc27a5b7ded8c9b025dd2242f",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/protocol.py",
+      "expected_sha256": "6bca0efbb7859009ef9cbb7b5a2c22f49f6b01f0104d5ddd5505aa3924c7a357",
+      "actual_sha256": "6bca0efbb7859009ef9cbb7b5a2c22f49f6b01f0104d5ddd5505aa3924c7a357",
+      "lf_sha256": "1e7964e29f9d9936e6024ba3e4112ce1f8fa5e9362debb7dec3b492cdce40227",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/results_contracts.py",
+      "expected_sha256": "19d5790faed27de32e42cdc7b14c827aaef1bbfe67c4f0b7a0319471ec0948dc",
+      "actual_sha256": "19d5790faed27de32e42cdc7b14c827aaef1bbfe67c4f0b7a0319471ec0948dc",
+      "lf_sha256": "3b8d5962d84461d26fb03f18263a07b6d1ba66c94b29c9edeecfb7c144dd750a",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/results_repository.py",
+      "expected_sha256": "9ea13e60f26975e27e410e50cf09536b78400d01b0b65bb039992e85812cadad",
+      "actual_sha256": "9ea13e60f26975e27e410e50cf09536b78400d01b0b65bb039992e85812cadad",
+      "lf_sha256": "ac7f48caca86ab22972dc19615289f5952def16d034e44d98f27dfc7581c9de8",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/widgets/agent_explorer_widget.py",
+      "expected_sha256": "a9d270f657cf02b1bfceddfd6517cc2a06516eb60cef2c10baf5f9514bfe26d2",
+      "actual_sha256": "a9d270f657cf02b1bfceddfd6517cc2a06516eb60cef2c10baf5f9514bfe26d2",
+      "lf_sha256": "be6e5d5a3e2f12dccbdc41675e832a71ce2c1032ef88a08490237bf58d19105a",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/widgets/case_explorer_widget.py",
+      "expected_sha256": "6820d3cd4439942558d04d09e73a72fbc6f4cb23b7b49e6efd1cf462bd8b39e1",
+      "actual_sha256": "6820d3cd4439942558d04d09e73a72fbc6f4cb23b7b49e6efd1cf462bd8b39e1",
+      "lf_sha256": "a1c305f1ba3338516454d4b098e4bfced01ca82d4f6f086fd353b16d5ebf31a7",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/widgets/experiment_setup_widget.py",
+      "expected_sha256": "2b6d26cd824ed3610ab1c29e3e9194fb5f84fd8ddba2d9e6a678d8e400fa9d9a",
+      "actual_sha256": "2b6d26cd824ed3610ab1c29e3e9194fb5f84fd8ddba2d9e6a678d8e400fa9d9a",
+      "lf_sha256": "862d3b170c2d5c8329ccae65fc9b1252df35d1891434785c7bf3647cd0d62a6d",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/widgets/plan_preflight_widget.py",
+      "expected_sha256": "9b48d8fdb18412ea940043338dafc3816b6f4411588df190bd4850d196978afa",
+      "actual_sha256": "9b48d8fdb18412ea940043338dafc3816b6f4411588df190bd4850d196978afa",
+      "lf_sha256": "d32c0ba2e502560fa47ba27539d32baf764ab8bd8bbd53e61f13b0bac6192fe9",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/widgets/results_widget.py",
+      "expected_sha256": "fec98b993186a057b5df2921ee39e2f8b55f9708c09258abab94fa2e5591df38",
+      "actual_sha256": "fec98b993186a057b5df2921ee39e2f8b55f9708c09258abab94fa2e5591df38",
+      "lf_sha256": "df596f73cfb202414b650fd704f334ede53125041af0e8db183c1f0ef5820d89",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/widgets/run_monitor_widget.py",
+      "expected_sha256": "6bdda0a7c9fbb5759d38656d5610961a19b52550f0bbd6ad3b90aaca13c77e9c",
+      "actual_sha256": "6bdda0a7c9fbb5759d38656d5610961a19b52550f0bbd6ad3b90aaca13c77e9c",
+      "lf_sha256": "f827ff06dfbf10fd265a0e7b54d56c909c1d7cb5c00c40011d5cf34ecb587b4a",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/src/workbench/worker.py",
+      "expected_sha256": "d81bc3dfbcdd8d62e339557f9299032a4b103a034db3ce6324a34ff9311d933e",
+      "actual_sha256": "d81bc3dfbcdd8d62e339557f9299032a4b103a034db3ce6324a34ff9311d933e",
+      "lf_sha256": "e2559d142a413bb48e83e56ecd7a8edf1df9e61e0002fca88d84578c15bcacf7",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/tests/test_finish_visual.py",
+      "expected_sha256": "080092f2a2418965de3ec2f7e1a95b470558951d3ff49e987e46a449c0649da9",
+      "actual_sha256": "91a8468f20aa3f3610f0389d081ae3dfcc035c293cbf50cf146c8b6a5450d034",
+      "lf_sha256": "080092f2a2418965de3ec2f7e1a95b470558951d3ff49e987e46a449c0649da9",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "maintenance_sources/tests/test_source_layout.py",
+      "expected_sha256": "6d5e5760c5e475961c57f71603dfa97266cd2c14de22732bdf1a8b89e8fda97a",
+      "actual_sha256": "fae46def096588a5e240786c51ed8ac5551a2dc040ff63bd103ea8b8928cf03b",
+      "lf_sha256": "6d5e5760c5e475961c57f71603dfa97266cd2c14de22732bdf1a8b89e8fda97a",
+      "status": "LF_CONVERSION_MATCH_ONLY"
+    },
+    {
+      "path": "maintenance_sources/tests/test_workbench.py",
+      "expected_sha256": "25e633300833f3d7906f166660b873cd008dde7392ca09070b7f7fbb73546f74",
+      "actual_sha256": "25e633300833f3d7906f166660b873cd008dde7392ca09070b7f7fbb73546f74",
+      "lf_sha256": "79a45967d2a6a9e2ecc149954db33010d9cbc417c8b38fba6a48d41b01b8cdb5",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/tests/test_workbench_hardening.py",
+      "expected_sha256": "d0b103bed6c9f95d3543d76523e7f5e927a80c7e0c3012fc69865c26dba834ee",
+      "actual_sha256": "d0b103bed6c9f95d3543d76523e7f5e927a80c7e0c3012fc69865c26dba834ee",
+      "lf_sha256": "d3ff290ef21504ffb25c2380214954a68f091dd24b386e1b19c5be4f265153ce",
+      "status": "EXACT"
+    },
+    {
+      "path": "maintenance_sources/tests/test_workbench_results.py",
+      "expected_sha256": "cafebd6d4970199ee95f70f1a882201c9860736a67fab062f6d02608ee2ab474",
+      "actual_sha256": "cafebd6d4970199ee95f70f1a882201c9860736a67fab062f6d02608ee2ab474",
+      "lf_sha256": "009661716437858942ccc7e0377e4741b9e2b68d7ffc9ebab84e5546d75fa49a",
+      "status": "EXACT"
+    }
+  ],
+  "counts": {
+    "EXACT": 40,
+    "LF_CONVERSION_MATCH_ONLY": 12
+  },
+  "interpretation": "LF equivalence is diagnostic, NOT a passing raw-byte hash check. The archive is unchanged; the live candidate snapshot is separate."
+}

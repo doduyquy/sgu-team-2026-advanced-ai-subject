@@ -1,0 +1,76 @@
+{
+  "run_id": "s4_g0_audit_02",
+  "audit_execution_status": "COMPLETE",
+  "completed_at_utc": "2026-10-31T12:57:12.637338+00:00",
+  "gate_status": "AWAITING_REVIEW",
+  "gate_approved": false,
+  "canonical_run": false,
+  "new_driving_episodes": 0,
+  "training_updates": 0,
+  "accepted_bc_segments": 0,
+  "expert_candidate": {
+    "agent_id": "stage1_rule_based",
+    "agent_version": "0.6.1",
+    "input_profile_id": "STATE_DECISION_V1",
+    "action_adapter_id": "continuous_box2_v1",
+    "inference_stochasticity": "deterministic",
+    "stateful_within_episode": true,
+    "method_family": "RULE_BASED"
+  },
+  "historical_expert_version": "0.6.0",
+  "natural_cases": 16,
+  "natural_steps": 22228,
+  "unique_geometries": 12,
+  "outcomes": {
+    "SUCCESS": 13,
+    "TIMEOUT": 3
+  },
+  "cases_by_tier": {
+    "Easy": 3,
+    "Medium": 4,
+    "Hard": 6,
+    "Extreme": 3
+  },
+  "steps_by_behavior": {
+    "CRUISE": 5711,
+    "FOLLOW": 3724,
+    "YIELD": 3121,
+    "APPROACH_JUNCTION": 436,
+    "COMMIT_JUNCTION": 879,
+    "TRAVERSE_JUNCTION": 4674,
+    "RECOVER_LANE": 510,
+    "EXIT_JUNCTION": 1235,
+    "EMERGENCY_BRAKE": 526,
+    "STOP_FOR_OBSTACLE": 17,
+    "PREPARE_CHANGE": 79,
+    "CHANGE_LANE": 213,
+    "BLOCKED_CHANGE": 14,
+    "BLOCKED": 1089
+  },
+  "descriptive_events": {
+    "brake_lt_minus_0_1": 1593,
+    "turn_abs_gt_0_1": 3623,
+    "route_passage_present": 12129,
+    "actors_present": 19160,
+    "motion_paths_present": 18888
+  },
+  "quality_review_segment_count": 118,
+  "snapshot_byte_check": {
+    "EXACT": 40,
+    "LF_CONVERSION_MATCH_ONLY": 12
+  },
+  "replay_steps": 1992,
+  "tests_status": "PASSED",
+  "tests_passed": 446,
+  "protected_files_unchanged": 308,
+  "open_findings": [
+    "Historical snapshot raw-byte mismatches require review; LF equivalence is not certification",
+    "Quality thresholds and all TIMEOUT segment labels remain unapproved",
+    "Expert coverage is limited, including three Extreme timeouts",
+    "Speed telemetry field mismatch needs a future verified runtime fix",
+    "Steering text labels conflict; preserve numeric actions",
+    "Checkpoint binding is not implemented",
+    "AgentContract 1.3 and benchmark eligibility audits are pending",
+    "PyTorch environment and compute budget require a pilot before training"
+  ]
+}

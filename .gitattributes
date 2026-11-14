@@ -16,3 +16,22 @@ autonomous-driving-rl/experiments/rule_based/versions/** -text
 autonomous-driving-rl/experiments/legacy_source/** -text
 autonomous-driving-rl/results/audits/rule_based/** -text
 autonomous-driving-rl/results/audits/source_cleanup/** -text
+
+# Stage 4 curated evidence and future immutable snapshots carry raw-byte hashes.
+autonomous-driving-rl/results/audits/stage4/** -text
+autonomous-driving-rl/experiments/stage4/versions/** -text
+
+# Stage 4 registries, approved split and decision records carry raw-byte hashes.
+autonomous-driving-rl/datasets/stage4_bc/*.json -text
+autonomous-driving-rl/datasets/stage4_bc/fit_dev_v1/** -text
+autonomous-driving-rl/experiments/stage4/g1_decision_fit_dev_kaggle_v1.json -text
+
+# Stage 4 source/config snapshots are checksummed too; keep their recorded bytes.
+autonomous-driving-rl/experiments/stage4/*.json -text
+autonomous-driving-rl/src/imitation/** -text
+autonomous-driving-rl/src/launcher/telemetry.py -text
+autonomous-driving-rl/scripts/stage4.py -text
+autonomous-driving-rl/scripts/audit_stage4_telemetry.py -text
+autonomous-driving-rl/scripts/collect_stage4_pilot.py -text
+autonomous-driving-rl/scripts/profile_stage4_resources.py -text
+autonomous-driving-rl/tests/test_stage4_*.py -text
