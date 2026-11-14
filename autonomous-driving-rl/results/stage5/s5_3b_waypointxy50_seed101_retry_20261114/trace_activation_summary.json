@@ -1,0 +1,122 @@
+[
+  {
+    "action_mean": [
+      -0.010949027724564075,
+      0.005711773410439491
+    ],
+    "action_std": [
+      7.171183824539185e-08,
+      2.0489096641540527e-08
+    ],
+    "action_unique_4dp": 1,
+    "checkpoints": {
+      "0": {
+        "active_units_max": 138,
+        "active_units_mean": 136.18668407310705,
+        "active_units_min": 134,
+        "first_layer_bias_mean": -0.0011979792034253478,
+        "first_layer_bias_std": 0.02961333654820919,
+        "first_layer_units": 256,
+        "model_sha256": "9b1b02fbf9ad1cb00e0239e6360882024aaa55f03528c7fee844f1fa054d5cd7",
+        "preactivation_mean": 0.008587364107370377,
+        "preactivation_positive_fraction": 0.5319792346605744,
+        "preactivation_std": 0.43890342116355896,
+        "zero_active_fraction": 0.0
+      },
+      "10000": {
+        "active_units_max": 0,
+        "active_units_mean": 0.0,
+        "active_units_min": 0,
+        "first_layer_bias_mean": -0.0025261358823627234,
+        "first_layer_bias_std": 0.029611483216285706,
+        "first_layer_units": 256,
+        "model_sha256": "9767737d08d1e2548ec4f270ac4c919d91d7cd16e37f4637f1a5aba162c4e50b",
+        "preactivation_mean": -0.3677515685558319,
+        "preactivation_positive_fraction": 0.0,
+        "preactivation_std": 0.3477689325809479,
+        "zero_active_fraction": 1.0
+      },
+      "5000": {
+        "active_units_max": 0,
+        "active_units_mean": 0.0,
+        "active_units_min": 0,
+        "first_layer_bias_mean": -0.002488702069967985,
+        "first_layer_bias_std": 0.029597513377666473,
+        "first_layer_units": 256,
+        "model_sha256": "41811e4d52b950cd2b218b66c5cb276da5eccf4033f32aebaf5ba19e61730aff",
+        "preactivation_mean": -0.3571658730506897,
+        "preactivation_positive_fraction": 0.0,
+        "preactivation_std": 0.3233901262283325,
+        "zero_active_fraction": 1.0
+      }
+    },
+    "geometry_id": "geom_easy_SCCS_seed19",
+    "route_end": 0.10668409795158246,
+    "route_start": 0.0098487876197353,
+    "steps": 766,
+    "terminal_safety_flags": {
+      "out_of_road": true
+    },
+    "trace": "runs\\stage5_pilot\\s5_3b_waypointxy50_seed101_retry_20261114\\diagnostic_traces_retry\\step_05000_geom_easy_SCCS_seed19.jsonl"
+  },
+  {
+    "action_mean": [
+      -0.02770264260470867,
+      0.02416387014091015
+    ],
+    "action_std": [
+      0.0443396158516407,
+      0.04890938475728035
+    ],
+    "action_unique_4dp": 49,
+    "checkpoints": {
+      "0": {
+        "active_units_max": 140,
+        "active_units_mean": 135.36141304347825,
+        "active_units_min": 127,
+        "first_layer_bias_mean": -0.0011979792034253478,
+        "first_layer_bias_std": 0.02961333654820919,
+        "first_layer_units": 256,
+        "model_sha256": "9b1b02fbf9ad1cb00e0239e6360882024aaa55f03528c7fee844f1fa054d5cd7",
+        "preactivation_mean": 0.009825804270803928,
+        "preactivation_positive_fraction": 0.5287555197010869,
+        "preactivation_std": 0.6295331716537476,
+        "zero_active_fraction": 0.0
+      },
+      "10000": {
+        "active_units_max": 115,
+        "active_units_mean": 14.13586956521739,
+        "active_units_min": 0,
+        "first_layer_bias_mean": -0.0025261358823627234,
+        "first_layer_bias_std": 0.029611483216285706,
+        "first_layer_units": 256,
+        "model_sha256": "9767737d08d1e2548ec4f270ac4c919d91d7cd16e37f4637f1a5aba162c4e50b",
+        "preactivation_mean": -0.3639993667602539,
+        "preactivation_positive_fraction": 0.05521824048913043,
+        "preactivation_std": 0.569381058216095,
+        "zero_active_fraction": 0.6793478260869565
+      },
+      "5000": {
+        "active_units_max": 116,
+        "active_units_mean": 14.26086956521739,
+        "active_units_min": 0,
+        "first_layer_bias_mean": -0.002488702069967985,
+        "first_layer_bias_std": 0.029597513377666473,
+        "first_layer_units": 256,
+        "model_sha256": "41811e4d52b950cd2b218b66c5cb276da5eccf4033f32aebaf5ba19e61730aff",
+        "preactivation_mean": -0.353533536195755,
+        "preactivation_positive_fraction": 0.05570652173913043,
+        "preactivation_std": 0.5564661622047424,
+        "zero_active_fraction": 0.6793478260869565
+      }
+    },
+    "geometry_id": "geom_hard_SCXOCS_seed0",
+    "route_end": 0.054140125572108073,
+    "route_start": 0.008067778548001727,
+    "steps": 368,
+    "terminal_safety_flags": {
+      "out_of_road": true
+    },
+    "trace": "runs\\stage5_pilot\\s5_3b_waypointxy50_seed101_retry_20261114\\diagnostic_traces_retry\\step_05000_geom_hard_SCXOCS_seed0.jsonl"
+  }
+]

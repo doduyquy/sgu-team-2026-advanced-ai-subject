@@ -14,6 +14,8 @@ import time
 import uuid
 from typing import Any, Dict, Iterable, List, Optional
 
+import numpy as np
+
 try:  # Load torch before Panda3D on Windows.
     import torch
 except ImportError:
@@ -130,6 +132,7 @@ def evaluate_checkpoint(
     checkpoint_dir: Path, split_path: Path, output_dir: Path, schedule_seed: int = 5302,
     max_steps_per_episode: Optional[int] = None, max_cases: Optional[int] = None,
     progress_file: Optional[Path] = None, progress_phase: str = "DIAGNOSTICS",
+    trace_dir: Optional[Path] = None, geometry_ids: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     encoder = Stage5ObservationEncoder(core_only=False)
     transform = metadata_transform = None
@@ -159,6 +162,12 @@ def evaluate_checkpoint(
     env = transform(base_env) if transform is not None else base_env
     adapter = get_action_adapter("continuous_box2_v1")
     schedule = diagnostic_schedule(load_pilot_split(split_path), schedule_seed)
+    if geometry_ids:
+        allowed = {item["geometry_id"] for item in schedule}
+        unknown = sorted(set(geometry_ids) - allowed)
+        if unknown:
+            raise ValueError(f"Requested trace geometries are not in fixed PILOT_DIAGNOSTIC schedule: {unknown}")
+        schedule = [item for item in schedule if item["geometry_id"] in set(geometry_ids)]
     if max_cases is not None:
         schedule = schedule[:max_cases]
     _write_progress(progress_file, status="RUNNING", phase=progress_phase,
@@ -177,10 +186,12 @@ def evaluate_checkpoint(
                 controls: List[List[float]] = []
                 latencies: List[float] = []
                 rewards: List[float] = []
+                trace_rows: List[Dict[str, Any]] = []
                 started = time.perf_counter()
                 interrupted = False
                 done = False
                 while not done:
+                    policy_observation = np.asarray(obs, dtype=np.float32).copy()
                     before = time.perf_counter_ns()
                     raw_action, _ = model.predict(obs, deterministic=True)
                     latencies.append((time.perf_counter_ns() - before) / 1e6)
@@ -190,6 +201,21 @@ def evaluate_checkpoint(
                     obs, reward, terminated, truncated, info = env.step(action)
                     rewards.append(float(reward))
                     speeds.append(float(info.get("speed_km_h", 0.0)))
+                    if trace_dir is not None:
+                        vehicle = getattr(getattr(base_env, "_env", None), "agent", None)
+                        position = getattr(vehicle, "position", None)
+                        trace_rows.append({
+                            "geometry_id": item["geometry_id"],
+                            "environment_seed": item["environment_seed"],
+                            "step_index": len(speeds), "policy_observation": policy_observation.tolist(),
+                            "action": action, "speed_km_h": float(info.get("speed_km_h", 0.0)),
+                            "route_completion": info.get("route_completion"), "delta_route": info.get("delta_route"),
+                            "reward": float(reward), "terminated": bool(terminated), "truncated": bool(truncated),
+                            "primary_reason": info.get("primary_reason"),
+                            "raw_safety_flags": dict(getattr(base_env, "_env_flags", {})),
+                            "ego_position_xy": ([float(position[0]), float(position[1])] if position is not None else None),
+                            "ego_heading_theta": (float(getattr(vehicle, "heading_theta")) if vehicle is not None else None),
+                        })
                     done = bool(terminated or truncated)
                     if progress_file is not None and len(speeds) % 100 == 0:
                         _write_progress(
@@ -212,6 +238,12 @@ def evaluate_checkpoint(
                 records.append(record)
                 sink.write(json.dumps(record, sort_keys=True) + "\n")
                 sink.flush()
+                if trace_dir is not None:
+                    trace_dir.mkdir(parents=True, exist_ok=True)
+                    trace_path = trace_dir / f"step_{training_step:05d}_{item['geometry_id']}.jsonl"
+                    with trace_path.open("w", encoding="utf-8", newline="\n") as trace_sink:
+                        for trace_row in trace_rows:
+                            trace_sink.write(json.dumps(trace_row, sort_keys=True) + "\n")
                 _write_progress(
                     progress_file, status="RUNNING", phase=progress_phase,
                     diagnostic_checkpoint_step=training_step,
@@ -266,10 +298,15 @@ def main() -> None:
     parser.add_argument("--progress-file", type=Path, default=None,
                         help="Optional pilot progress file updated during diagnostic episodes.")
     parser.add_argument("--progress-phase", default="DIAGNOSTICS")
+    parser.add_argument("--trace-dir", type=Path, default=None,
+                        help="Optional development-only per-step trace output directory.")
+    parser.add_argument("--geometry-id", action="append", default=None,
+                        help="Restrict evaluation to a named geometry from the fixed diagnostic schedule; repeatable.")
     args = parser.parse_args()
     print(json.dumps(evaluate_checkpoint(args.checkpoint, args.split, args.output, args.schedule_seed,
                                          args.max_steps_per_episode, args.max_cases,
-                                         args.progress_file, args.progress_phase), indent=2))
+                                         args.progress_file, args.progress_phase,
+                                         args.trace_dir, args.geometry_id), indent=2))
 
 
 if __name__ == "__main__":
