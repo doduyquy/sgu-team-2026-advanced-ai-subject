@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "case_id": "sandbox/Easy/SCS/0/0",
+      "steps": 418,
+      "public_inputs_decisions_actions_equal": true,
+      "excluded": [
+        "act_latency_ms"
+      ]
+    },
+    {
+      "case_id": "sandbox/Medium/SCXCS/14/0",
+      "steps": 566,
+      "public_inputs_decisions_actions_equal": true,
+      "excluded": [
+        "act_latency_ms"
+      ]
+    },
+    {
+      "case_id": "sandbox/Hard/SCTXrCS/2/0",
+      "steps": 1432,
+      "public_inputs_decisions_actions_equal": true,
+      "excluded": [
+        "act_latency_ms"
+      ]
+    }
+  ],
+  "steps": 2416
+}

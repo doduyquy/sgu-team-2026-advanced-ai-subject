@@ -1,0 +1,30 @@
+[
+  {
+    "state": {
+      "run_id": "s4_g1_telemetry_before_01",
+      "status": "FAILED",
+      "started_at_utc": "2026-11-13T16:18:25.931338+00:00",
+      "scope": "G1_STEP1_ONLY",
+      "canonical_run": false,
+      "dataset_eligible": false,
+      "finished_at_utc": "2026-11-13T16:18:28.807713+00:00",
+      "error_type": "TypeError",
+      "error": "Object of type Config is not JSON serializable"
+    },
+    "integrity_sha256": "309ebae46da4572191559fa93b2a5b4f9751db91423a58df9bf80cd0b6b17160"
+  },
+  {
+    "state": {
+      "run_id": "s4_g1_telemetry_before_02",
+      "status": "FAILED",
+      "started_at_utc": "2026-11-13T16:19:08.271342+00:00",
+      "scope": "G1_STEP1_ONLY",
+      "canonical_run": false,
+      "dataset_eligible": false,
+      "finished_at_utc": "2026-11-13T16:19:13.921263+00:00",
+      "error_type": "ValueError",
+      "error": "Phép thử dấu lái kết thúc sớm"
+    },
+    "integrity_sha256": "cc924c9cf0cd3ecf940fc0eeb035e4972d0f8df1e1ac07e19c490fd4f734b42c"
+  }
+]

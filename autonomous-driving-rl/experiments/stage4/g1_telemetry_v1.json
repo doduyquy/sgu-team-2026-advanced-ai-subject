@@ -1,0 +1,27 @@
+{
+  "schema_version": "stage4-g1-telemetry/1.0.0",
+  "scope": "G1_STEP1_ONLY_TRAIN_NONCANONICAL",
+  "agent_seed": 42,
+  "cases": [
+    {"tier": "Easy", "sequence": "SCS", "geometry_seed": 0, "environment_seed": 0},
+    {"tier": "Medium", "sequence": "SCXCS", "geometry_seed": 14, "environment_seed": 0},
+    {"tier": "Hard", "sequence": "SCTXrCS", "geometry_seed": 2, "environment_seed": 0}
+  ],
+  "controlled_probe": {
+    "traffic_density_override": 0.0,
+    "warmup_steps": 20,
+    "warmup_throttle": 0.4,
+    "turn_steps": 6,
+    "turn_throttle": 0.2,
+    "steering_values": [-0.25, 0.0, 0.25]
+  },
+  "tolerances": {
+    "speed_kmh_abs": 0.00001,
+    "minimum_heading_change_rad": 0.01,
+    "minimum_lateral_displacement_m": 0.01,
+    "straight_heading_change_rad": 0.01
+  },
+  "speed_reference": "3.6 * hypot(Bullet rigid-body vx, vy), sampled AFTER env.step",
+  "steering_reference": "wrapped heading delta and displacement projected onto initial ego-left axis; forward motion only",
+  "dataset_eligible": false
+}

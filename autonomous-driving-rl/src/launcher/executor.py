@@ -43,6 +43,7 @@ from src.launcher.models import (
     validate_custom_run_id,
 )
 from src.launcher.preflight import run_preflight
+from src.launcher.telemetry import read_vehicle_speed_kmh
 from src.platform import (
     AgentPolicy,
     AgentPublicEpisodeContext,
@@ -445,7 +446,7 @@ class ExperimentExecutor:
                         truncated = outcome.truncated
 
                         # 6. Gate-4 Step Reward Computation (Signed Delta, No Clamping)
-                        speed_kmh = float(env.agent.speed_kmh) if hasattr(env, "agent") and hasattr(env.agent, "speed_kmh") else 0.0
+                        speed_kmh = read_vehicle_speed_kmh(env.agent)
                         speeds_kmh.append(speed_kmh)
 
                         curr_route = float(step_info.get("route_completion", 0.0))

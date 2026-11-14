@@ -1,0 +1,31 @@
+{
+  "schema_version": "stage4-g1-telemetry-evidence/1.0.0",
+  "published_at_utc": "2026-11-13T16:29:23.241278+00:00",
+  "scope": "G1_STEP1_ONLY",
+  "step1_verified": true,
+  "g1_complete": false,
+  "dataset_eligible": false,
+  "raw_runs": [
+    {
+      "run_id": "s4_g1_telemetry_before_03",
+      "integrity_sha256": "c10aa9c380310821264c5be47770e766269476e9a8e698a69474803f2cb34aa4",
+      "verified_files": 227
+    },
+    {
+      "run_id": "s4_g1_telemetry_after_01",
+      "integrity_sha256": "e177a65cdf2112c2cd1cb21eac1672208069c9f1ce464da1f019d62b5ff28265",
+      "verified_files": 228
+    }
+  ],
+  "test_run": "s4_g1_telemetry_checks_01",
+  "raw_required": "Full source, maps, per-step traces and runtime remain in runs/<run_id>; Git summaries alone cannot reconstruct missing raw evidence.",
+  "files": {
+    "after_sources.json": "e630e1feca679a2ee98dac253bb6734f7e396c07e282e7c677d00a11c26f6051",
+    "after_summary.json": "2962c825f3937b4e1cb7798305b8a5bd6e5137f7e2c1910a26d13bd4abcf0a5d",
+    "before_sources.json": "f20915ed1a8b6a33793b7a0dd29e6512308409a4ba3bd437707f367e7101b1b9",
+    "before_summary.json": "80f9869cef0f70ec5aa81a5373fc65c8d3854f2760db05caed9c8cfe83166748",
+    "failed_attempts.json": "9668b38da7dc71ae1edaa79db5549071be81c86015507a622d5573c4e330d24a",
+    "paired_trace_comparison.json": "863d35211e7ccdbe1cdbba5e447d7f29b0b3aaae785ad3d180ff8984aaa1a578",
+    "test_verification.json": "6cdbc41d696c1ae96d59ee5333003500c11799262debfefcc380717d91d12928"
+  }
+}

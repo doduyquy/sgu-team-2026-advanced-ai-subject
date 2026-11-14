@@ -4,7 +4,7 @@ Gate 6 of Research Platform V1.
 
 Physical actuator contract: continuous Box(-1.0, 1.0, shape=(2,))
 Representation: [steering, throttle_brake]
-- steering: -1.0 (full left) to +1.0 (full right)
+- steering: -1.0 (full right) to +1.0 (full left), while moving forward
 - throttle_brake: -1.0 (full brake) to +1.0 (full throttle)
 Control cycle: nominal 10 Hz (physics dt=0.02s, decision_repeat=5).
 """
@@ -98,7 +98,7 @@ class ContinuousBox2Adapter(ActionAdapter):
             "low": [-1.0, -1.0],
             "high": [1.0, 1.0],
             "dtype": "float32",
-            "semantics": ["steering (-1=left, +1=right)", "throttle_brake (-1=brake, +1=throttle)"]
+            "semantics": ["steering (-1=right, +1=left; forward motion)", "throttle_brake (-1=brake, +1=throttle)"]
         }
 
     def to_canonical(self, agent_action: Any) -> CanonicalActionV1:

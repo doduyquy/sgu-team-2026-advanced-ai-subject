@@ -1,0 +1,25 @@
+{
+  "status": "PASSED",
+  "total_tests": 576,
+  "finished_at_utc": "2026-11-13T16:28:26.602936+00:00",
+  "groups": [
+    {
+      "group": "backend",
+      "exit_code": 0,
+      "status": "PASSED",
+      "tests": 452,
+      "seconds": 83.153,
+      "log_sha256": "4fe7f61c2666e5d7a6c664480ebfdf7988fafdd01f3777e183ede9b442061126"
+    },
+    {
+      "group": "gui",
+      "exit_code": 0,
+      "status": "PASSED",
+      "tests": 124,
+      "seconds": 159.206,
+      "log_sha256": "bbf9ab31128f8d3b80b08efcb0de1950acb4834733f0257c2c080153bdbe51cd"
+    }
+  ],
+  "source_summary_sha256": "ad4bbcbe56173b887b4af78100ca20e3eafbdd5f567cb90906cb3807478d8864",
+  "source_request_sha256": "35b538585a89cf5ce4e2151688a719ab10ce4a568b4306c70305bca2f2b713fe"
+}
