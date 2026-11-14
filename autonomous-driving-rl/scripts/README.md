@@ -14,6 +14,10 @@ Scripts below are tools supporting that runtime.
 | Platform and Workbench contract audits | `audit_*.py`, `run_observation_action_audit.py` |
 | Dataset export/verification and previews | `export_mapsuite_v1_*.py`, `verify_mapsuite_v1_dataset.py` |
 | Full backend/GUI regression, isolated native processes and logs | `run_tests.py` |
+| Kiểm định ngoại tuyến và xuất bằng chứng G0 của Stage 4 (chưa thu dữ liệu/huấn luyện) | `stage4.py audit`, `stage4.py publish-audit` |
+| G1 bước 1: kiểm chứng vận tốc và dấu lái trên TRAIN, hồ sơ nguồn/bản đồ/số đo từng bước | `audit_stage4_telemetry.py --run-id <new-id> --expected-logging corrected` |
+| G1 bước 2: thu thử Stage 1, kiểm tra nguồn gốc/ghép bước và phát lại; xuất tổng hợp có băm | `collect_stage4_pilot.py collect --run-id <new-id>`, `collect_stage4_pilot.py publish --run-id <id> --output results/audits/stage4/g1/<new-dir>` |
+| G1 bước 3: đo thời gian/RAM/dung lượng toàn cây collector, kiểm tra môi trường, ngoại suy theo tier | `profile_stage4_resources.py profile --run-id <new-id>`, `profile_stage4_resources.py publish --run-id <id> --output results/audits/stage4/g1/<new-dir>` |
 
 Use a fresh run ID for every driving attempt. See the
 [experiment workflow](../experiments/rule_based/README.md).
