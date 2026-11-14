@@ -1,0 +1,4817 @@
+{
+  "schema_version": "stage4-quality-review/1.0.0",
+  "status": "COMPLETE",
+  "created_at_utc": "2026-11-14T10:30:27.017518+00:00",
+  "scope": "FIT_CALIBRATION_ONLY",
+  "reviewer": "Codex evidence review; no human sign-off claimed",
+  "rules_version": "1.0.0",
+  "command": [
+    "scripts/review_stage4_quality.py",
+    "profile",
+    "--source-run",
+    "s4_g1_pilot_02",
+    "--source-run",
+    "s4_g1_quality_fit_01",
+    "--rules",
+    "experiments/stage4/g1_quality_rules_v1.json",
+    "--output",
+    "runs/s4_g1_quality_profile_02"
+  ],
+  "python": "3.10.22 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:15:38) [MSC v.1942 64 bit (AMD64)]",
+  "executable": "C:\\Users\\DANG KHOA\\.conda\\envs\\metadrive\\python.exe",
+  "dependency_sha256": {
+    "scripts/replay_rule_based_trace.py": "58181a8421269f6699c157bb81cc7f92cc689805a8034ccef60e35d593a63ce3",
+    "scripts/review_stage4_quality.py": "606fb0de1a4fecd8b8d5b1f37c385d32c8a19a61c8ef1dd4f6635a634168bde0",
+    "scripts/stage4.py": "6e0a1660f050f6e830987250fe9627a95cbb461941903214927ba52a867d3093",
+    "src/agents/__init__.py": "b7aef2752ee8012fe89ea807368676e4399ea29e15ec8074874659acda4c758f",
+    "src/agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+    "src/agents/README.md": "bde418f9f249d0078c6ded2ebfd989bd4d0dcf2a97f0000f8b6fc044acab056f",
+    "src/agents/rule_based_agent.py": "d7b287c8b9aa771de8d0c4691a62c36945c32aec392ff01154c9eb1e1098ce73",
+    "src/agents/rule_based_junction.py": "b345ba6277eed9eccd53f965c4d72d43f327e319fb6f2dc0d5ce16d7adf7bb16",
+    "src/agents/rule_based_lane_change.py": "191518078edc6438c1f6c0f2c4f25484902fabca04b51f4acce7647cd1d32df8",
+    "src/agents/rule_based_memory.py": "4ceac7c3b08cafb72db710623dcecef84e8b2e021e2638a12c3468dc18a46de4",
+    "src/agents/rule_based_traffic.py": "a912c753950a345045dbd06463f3e81c5f4ad5ff266d163cbb55f25f0992d517",
+    "src/imitation/__init__.py": "25e128ec61bb74e26b8102e41bb0f6cb5bfd4a9cd81322e911926a445f17300d",
+    "src/imitation/audit.py": "8f944eee387ff718a7408a36dffa659364480537fe5758e0e2b7a648bf64c7e0",
+    "src/imitation/pilot.py": "95fe0d4ab98d3fbd73297f1b38624a3252b492bf64d7df4aab46000e58b6e980",
+    "src/imitation/resources.py": "63abe5dc22ef892de3520a9fdd8eff99cc4d8f4b5bbb5725f1175410de07ec73",
+    "src/platform/__init__.py": "36c2140052470e2daaa2c15b42a9763385e4bf12b270265e5b04dc4fbf4680dc",
+    "src/platform/action_adapter.py": "d946ca9c858e138ea18d3647a98e8a7dc47c66d72dc67faf53a6275b7d5aceca",
+    "src/platform/agent.py": "a111916966a6cfb0480d45e5642f55bcad375bc02e4f90e8e4796b8ea39375e1",
+    "src/platform/agent_input.py": "1bf5f0415a3394f6ed0c48f927f35aaa6f7462da48f0705e46d43f589a3e2183",
+    "src/platform/episode.py": "50679dd877753f18c92f5107aae3d4dada7a629e8498e75d67031096a012716a",
+    "src/platform/experiment_logging.py": "9206331477748c59bed581bd5da66825dcc2286b7470e5fa0ccc278b3f038413",
+    "src/platform/metrics.py": "52616b4af845cd5d597e7c63fffb75297795cfa15a1e36e56946b241e28e869e",
+    "src/platform/protocol.py": "6621e8b9f3dc03b67292f34306e0245dcff0f09c9dc549ed4b9e7b03dd8e1a42",
+    "src/platform/reward.py": "ecb206c796f682271ced0b943c2d505734c916318d1a12c44b916d5d2bf76bbf",
+    "src/platform/specs.py": "9415fa5ece6868966522092ebb14299bdd7269cb888c397ab3a802eac1f9ec1b",
+    "src/platform/wandb_backend.py": "aa289996dcfb7bf9856bfb046dac64098a0732f0580d6ba2f1c8fe458273d26f"
+  },
+  "rules_sha256": "1d1a2728c4aae063e492d90d2019cc7d2531ce2edf89067821d328b850e74ce7",
+  "reviewer_source_sha256": "606fb0de1a4fecd8b8d5b1f37c385d32c8a19a61c8ef1dd4f6635a634168bde0",
+  "partition_sha256": "df244187a6c6ffa54308a776c3bd02a5d1705771717d9dd3c46d33e10ed45f90",
+  "freeze_sha256": null,
+  "sources": [
+    {
+      "run_id": "s4_g1_pilot_02",
+      "integrity_sha256": "bdc85094ddfa81be93840507495ea1bd7ee725d5d164e015ec18f0524e5c8367",
+      "verified_files": 1018,
+      "request_sha256": "02b8fe5d5f98582398c2384f949bc0431a9546963c8807a98e16b9e14f475e18",
+      "expert_provenance_sha256": "57115658b486b66f8ad3dc8f83d8e67a96680cb7a8c7a8da8359616555e7796f"
+    },
+    {
+      "run_id": "s4_g1_quality_fit_01",
+      "integrity_sha256": "d70981f9b7b40195553b606c3c57b02998e2cb056b79d5e3c749e4be23ae8090",
+      "verified_files": 928,
+      "request_sha256": "49866a8cf8743b5c949259e2d185279c6f2a11f4619faa85f2d0c934e763584d",
+      "expert_provenance_sha256": "57115658b486b66f8ad3dc8f83d8e67a96680cb7a8c7a8da8359616555e7796f"
+    }
+  ],
+  "episodes": [
+    {
+      "source_run_id": "s4_g1_pilot_02",
+      "episode_id": "episode_002",
+      "case": {
+        "case_id": "sandbox/Medium/SCXCS/14/0",
+        "case_index": 1,
+        "protocol_order_index": 1,
+        "split": "TRAIN",
+        "tier": "Medium",
+        "sequence": "SCXCS",
+        "geometry_generation_seed": 14,
+        "geometry_sha256": "281b1353d6ca897dda5c22baddabbb2d890860f22e7ff8e87c335f432ee5a426",
+        "environment_seed": 0,
+        "traffic_density": 0.08,
+        "horizon_steps": 1098
+      },
+      "geometry_id": "geom_medium_SCXCS_seed14",
+      "partition": "FIT",
+      "steps": 566,
+      "outcome": "SUCCESS",
+      "trace_sha256": "d20fc527ba0eaae600d8de383b906285fc0142684ce6caa4811a88614d66512f",
+      "transitions_sha256": "72428f11129c206f556739b422ff1cb0691d4c7be17172f2842b4156fd02e5c1",
+      "map_sha256": "a33cc6f9d0ae3859fc0749a8f9d9b80de964090dd9c1ac49b2debcd5ed4a0d3e",
+      "pairing_and_replay_passed": true,
+      "whole_success_approved": true,
+      "windows": [
+        {
+          "start": 0,
+          "end": 50,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.013679947055350163,
+            "route_end": 0.06495774026619054,
+            "route_gain": 0.051277793210840375,
+            "max_route_drop": 0,
+            "travel_m": 18.759265899658203,
+            "speed_min_kmh": 0.5468137979507479,
+            "speed_max_kmh": 27.340534973150366,
+            "speed_median_kmh": 13.943686294558619,
+            "max_heading_rad": 1.0652644357733723e-06,
+            "min_lane_clearance_m": 0.8239975951660616,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.796319051867613e-07,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5468144416809557,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 50
+            }
+          }
+        },
+        {
+          "start": 50,
+          "end": 100,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.06495774026619054,
+            "route_end": 0.20785900349748881,
+            "route_gain": 0.14290126323129826,
+            "max_route_drop": 0,
+            "travel_m": 52.26827621460197,
+            "speed_min_kmh": 27.887345123296978,
+            "speed_max_kmh": 44.0909534454351,
+            "speed_median_kmh": 38.435260391240604,
+            "max_heading_rad": 1.5978966541041473e-06,
+            "min_lane_clearance_m": 0.8239931740986676,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 6.534892804666015e-07,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 1.6522064208956522,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 50
+            }
+          }
+        },
+        {
+          "start": 100,
+          "end": 150,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.20785900349748881,
+            "route_end": 0.2771136897903562,
+            "route_gain": 0.0692546862928674,
+            "max_route_drop": 0,
+            "travel_m": 25.17817602620521,
+            "speed_min_kmh": 7.985012856320437,
+            "speed_max_kmh": 33.072146987923574,
+            "speed_median_kmh": 19.275611847422788,
+            "max_heading_rad": 0.1241070762626144,
+            "min_lane_clearance_m": 0.22160998855772407,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.06723691150546074,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.451919928193936,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 31,
+              "RECOVER_LANE": 19
+            }
+          }
+        },
+        {
+          "start": 150,
+          "end": 200,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.2771136897903562,
+            "route_end": 0.3491899977605461,
+            "route_gain": 0.07207630797018988,
+            "max_route_drop": 0,
+            "travel_m": 26.331070173070955,
+            "speed_min_kmh": 7.984233570640867,
+            "speed_max_kmh": 28.55236930865397,
+            "speed_median_kmh": 20.61378485027538,
+            "max_heading_rad": 0.1270519463316918,
+            "min_lane_clearance_m": 0.2864179527756967,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.055752046406269073,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 3.1478465111312204,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "RECOVER_LANE": 2,
+              "APPROACH_JUNCTION": 38,
+              "YIELD": 10
+            }
+          }
+        },
+        {
+          "start": 200,
+          "end": 250,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.3491899977605461,
+            "route_end": 0.3946641484793069,
+            "route_gain": 0.04547415071876082,
+            "max_route_drop": 0,
+            "travel_m": 16.63285323861361,
+            "speed_min_kmh": 0.7805840422868239,
+            "speed_max_kmh": 23.999997195833533,
+            "speed_median_kmh": 10.276865372275513,
+            "max_heading_rad": 0.001661146729937113,
+            "min_lane_clearance_m": 0.8146177969936583,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.00015991396503522992,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.8187606572470614,
+            "safety_events": {},
+            "unsupported_stop_steps": 2,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 2,
+            "wait_support_steps": {},
+            "min_front_gap_m": 14.449781919975035,
+            "min_closing_ttc_s": 1.9850237547016285,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 43,
+              "COMMIT_JUNCTION": 7
+            }
+          }
+        },
+        {
+          "start": 250,
+          "end": 300,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.3946641484793069,
+            "route_end": 0.45810957632597105,
+            "route_gain": 0.06344542784666413,
+            "max_route_drop": 0,
+            "travel_m": 23.206114996099146,
+            "speed_min_kmh": 5.15509544122109,
+            "speed_max_kmh": 23.75060171717303,
+            "speed_median_kmh": 18.552033121871958,
+            "max_heading_rad": 3.854925677881927e-05,
+            "min_lane_clearance_m": 0.8239069296161761,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 4.9944537749979645e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.546826966651679,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "COMMIT_JUNCTION": 16,
+              "TRAVERSE_JUNCTION": 34
+            }
+          }
+        },
+        {
+          "start": 300,
+          "end": 350,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.45810957632597105,
+            "route_end": 0.5529836579422222,
+            "route_gain": 0.0948740816162511,
+            "max_route_drop": 0,
+            "travel_m": 34.70161559029159,
+            "speed_min_kmh": 23.78035435017833,
+            "speed_max_kmh": 31.65284913198725,
+            "speed_median_kmh": 23.99022022992728,
+            "max_heading_rad": 4.8602689901589e-06,
+            "min_lane_clearance_m": 0.8239524647107438,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 4.097672672287445e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5468166596189086,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "TRAVERSE_JUNCTION": 31,
+              "EXIT_JUNCTION": 5,
+              "CRUISE": 14
+            }
+          }
+        },
+        {
+          "start": 350,
+          "end": 400,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.5529836579422222,
+            "route_end": 0.6456199504913586,
+            "route_gain": 0.09263629254913641,
+            "max_route_drop": 0,
+            "travel_m": 33.70074081916579,
+            "speed_min_kmh": 19.64959652977967,
+            "speed_max_kmh": 33.456142627078805,
+            "speed_median_kmh": 21.26573822551999,
+            "max_heading_rad": 0.07091611824522892,
+            "min_lane_clearance_m": 0.3281817618877496,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.03663714602589607,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 2.276894570017774,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 50
+            }
+          }
+        },
+        {
+          "start": 400,
+          "end": 450,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.6456199504913586,
+            "route_end": 0.7459804327724208,
+            "route_gain": 0.1003604822810622,
+            "max_route_drop": 0,
+            "travel_m": 36.590131521952785,
+            "speed_min_kmh": 21.108397172687653,
+            "speed_max_kmh": 31.820204705069578,
+            "speed_median_kmh": 27.259685528495297,
+            "max_heading_rad": 0.12668883271328912,
+            "min_lane_clearance_m": 0.34888843497343336,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.06280134618282318,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5570536956752044,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 23.602785438336888,
+            "min_closing_ttc_s": 4.972837773160494,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 21,
+              "FOLLOW": 29
+            }
+          }
+        },
+        {
+          "start": 450,
+          "end": 500,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.7459804327724208,
+            "route_end": 0.8650724315085877,
+            "route_gain": 0.11909199873616694,
+            "max_route_drop": 0,
+            "travel_m": 43.55968132113899,
+            "speed_min_kmh": 30.41985684740985,
+            "speed_max_kmh": 32.01780313834404,
+            "speed_median_kmh": 31.401864808127932,
+            "max_heading_rad": 8.748484180909344e-05,
+            "min_lane_clearance_m": 0.8233596738051248,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.282305983200786e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.11195659848504746,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 19.0195,
+            "min_closing_ttc_s": 8.314967513944165,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 500,
+          "end": 550,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.8650724315085877,
+            "route_end": 0.972781515312227,
+            "route_gain": 0.1077090838036393,
+            "max_route_drop": 0,
+            "travel_m": 39.396209775061656,
+            "speed_min_kmh": 18.002032830011704,
+            "speed_max_kmh": 30.982617142816967,
+            "speed_median_kmh": 30.48780723073813,
+            "max_heading_rad": 3.5952674715122868e-06,
+            "min_lane_clearance_m": 0.823962081243413,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.829063078024774e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 2.9394027581542197,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 18.4261,
+            "min_closing_ttc_s": 67.63105413105413,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 32,
+              "CRUISE": 18
+            }
+          }
+        },
+        {
+          "start": 550,
+          "end": 566,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.972781515312227,
+            "route_end": 0.9865458416557331,
+            "route_gain": 0.013764326343506106,
+            "max_route_drop": 0,
+            "travel_m": 5.034508412807126,
+            "speed_min_kmh": 8.323846325068178,
+            "speed_max_kmh": 14.491865744430333,
+            "speed_median_kmh": 8.87339653919565,
+            "max_heading_rad": 1.0086722628699363e-05,
+            "min_lane_clearance_m": 0.8239187571142479,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 1.228868256930582e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.440404472252082,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 16
+            }
+          }
+        }
+      ],
+      "intervals": [
+        {
+          "start": 0,
+          "end": 566,
+          "decision": "KEEP",
+          "destination": "BC_A_AND_B",
+          "reason": "REVIEWED_SUCCESS",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ],
+      "eligible_steps": 566,
+      "window_label_steps": {
+        "PROGRESS": 566
+      }
+    },
+    {
+      "source_run_id": "s4_g1_pilot_02",
+      "episode_id": "episode_003",
+      "case": {
+        "case_id": "sandbox/Hard/SCTXrCS/2/0",
+        "case_index": 1,
+        "protocol_order_index": 1,
+        "split": "TRAIN",
+        "tier": "Hard",
+        "sequence": "SCTXrCS",
+        "geometry_generation_seed": 2,
+        "geometry_sha256": "84cc4ae49427ce5cde984c58a3f68d261abbd791768ac9aa79d5b44f22f08218",
+        "environment_seed": 0,
+        "traffic_density": 0.15,
+        "horizon_steps": 2208
+      },
+      "geometry_id": "geom_hard_SCTXrCS_seed2",
+      "partition": "FIT",
+      "steps": 1432,
+      "outcome": "SUCCESS",
+      "trace_sha256": "4f4040eef8e01df8d66bfe9c0708943a628e83db8fd031af0be814664d6d1837",
+      "transitions_sha256": "fb5ab7e3117f46ca2441ec330d7c1cc26f9d7ebb96cbc4fb2ebc329638e63729",
+      "map_sha256": "1c5527f3767200ddd72a567412d3d798e2d2cae85ecbb6d173765b23e4b745b7",
+      "pairing_and_replay_passed": true,
+      "whole_success_approved": false,
+      "windows": [
+        {
+          "start": 0,
+          "end": 50,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.006798629779783784,
+            "route_end": 0.03228255384427575,
+            "route_gain": 0.02548392406449197,
+            "max_route_drop": 0,
+            "travel_m": 18.759265899658203,
+            "speed_min_kmh": 0.5468137979507479,
+            "speed_max_kmh": 27.340534973150366,
+            "speed_median_kmh": 13.943686294558619,
+            "max_heading_rad": 1.0652644357733723e-06,
+            "min_lane_clearance_m": 0.8239975951660616,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.796319051867613e-07,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5468144416809557,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 38.9772,
+            "min_closing_ttc_s": 11.233017992020274,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 50
+            }
+          }
+        },
+        {
+          "start": 50,
+          "end": 100,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.03228255384427575,
+            "route_end": 0.09606491566648274,
+            "route_gain": 0.06378236182220699,
+            "max_route_drop": 0,
+            "travel_m": 46.942447662353516,
+            "speed_min_kmh": 27.887345123296978,
+            "speed_max_kmh": 40.845180130009346,
+            "speed_median_kmh": 33.4467721939226,
+            "max_heading_rad": 1.997370817186095e-06,
+            "min_lane_clearance_m": 0.8239954909372272,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.796319904518896e-07,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 3.677481079101497,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 25.702338855810275,
+            "min_closing_ttc_s": 4.1150742854321445,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 30,
+              "FOLLOW": 20
+            }
+          }
+        },
+        {
+          "start": 100,
+          "end": 150,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.09606491566648274,
+            "route_end": 0.1399569768843078,
+            "route_gain": 0.04389206121782506,
+            "max_route_drop": 0,
+            "travel_m": 32.29174611799841,
+            "speed_min_kmh": 20.076582527188332,
+            "speed_max_kmh": 34.59929809572406,
+            "speed_median_kmh": 21.58586557510653,
+            "max_heading_rad": 0.05100153224583526,
+            "min_lane_clearance_m": 0.48134369305263247,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.015830110758543015,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 3.413778305060845,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 12.446938167546769,
+            "min_closing_ttc_s": 3.611972517575011,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 42,
+              "CRUISE": 8
+            }
+          }
+        },
+        {
+          "start": 150,
+          "end": 200,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.1399569768843078,
+            "route_end": 0.18442561375508829,
+            "route_gain": 0.04446863687078048,
+            "max_route_drop": 0,
+            "travel_m": 32.38744505250549,
+            "speed_min_kmh": 22.919062630629796,
+            "speed_max_kmh": 24.60566146536125,
+            "speed_median_kmh": 23.3620505731528,
+            "max_heading_rad": 0.08670427756513588,
+            "min_lane_clearance_m": 0.4061802696627417,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.014443427324295044,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5423814030426151,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 11.787324671548976,
+            "min_closing_ttc_s": 7.821487946241174,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 50
+            }
+          }
+        },
+        {
+          "start": 200,
+          "end": 250,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.18442561375508829,
+            "route_end": 0.23697280365753676,
+            "route_gain": 0.05254718990244847,
+            "max_route_drop": 0,
+            "travel_m": 38.68031186028158,
+            "speed_min_kmh": 19.111189053069705,
+            "speed_max_kmh": 36.141639157430966,
+            "speed_median_kmh": 26.31480211712782,
+            "max_heading_rad": 0.11002394457722865,
+            "min_lane_clearance_m": 0.510801554456314,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.07808918878436089,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.433644608856323,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 15.97357377754023,
+            "min_closing_ttc_s": 14.109666855959087,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 2,
+              "CRUISE": 1,
+              "APPROACH_JUNCTION": 23,
+              "YIELD": 24
+            }
+          }
+        },
+        {
+          "start": 250,
+          "end": 300,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.23697280365753676,
+            "route_end": 0.24661830459132766,
+            "route_gain": 0.009645500933790907,
+            "max_route_drop": 1.1490766063659841e-07,
+            "travel_m": 7.099270258482975,
+            "speed_min_kmh": 0.012784984231316585,
+            "speed_max_kmh": 18.30076856088163,
+            "speed_median_kmh": 1.641730859999756,
+            "max_heading_rad": 3.878228337450551e-05,
+            "min_lane_clearance_m": 0.8237979193667504,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.721372584346682e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.8104204921880758,
+            "safety_events": {},
+            "unsupported_stop_steps": 19,
+            "supported_stop_steps": 3,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 19,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 3
+            },
+            "min_front_gap_m": 6.0954148760784665,
+            "min_closing_ttc_s": 0.7504820088744726,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 49,
+              "EMERGENCY_BRAKE": 1
+            }
+          }
+        },
+        {
+          "start": 300,
+          "end": 350,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.24661830459132766,
+            "route_end": 0.26615846336347354,
+            "route_gain": 0.019540158772145877,
+            "max_route_drop": 1.1490766063659841e-07,
+            "travel_m": 14.25184585853764,
+            "speed_min_kmh": 0.01278497949925034,
+            "speed_max_kmh": 19.121108359367906,
+            "speed_median_kmh": 11.423732241284247,
+            "max_heading_rad": 0.07110015932131074,
+            "min_lane_clearance_m": 0.29497194380885294,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.06585263181477785,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.4514799451377645,
+            "safety_events": {},
+            "unsupported_stop_steps": 6,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 6,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "EMERGENCY_BRAKE": 1,
+              "YIELD": 3,
+              "COMMIT_JUNCTION": 24,
+              "TRAVERSE_JUNCTION": 20,
+              "RECOVER_LANE": 2
+            }
+          }
+        },
+        {
+          "start": 350,
+          "end": 400,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.26615846336347354,
+            "route_end": 0.2977362706398636,
+            "route_gain": 0.031577807276390035,
+            "max_route_drop": 0,
+            "travel_m": 22.877236270789982,
+            "speed_min_kmh": 8.70753234693034,
+            "speed_max_kmh": 20.613432408713166,
+            "speed_median_kmh": 18.296420785432783,
+            "max_heading_rad": 0.11315516342647403,
+            "min_lane_clearance_m": 0.29842426916705134,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.07162198424339294,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 3.743267071047388,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "TRAVERSE_JUNCTION": 48,
+              "RECOVER_LANE": 2
+            }
+          }
+        },
+        {
+          "start": 400,
+          "end": 450,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.2977362706398636,
+            "route_end": 0.3358548345361647,
+            "route_gain": 0.03811856389630114,
+            "max_route_drop": 0,
+            "travel_m": 28.0638035040083,
+            "speed_min_kmh": 7.576419832735589,
+            "speed_max_kmh": 24.23754948388702,
+            "speed_median_kmh": 22.404021300959204,
+            "max_heading_rad": 0.14517633026021048,
+            "min_lane_clearance_m": 0.412882352332282,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.09084872156381607,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.8184862161879458,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "TRAVERSE_JUNCTION": 2,
+              "EXIT_JUNCTION": 5,
+              "APPROACH_JUNCTION": 3,
+              "YIELD": 40
+            }
+          }
+        },
+        {
+          "start": 450,
+          "end": 500,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.3358548345361647,
+            "route_end": 0.3379033188152937,
+            "route_gain": 0.0020484842791289593,
+            "max_route_drop": 2.6224801091823124e-07,
+            "travel_m": 1.512143118800159,
+            "speed_min_kmh": 0.00842342978476585,
+            "speed_max_kmh": 6.8811570476775925,
+            "speed_median_kmh": 0.05077617439010801,
+            "max_heading_rad": 2.3169501483177868e-05,
+            "min_lane_clearance_m": 0.8239060010564696,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 8.310104021802545e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.6952627850579969,
+            "safety_events": {},
+            "unsupported_stop_steps": 26,
+            "supported_stop_steps": 6,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 16,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 11
+            },
+            "min_front_gap_m": 21.7906629693506,
+            "min_closing_ttc_s": 3.753386897021944,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 47,
+              "EMERGENCY_BRAKE": 3
+            }
+          }
+        },
+        {
+          "start": 500,
+          "end": 550,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.3379033188152937,
+            "route_end": 0.36085330403139293,
+            "route_gain": 0.022949985216099256,
+            "max_route_drop": 2.6224801091823124e-07,
+            "travel_m": 16.891178465564096,
+            "speed_min_kmh": 0.008423443609947054,
+            "speed_max_kmh": 23.056709576852924,
+            "speed_median_kmh": 12.832431890194012,
+            "max_heading_rad": 1.265001517758435e-05,
+            "min_lane_clearance_m": 0.823941633179927,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 3.865147846227046e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5468223368239169,
+            "safety_events": {},
+            "unsupported_stop_steps": 4,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 11,
+            "wait_support_steps": {},
+            "min_front_gap_m": 19.248498465765152,
+            "min_closing_ttc_s": 2.9490123432711544,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "COMMIT_JUNCTION": 26,
+              "TRAVERSE_JUNCTION": 24
+            }
+          }
+        },
+        {
+          "start": 550,
+          "end": 600,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.36085330403139293,
+            "route_end": 0.40599457607171685,
+            "route_gain": 0.04514127204032392,
+            "max_route_drop": 0,
+            "travel_m": 33.223006168121124,
+            "speed_min_kmh": 23.169240594605267,
+            "speed_max_kmh": 26.184507481498756,
+            "speed_median_kmh": 23.962988922100926,
+            "max_heading_rad": 2.39684498160031e-06,
+            "min_lane_clearance_m": 0.8239757351625893,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.414590653643245e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.546821788218228,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "TRAVERSE_JUNCTION": 41,
+              "EXIT_JUNCTION": 5,
+              "CRUISE": 4
+            }
+          }
+        },
+        {
+          "start": 600,
+          "end": 650,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.40599457607171685,
+            "route_end": 0.4779125407775012,
+            "route_gain": 0.07191796470578438,
+            "max_route_drop": 0,
+            "travel_m": 52.93007655757893,
+            "speed_min_kmh": 26.731328172499886,
+            "speed_max_kmh": 44.781998684542884,
+            "speed_median_kmh": 40.128370229137204,
+            "max_heading_rad": 3.861583580899719e-06,
+            "min_lane_clearance_m": 0.8239703985506904,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.898523064231995e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5468242569111084,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 50
+            }
+          }
+        },
+        {
+          "start": 650,
+          "end": 700,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.4779125407775012,
+            "route_end": 0.5399651387025455,
+            "route_gain": 0.06205259792504425,
+            "max_route_drop": 0,
+            "travel_m": 45.6693802987725,
+            "speed_min_kmh": 16.606593430960984,
+            "speed_max_kmh": 44.98278283629715,
+            "speed_median_kmh": 28.678856443830107,
+            "max_heading_rad": 0.002693654284560587,
+            "min_lane_clearance_m": 0.8167343748143264,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0016651189362164587,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.577090237961464,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 44,
+              "YIELD": 6
+            }
+          }
+        },
+        {
+          "start": 700,
+          "end": 750,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.5399651387025455,
+            "route_end": 0.5957291780877904,
+            "route_gain": 0.05576403938524488,
+            "max_route_drop": 0,
+            "travel_m": 41.04113466396542,
+            "speed_min_kmh": 17.646764696366617,
+            "speed_max_kmh": 32.46424234798271,
+            "speed_median_kmh": 30.248254732817628,
+            "max_heading_rad": 7.736482966658187e-05,
+            "min_lane_clearance_m": 0.8235512299070815,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.532309387490386e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.511581697493053,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 18.195050642274488,
+            "min_closing_ttc_s": 4.317187480192668,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 6,
+              "FOLLOW": 44
+            }
+          }
+        },
+        {
+          "start": 750,
+          "end": 800,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.5957291780877904,
+            "route_end": 0.6284461689810962,
+            "route_gain": 0.03271699089330582,
+            "max_route_drop": 0,
+            "travel_m": 24.079003880403395,
+            "speed_min_kmh": 12.051392298989864,
+            "speed_max_kmh": 23.95294985912062,
+            "speed_median_kmh": 17.15278025537146,
+            "max_heading_rad": 0.0028470523633497007,
+            "min_lane_clearance_m": 0.8171563728702931,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0019218279048800468,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.452034775879984,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 2
+            },
+            "min_front_gap_m": 12.124703663331244,
+            "min_closing_ttc_s": 2.295919555955726,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 37,
+              "STOP_FOR_OBSTACLE": 13
+            }
+          }
+        },
+        {
+          "start": 800,
+          "end": 850,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.6284461689810962,
+            "route_end": 0.6549853578184881,
+            "route_gain": 0.026539188837391925,
+            "max_route_drop": 0,
+            "travel_m": 19.521149761274703,
+            "speed_min_kmh": 0.0025994421628514246,
+            "speed_max_kmh": 21.88061159085866,
+            "speed_median_kmh": 17.622735902326824,
+            "max_heading_rad": 0.02476739813773765,
+            "min_lane_clearance_m": 0.6353569586625858,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.03554302221164107,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.455617904001439,
+            "safety_events": {},
+            "unsupported_stop_steps": 9,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 9,
+            "wait_support_steps": {},
+            "min_front_gap_m": 12.006844867441103,
+            "min_closing_ttc_s": 32.92743142371087,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 33,
+              "YIELD": 12,
+              "CRUISE": 5
+            }
+          }
+        },
+        {
+          "start": 850,
+          "end": 900,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.6549853578184881,
+            "route_end": 0.6570242301079512,
+            "route_gain": 0.0020388722894630895,
+            "max_route_drop": 3.3448710456962516e-07,
+            "travel_m": 1.4984640883784615,
+            "speed_min_kmh": 0.005943318883951173,
+            "speed_max_kmh": 7.6436053957063566,
+            "speed_median_kmh": 0.016245814571213428,
+            "max_heading_rad": 0.03690914984952062,
+            "min_lane_clearance_m": 0.6267620660927122,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.013958390802145004,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 1.5483457845973034,
+            "safety_events": {},
+            "unsupported_stop_steps": 37,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 8,
+            "longest_unsupported_stop": 37,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 35,
+              "CRUISE": 15
+            }
+          }
+        },
+        {
+          "start": 900,
+          "end": 950,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.6570242301079512,
+            "route_end": 0.6966274816082669,
+            "route_gain": 0.03960325150031574,
+            "max_route_drop": 0,
+            "travel_m": 29.071323989940467,
+            "speed_min_kmh": 8.18990641793202,
+            "speed_max_kmh": 32.291905742609295,
+            "speed_median_kmh": 21.56585720974008,
+            "max_heading_rad": 0.04080846452410534,
+            "min_lane_clearance_m": 0.5223714119199833,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.02522597461938858,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.546314459721227,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 50
+            }
+          }
+        },
+        {
+          "start": 950,
+          "end": 1000,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.6966274816082669,
+            "route_end": 0.7464524810091736,
+            "route_gain": 0.04982499940090668,
+            "max_route_drop": 0,
+            "travel_m": 36.49570163479284,
+            "speed_min_kmh": 17.89460449851802,
+            "speed_max_kmh": 33.121672700326734,
+            "speed_median_kmh": 25.667101571373557,
+            "max_heading_rad": 0.03725424736841607,
+            "min_lane_clearance_m": 0.4495653951320576,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.021604139357805252,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.7465753619590316,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 11,
+              "FOLLOW": 39
+            }
+          }
+        },
+        {
+          "start": 1000,
+          "end": 1050,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.7464524810091736,
+            "route_end": 0.7732531580292343,
+            "route_gain": 0.026800677020060726,
+            "max_route_drop": 0,
+            "travel_m": 19.681494885140246,
+            "speed_min_kmh": 11.592149493815569,
+            "speed_max_kmh": 17.684384927063963,
+            "speed_median_kmh": 13.77015565105723,
+            "max_heading_rad": 0.025352130290505072,
+            "min_lane_clearance_m": 0.6179876504491206,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0002112165093421936,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.2149032356809606,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 9.47930850060754,
+            "min_closing_ttc_s": 8.306340409059022,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1050,
+          "end": 1100,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.7732531580292343,
+            "route_end": 0.7927317406268748,
+            "route_gain": 0.01947858259764046,
+            "max_route_drop": 0,
+            "travel_m": 14.310565594553564,
+            "speed_min_kmh": 9.251661334235818,
+            "speed_max_kmh": 11.548763831334913,
+            "speed_median_kmh": 10.198477929241179,
+            "max_heading_rad": 0.028836793822511562,
+            "min_lane_clearance_m": 0.661146718404222,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0023276768624782562,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.18948965099037984,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 8
+            },
+            "min_front_gap_m": 7.877765166611573,
+            "min_closing_ttc_s": 14.276502230504382,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1100,
+          "end": 1150,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.7927317406268748,
+            "route_end": 0.8088590925880396,
+            "route_gain": 0.01612735196116477,
+            "max_route_drop": 0,
+            "travel_m": 11.868763911241258,
+            "speed_min_kmh": 7.874436443091114,
+            "speed_max_kmh": 9.246910731539668,
+            "speed_median_kmh": 8.508227777479066,
+            "max_heading_rad": 0.04747617113742983,
+            "min_lane_clearance_m": 0.6648026207056008,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.03954591229557991,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.06383365191997115,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 7.177512760749142,
+            "min_closing_ttc_s": 34.15353664979882,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1150,
+          "end": 1200,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.8088590925880396,
+            "route_end": 0.8229602365292426,
+            "route_gain": 0.014101143941202987,
+            "max_route_drop": 0,
+            "travel_m": 10.378144699264361,
+            "speed_min_kmh": 7.273862758889419,
+            "speed_max_kmh": 7.871052235384525,
+            "speed_median_kmh": 7.404450922273212,
+            "max_heading_rad": 0.0022164158172189863,
+            "min_lane_clearance_m": 0.8117015057319286,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.00019643517771328334,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.046183741349500096,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 6.709542752579679,
+            "min_closing_ttc_s": 51.51810346361052,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1200,
+          "end": 1250,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.8229602365292426,
+            "route_end": 0.8403650729787013,
+            "route_gain": 0.017404836449458783,
+            "max_route_drop": 0,
+            "travel_m": 12.809585635692944,
+            "speed_min_kmh": 7.313641419584877,
+            "speed_max_kmh": 12.645150301726941,
+            "speed_median_kmh": 8.986693062850712,
+            "max_heading_rad": 5.752427954563988e-05,
+            "min_lane_clearance_m": 0.8235427927101782,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 6.575133738806471e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.17799933038017812,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 41
+            },
+            "min_front_gap_m": 6.708042752579679,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1250,
+          "end": 1300,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.8403650729787013,
+            "route_end": 0.8706071081826734,
+            "route_gain": 0.030242035203972062,
+            "max_route_drop": 0,
+            "travel_m": 22.25748803968454,
+            "speed_min_kmh": 12.810150327941962,
+            "speed_max_kmh": 19.294943131878515,
+            "speed_median_kmh": 16.32906766446751,
+            "max_heading_rad": 2.2170816074251753e-05,
+            "min_lane_clearance_m": 0.8239124847824492,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 8.020846152589911e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.17882208699616875,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 8.69039038703059,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1300,
+          "end": 1350,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.8706071081826734,
+            "route_end": 0.9177010048230909,
+            "route_gain": 0.04709389664041752,
+            "max_route_drop": 0,
+            "travel_m": 34.66009592054579,
+            "speed_min_kmh": 19.470958162068637,
+            "speed_max_kmh": 28.42218696738068,
+            "speed_median_kmh": 26.209908669484825,
+            "max_heading_rad": 9.986854087373764e-06,
+            "min_lane_clearance_m": 0.8239163400893915,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 8.745099535190093e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.39021397207103803,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 12.027730043001135,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1350,
+          "end": 1400,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.9177010048230909,
+            "route_end": 0.9725948874312048,
+            "route_gain": 0.0548938826081139,
+            "max_route_drop": 0,
+            "travel_m": 40.400717972318425,
+            "speed_min_kmh": 26.755949213438946,
+            "speed_max_kmh": 29.65592956122905,
+            "speed_median_kmh": 29.23892624020178,
+            "max_heading_rad": 8.18922035206171e-06,
+            "min_lane_clearance_m": 0.8239423392020477,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.571517476710142e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 2.8999803477901054,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 16.63391501075014,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1400,
+          "end": 1432,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.9725948874312048,
+            "route_end": 0.9932180875380764,
+            "route_gain": 0.020623200106871575,
+            "max_route_drop": 0,
+            "travel_m": 15.178232131144087,
+            "speed_min_kmh": 8.323420338172705,
+            "speed_max_kmh": 27.237449597829148,
+            "speed_median_kmh": 16.27345503095632,
+            "max_heading_rad": 0.00022330605740394915,
+            "min_lane_clearance_m": 0.8233867515989926,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0001584509591339156,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.423041592907072,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 1,
+              "CRUISE": 31
+            }
+          }
+        }
+      ],
+      "intervals": [
+        {
+          "start": 0,
+          "end": 1432,
+          "decision": "EXCLUDE",
+          "destination": null,
+          "reason": "SUCCESS_NOT_APPROVED_AS_A_WHOLE",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ],
+      "eligible_steps": 0,
+      "window_label_steps": {
+        "PROGRESS": 1232,
+        "UNCERTAIN": 200
+      }
+    },
+    {
+      "source_run_id": "s4_g1_quality_fit_01",
+      "episode_id": "episode_000",
+      "case": {
+        "case_id": "sandbox/Extreme/SCXOCrTYCS/14/0",
+        "case_index": 1,
+        "protocol_order_index": 1,
+        "split": "TRAIN",
+        "tier": "Extreme",
+        "sequence": "SCXOCrTYCS",
+        "geometry_generation_seed": 14,
+        "geometry_sha256": "f3524fcc947c48987af47d9e2da32098656d8670e9fe92fa5accc39752b986af",
+        "environment_seed": 0,
+        "traffic_density": 0.25,
+        "horizon_steps": 2655
+      },
+      "geometry_id": "geom_extreme_SCXOCrTYCS_seed14",
+      "partition": "FIT",
+      "steps": 2655,
+      "outcome": "TIMEOUT",
+      "trace_sha256": "abc532b946cbd854cd5f4076e81edace060681398554b81767d2d29c71e6f550",
+      "transitions_sha256": "3dab9606f1139d6cd67910965cc63618be3d5a60c5cf0eb26d45a799af40d546",
+      "map_sha256": "c014290ed0fcca73193d6023b1d582e3255fc2d289dcdf21a9d2a6698bbfcbed",
+      "pairing_and_replay_passed": true,
+      "whole_success_approved": false,
+      "windows": [
+        {
+          "start": 0,
+          "end": 50,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.005654654134642807,
+            "route_end": 0.026850509953517197,
+            "route_gain": 0.02119585581887439,
+            "max_route_drop": 0,
+            "travel_m": 18.759265899658203,
+            "speed_min_kmh": 0.5468137979507479,
+            "speed_max_kmh": 27.340534973150366,
+            "speed_median_kmh": 13.943686294558619,
+            "max_heading_rad": 1.0652644357733723e-06,
+            "min_lane_clearance_m": 0.8239975951660616,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.796319051867613e-07,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5468144416809557,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 32.9864,
+            "min_closing_ttc_s": 4.982990422671381,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 39,
+              "FOLLOW": 11
+            }
+          }
+        },
+        {
+          "start": 50,
+          "end": 100,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE"
+          ],
+          "evidence": {
+            "route_start": 0.026850509953517197,
+            "route_end": 0.06506352072055427,
+            "route_gain": 0.03821301076703707,
+            "max_route_drop": 0,
+            "travel_m": 33.84699161826291,
+            "speed_min_kmh": 3.040902461357161,
+            "speed_max_kmh": 28.82416992187518,
+            "speed_median_kmh": 24.775835037232092,
+            "max_heading_rad": 0.1382554779884284,
+            "min_lane_clearance_m": -0.08041527313021146,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.09598143841833462,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.4523415288657375,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 16.086704593707083,
+            "min_closing_ttc_s": 3.5380277544002556,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 37,
+              "PREPARE_CHANGE": 9,
+              "BLOCKED_CHANGE": 1,
+              "CHANGE_LANE": 3
+            }
+          }
+        },
+        {
+          "start": 100,
+          "end": 150,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE"
+          ],
+          "evidence": {
+            "route_start": 0.06506352072055427,
+            "route_end": 0.08368418541892712,
+            "route_gain": 0.018620664698372855,
+            "max_route_drop": 0,
+            "travel_m": 16.72982624719177,
+            "speed_min_kmh": 0.2690346670474373,
+            "speed_max_kmh": 21.9971564037552,
+            "speed_median_kmh": 13.115519198730702,
+            "max_heading_rad": 0.21154380697464603,
+            "min_lane_clearance_m": -1.3347656753710027,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.019294925034046173,
+            "steering_sign_changes": 1,
+            "max_speed_delta_kmh": 4.472956926767026,
+            "safety_events": {},
+            "unsupported_stop_steps": 3,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 3,
+            "longest_unsupported_stop": 3,
+            "wait_support_steps": {},
+            "min_front_gap_m": 17.887031809821046,
+            "min_closing_ttc_s": 7.677163931914304,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CHANGE_LANE": 49,
+              "BLOCKED_CHANGE": 1
+            }
+          }
+        },
+        {
+          "start": 150,
+          "end": 200,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.08368418541892712,
+            "route_end": 0.11681933123060545,
+            "route_gain": 0.033135145811678327,
+            "max_route_drop": 0,
+            "travel_m": 30.963072220290556,
+            "speed_min_kmh": 20.216140267280466,
+            "speed_max_kmh": 26.829842130188872,
+            "speed_median_kmh": 20.965785903635428,
+            "max_heading_rad": 0.08103027143313213,
+            "min_lane_clearance_m": 0.3079295768950945,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.018035467714071274,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 1.9153811699625827,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 16.01918401527261,
+            "min_closing_ttc_s": 9.980208671294513,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 47,
+              "APPROACH_JUNCTION": 3
+            }
+          }
+        },
+        {
+          "start": 200,
+          "end": 250,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.11681933123060545,
+            "route_end": 0.15344323033603122,
+            "route_gain": 0.03662389910542577,
+            "max_route_drop": 0,
+            "travel_m": 33.643375486789104,
+            "speed_min_kmh": 20.387896984980834,
+            "speed_max_kmh": 31.090094026757114,
+            "speed_median_kmh": 23.999991735717522,
+            "max_heading_rad": 0.13078988330609664,
+            "min_lane_clearance_m": 0.32577631842982924,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.06411683559417725,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.107790859781659,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 21.550584481287217,
+            "min_closing_ttc_s": 49.60046443757894,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "APPROACH_JUNCTION": 27,
+              "YIELD": 23
+            }
+          }
+        },
+        {
+          "start": 250,
+          "end": 300,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.15344323033603122,
+            "route_end": 0.16243675572416633,
+            "route_gain": 0.00899352538813511,
+            "max_route_drop": 2.4356103661693496e-08,
+            "travel_m": 7.9581625826394475,
+            "speed_min_kmh": 0.009053199108942572,
+            "speed_max_kmh": 19.572355339673177,
+            "speed_median_kmh": 2.250742364450866,
+            "max_heading_rad": 5.1532167092749326e-05,
+            "min_lane_clearance_m": 0.8237197843915559,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.3304572247725446e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 1.4312506020454157,
+            "safety_events": {},
+            "unsupported_stop_steps": 21,
+            "supported_stop_steps": 1,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 11,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 6
+            },
+            "min_front_gap_m": 19.13291178429012,
+            "min_closing_ttc_s": 3.2354632255500326,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 50
+            }
+          }
+        },
+        {
+          "start": 300,
+          "end": 350,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.16243675572416633,
+            "route_end": 0.1630814586158052,
+            "route_gain": 0.0006447028916388708,
+            "max_route_drop": 3.3261625481673107e-07,
+            "travel_m": 0.5727399637316931,
+            "speed_min_kmh": 0.004321158529595641,
+            "speed_max_kmh": 4.362127728172631,
+            "speed_median_kmh": 0.014254272666932284,
+            "max_heading_rad": 1.364870058673251e-05,
+            "min_lane_clearance_m": 0.8236903819851404,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.1929576178081334e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 1.1627476872591018,
+            "safety_events": {},
+            "unsupported_stop_steps": 35,
+            "supported_stop_steps": 7,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 29,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 7
+            },
+            "min_front_gap_m": 19.00747754327927,
+            "min_closing_ttc_s": 3.5877380741952978,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 35,
+              "COMMIT_JUNCTION": 15
+            }
+          }
+        },
+        {
+          "start": 350,
+          "end": 400,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.1630814586158052,
+            "route_end": 0.18903113409444794,
+            "route_gain": 0.025949675478642742,
+            "max_route_drop": 0,
+            "travel_m": 22.962142656503712,
+            "speed_min_kmh": 4.908941623958847,
+            "speed_max_kmh": 23.735532517791018,
+            "speed_median_kmh": 18.305882258980393,
+            "max_heading_rad": 4.940163822098053e-05,
+            "min_lane_clearance_m": 0.8237099356248965,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 1.3878685422241688e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5468206324914036,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "COMMIT_JUNCTION": 15,
+              "TRAVERSE_JUNCTION": 35
+            }
+          }
+        },
+        {
+          "start": 400,
+          "end": 450,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.18903113409444794,
+            "route_end": 0.22669972383965328,
+            "route_gain": 0.037668589745205344,
+            "max_route_drop": 0,
+            "travel_m": 33.33188239262415,
+            "speed_min_kmh": 23.767085799830436,
+            "speed_max_kmh": 25.09086689430444,
+            "speed_median_kmh": 23.989615940312284,
+            "max_heading_rad": 9.653958951583164e-06,
+            "min_lane_clearance_m": 0.8238745388523926,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.177181947146892e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.7665534582038767,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "TRAVERSE_JUNCTION": 31,
+              "EXIT_JUNCTION": 5,
+              "APPROACH_JUNCTION": 10,
+              "YIELD": 4
+            }
+          }
+        },
+        {
+          "start": 450,
+          "end": 500,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.22669972383965328,
+            "route_end": 0.2430318105590395,
+            "route_gain": 0.016332086719386213,
+            "max_route_drop": 0,
+            "travel_m": 14.451807162806832,
+            "speed_min_kmh": 0.04935493539169693,
+            "speed_max_kmh": 24.000022571951522,
+            "speed_median_kmh": 7.999577593331793,
+            "max_heading_rad": 0.0003041995755144189,
+            "min_lane_clearance_m": 0.8232414916327463,
+            "overflow_steps": 2,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.00020497846708167344,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.572833378087145,
+            "safety_events": {},
+            "unsupported_stop_steps": 2,
+            "supported_stop_steps": 2,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 2,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 6
+            },
+            "min_front_gap_m": 8.144400442321526,
+            "min_closing_ttc_s": 5.567057738019984,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "APPROACH_JUNCTION": 2,
+              "YIELD": 48
+            }
+          }
+        },
+        {
+          "start": 500,
+          "end": 550,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.2430318105590395,
+            "route_end": 0.2438169418407364,
+            "route_gain": 0.0007851312816969103,
+            "max_route_drop": 2.9866800677069705e-07,
+            "travel_m": 0.6977436161395286,
+            "speed_min_kmh": 0.0058063460199905634,
+            "speed_max_kmh": 3.862706393234618,
+            "speed_median_kmh": 0.021826303605775595,
+            "max_heading_rad": 3.994741635060529e-05,
+            "min_lane_clearance_m": 0.8237679213970467,
+            "overflow_steps": 29,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 1.240175697603263e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5852841816985177,
+            "safety_events": {},
+            "unsupported_stop_steps": 28,
+            "supported_stop_steps": 6,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 26,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 24
+            },
+            "min_front_gap_m": 14.497609850925425,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 50
+            }
+          }
+        },
+        {
+          "start": 550,
+          "end": 600,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.2438169418407364,
+            "route_end": 0.2438169418407364,
+            "route_gain": 0.0,
+            "max_route_drop": 7.946307389872231e-08,
+            "travel_m": 0.003516977103154333,
+            "speed_min_kmh": 0.01245943550057323,
+            "speed_max_kmh": 0.013722384547029707,
+            "speed_median_kmh": 0.013090909262029049,
+            "max_heading_rad": 3.9281626078802034e-05,
+            "min_lane_clearance_m": 0.8238260281969066,
+            "overflow_steps": 46,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 1.5098703443072736e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.0012629490464564769,
+            "safety_events": {},
+            "unsupported_stop_steps": 26,
+            "supported_stop_steps": 12,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 25,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 24
+            },
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 46,
+              "COMMIT_JUNCTION": 4
+            }
+          }
+        },
+        {
+          "start": 600,
+          "end": 650,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.2438169418407364,
+            "route_end": 0.24474433076902272,
+            "route_gain": 0.0009273889282863101,
+            "max_route_drop": 3.2941887337378795e-07,
+            "travel_m": 0.82321747802353,
+            "speed_min_kmh": 0.003827893639292143,
+            "speed_max_kmh": 4.362545807919561,
+            "speed_median_kmh": 0.016058024863033475,
+            "max_heading_rad": 4.1478733977973186e-05,
+            "min_lane_clearance_m": 0.8236598791382178,
+            "overflow_steps": 5,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.0666837372118607e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 1.9308621489121873,
+            "safety_events": {},
+            "unsupported_stop_steps": 28,
+            "supported_stop_steps": 17,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 10,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 12
+            },
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 32,
+              "COMMIT_JUNCTION": 18
+            }
+          }
+        },
+        {
+          "start": 650,
+          "end": 700,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE"
+          ],
+          "evidence": {
+            "route_start": 0.24474433076902272,
+            "route_end": 0.25249771570433954,
+            "route_gain": 0.007753384935316826,
+            "max_route_drop": 1.4613662191464982e-07,
+            "travel_m": 6.897464076501956,
+            "speed_min_kmh": 0.007609349929209692,
+            "speed_max_kmh": 12.944434455375204,
+            "speed_median_kmh": 5.182767016487182,
+            "max_heading_rad": 0.13464656181623466,
+            "min_lane_clearance_m": 0.0038660162975905354,
+            "overflow_steps": 8,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.14333990588784218,
+            "steering_sign_changes": 1,
+            "max_speed_delta_kmh": 4.343142718896981,
+            "safety_events": {},
+            "unsupported_stop_steps": 20,
+            "supported_stop_steps": 1,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 18,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 2
+            },
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "COMMIT_JUNCTION": 16,
+              "TRAVERSE_JUNCTION": 3,
+              "RECOVER_LANE": 31
+            }
+          }
+        },
+        {
+          "start": 700,
+          "end": 750,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE"
+          ],
+          "evidence": {
+            "route_start": 0.25249771570433954,
+            "route_end": 0.2630153771865016,
+            "route_gain": 0.010517661482162044,
+            "max_route_drop": 1.4613662191464982e-07,
+            "travel_m": 6.710727499866165,
+            "speed_min_kmh": 0.011627357095293056,
+            "speed_max_kmh": 7.91603058593633,
+            "speed_median_kmh": 6.55682530994103,
+            "max_heading_rad": 0.20701641349616676,
+            "min_lane_clearance_m": 0.008821184487834977,
+            "overflow_steps": 2,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.1371121066622436,
+            "steering_sign_changes": 1,
+            "max_speed_delta_kmh": 0.5463485301476787,
+            "safety_events": {},
+            "unsupported_stop_steps": 9,
+            "supported_stop_steps": 3,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 9,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 3
+            },
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "RECOVER_LANE": 47,
+              "EMERGENCY_BRAKE": 3
+            }
+          }
+        },
+        {
+          "start": 750,
+          "end": 800,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE"
+          ],
+          "evidence": {
+            "route_start": 0.2630153771865016,
+            "route_end": 0.27296484385104997,
+            "route_gain": 0.009949466664548379,
+            "max_route_drop": 0,
+            "travel_m": 7.765633509674647,
+            "speed_min_kmh": 0.0044000330491477885,
+            "speed_max_kmh": 13.889046815365068,
+            "speed_median_kmh": 6.353609949435842,
+            "max_heading_rad": 0.2705301670378928,
+            "min_lane_clearance_m": -0.13256700541710265,
+            "overflow_steps": 1,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.21765556186437607,
+            "steering_sign_changes": 1,
+            "max_speed_delta_kmh": 4.325463487994057,
+            "safety_events": {},
+            "unsupported_stop_steps": 10,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 10,
+            "wait_support_steps": {},
+            "min_front_gap_m": 22.411955311801933,
+            "min_closing_ttc_s": 6.165939064543285,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "RECOVER_LANE": 22,
+              "TRAVERSE_JUNCTION": 28
+            }
+          }
+        },
+        {
+          "start": 800,
+          "end": 850,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE"
+          ],
+          "evidence": {
+            "route_start": 0.27296484385104997,
+            "route_end": 0.2915203098348587,
+            "route_gain": 0.01855546598380875,
+            "max_route_drop": 0,
+            "travel_m": 16.73121404304426,
+            "speed_min_kmh": 7.938691061074533,
+            "speed_max_kmh": 19.158641246242237,
+            "speed_median_kmh": 8.43233383411959,
+            "max_heading_rad": 0.1934585947257781,
+            "min_lane_clearance_m": -0.20143673134562023,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.205660842359066,
+            "steering_sign_changes": 1,
+            "max_speed_delta_kmh": 3.7184178422958354,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 21,
+              "PUBLIC_FRONT_ACTOR": 5
+            },
+            "min_front_gap_m": 5.841639854368237,
+            "min_closing_ttc_s": 2.7048385675641233,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "TRAVERSE_JUNCTION": 23,
+              "RECOVER_LANE": 27
+            }
+          }
+        },
+        {
+          "start": 850,
+          "end": 900,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE",
+            "CLOSING_RISK_WITHOUT_BRAKING"
+          ],
+          "evidence": {
+            "route_start": 0.2915203098348587,
+            "route_end": 0.30425365320631736,
+            "route_gain": 0.01273334337145865,
+            "max_route_drop": 0,
+            "travel_m": 8.607650953561452,
+            "speed_min_kmh": 3.4103626499324466,
+            "speed_max_kmh": 7.971041191576563,
+            "speed_median_kmh": 6.224189446592595,
+            "max_heading_rad": 0.2442966067634285,
+            "min_lane_clearance_m": 0.0493938982900608,
+            "overflow_steps": 10,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.16801504790782928,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.2665743180382769,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50,
+              "PUBLIC_PREDICTED_OCCUPANCY": 38
+            },
+            "min_front_gap_m": -2.681451080252942,
+            "min_closing_ttc_s": 0.0,
+            "unsafe_approach_steps": 17,
+            "teacher_behavior_counts_for_audit_only": {
+              "RECOVER_LANE": 36,
+              "TRAVERSE_JUNCTION": 3,
+              "EXIT_JUNCTION": 11
+            }
+          }
+        },
+        {
+          "start": 900,
+          "end": 950,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.30425365320631736,
+            "route_end": 0.3091830987949308,
+            "route_gain": 0.0049294455886134125,
+            "max_route_drop": 0,
+            "travel_m": 4.3630514308271255,
+            "speed_min_kmh": 1.755370155049472,
+            "speed_max_kmh": 7.349445734418945,
+            "speed_median_kmh": 2.640616220485965,
+            "max_heading_rad": 0.03168908696890693,
+            "min_lane_clearance_m": 0.6172501009872997,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0038080215454101562,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 1.8940433076904704,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 4.4441082469959685,
+            "min_closing_ttc_s": 6.824764048936848,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "EXIT_JUNCTION": 6,
+              "FOLLOW": 44
+            }
+          }
+        },
+        {
+          "start": 950,
+          "end": 1000,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.3091830987949308,
+            "route_end": 0.3265117964724735,
+            "route_gain": 0.017328697677542748,
+            "max_route_drop": 0,
+            "travel_m": 15.333896691120808,
+            "speed_min_kmh": 5.657721602405524,
+            "speed_max_kmh": 16.711417511776034,
+            "speed_median_kmh": 10.659860081091797,
+            "max_heading_rad": 0.018757841979919365,
+            "min_lane_clearance_m": 0.7433424668277542,
+            "overflow_steps": 3,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0013437634333968163,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 3.366496763614556,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 13
+            },
+            "min_front_gap_m": 5.79959458869379,
+            "min_closing_ttc_s": 4.329645039231432,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1000,
+          "end": 1050,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.3265117964724735,
+            "route_end": 0.35066498437724514,
+            "route_gain": 0.02415318790477161,
+            "max_route_drop": 0,
+            "travel_m": 20.85078886384703,
+            "speed_min_kmh": 6.269211593347957,
+            "speed_max_kmh": 28.104632832306734,
+            "speed_median_kmh": 14.747176791137676,
+            "max_heading_rad": 0.023986087730141548,
+            "min_lane_clearance_m": 0.6212004257966215,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.022950947284698486,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5468166881149337,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 8.064460621023501,
+            "min_closing_ttc_s": 5.813507381240961,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 16,
+              "CRUISE": 34
+            }
+          }
+        },
+        {
+          "start": 1050,
+          "end": 1100,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.35066498437724514,
+            "route_end": 0.3837553335425544,
+            "route_gain": 0.033090349165309285,
+            "max_route_drop": 0,
+            "travel_m": 27.47277884944038,
+            "speed_min_kmh": 0.09743820805123064,
+            "speed_max_kmh": 32.93633548374312,
+            "speed_median_kmh": 27.839065310534657,
+            "max_heading_rad": 0.06454477993072615,
+            "min_lane_clearance_m": 0.4539868711073115,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.03980199992656708,
+            "steering_sign_changes": 1,
+            "max_speed_delta_kmh": 4.040603157491693,
+            "safety_events": {},
+            "unsupported_stop_steps": 3,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 3,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 8,
+              "PUBLIC_FRONT_ACTOR": 3
+            },
+            "min_front_gap_m": 6.284197413821935,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 20,
+              "FOLLOW": 24,
+              "YIELD": 6
+            }
+          }
+        },
+        {
+          "start": 1100,
+          "end": 1150,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.3837553335425544,
+            "route_end": 0.3882780992494801,
+            "route_gain": 0.004522765706925669,
+            "max_route_drop": 7.897492554365115e-08,
+            "travel_m": 3.768898406783279,
+            "speed_min_kmh": 0.007308160487600931,
+            "speed_max_kmh": 9.38728297148171,
+            "speed_median_kmh": 0.948117707427965,
+            "max_heading_rad": 0.0678507697187416,
+            "min_lane_clearance_m": 0.48685456669915084,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.03751242160797119,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.511778384973665,
+            "safety_events": {},
+            "unsupported_stop_steps": 21,
+            "supported_stop_steps": 4,
+            "clear_unsupported_stop_steps": 6,
+            "longest_unsupported_stop": 19,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 16,
+              "PUBLIC_PREDICTED_OCCUPANCY": 13
+            },
+            "min_front_gap_m": -0.7310088598257627,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 17,
+              "YIELD": 25,
+              "CRUISE": 8
+            }
+          }
+        },
+        {
+          "start": 1150,
+          "end": 1200,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "CLOSING_RISK_WITHOUT_BRAKING"
+          ],
+          "evidence": {
+            "route_start": 0.3882780992494801,
+            "route_end": 0.4134760459216788,
+            "route_gain": 0.025197946672198712,
+            "max_route_drop": 0,
+            "travel_m": 20.98702086161639,
+            "speed_min_kmh": 2.19440897457288,
+            "speed_max_kmh": 27.677866054772053,
+            "speed_median_kmh": 15.577069504409195,
+            "max_heading_rad": 0.05034346970990189,
+            "min_lane_clearance_m": 0.6444504605113766,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.021893367171287537,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5467091141188991,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 34,
+              "PUBLIC_PREDICTED_OCCUPANCY": 12
+            },
+            "min_front_gap_m": 1.7611131977222874,
+            "min_closing_ttc_s": 0.6377609899769274,
+            "unsafe_approach_steps": 3,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 45,
+              "FOLLOW": 5
+            }
+          }
+        },
+        {
+          "start": 1200,
+          "end": 1250,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.4134760459216788,
+            "route_end": 0.4430372700916011,
+            "route_gain": 0.029561224169922296,
+            "max_route_drop": 0,
+            "travel_m": 24.591738783087198,
+            "speed_min_kmh": 11.336920073700362,
+            "speed_max_kmh": 26.629050524781665,
+            "speed_median_kmh": 16.614498353426765,
+            "max_heading_rad": 0.02544903310025925,
+            "min_lane_clearance_m": 0.5838427561483627,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.027821898460388184,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.6866950790500574,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 8.507471524607084,
+            "min_closing_ttc_s": 4.091442602879424,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1250,
+          "end": 1300,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.4430372700916011,
+            "route_end": 0.4546171397572196,
+            "route_gain": 0.011579869665618525,
+            "max_route_drop": 1.5923276719398416e-07,
+            "travel_m": 9.643786910451675,
+            "speed_min_kmh": 0.004236684068065866,
+            "speed_max_kmh": 11.230478488552023,
+            "speed_median_kmh": 8.74268957659271,
+            "max_heading_rad": 0.03410646447801646,
+            "min_lane_clearance_m": 0.6515688817783121,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.021744951605796814,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.365150469727194,
+            "safety_events": {},
+            "unsupported_stop_steps": 4,
+            "supported_stop_steps": 8,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 4,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 41,
+              "PUBLIC_PREDICTED_OCCUPANCY": 9
+            },
+            "min_front_gap_m": 6.238213388778679,
+            "min_closing_ttc_s": 7.2611017897707155,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 37,
+              "YIELD": 12,
+              "CRUISE": 1
+            }
+          }
+        },
+        {
+          "start": 1300,
+          "end": 1350,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.4546171397572196,
+            "route_end": 0.4670334042840695,
+            "route_gain": 0.012416264526849852,
+            "max_route_drop": 0,
+            "travel_m": 10.348884489226904,
+            "speed_min_kmh": 1.6247582150675681,
+            "speed_max_kmh": 9.80922732005151,
+            "speed_median_kmh": 7.983723890893421,
+            "max_heading_rad": 0.03509017569539452,
+            "min_lane_clearance_m": 0.6894009465015364,
+            "overflow_steps": 19,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.023270301520824432,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5466876624334676,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 17
+            },
+            "min_front_gap_m": 7.1207366845767455,
+            "min_closing_ttc_s": 7.753150527832906,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1350,
+          "end": 1400,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.4670334042840695,
+            "route_end": 0.47677782490403314,
+            "route_gain": 0.009744420619963667,
+            "max_route_drop": 0,
+            "travel_m": 8.12459413405932,
+            "speed_min_kmh": 4.83287921850301,
+            "speed_max_kmh": 7.021915246357656,
+            "speed_median_kmh": 5.803992090205045,
+            "max_heading_rad": 0.027473258619956642,
+            "min_lane_clearance_m": 0.7237149461481555,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0005702078342437744,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5900494088153625,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 5.648764020437726,
+            "min_closing_ttc_s": 12.154441918016047,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1400,
+          "end": 1450,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.47677782490403314,
+            "route_end": 0.4841059728931862,
+            "route_gain": 0.007328147989153044,
+            "max_route_drop": 0,
+            "travel_m": 6.111475349977268,
+            "speed_min_kmh": 3.8754662196994927,
+            "speed_max_kmh": 4.944285652660731,
+            "speed_median_kmh": 4.357506489196402,
+            "max_heading_rad": 0.03381914613656134,
+            "min_lane_clearance_m": 0.740530904917009,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0011249817907810211,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.059148908833003055,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 5.083349411632227,
+            "min_closing_ttc_s": 26.927255689541614,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1450,
+          "end": 1500,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.4841059728931862,
+            "route_end": 0.48966906495806356,
+            "route_gain": 0.005563092064877373,
+            "max_route_drop": 0,
+            "travel_m": 4.775929569786333,
+            "speed_min_kmh": 3.029672131834225,
+            "speed_max_kmh": 3.8517763763777855,
+            "speed_median_kmh": 3.4232369105073515,
+            "max_heading_rad": 0.03926829669716092,
+            "min_lane_clearance_m": 0.689229726944862,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.03409881517291069,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.04721232348410043,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 4.657708843201145,
+            "min_closing_ttc_s": 44.17401416886111,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1500,
+          "end": 1550,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.48966906495806356,
+            "route_end": 0.4938303943227291,
+            "route_gain": 0.004161329364665567,
+            "max_route_drop": 0,
+            "travel_m": 3.6822652560629017,
+            "speed_min_kmh": 2.304910545122619,
+            "speed_max_kmh": 2.991369821635458,
+            "speed_median_kmh": 2.629748763098357,
+            "max_heading_rad": 0.0031513185178915215,
+            "min_lane_clearance_m": 0.8062289044206945,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0003852914087474346,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.039673707590305085,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 4.270492410568998,
+            "min_closing_ttc_s": 55.31165289937731,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1550,
+          "end": 1600,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.4938303943227291,
+            "route_end": 0.49708133878802113,
+            "route_gain": 0.003250944465292005,
+            "max_route_drop": 0,
+            "travel_m": 2.876672534915866,
+            "speed_min_kmh": 1.9027076931476123,
+            "speed_max_kmh": 2.2860266219688614,
+            "speed_median_kmh": 2.0478270062409067,
+            "max_heading_rad": 0.0028133633755604848,
+            "min_lane_clearance_m": 0.8146405185934839,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.603779572993517e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.02325407129248891,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 4.009991433175741,
+            "min_closing_ttc_s": 62.77200949998794,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1600,
+          "end": 1650,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.49708133878802113,
+            "route_end": 0.5000647595169792,
+            "route_gain": 0.0029834207289580195,
+            "max_route_drop": 0,
+            "travel_m": 2.6399456975307545,
+            "speed_min_kmh": 1.8600721532088922,
+            "speed_max_kmh": 2.049185509537443,
+            "speed_median_kmh": 1.8858969387466131,
+            "max_heading_rad": 0.0012097409251690117,
+            "min_lane_clearance_m": 0.8206696779588866,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 6.600760389119387e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.03631819815328563,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 3.952012431885503,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1650,
+          "end": 1700,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.5000647595169792,
+            "route_end": 0.5078275639359894,
+            "route_gain": 0.0077628044190102274,
+            "max_route_drop": 0,
+            "travel_m": 6.869088752928914,
+            "speed_min_kmh": 2.0814120083474026,
+            "speed_max_kmh": 10.874109712271176,
+            "speed_median_kmh": 4.237409145338207,
+            "max_heading_rad": 0.00021212078082522012,
+            "min_lane_clearance_m": 0.822595527842628,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 7.388563244603574e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.3951798342053845,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 4.002152277096602,
+            "min_closing_ttc_s": 7.5033052720469655,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1700,
+          "end": 1750,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.5078275639359894,
+            "route_end": 0.5138718901046181,
+            "route_gain": 0.006044326168628711,
+            "max_route_drop": 0,
+            "travel_m": 5.356307478612113,
+            "speed_min_kmh": 1.1083885129319158,
+            "speed_max_kmh": 9.054032670337458,
+            "speed_median_kmh": 3.276674969165817,
+            "max_heading_rad": 0.06906415602318905,
+            "min_lane_clearance_m": 0.5060040301470397,
+            "overflow_steps": 18,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.13625360845071555,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.398469242942032,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 5.11269321021615,
+            "min_closing_ttc_s": 5.057207278390822,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 33,
+              "BLOCKED_CHANGE": 2,
+              "PREPARE_CHANGE": 15
+            }
+          }
+        },
+        {
+          "start": 1750,
+          "end": 1800,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE"
+          ],
+          "evidence": {
+            "route_start": 0.5138718901046181,
+            "route_end": 0.5179738292276191,
+            "route_gain": 0.004101939123001053,
+            "max_route_drop": 3.61300162010636e-08,
+            "travel_m": 3.693348065557643,
+            "speed_min_kmh": 0.0018242616781570182,
+            "speed_max_kmh": 11.470937238278488,
+            "speed_median_kmh": 0.3476754048026513,
+            "max_heading_rad": 0.1896887086469654,
+            "min_lane_clearance_m": -0.3574245034419261,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.05981843173503876,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 3.4523448042863265,
+            "safety_events": {},
+            "unsupported_stop_steps": 12,
+            "supported_stop_steps": 12,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 10,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 24,
+              "PUBLIC_PREDICTED_OCCUPANCY": 16
+            },
+            "min_front_gap_m": -2.541258356483191,
+            "min_closing_ttc_s": 10.401300474809535,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "PREPARE_CHANGE": 17,
+              "BLOCKED_CHANGE": 20,
+              "EMERGENCY_BRAKE": 7,
+              "CHANGE_LANE": 6
+            }
+          }
+        },
+        {
+          "start": 1800,
+          "end": 1850,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE"
+          ],
+          "evidence": {
+            "route_start": 0.5179738292276191,
+            "route_end": 0.5348036025486007,
+            "route_gain": 0.016829773320981567,
+            "max_route_drop": 0,
+            "travel_m": 15.22646813168932,
+            "speed_min_kmh": 0.0075002706721790735,
+            "speed_max_kmh": 18.18439029017207,
+            "speed_median_kmh": 12.907459386421083,
+            "max_heading_rad": 0.28994953315350575,
+            "min_lane_clearance_m": -1.4430388295314391,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.05532865226268768,
+            "steering_sign_changes": 1,
+            "max_speed_delta_kmh": 4.557459444138429,
+            "safety_events": {},
+            "unsupported_stop_steps": 7,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 7,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 2
+            },
+            "min_front_gap_m": 14.975992063594926,
+            "min_closing_ttc_s": 4.5010057264144505,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CHANGE_LANE": 30,
+              "BLOCKED_CHANGE": 3,
+              "FOLLOW": 8,
+              "YIELD": 7,
+              "EMERGENCY_BRAKE": 1,
+              "CRUISE": 1
+            }
+          }
+        },
+        {
+          "start": 1850,
+          "end": 1900,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.5348036025486007,
+            "route_end": 0.5558601798406002,
+            "route_gain": 0.0210565772919995,
+            "max_route_drop": 0,
+            "travel_m": 18.632555222367316,
+            "speed_min_kmh": 2.7591777680437892,
+            "speed_max_kmh": 19.594408860743926,
+            "speed_median_kmh": 15.880347976739976,
+            "max_heading_rad": 0.009411744450395165,
+            "min_lane_clearance_m": 0.7458705959910358,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0030642226338386536,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 1.308078445238646,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 13.409771852044836,
+            "min_closing_ttc_s": 5.124198456541725,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 1900,
+          "end": 1950,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.5558601798406002,
+            "route_end": 0.5705638254740542,
+            "route_gain": 0.014703645633453943,
+            "max_route_drop": 0,
+            "travel_m": 13.010845125630842,
+            "speed_min_kmh": 0.020620969207804724,
+            "speed_max_kmh": 16.03486461317219,
+            "speed_median_kmh": 10.136669888699958,
+            "max_heading_rad": 5.1265850984805184e-05,
+            "min_lane_clearance_m": 0.8236976777437066,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.521750972548034e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.425620472696407,
+            "safety_events": {},
+            "unsupported_stop_steps": 5,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 5,
+            "wait_support_steps": {},
+            "min_front_gap_m": 13.510050731892191,
+            "min_closing_ttc_s": 5.648188687594438,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 43,
+              "YIELD": 6,
+              "CRUISE": 1
+            }
+          }
+        },
+        {
+          "start": 1950,
+          "end": 2000,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.5705638254740542,
+            "route_end": 0.5899790238916692,
+            "route_gain": 0.019415198417615076,
+            "max_route_drop": 0,
+            "travel_m": 17.179966508425785,
+            "speed_min_kmh": 10.568390273262597,
+            "speed_max_kmh": 14.367050140170003,
+            "speed_median_kmh": 12.194822866501635,
+            "max_heading_rad": 6.125270506363023e-06,
+            "min_lane_clearance_m": 0.8239540230028024,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.7884860855920124e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.1371981687001167,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 9.04122535877395,
+            "min_closing_ttc_s": 7.555869320278922,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 2000,
+          "end": 2050,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.5899790238916692,
+            "route_end": 0.6044333461143023,
+            "route_gain": 0.014454322222633098,
+            "max_route_drop": 0,
+            "travel_m": 12.790225798799577,
+            "speed_min_kmh": 8.249564410182812,
+            "speed_max_kmh": 10.528719004639319,
+            "speed_median_kmh": 9.128510676027116,
+            "max_heading_rad": 1.9973708167420057e-06,
+            "min_lane_clearance_m": 0.8239764335209759,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 3.823970473604277e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 2.0786289274038907,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 22
+            },
+            "min_front_gap_m": 7.658340229612264,
+            "min_closing_ttc_s": 7.5402200151230145,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 2050,
+          "end": 2100,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6044333461143023,
+            "route_end": 0.6169663437423346,
+            "route_gain": 0.012532997628032283,
+            "max_route_drop": 0,
+            "travel_m": 11.090099357407624,
+            "speed_min_kmh": 5.921669279169907,
+            "speed_max_kmh": 8.80755703075576,
+            "speed_median_kmh": 8.285685563514228,
+            "max_heading_rad": 1.1984224914662889e-06,
+            "min_lane_clearance_m": 0.82398223265372,
+            "overflow_steps": 36,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.062998646579217e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 2.1178184401742177,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 6.897540229612263,
+            "min_closing_ttc_s": 7.773366810718672,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 2100,
+          "end": 2150,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6169663437423346,
+            "route_end": 0.6274919588686486,
+            "route_gain": 0.010525615126314003,
+            "max_route_drop": 0,
+            "travel_m": 9.313822679821179,
+            "speed_min_kmh": 4.916590176180939,
+            "speed_max_kmh": 7.435162942091092,
+            "speed_median_kmh": 6.932069373766845,
+            "max_heading_rad": 2.3968449802680425e-06,
+            "min_lane_clearance_m": 0.8239785145215056,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 3.1301274248107802e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 2.088420193626633,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 6.529862920165312,
+            "min_closing_ttc_s": 7.07719148895042,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 2150,
+          "end": 2200,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6274919588686486,
+            "route_end": 0.6378082752727162,
+            "route_gain": 0.010316316404067605,
+            "max_route_drop": 0,
+            "travel_m": 9.1286200901073,
+            "speed_min_kmh": 6.161534047199663,
+            "speed_max_kmh": 6.930684890015875,
+            "speed_median_kmh": 6.567136584065679,
+            "max_heading_rad": 3.5952674726225098e-06,
+            "min_lane_clearance_m": 0.8239760494998086,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 4.087324867896314e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.036898336446804514,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 6.221710516641385,
+            "min_closing_ttc_s": 66.4115957493499,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 2200,
+          "end": 2250,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6378082752727162,
+            "route_end": 0.646826262967519,
+            "route_gain": 0.009017987694802776,
+            "max_route_drop": 0,
+            "travel_m": 7.979765298135295,
+            "speed_min_kmh": 5.3118646375803875,
+            "speed_max_kmh": 6.156757769590138,
+            "speed_median_kmh": 5.734484524992883,
+            "max_heading_rad": 3.99474163437219e-06,
+            "min_lane_clearance_m": 0.8239577872522253,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 3.9560791265103035e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.03652155118434042,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 5.80577822939627,
+            "min_closing_ttc_s": 62.66923628044693,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 2250,
+          "end": 2300,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.646826262967519,
+            "route_end": 0.6543096120602598,
+            "route_gain": 0.007483349092740843,
+            "max_route_drop": 0,
+            "travel_m": 6.621806489185482,
+            "speed_min_kmh": 4.177443328461576,
+            "speed_max_kmh": 5.29888995099137,
+            "speed_median_kmh": 4.576207311790622,
+            "max_heading_rad": 4.127899689176928e-06,
+            "min_lane_clearance_m": 0.8239692236022218,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 6.336571004794678e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.75875754940619,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 5.349922066730951,
+            "min_closing_ttc_s": 14.938397262397958,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 2300,
+          "end": 2350,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6543096120602598,
+            "route_end": 0.6606983731750431,
+            "route_gain": 0.006388761114783259,
+            "max_route_drop": 0,
+            "travel_m": 5.653236177350052,
+            "speed_min_kmh": 3.689591482496378,
+            "speed_max_kmh": 4.432461080074169,
+            "speed_median_kmh": 4.058655537855358,
+            "max_heading_rad": 4.261057743537577e-06,
+            "min_lane_clearance_m": 0.823963322742389,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 7.379465387202799e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.0297232450887277,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 4.977151435191548,
+            "min_closing_ttc_s": 63.07324425991165,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 2350,
+          "end": 2400,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6606983731750431,
+            "route_end": 0.6659318230499239,
+            "route_gain": 0.005233449874880836,
+            "max_route_drop": 0,
+            "travel_m": 4.630933548244387,
+            "speed_min_kmh": 2.973800264847155,
+            "speed_max_kmh": 3.6814068143868663,
+            "speed_median_kmh": 3.3205568486183887,
+            "max_heading_rad": 2.530003035072781e-06,
+            "min_lane_clearance_m": 0.823965320663751,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 6.448406196568612e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.026242859296864207,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 4.612566162489646,
+            "min_closing_ttc_s": 62.88140956570146,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 2400,
+          "end": 2450,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6659318230499239,
+            "route_end": 0.6700853187590556,
+            "route_gain": 0.004153495709131705,
+            "max_route_drop": 0,
+            "travel_m": 3.67531228776985,
+            "speed_min_kmh": 2.317867993608302,
+            "speed_max_kmh": 2.9656296838059775,
+            "speed_median_kmh": 2.633004807313408,
+            "max_heading_rad": 8.881784197001252e-16,
+            "min_lane_clearance_m": 0.8239843090772608,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 7.1619356276642065e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.020883672178272583,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 4.273380918498084,
+            "min_closing_ttc_s": 63.79377190258942,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "APPROACH_JUNCTION": 50
+            }
+          }
+        },
+        {
+          "start": 2450,
+          "end": 2500,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6700853187590556,
+            "route_end": 0.6732635661144915,
+            "route_gain": 0.003178247355435815,
+            "max_route_drop": 0,
+            "travel_m": 2.8123422757324605,
+            "speed_min_kmh": 1.7359164406824512,
+            "speed_max_kmh": 2.309192126365665,
+            "speed_median_kmh": 2.0119482294480626,
+            "max_heading_rad": 8.881784197001252e-16,
+            "min_lane_clearance_m": 0.8239767988920191,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 6.333438932415447e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.01739362043593662,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 3.968680918498084,
+            "min_closing_ttc_s": 66.52994674238086,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "APPROACH_JUNCTION": 50
+            }
+          }
+        },
+        {
+          "start": 2500,
+          "end": 2550,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6732635661144915,
+            "route_end": 0.6755950636936506,
+            "route_gain": 0.0023314975791591808,
+            "max_route_drop": 0,
+            "travel_m": 2.063077059767598,
+            "speed_min_kmh": 1.2432616869502404,
+            "speed_max_kmh": 1.727544483981743,
+            "speed_median_kmh": 1.4735977014257284,
+            "max_heading_rad": 2.263686927239661e-06,
+            "min_lane_clearance_m": 0.8239773353338221,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.884136498934822e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.01390167442650192,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 3.7061809184980845,
+            "min_closing_ttc_s": 72.93202216382522,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "APPROACH_JUNCTION": 50
+            }
+          }
+        },
+        {
+          "start": 2550,
+          "end": 2600,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6755950636936506,
+            "route_end": 0.6772282706988579,
+            "route_gain": 0.0016332070052073044,
+            "max_route_drop": 0,
+            "travel_m": 1.445179253764146,
+            "speed_min_kmh": 0.8487731365680828,
+            "speed_max_kmh": 1.2356864510768573,
+            "speed_median_kmh": 1.0300680896672132,
+            "max_heading_rad": 3.4621094178177714e-06,
+            "min_lane_clearance_m": 0.8239578844011358,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.579452590609435e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.010263255928925963,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 20,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 3.491395703215712,
+            "min_closing_ttc_s": 85.93939341533972,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "APPROACH_JUNCTION": 50
+            }
+          }
+        },
+        {
+          "start": 2600,
+          "end": 2650,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6772282706988579,
+            "route_end": 0.6783176561246738,
+            "route_gain": 0.0010893854258158253,
+            "max_route_drop": 0,
+            "travel_m": 0.9639667332050734,
+            "speed_min_kmh": 0.5511313027218141,
+            "speed_max_kmh": 0.8424901869309483,
+            "speed_median_kmh": 0.6854717717516188,
+            "max_heading_rad": 3.4621094178177714e-06,
+            "min_lane_clearance_m": 0.8239602660062616,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.742291250498965e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.007714992302228496,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 70,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 50
+            },
+            "min_front_gap_m": 3.325595703215713,
+            "min_closing_ttc_s": 108.69790240152716,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "APPROACH_JUNCTION": 50
+            }
+          }
+        },
+        {
+          "start": 2650,
+          "end": 2655,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.6783176561246738,
+            "route_end": 0.6784024417834743,
+            "route_gain": 8.478565880054578e-05,
+            "max_route_drop": 0,
+            "travel_m": 0.07502446164830973,
+            "speed_min_kmh": 0.5267376886611602,
+            "speed_max_kmh": 0.5462827751912881,
+            "speed_median_kmh": 0.5362065946551551,
+            "max_heading_rad": 3.4621094178177714e-06,
+            "min_lane_clearance_m": 0.8239593272331064,
+            "overflow_steps": 5,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 3.0086575861787423e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.0051543442245073345,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 75,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 5
+            },
+            "min_front_gap_m": 3.311595703215712,
+            "min_closing_ttc_s": 185.74431885744843,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "APPROACH_JUNCTION": 5
+            }
+          }
+        }
+      ],
+      "intervals": [
+        {
+          "start": 0,
+          "end": 1900,
+          "decision": "EXCLUDE",
+          "destination": null,
+          "reason": "QUALITY_OR_BOUNDARY_OR_TAIL_OR_SHORT_SEGMENT_EXCLUSION",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        },
+        {
+          "start": 1900,
+          "end": 2000,
+          "decision": "KEEP",
+          "destination": "BC_B_ONLY",
+          "reason": "REVIEWED_TIMEOUT_PROGRESS_OR_WAIT",
+          "context_before_start": 1891,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        },
+        {
+          "start": 2000,
+          "end": 2655,
+          "decision": "EXCLUDE",
+          "destination": null,
+          "reason": "QUALITY_OR_BOUNDARY_OR_TAIL_OR_SHORT_SEGMENT_EXCLUSION",
+          "context_before_start": 1991,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ],
+      "eligible_steps": 100,
+      "window_label_steps": {
+        "PROGRESS": 650,
+        "UNCERTAIN": 1505,
+        "UNSAFE_OR_UNSTABLE": 500
+      }
+    },
+    {
+      "source_run_id": "s4_g1_quality_fit_01",
+      "episode_id": "episode_001",
+      "case": {
+        "case_id": "sandbox/Extreme/CrXROSTR/15/0",
+        "case_index": 1,
+        "protocol_order_index": 1,
+        "split": "TRAIN",
+        "tier": "Extreme",
+        "sequence": "CrXROSTR",
+        "geometry_generation_seed": 15,
+        "geometry_sha256": "0d2cf498de4ce8248a6becb9a95b71244b14df5067b425db0c449e31e2af79bc",
+        "environment_seed": 0,
+        "traffic_density": 0.25,
+        "horizon_steps": 2575
+      },
+      "geometry_id": "geom_extreme_CrXROSTR_seed15",
+      "partition": "FIT",
+      "steps": 948,
+      "outcome": "CRASH_VEHICLE",
+      "trace_sha256": "e626db076f8773310f8a7c14b7dc07c4c4aaabdec574e8a13c26d64d79522d68",
+      "transitions_sha256": "f80857437d4cd61a39e4037c45478cfaf9312652b345916a90018c1339f1c6fc",
+      "map_sha256": "e45e8ce44de1c61fc6f2bbe5f656fb0b37fed906e785a6fc0a8bb8cf4133f0d2",
+      "pairing_and_replay_passed": true,
+      "whole_success_approved": false,
+      "windows": [
+        {
+          "start": 0,
+          "end": 50,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.005830595939818811,
+            "route_end": 0.027064036094387598,
+            "route_gain": 0.021233440154568788,
+            "max_route_drop": 0,
+            "travel_m": 18.225557327270508,
+            "speed_min_kmh": 0.5468137979507479,
+            "speed_max_kmh": 23.48272018433279,
+            "speed_median_kmh": 13.943686294558619,
+            "max_heading_rad": 1.5978966541041473e-06,
+            "min_lane_clearance_m": 0.8239963927494854,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 4.6605316583736567e-07,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.7242736816418613,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 22.991789913412624,
+            "min_closing_ttc_s": 4.105462790147288,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 25,
+              "STOP_FOR_OBSTACLE": 3,
+              "FOLLOW": 22
+            }
+          }
+        },
+        {
+          "start": 50,
+          "end": 100,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.027064036094387598,
+            "route_end": 0.056474396136266425,
+            "route_gain": 0.029410360041878827,
+            "max_route_drop": 0,
+            "travel_m": 25.242169164712188,
+            "speed_min_kmh": 17.044903564453225,
+            "speed_max_kmh": 20.599186706545943,
+            "speed_median_kmh": 17.87549405408639,
+            "max_heading_rad": 0.03970893027557221,
+            "min_lane_clearance_m": 0.6113108371981142,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.00987148191779852,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.37377548217918033,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 12.24752574834235,
+            "min_closing_ttc_s": 4.3807616393410775,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 48,
+              "CRUISE": 2
+            }
+          }
+        },
+        {
+          "start": 100,
+          "end": 150,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.056474396136266425,
+            "route_end": 0.08558879335904078,
+            "route_gain": 0.029114397222774355,
+            "max_route_drop": 0,
+            "travel_m": 24.675110978257113,
+            "speed_min_kmh": 11.320855535861389,
+            "speed_max_kmh": 21.637429432919806,
+            "speed_median_kmh": 20.358077739903596,
+            "max_heading_rad": 0.0917291700990911,
+            "min_lane_clearance_m": 0.3447329192882955,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.01709090545773506,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 1.9127031479729553,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 10.755284320431926,
+            "min_closing_ttc_s": 6.856559108952049,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CRUISE": 26,
+              "FOLLOW": 24
+            }
+          }
+        },
+        {
+          "start": 150,
+          "end": 200,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.08558879335904078,
+            "route_end": 0.10442985933246375,
+            "route_gain": 0.01884106597342297,
+            "max_route_drop": 0,
+            "travel_m": 16.172925134115435,
+            "speed_min_kmh": 8.917375666668129,
+            "speed_max_kmh": 19.17193008676325,
+            "speed_median_kmh": 10.651729848264903,
+            "max_heading_rad": 0.11993044752218207,
+            "min_lane_clearance_m": 0.4358336041308841,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.09468503296375275,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5468175871000689,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 8.61610531406407,
+            "min_closing_ttc_s": 7.743003194040299,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 200,
+          "end": 250,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.10442985933246375,
+            "route_end": 0.14061563215779035,
+            "route_gain": 0.036185772825326604,
+            "max_route_drop": 0,
+            "travel_m": 31.053563604326122,
+            "speed_min_kmh": 19.718744941600715,
+            "speed_max_kmh": 24.69178427272328,
+            "speed_median_kmh": 22.31455123700254,
+            "max_heading_rad": 0.0016657739723309195,
+            "min_lane_clearance_m": 0.8173501850746717,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.00018535309936851263,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5468189472813023,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 2
+            },
+            "min_front_gap_m": 15.562594461617648,
+            "min_closing_ttc_s": 5.48054858473754,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 250,
+          "end": 300,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.14061563215779035,
+            "route_end": 0.1644286460730577,
+            "route_gain": 0.023813013915267356,
+            "max_route_drop": 0,
+            "travel_m": 20.435888100416456,
+            "speed_min_kmh": 0.7184821012350857,
+            "speed_max_kmh": 25.841676297246075,
+            "speed_median_kmh": 11.681945567741927,
+            "max_heading_rad": 0.008534499187322409,
+            "min_lane_clearance_m": 0.7923500389782392,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.17466885689646006,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.469106420925684,
+            "safety_events": {},
+            "unsupported_stop_steps": 1,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 1,
+            "wait_support_steps": {
+              "PUBLIC_FRONT_ACTOR": 3
+            },
+            "min_front_gap_m": 7.009065865856349,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 36,
+              "YIELD": 6,
+              "CRUISE": 2,
+              "PREPARE_CHANGE": 1,
+              "ABORT_CHANGE": 5
+            }
+          }
+        },
+        {
+          "start": 300,
+          "end": 350,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.1644286460730577,
+            "route_end": 0.19799726640823342,
+            "route_gain": 0.033568620335175714,
+            "max_route_drop": 0,
+            "travel_m": 28.807607359932586,
+            "speed_min_kmh": 8.566786128449172,
+            "speed_max_kmh": 30.66721214256937,
+            "speed_median_kmh": 21.963764565650237,
+            "max_heading_rad": 0.0038188065556050703,
+            "min_lane_clearance_m": 0.8022073196535341,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0009746113792061806,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 1.5838877022679299,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 17.942225702634158,
+            "min_closing_ttc_s": 6.459246060984486,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 50
+            }
+          }
+        },
+        {
+          "start": 350,
+          "end": 400,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE"
+          ],
+          "evidence": {
+            "route_start": 0.19799726640823342,
+            "route_end": 0.21710065578110602,
+            "route_gain": 0.019103389372872592,
+            "max_route_drop": 0,
+            "travel_m": 16.42530990498068,
+            "speed_min_kmh": 0.021234626897115798,
+            "speed_max_kmh": 25.054651398220358,
+            "speed_median_kmh": 11.705514056727168,
+            "max_heading_rad": 0.14016995791705836,
+            "min_lane_clearance_m": 0.07440630896798517,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.19822699471239957,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.463835013235723,
+            "safety_events": {},
+            "unsupported_stop_steps": 5,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 5,
+            "longest_unsupported_stop": 5,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 4
+            },
+            "min_front_gap_m": 10.256811413482923,
+            "min_closing_ttc_s": 3.312855181550113,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "FOLLOW": 25,
+              "PREPARE_CHANGE": 22,
+              "BLOCKED_CHANGE": 3
+            }
+          }
+        },
+        {
+          "start": 400,
+          "end": 450,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "LOW_LANE_CLEARANCE"
+          ],
+          "evidence": {
+            "route_start": 0.21710065578110602,
+            "route_end": 0.2341713075462637,
+            "route_gain": 0.01707065176515768,
+            "max_route_drop": 0,
+            "travel_m": 15.029952390044791,
+            "speed_min_kmh": 6.574792017236934,
+            "speed_max_kmh": 14.276182690575217,
+            "speed_median_kmh": 10.979894710709104,
+            "max_heading_rad": 0.2965834674288917,
+            "min_lane_clearance_m": -1.4540955541655654,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.0563492476940155,
+            "steering_sign_changes": 1,
+            "max_speed_delta_kmh": 4.512523284293252,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 11.79907842158745,
+            "min_closing_ttc_s": 19.596378845166416,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "CHANGE_LANE": 44,
+              "BLOCKED_CHANGE": 4,
+              "APPROACH_JUNCTION": 2
+            }
+          }
+        },
+        {
+          "start": 450,
+          "end": 500,
+          "label": "PROGRESS",
+          "reasons": [
+            "ROUTE_PROGRESS_AND_LOCAL_SCREENS_PASSED"
+          ],
+          "evidence": {
+            "route_start": 0.2341713075462637,
+            "route_end": 0.2665752247885387,
+            "route_gain": 0.03240391724227498,
+            "max_route_drop": 0,
+            "travel_m": 27.808414473101248,
+            "speed_min_kmh": 12.853457755254333,
+            "speed_max_kmh": 27.075414541889888,
+            "speed_median_kmh": 20.221493014655202,
+            "max_heading_rad": 0.05230212025368841,
+            "min_lane_clearance_m": 0.6455929067053483,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 0.009128645062446594,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 4.511616281122244,
+            "safety_events": {},
+            "unsupported_stop_steps": 0,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 0,
+            "wait_support_steps": {},
+            "min_front_gap_m": 10.673620910691648,
+            "min_closing_ttc_s": 5.783954470277962,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "APPROACH_JUNCTION": 31,
+              "YIELD": 19
+            }
+          }
+        },
+        {
+          "start": 500,
+          "end": 550,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.2665752247885387,
+            "route_end": 0.2771410119507548,
+            "route_gain": 0.010565787162216123,
+            "max_route_drop": 0,
+            "travel_m": 9.06724685499575,
+            "speed_min_kmh": 0.21137928111563314,
+            "speed_max_kmh": 15.087727976828683,
+            "speed_median_kmh": 6.184104756930905,
+            "max_heading_rad": 7.496798468653587e-05,
+            "min_lane_clearance_m": 0.8236915557290078,
+            "overflow_steps": 14,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 5.041104668634944e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 2.489037117087511,
+            "safety_events": {},
+            "unsupported_stop_steps": 5,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 5,
+            "wait_support_steps": {},
+            "min_front_gap_m": 11.361065190278355,
+            "min_closing_ttc_s": 4.603382868825953,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 50
+            }
+          }
+        },
+        {
+          "start": 550,
+          "end": 600,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.2771410119507548,
+            "route_end": 0.28120771752988777,
+            "route_gain": 0.004066705579132968,
+            "max_route_drop": 5.094428920382477e-07,
+            "travel_m": 3.492439014622115,
+            "speed_min_kmh": 0.006469232957618368,
+            "speed_max_kmh": 12.06627991599481,
+            "speed_median_kmh": 0.013345204962387499,
+            "max_heading_rad": 1.7876468816568902e-05,
+            "min_lane_clearance_m": 0.8238523128896942,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 2.201740790042095e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.7474530317308528,
+            "safety_events": {},
+            "unsupported_stop_steps": 24,
+            "supported_stop_steps": 6,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 17,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 1,
+              "PUBLIC_FRONT_ACTOR": 6
+            },
+            "min_front_gap_m": 6.163832796732658,
+            "min_closing_ttc_s": 2.7615759451551276,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 50
+            }
+          }
+        },
+        {
+          "start": 600,
+          "end": 650,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.28120771752988777,
+            "route_end": 0.281303477591993,
+            "route_gain": 9.576006210521015e-05,
+            "max_route_drop": 7.946388208557309e-08,
+            "travel_m": 0.08436236353211951,
+            "speed_min_kmh": 0.012780375956882369,
+            "speed_max_kmh": 0.5484834159477445,
+            "speed_median_kmh": 0.013401440457378117,
+            "max_heading_rad": 1.884186471134974e-05,
+            "min_lane_clearance_m": 0.8237707829073524,
+            "overflow_steps": 50,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 1.185615110443905e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.3854171841120624,
+            "safety_events": {},
+            "unsupported_stop_steps": 50,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 67,
+            "wait_support_steps": {},
+            "min_front_gap_m": 11.850367570006291,
+            "min_closing_ttc_s": 23.272018031305294,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 50
+            }
+          }
+        },
+        {
+          "start": 650,
+          "end": 700,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "INCOMPLETE_TRAFFIC_OR_ROUTE_CONTEXT"
+          ],
+          "evidence": {
+            "route_start": 0.281303477591993,
+            "route_end": 0.281303477591993,
+            "route_gain": 0.0,
+            "max_route_drop": 7.946388203006194e-08,
+            "travel_m": 0.003411968959808025,
+            "speed_min_kmh": 0.012780380623040724,
+            "speed_max_kmh": 0.013401438614163142,
+            "speed_median_kmh": 0.013090909258630764,
+            "max_heading_rad": 1.8675417143620976e-05,
+            "min_lane_clearance_m": 0.8237714592618584,
+            "overflow_steps": 3,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 1.9123690435662866e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.0006210603005838578,
+            "safety_events": {},
+            "unsupported_stop_steps": 50,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 117,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 20,
+              "BLOCKED": 30
+            }
+          }
+        },
+        {
+          "start": 700,
+          "end": 750,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.281303477591993,
+            "route_end": 0.281303477591993,
+            "route_gain": 0.0,
+            "max_route_drop": 7.946388203006194e-08,
+            "travel_m": 0.003411968959808025,
+            "speed_min_kmh": 0.012780392237367044,
+            "speed_max_kmh": 0.013401426163999362,
+            "speed_median_kmh": 0.01309090906550972,
+            "max_heading_rad": 1.8675417143620976e-05,
+            "min_lane_clearance_m": 0.8237714592618584,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 1.9123690435662866e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.0006210343771623633,
+            "safety_events": {},
+            "unsupported_stop_steps": 50,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 167,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "BLOCKED": 50
+            }
+          }
+        },
+        {
+          "start": 750,
+          "end": 800,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.281303477591993,
+            "route_end": 0.281303477591993,
+            "route_gain": 0.0,
+            "max_route_drop": 7.946388203006194e-08,
+            "travel_m": 0.003411968959808025,
+            "speed_min_kmh": 0.012780414709981825,
+            "speed_max_kmh": 0.013401405852568217,
+            "speed_median_kmh": 0.01309090954320637,
+            "max_heading_rad": 1.8675417143620976e-05,
+            "min_lane_clearance_m": 0.8237714592618584,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 1.9123690435662866e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.0006209911425863919,
+            "safety_events": {},
+            "unsupported_stop_steps": 50,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 217,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "BLOCKED": 50
+            }
+          }
+        },
+        {
+          "start": 800,
+          "end": 850,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.281303477591993,
+            "route_end": 0.281303477591993,
+            "route_gain": 0.0,
+            "max_route_drop": 7.946388203006194e-08,
+            "travel_m": 0.003411968959808025,
+            "speed_min_kmh": 0.01278041657820718,
+            "speed_max_kmh": 0.013401402746506355,
+            "speed_median_kmh": 0.01309090950769803,
+            "max_heading_rad": 1.8675417143620976e-05,
+            "min_lane_clearance_m": 0.8237714592618584,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 1.9123690435662866e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.0006209861682991754,
+            "safety_events": {},
+            "unsupported_stop_steps": 50,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 267,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "BLOCKED": 50
+            }
+          }
+        },
+        {
+          "start": 850,
+          "end": 900,
+          "label": "UNCERTAIN",
+          "reasons": [
+            "STOP_WITHOUT_SUFFICIENT_PUBLIC_SUPPORT"
+          ],
+          "evidence": {
+            "route_start": 0.281303477591993,
+            "route_end": 0.2813211262802984,
+            "route_gain": 1.76486883053939e-05,
+            "max_route_drop": 7.946388203006194e-08,
+            "travel_m": 0.01842107542795956,
+            "speed_min_kmh": 0.012780442809194572,
+            "speed_max_kmh": 0.5334124074474104,
+            "speed_median_kmh": 0.013401363955134112,
+            "max_heading_rad": 1.8708706656989094e-05,
+            "min_lane_clearance_m": 0.8237702788466407,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 7.0980750024318695e-06,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 0.5200110438685666,
+            "safety_events": {},
+            "unsupported_stop_steps": 50,
+            "supported_stop_steps": 0,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 317,
+            "wait_support_steps": {},
+            "min_front_gap_m": null,
+            "min_closing_ttc_s": null,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "BLOCKED": 48,
+              "COMMIT_JUNCTION": 1,
+              "YIELD": 1
+            }
+          }
+        },
+        {
+          "start": 900,
+          "end": 948,
+          "label": "UNSAFE_OR_UNSTABLE",
+          "reasons": [
+            "SAFETY_EVENT"
+          ],
+          "evidence": {
+            "route_start": 0.2813211262802984,
+            "route_end": 0.2813221268625474,
+            "route_gain": 1.000582249000015e-06,
+            "max_route_drop": 5.165152333619361e-07,
+            "travel_m": 0.00979521088379216,
+            "speed_min_kmh": 7.380770156861476e-05,
+            "speed_max_kmh": 6.952236905176149,
+            "speed_median_kmh": 0.015272642042594268,
+            "max_heading_rad": 1.920804936195175e-05,
+            "min_lane_clearance_m": 0.8237708950251101,
+            "overflow_steps": 0,
+            "route_incompatible_steps": 0,
+            "lidar_unavailable_steps": 0,
+            "max_steering_delta": 1.4884564734529704e-05,
+            "steering_sign_changes": 0,
+            "max_speed_delta_kmh": 6.9369642593980885,
+            "safety_events": {
+              "crash_vehicle": 1
+            },
+            "unsupported_stop_steps": 17,
+            "supported_stop_steps": 26,
+            "clear_unsupported_stop_steps": 0,
+            "longest_unsupported_stop": 322,
+            "wait_support_steps": {
+              "PUBLIC_PREDICTED_OCCUPANCY": 29,
+              "PUBLIC_FRONT_ACTOR": 26
+            },
+            "min_front_gap_m": -4.098548804977184,
+            "min_closing_ttc_s": 0.0,
+            "unsafe_approach_steps": 0,
+            "teacher_behavior_counts_for_audit_only": {
+              "YIELD": 25,
+              "EMERGENCY_BRAKE": 23
+            }
+          }
+        }
+      ],
+      "intervals": [
+        {
+          "start": 0,
+          "end": 948,
+          "decision": "EXCLUDE",
+          "destination": null,
+          "reason": "QUALITY_OR_BOUNDARY_OR_TAIL_OR_SHORT_SEGMENT_EXCLUSION",
+          "context_before_start": 0,
+          "history_policy": "CURRENT_AND_PAST_ONLY; context rows are not accepted labels"
+        }
+      ],
+      "eligible_steps": 0,
+      "window_label_steps": {
+        "PROGRESS": 400,
+        "UNCERTAIN": 400,
+        "UNSAFE_OR_UNSTABLE": 148
+      }
+    }
+  ],
+  "raw_steps": 5601,
+  "eligible_steps": 666,
+  "bc_datasets_built": false,
+  "training_updates": 0,
+  "g1_complete": false
+}

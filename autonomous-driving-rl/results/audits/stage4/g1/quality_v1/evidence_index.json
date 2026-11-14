@@ -1,0 +1,14 @@
+{
+  "schema_version": "stage4-quality-evidence/1.0.0",
+  "published_at_utc": "2026-11-14T10:37:23.952730+00:00",
+  "source_review": "runs/s4_g1_quality_review_01",
+  "source_integrity_sha256": "82b9da84cee7df8cf270ef455e22a8841e8a90d3e4f775d3c31d6560b8fd29b8",
+  "frozen_rules": "results/audits/stage4/g1/quality_rules_v1",
+  "freeze_sha256": "1956974d447e5575b1a3c0b17805f4405a7fb78758677917774d5d0a56f5c7dc",
+  "rules_sha256": "1d1a2728c4aae063e492d90d2019cc7d2531ce2edf89067821d328b850e74ce7",
+  "files": {
+    "review.json": "66925c37b711570676d6442c24418b6f36f45be4544b34b0edf9ee44f9f9fed6",
+    "summary.json": "93231c59d920ae95a70a776e4519d5ef65b95479037579696b1f858663f3ef2c"
+  },
+  "g1_complete": false
+}

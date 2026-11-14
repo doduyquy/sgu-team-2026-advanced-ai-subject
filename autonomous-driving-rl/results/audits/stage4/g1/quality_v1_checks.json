@@ -1,0 +1,84 @@
+{
+  "schema_version": "stage4-quality-verification/1.0.0",
+  "status": "PASSED",
+  "verified_at_utc": "2026-11-14T10:40:58.156967+00:00",
+  "raw_sources": {
+    "s4_g1_pilot_02": {
+      "verified_files": 1018,
+      "integrity_sha256": "bdc85094ddfa81be93840507495ea1bd7ee725d5d164e015ec18f0524e5c8367",
+      "protected_current_files_unchanged": 182
+    },
+    "s4_g1_quality_fit_01": {
+      "verified_files": 928,
+      "integrity_sha256": "d70981f9b7b40195553b606c3c57b02998e2cb056b79d5e3c749e4be23ae8090",
+      "protected_current_files_unchanged": 182
+    }
+  },
+  "reviewed_steps": 9347,
+  "reviewed_windows": 191,
+  "fit_calibration_equals_frozen_application": true,
+  "rules_frozen_before_dev_application": true,
+  "interval_coverage_and_guards_passed": true,
+  "test_source_hashes_current": true,
+  "tests": {
+    "status": "PASSED",
+    "finished_at_utc": "2026-11-14T10:34:30.772581+00:00",
+    "groups": [
+      {
+        "group": "backend",
+        "command": [
+          "C:\\Users\\DANG KHOA\\.conda\\envs\\metadrive\\python.exe",
+          "-B",
+          "-X",
+          "utf8",
+          "-X",
+          "faulthandler",
+          "-m",
+          "unittest",
+          "tests.test_agent_contract",
+          "tests.test_agent_experiment_logging",
+          "tests.test_episode_lifecycle",
+          "tests.test_evaluation_protocol",
+          "tests.test_finish_visual",
+          "tests.test_launcher_core",
+          "tests.test_logging_contract",
+          "tests.test_mapsuite_dataset",
+          "tests.test_mapsuite_preview_export",
+          "tests.test_random_naive_agent",
+          "tests.test_reward_metrics",
+          "tests.test_rule_based_agent",
+          "tests.test_rule_based_corridor",
+          "tests.test_rule_based_p2_p3",
+          "tests.test_rule_based_p4",
+          "tests.test_rule_based_replay",
+          "tests.test_rule_based_report",
+          "tests.test_source_layout",
+          "tests.test_stage4_audit",
+          "tests.test_stage4_pilot",
+          "tests.test_stage4_quality",
+          "tests.test_stage4_resources",
+          "tests.test_stage4_telemetry",
+          "-q"
+        ],
+        "exit_code": 0,
+        "status": "PASSED",
+        "log": "D:\\Học\\Tri tue nhan to nang cao\\lab\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\runs\\s4_g1_quality_checks_02\\backend.log",
+        "tests": 512,
+        "seconds": 112.667,
+        "log_sha256": "50162d72674075dc5e78fd4eee62ed2f00afd2c1e16293d0ea84b1fecef97ef3"
+      }
+    ],
+    "total_tests": 512
+  },
+  "tests_request_sha256": "0846c61299edf169ac9a7b99254b532ad48c4335439606db348078a14da20869",
+  "preserved_failed_tests": {
+    "run_id": "s4_g1_quality_checks_01",
+    "summary_sha256": "484958a15fd8b5b862251b40655c673c996a51f9697a06cd935d827cceb216e7",
+    "reason": "Windows short/long temporary path comparison; fixed by resolving containment root."
+  },
+  "rules_freeze_sha256": "1956974d447e5575b1a3c0b17805f4405a7fb78758677917774d5d0a56f5c7dc",
+  "review_sha256": "66925c37b711570676d6442c24418b6f36f45be4544b34b0edf9ee44f9f9fed6",
+  "bc_datasets_built": false,
+  "g1_complete": false,
+  "training_updates": 0
+}

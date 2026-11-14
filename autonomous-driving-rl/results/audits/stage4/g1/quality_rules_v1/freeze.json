@@ -1,0 +1,51 @@
+{
+  "schema_version": "stage4-quality-freeze/1.0.0",
+  "status": "FROZEN_FOR_PILOT",
+  "frozen_at_utc": "2026-11-14T10:32:51.856231+00:00",
+  "reviewer": "Codex evidence review; no human sign-off claimed",
+  "profile_integrity_sha256": "5747bc0a55ad201059746693201697244df7ff104c3b74145376d0fc7cd38f11",
+  "partition_sha256": "df244187a6c6ffa54308a776c3bd02a5d1705771717d9dd3c46d33e10ed45f90",
+  "reviewer_source_sha256": "606fb0de1a4fecd8b8d5b1f37c385d32c8a19a61c8ef1dd4f6635a634168bde0",
+  "dependency_sha256": {
+    "scripts/replay_rule_based_trace.py": "58181a8421269f6699c157bb81cc7f92cc689805a8034ccef60e35d593a63ce3",
+    "scripts/review_stage4_quality.py": "606fb0de1a4fecd8b8d5b1f37c385d32c8a19a61c8ef1dd4f6635a634168bde0",
+    "scripts/stage4.py": "6e0a1660f050f6e830987250fe9627a95cbb461941903214927ba52a867d3093",
+    "src/agents/__init__.py": "b7aef2752ee8012fe89ea807368676e4399ea29e15ec8074874659acda4c758f",
+    "src/agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+    "src/agents/README.md": "bde418f9f249d0078c6ded2ebfd989bd4d0dcf2a97f0000f8b6fc044acab056f",
+    "src/agents/rule_based_agent.py": "d7b287c8b9aa771de8d0c4691a62c36945c32aec392ff01154c9eb1e1098ce73",
+    "src/agents/rule_based_junction.py": "b345ba6277eed9eccd53f965c4d72d43f327e319fb6f2dc0d5ce16d7adf7bb16",
+    "src/agents/rule_based_lane_change.py": "191518078edc6438c1f6c0f2c4f25484902fabca04b51f4acce7647cd1d32df8",
+    "src/agents/rule_based_memory.py": "4ceac7c3b08cafb72db710623dcecef84e8b2e021e2638a12c3468dc18a46de4",
+    "src/agents/rule_based_traffic.py": "a912c753950a345045dbd06463f3e81c5f4ad5ff266d163cbb55f25f0992d517",
+    "src/imitation/__init__.py": "25e128ec61bb74e26b8102e41bb0f6cb5bfd4a9cd81322e911926a445f17300d",
+    "src/imitation/audit.py": "8f944eee387ff718a7408a36dffa659364480537fe5758e0e2b7a648bf64c7e0",
+    "src/imitation/pilot.py": "95fe0d4ab98d3fbd73297f1b38624a3252b492bf64d7df4aab46000e58b6e980",
+    "src/imitation/resources.py": "63abe5dc22ef892de3520a9fdd8eff99cc4d8f4b5bbb5725f1175410de07ec73",
+    "src/platform/__init__.py": "36c2140052470e2daaa2c15b42a9763385e4bf12b270265e5b04dc4fbf4680dc",
+    "src/platform/action_adapter.py": "d946ca9c858e138ea18d3647a98e8a7dc47c66d72dc67faf53a6275b7d5aceca",
+    "src/platform/agent.py": "a111916966a6cfb0480d45e5642f55bcad375bc02e4f90e8e4796b8ea39375e1",
+    "src/platform/agent_input.py": "1bf5f0415a3394f6ed0c48f927f35aaa6f7462da48f0705e46d43f589a3e2183",
+    "src/platform/episode.py": "50679dd877753f18c92f5107aae3d4dada7a629e8498e75d67031096a012716a",
+    "src/platform/experiment_logging.py": "9206331477748c59bed581bd5da66825dcc2286b7470e5fa0ccc278b3f038413",
+    "src/platform/metrics.py": "52616b4af845cd5d597e7c63fffb75297795cfa15a1e36e56946b241e28e869e",
+    "src/platform/protocol.py": "6621e8b9f3dc03b67292f34306e0245dcff0f09c9dc549ed4b9e7b03dd8e1a42",
+    "src/platform/reward.py": "ecb206c796f682271ced0b943c2d505734c916318d1a12c44b916d5d2bf76bbf",
+    "src/platform/specs.py": "9415fa5ece6868966522092ebb14299bdd7269cb888c397ab3a802eac1f9ec1b",
+    "src/platform/wandb_backend.py": "aa289996dcfb7bf9856bfb046dac64098a0732f0580d6ba2f1c8fe458273d26f"
+  },
+  "calibration_partitions": [
+    "FIT"
+  ],
+  "dev_rule_tuning": false,
+  "files": {
+    "fit_calibration.json": "447bdf0b01ed7e43ee5f45da6056d58c9f294ccd5be48e69360263967696f6ba",
+    "reviewer_source.py": "606fb0de1a4fecd8b8d5b1f37c385d32c8a19a61c8ef1dd4f6635a634168bde0",
+    "rules.json": "1d1a2728c4aae063e492d90d2019cc7d2531ce2edf89067821d328b850e74ce7"
+  },
+  "limitations": [
+    "Small pilot, conservative local geometry/constant velocity screens; no safety guarantee.",
+    "Uncertain windows excluded; broader coverage requires a new FIT-calibrated rule version.",
+    "No balancing/weight choice, BC dataset construction or training in step 5."
+  ]
+}

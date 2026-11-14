@@ -1,0 +1,36 @@
+{
+  "schema_version": "stage4-quality-summary/1.0.0",
+  "partitions": {
+    "FIT": {
+      "episodes": 4,
+      "raw_steps": 5601,
+      "outcomes": {
+        "SUCCESS": 2,
+        "TIMEOUT": 1,
+        "CRASH_VEHICLE": 1
+      },
+      "approved_success_episodes": 1,
+      "bc_a_eligible_steps": 566,
+      "bc_b_additional_timeout_steps": 100,
+      "bc_b_eligible_steps": 666
+    },
+    "DEV": {
+      "episodes": 3,
+      "raw_steps": 3746,
+      "outcomes": {
+        "SUCCESS": 2,
+        "TIMEOUT": 1
+      },
+      "approved_success_episodes": 2,
+      "bc_a_eligible_steps": 832,
+      "bc_b_additional_timeout_steps": 500,
+      "bc_b_eligible_steps": 1332
+    }
+  },
+  "quality_rules_version": "1.0.0",
+  "training_samples_from_dev": 0,
+  "bc_datasets_built": false,
+  "bc_accepted_samples": 0,
+  "training_updates": 0,
+  "note": "Eligibility annotations only. DEV remains DEV; excluded raw steps are retained."
+}
