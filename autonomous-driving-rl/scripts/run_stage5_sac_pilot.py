@@ -5,6 +5,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
 import platform
 import shutil
@@ -34,10 +35,26 @@ def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def write_progress(path: Path, **updates: object) -> None:
+    current = {}
+    if path.exists():
+        try:
+            current = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            current = {}
+    current.update(updates)
+    current["updated_at_epoch_s"] = time.time()
+    temporary = path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(current, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
+
+
 def evaluate(checkpoint: Path, run_dir: Path, split_path: Path, *, probe: bool = False) -> subprocess.CompletedProcess:
     command = [sys.executable, str(ROOT / "scripts/evaluate_stage5_pilot.py"),
                "--checkpoint", str(checkpoint), "--split", str(split_path),
                "--output", str(run_dir / ("technical_probe" if probe else "diagnostics"))]
+    command += ["--progress-file", str(run_dir / "progress.json"),
+                "--progress-phase", "TECHNICAL_PROBE" if probe else "DIAGNOSTICS"]
     if probe:
         command += ["--max-cases", "1", "--max-steps-per-episode", "20"]
     return subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
@@ -71,6 +88,8 @@ def main() -> int:
     }
     status_path = run_dir / "run_status.json"
     status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_progress(run_dir / "progress.json", status="RUNNING", phase="PREPARING", training_step=0,
+                   requested_timesteps=10000, checkpoint_steps=[0, 5000, 10000])
     trainer = None
     try:
         trainer = SacBaselineTrainer(training_root_seed=101, project_root=ROOT,
@@ -99,7 +118,9 @@ def main() -> int:
         if probe.returncode != 0:
             raise RuntimeError(f"Evaluator technical probe failed with exit code {probe.returncode}")
 
-        checkpoint_callback = PilotCheckpointCallback(trainer, checkpoints_dir, [5000, 10000], verbose=1)
+        checkpoint_callback = PilotCheckpointCallback(
+            trainer, checkpoints_dir, [5000, 10000], requested_timesteps=10000, verbose=1
+        )
         started = time.perf_counter()
         trainer.model.learn(total_timesteps=10000,
                             callback=CallbackList([trainer.callback, checkpoint_callback]),
@@ -111,13 +132,32 @@ def main() -> int:
             "optimizer_updates": int(getattr(trainer.model, "_n_updates", 0)),
             "unique_training_geometries": len({r["geometry_id"] for r in trainer.callback.episode_records}),
             "training_wall_time_s": elapsed,
-            "training_steps_per_second": 10000 / max(elapsed, 0.001),
+            "training_steps_per_second": int(trainer.model.num_timesteps) / max(elapsed, 0.001),
             "checkpoint_steps_saved": [0] + checkpoint_callback.saved_steps,
             "training_action_summary": json.loads(
                 (checkpoints_dir / "training_action_summary.json").read_text(encoding="utf-8")
             ),
         })
         (run_dir / "training_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        if (run_dir / "STOP_REQUESTED").exists():
+            actual_step = int(trainer.model.num_timesteps)
+            partial_checkpoint = checkpoints_dir / f"step_{actual_step:05d}"
+            if not partial_checkpoint.exists():
+                trainer.save_checkpoint(partial_checkpoint, save_replay_buffer=False)
+            metadata = verify_checkpoint_integrity(partial_checkpoint,
+                         expected_encoder_fingerprint=trainer.encoder.get_schema_fingerprint())
+            record.update({
+                "status": "INTERRUPTED", "training_summary": summary,
+                "stop_reason": "USER_REQUESTED_GRACEFUL_STOP",
+                "partial_checkpoint_step": actual_step,
+                "partial_checkpoint_sha256": metadata["model_sha256"],
+                "finish_utc": datetime.now(timezone.utc).isoformat(),
+            })
+            status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            write_progress(run_dir / "progress.json", status="INTERRUPTED", phase="STOPPED_BY_USER",
+                           training_step=actual_step, requested_timesteps=10000,
+                           partial_checkpoint_step=actual_step)
+            return 0
         if int(trainer.model.num_timesteps) != 10000 or checkpoint_callback.saved_steps != [5000, 10000]:
             raise RuntimeError("Pilot stopped before exact 10,000 steps or a required checkpoint was missed")
         for step in (0, 5000, 10000):
@@ -137,6 +177,9 @@ def main() -> int:
 
         if not args.skip_full_diagnostics:
             for step in (0, 5000, 10000):
+                write_progress(run_dir / "progress.json", status="RUNNING", phase="DIAGNOSTICS",
+                               diagnostic_checkpoint_step=step, diagnostic_cases_completed=0,
+                               diagnostic_cases_planned=24)
                 result = evaluate(checkpoints_dir / f"step_{step:05d}", run_dir, split_path)
                 (run_dir / f"diagnostics_step_{step:05d}.stdout.txt").write_text(result.stdout, encoding="utf-8")
                 (run_dir / f"diagnostics_step_{step:05d}.stderr.txt").write_text(result.stderr, encoding="utf-8")
@@ -157,8 +200,13 @@ def main() -> int:
             shutil.copy2(split_path, report_dir / "pilot_split_v1.json")
             shutil.copy2(config_path, report_dir / "pilot_protocol_v1.json")
             record["status"] = "COMPLETE"
+            write_progress(run_dir / "progress.json", status="COMPLETE", phase="COMPLETE",
+                           training_step=10000, requested_timesteps=10000,
+                           diagnostic_checkpoints_complete=[0, 5000, 10000])
         else:
             record["status"] = "TRAINING_COMPLETE_DIAGNOSTICS_PENDING"
+            write_progress(run_dir / "progress.json", status="TRAINING_COMPLETE_DIAGNOSTICS_PENDING",
+                           phase="TRAINING_COMPLETE", training_step=10000, requested_timesteps=10000)
         record["finish_utc"] = datetime.now(timezone.utc).isoformat()
         status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return 0
@@ -168,6 +216,8 @@ def main() -> int:
         record["traceback"] = traceback.format_exc()
         record["finish_utc"] = datetime.now(timezone.utc).isoformat()
         status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        write_progress(run_dir / "progress.json", status="FAILED_OR_INCOMPLETE", phase="FAILED",
+                       error=repr(exc), training_step=record.get("training_summary", {}).get("actual_num_timesteps", 0))
         return 1
     finally:
         if trainer is not None:

@@ -40,6 +40,7 @@ from src.workbench.widgets.experiment_setup_widget import ExperimentSetupWidget
 from src.workbench.widgets.plan_preflight_widget import PlanAndPreflightWidget
 from src.workbench.widgets.results_widget import ResultsWidget
 from src.workbench.widgets.run_monitor_widget import RunMonitorWidget
+from src.workbench.widgets.stage5_pilot_widget import Stage5PilotWidget
 from src.workbench.widgets.training_widget import TrainingWidget
 
 
@@ -57,6 +58,7 @@ class MainWindow(QMainWindow):
         self._last_completed_run_dir: Optional[Path] = None
         self._terminal_semantic_status: Optional[str] = None
         self._training_active = False
+        self._stage5_pilot_active = False
         self._training_done = None
 
         self._init_ui()
@@ -105,6 +107,10 @@ class MainWindow(QMainWindow):
         self.results_widget = ResultsWidget()
         self.tab_widget.addTab(self.results_widget, "6. Results")
 
+        # Stage 5 SAC pilot dashboard is separate from the canonical Gate-7 Results browser.
+        self.stage5_pilot_widget = Stage5PilotWidget(self._core_adapter.project_root)
+        self.tab_widget.addTab(self.stage5_pilot_widget, "7. SAC Training")
+
         main_layout.addWidget(self.tab_widget)
 
         # Status Bar
@@ -121,6 +127,8 @@ class MainWindow(QMainWindow):
         self.training_widget.startTrainingRequested.connect(self._on_training_requested)
         self.training_widget.terminateRequested.connect(self._on_terminate_requested)
         self.training_widget.trainingComplete.connect(self._on_training_completed)
+        self.stage5_pilot_widget.busyChanged.connect(self._on_stage5_pilot_busy)
+        self.stage5_pilot_widget.runFinished.connect(self._on_stage5_pilot_finished)
         self.campaign_controller.busyChanged.connect(self._on_campaign_busy)
         self.campaign_controller.messageChanged.connect(self.status_bar.showMessage)
         self.campaign_controller.changed.connect(self._on_campaign_changed)
@@ -143,13 +151,13 @@ class MainWindow(QMainWindow):
         self._runner.rawOutputReceived.connect(self._on_raw_worker_output)
 
     def _on_request_changed(self) -> None:
-        if self.campaign_controller.active or self._training_active:
+        if self.campaign_controller.active or self._training_active or self._stage5_pilot_active:
             return
         self.plan_preflight_widget.clear()
         self.status_bar.showMessage("Request parameters changed. Plan & Preflight invalidated.")
 
     def _on_resolve_requested(self, request: LaunchRequestV1) -> None:
-        if self.campaign_controller.active or self._training_active:
+        if self.campaign_controller.active or self._training_active or self._stage5_pilot_active:
             return
         self._terminal_semantic_status = None
         self.setup_widget.set_operation_active(True)
@@ -163,7 +171,7 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(self._terminal_semantic_status)
 
     def _on_run_requested(self, request: LaunchRequestV1) -> None:
-        if self.campaign_controller.active or self._training_active:
+        if self.campaign_controller.active or self._training_active or self._stage5_pilot_active:
             return
         self._terminal_semantic_status = None
         self._last_completed_run_dir = None  # Reset pending run-dir on start of every RUN
@@ -179,6 +187,8 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(self._terminal_semantic_status)
 
     def _on_terminate_requested(self) -> None:
+        if self._stage5_pilot_active:
+            return
         warning_msg = (
             "FORCE TERMINATE will kill the running worker process immediately.\n\n"
             "Warning: Force termination is non-graceful and may leave the local "
@@ -304,7 +314,7 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(self._terminal_semantic_status)
 
     def _on_campaign_requested(self, operation, campaign) -> None:
-        if self._training_active:
+        if self._training_active or self._stage5_pilot_active:
             return
         self._terminal_semantic_status = None
         self.plan_preflight_widget.clear()
@@ -321,20 +331,34 @@ class MainWindow(QMainWindow):
             self.plan_preflight_widget.clear()
 
     def _on_campaign_busy(self, busy: bool) -> None:
+        busy = busy or self._stage5_pilot_active
         self.benchmark_widget.set_busy(busy)
         self.setup_widget.set_operation_active(busy)
         self.training_widget.set_busy(busy)
+        self.stage5_pilot_widget.set_external_busy(busy)
         self.setup_pages.setTabEnabled(0, not self._training_active)
         self.setup_pages.setTabEnabled(1, not busy or (not self.campaign_controller.active and not self._training_active))
         self.setup_pages.setTabEnabled(2, not busy or self._training_active)
 
+    def _on_stage5_pilot_busy(self, busy: bool) -> None:
+        self._stage5_pilot_active = bool(busy)
+        self._on_campaign_busy(self.campaign_controller.active or self._runner.is_running)
+        if busy:
+            activity = "SAC pilot" if self.stage5_pilot_widget.is_running else "checkpoint simulator"
+            self.status_bar.showMessage(f"Stage 5 {activity} đang chạy · theo dõi tại tab SAC Training.")
+
+    def _on_stage5_pilot_finished(self, run_id: str, exit_code: int) -> None:
+        self.status_bar.showMessage(
+            f"Stage 5 run {run_id} kết thúc (exit code {exit_code}); xem trạng thái và kết quả tại tab SAC Training."
+        )
+
     def _show_training(self):
-        if not self._runner.is_running and not self.campaign_controller.active:
+        if not self._runner.is_running and not self.campaign_controller.active and not self._stage5_pilot_active:
             self.tab_widget.setCurrentIndex(0)
             self.setup_pages.setCurrentIndex(2)
 
     def _on_training_requested(self, preset):
-        if self._runner.is_running or self.campaign_controller.active or self._training_active:
+        if self._runner.is_running or self.campaign_controller.active or self._training_active or self._stage5_pilot_active:
             return
         self._training_active = True
         self._training_done = None
@@ -370,6 +394,26 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Window close behavior (Specification Section 22)."""
+        if self.stage5_pilot_widget.is_running or self.stage5_pilot_widget.is_viewer_running:
+            warning_msg = (
+                "Stage 5 pilot or checkpoint viewer is still running. Closing now will force-kill that process. "
+                "A pilot may remain marked RUNNING and its current episode may be incomplete.\n\n"
+                "Force close, or cancel and keep monitoring?"
+            )
+            reply = QMessageBox.question(
+                self, "Stage 5 process still running", warning_msg,
+                QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Cancel,
+            )
+            if reply != QMessageBox.StandardButton.Discard:
+                event.ignore()
+                return
+            if not self.stage5_pilot_widget.force_terminate_and_wait(timeout_ms=2000):
+                self.status_bar.showMessage("Không xác nhận được Stage 5 process đã dừng; cửa sổ vẫn mở.")
+                event.ignore()
+                return
+            event.accept()
+            return
         if self._runner.is_running:
             warning_msg = (
                 "An experiment worker is currently running.\n\n"

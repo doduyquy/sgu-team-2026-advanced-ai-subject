@@ -124,6 +124,29 @@ class TestPilotProtocol(unittest.TestCase):
             actions = json.loads((Path(temp_dir) / "training_action_summary.json").read_text())
             self.assertEqual(actions["brake_fraction"], 1.0)
 
+    def test_training_callback_writes_live_heartbeat_and_honors_graceful_stop(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            run_dir = Path(temp_dir) / "run"
+            callback = PilotCheckpointCallback(type("Trainer", (), {})(), run_dir / "checkpoints", checkpoints=[])
+            callback.model = type("Model", (), {"num_timesteps": 100, "_n_updates": 40, "logger": None})()
+            callback.trainer.callback = type("Diagnostics", (), {"episode_records": []})()
+            callback.locals = {
+                "infos": [{"action_steering": 0.0, "action_throttle_brake": 0.5}],
+                "actions": np.asarray([[0.0, 0.5]], dtype=np.float32),
+                "rewards": np.asarray([0.1]), "dones": np.asarray([False]),
+            }
+            callback._on_training_start()
+            self.assertTrue(callback._on_step())
+            progress = json.loads((run_dir / "progress.json").read_text())
+            self.assertEqual(progress["training_step"], 100)
+            self.assertEqual(progress["optimizer_updates"], 40)
+            self.assertAlmostEqual(progress["action_summary"]["throttle_fraction"], 1.0)
+            callback.stop_file.parent.mkdir(parents=True, exist_ok=True)
+            callback.stop_file.write_text("stop", encoding="utf-8")
+            callback.model.num_timesteps = 101
+            self.assertFalse(callback._on_step())
+            callback._on_training_end()
+
     def test_evaluator_does_not_update_model_or_sampler_and_writes_records(self):
         class FakePolicy(torch.nn.Module):
             def __init__(self):
@@ -171,18 +194,23 @@ class TestPilotProtocol(unittest.TestCase):
         split_path = Path(tempfile.mkdtemp()) / "split.json"
         split_path.write_text(json.dumps(build_pilot_split(PROJECT_ROOT)), encoding="utf-8")
         output = split_path.parent / "records"
+        progress_path = split_path.parent / "progress.json"
         model = FakeModel()
         metadata = {"model_sha256": "a" * 64, "total_timesteps": 0}
         with patch("scripts.evaluate_stage5_pilot.load_sac_checkpoint", return_value=(model, metadata)), \
              patch("scripts.evaluate_stage5_pilot.TrainCaseSampler", FakeSampler), \
              patch("scripts.evaluate_stage5_pilot.Stage5TrainingEnv", FakeEnv):
-            result = evaluate_checkpoint(Path("checkpoint"), split_path, output, max_cases=1)
+            result = evaluate_checkpoint(Path("checkpoint"), split_path, output, max_cases=1,
+                                         progress_file=progress_path, progress_phase="TECHNICAL_PROBE")
         self.assertTrue(result["evaluation_state_unchanged"])
         self.assertEqual(result["training_sampler_sampled_count"], 0)
         row = json.loads((output / "step_00000_episodes.jsonl").read_text().splitlines()[0])
         self.assertEqual(row["outcome"], "OUT_OF_ROAD")
         self.assertTrue(row["safety_failure"])
         self.assertEqual(row["episode_steps"], 1)
+        progress = json.loads(progress_path.read_text(encoding="utf-8"))
+        self.assertEqual(progress["phase"], "TECHNICAL_PROBE")
+        self.assertEqual(progress["diagnostic_cases_completed"], 1)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import psutil
 import statistics
@@ -27,6 +28,22 @@ from src.training.stage5.env_adapter import Stage5TrainingEnv
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
 from src.training.stage5.pilot_protocol import diagnostic_schedule, load_pilot_split
 from src.training.stage5.train_sampler import SamplerStrategy, TrainCaseSampler
+
+
+def _write_progress(path: Optional[Path], **updates: Any) -> None:
+    if path is None:
+        return
+    payload: Dict[str, Any] = {}
+    if path.exists():
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = {}
+    payload.update(updates)
+    payload["updated_at_epoch_s"] = time.time()
+    temporary = path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
 
 
 def policy_state_sha256(model: Any) -> str:
@@ -101,6 +118,7 @@ def _episode_record(
 def evaluate_checkpoint(
     checkpoint_dir: Path, split_path: Path, output_dir: Path, schedule_seed: int = 5302,
     max_steps_per_episode: Optional[int] = None, max_cases: Optional[int] = None,
+    progress_file: Optional[Path] = None, progress_phase: str = "DIAGNOSTICS",
 ) -> Dict[str, Any]:
     encoder = Stage5ObservationEncoder(core_only=False)
     model, metadata = load_sac_checkpoint(
@@ -122,12 +140,16 @@ def evaluate_checkpoint(
     schedule = diagnostic_schedule(load_pilot_split(split_path), schedule_seed)
     if max_cases is not None:
         schedule = schedule[:max_cases]
+    _write_progress(progress_file, status="RUNNING", phase=progress_phase,
+                    diagnostic_checkpoint_step=training_step, diagnostic_cases_completed=0,
+                    diagnostic_cases_planned=len(schedule), diagnostic_current_case=None,
+                    diagnostic_current_episode_step=0)
     output_dir.mkdir(parents=True, exist_ok=True)
     records_path = output_dir / f"step_{training_step:05d}_episodes.jsonl"
     records: List[Dict[str, Any]] = []
     try:
         with records_path.open("w", encoding="utf-8", newline="\n") as sink:
-            for item in schedule:
+            for case_index, item in enumerate(schedule, start=1):
                 case = sampler.get_case_for_geometry_id(item["geometry_id"], item["environment_seed"])
                 obs, _ = env.reset(options={"case": case})
                 speeds: List[float] = []
@@ -148,6 +170,17 @@ def evaluate_checkpoint(
                     rewards.append(float(reward))
                     speeds.append(float(info.get("speed_km_h", 0.0)))
                     done = bool(terminated or truncated)
+                    if progress_file is not None and len(speeds) % 100 == 0:
+                        _write_progress(
+                            progress_file, status="RUNNING", phase=progress_phase,
+                            diagnostic_checkpoint_step=training_step,
+                            diagnostic_cases_completed=case_index - 1,
+                            diagnostic_cases_planned=len(schedule),
+                            diagnostic_current_case=item["geometry_id"],
+                            diagnostic_current_episode_step=len(speeds),
+                            diagnostic_latest_speed_km_h=speeds[-1],
+                            diagnostic_latest_route_completion=info.get("route_completion"),
+                        )
                     if max_steps_per_episode is not None and len(speeds) >= max_steps_per_episode and not done:
                         interrupted = True
                         break
@@ -158,6 +191,14 @@ def evaluate_checkpoint(
                 records.append(record)
                 sink.write(json.dumps(record, sort_keys=True) + "\n")
                 sink.flush()
+                _write_progress(
+                    progress_file, status="RUNNING", phase=progress_phase,
+                    diagnostic_checkpoint_step=training_step,
+                    diagnostic_cases_completed=case_index,
+                    diagnostic_cases_planned=len(schedule),
+                    diagnostic_current_case=None, diagnostic_current_episode_step=0,
+                    diagnostic_last_outcome=record["outcome"],
+                )
     finally:
         env.close()
     if sampler.sampled_count != 0:
@@ -196,9 +237,13 @@ def main() -> None:
     parser.add_argument("--max-steps-per-episode", type=int, default=None,
                         help="Technical probe only. Interrupted episodes are explicitly excluded from outcome rates.")
     parser.add_argument("--max-cases", type=int, default=None, help="Technical probe only; never a full diagnostic result.")
+    parser.add_argument("--progress-file", type=Path, default=None,
+                        help="Optional pilot progress file updated during diagnostic episodes.")
+    parser.add_argument("--progress-phase", default="DIAGNOSTICS")
     args = parser.parse_args()
     print(json.dumps(evaluate_checkpoint(args.checkpoint, args.split, args.output, args.schedule_seed,
-                                         args.max_steps_per_episode, args.max_cases), indent=2))
+                                         args.max_steps_per_episode, args.max_cases,
+                                         args.progress_file, args.progress_phase), indent=2))
 
 
 if __name__ == "__main__":

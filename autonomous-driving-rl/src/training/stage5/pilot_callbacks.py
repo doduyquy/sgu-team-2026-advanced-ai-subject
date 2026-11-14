@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+import statistics
 import time
 from typing import Any, Dict, Iterable, List
 
@@ -13,10 +15,14 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 
 class PilotCheckpointCallback(BaseCallback):
-    def __init__(self, trainer: Any, output_root: Path, checkpoints: Iterable[int], verbose: int = 0):
+    def __init__(self, trainer: Any, output_root: Path, checkpoints: Iterable[int],
+                 requested_timesteps: int = 10000, stop_file: Path | None = None, verbose: int = 0):
         super().__init__(verbose)
         self.trainer = trainer
         self.output_root = Path(output_root)
+        self.run_root = self.output_root.parent
+        self.requested_timesteps = int(requested_timesteps)
+        self.stop_file = Path(stop_file) if stop_file else self.run_root / "STOP_REQUESTED"
         self.checkpoints = sorted({int(step) for step in checkpoints if int(step) > 0})
         self.saved_steps: List[int] = []
         self.resource_samples: List[Dict[str, Any]] = []
@@ -73,13 +79,55 @@ class PilotCheckpointCallback(BaseCallback):
         if step in self.checkpoints and step not in self.saved_steps:
             self._save(step)
         if step % 100 == 0:
-            self.resource_samples.append({
+            sample = {
                 "training_step": step,
                 "elapsed_s": time.perf_counter() - self.started,
                 "rss_mb": self.process.memory_info().rss / (1024 * 1024),
                 "optimizer_updates": int(getattr(self.model, "_n_updates", 0)),
-            })
+            }
+            self.resource_samples.append(sample)
+            self._write_progress(step, sample)
+        if self.stop_file.exists():
+            return False
         return True
+
+    def _write_progress(self, step: int, resource_sample: Dict[str, Any]) -> None:
+        values = getattr(getattr(self.model, "logger", None), "name_to_value", {}) or {}
+        count = self.action_counts["steps"]
+        episodes = getattr(self.trainer.callback, "episode_records", [])
+        unique_geometries = sorted({row.get("geometry_id") for row in episodes if row.get("geometry_id")})
+        episode_routes = [float(row["route_completion"]) for row in episodes if row.get("route_completion") is not None]
+        episode_returns = [float(row["cumulative_reward"]) for row in episodes if row.get("cumulative_reward") is not None]
+        payload = {
+            "status": "RUNNING", "phase": "TRAINING", "training_step": step,
+            "requested_timesteps": self.requested_timesteps,
+            "progress_fraction": min(1.0, step / max(1, self.requested_timesteps)),
+            "elapsed_s": resource_sample["elapsed_s"],
+            "steps_per_second": step / max(0.001, resource_sample["elapsed_s"]),
+            "optimizer_updates": resource_sample["optimizer_updates"],
+            "actor_loss": _json_number(values.get("train/actor_loss")),
+            "critic_loss": _json_number(values.get("train/critic_loss")),
+            "entropy_coefficient": _json_number(values.get("train/ent_coef")),
+            "rss_mb": resource_sample["rss_mb"],
+            "completed_episodes": len(episodes),
+            "clean_success_count": sum(bool(row.get("clean_success")) for row in episodes),
+            "mean_completed_episode_route": statistics.mean(episode_routes) if episode_routes else None,
+            "mean_completed_episode_return": statistics.mean(episode_returns) if episode_returns else None,
+            "unique_training_geometries": unique_geometries,
+            "action_summary": {
+                "steps": count,
+                "throttle_fraction": self.action_counts["throttle"] / count if count else None,
+                "brake_fraction": self.action_counts["brake"] / count if count else None,
+                "near_zero_fraction": self.action_counts["near_zero"] / count if count else None,
+                "mean_steering": self.action_sums["steering"] / count if count else None,
+                "mean_throttle_brake": self.action_sums["throttle_brake"] / count if count else None,
+            },
+            "updated_at_epoch_s": time.time(),
+        }
+        path = self.run_root / "progress.json"
+        temporary = path.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+        os.replace(temporary, path)
 
     def _save(self, step: int) -> None:
         target = self.output_root / f"step_{step:05d}"
@@ -109,6 +157,16 @@ class PilotCheckpointCallback(BaseCallback):
         (self.output_root / "resource_samples.json").write_text(
             json.dumps(self.resource_samples, indent=2) + "\n", encoding="utf-8"
         )
+
+
+def _json_number(value: Any) -> Any:
+    if value is None:
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if np.isfinite(number) else None
 
 
 def checkpoint_runtime_stats(trainer: Any, started: float) -> Dict[str, Any]:
