@@ -16,6 +16,7 @@ from src.agents import Stage0RandomNaiveAgent
 from src.agents.astar_agent import AStarAgent, LearnedAStarAgent
 from src.agents.graph_search_agents import BFSAgent, DijkstraAgent
 from src.agents.hybrid_astar_agent import HybridAStarAgent
+from src.agents.MCTS_agent import MCTSAgent
 from src.platform import (
     AgentPolicy,
     DeterministicConstantFixtureAgent,
@@ -113,6 +114,10 @@ def _factory_stage0_random_naive() -> Stage0RandomNaiveAgent:
 
 def _factory_stage2_astar() -> AStarAgent:
     return AStarAgent()
+
+
+def _factory_stage3_mcts() -> MCTSAgent:
+    return MCTSAgent()
 
 
 def _factory_stage6_astar_learned() -> LearnedAStarAgent:
@@ -278,7 +283,7 @@ def build_historical_fixture_registry() -> AgentRegistryV1:
 def build_canonical_agent_registry() -> AgentRegistryV1:
     """
     Initializes and populates canonical AgentRegistryV1 with the four historical Gate-6 fixture agents
-    plus Stage 0, Stage 2 search methods and Stage 6 learned A*.
+    plus Stage 0, Stage 2 search, Stage 3 MCTS, Stage 5 SAC and Stage 6 learned A*.
     This function represents the authoritative registry for Platform V1 launcher execution.
     NOTE: All registered methods currently have benchmark_eligible = False.
     """
@@ -313,6 +318,21 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             ),
         ),
         factory=_factory_stage0_random_naive
+    )
+
+    _factory_stage3_mcts.experiment_parameters = MCTSAgent.experiment_parameters
+    registry.register(
+        AgentRegistrationV1(
+            agent_id=MCTSAgent.agent_id, agent_version=MCTSAgent.agent_version,
+            stage_label="STAGE_3", method_family=MCTSAgent.method_family, purpose="CANDIDATE",
+            implementation_ref=f"{MCTSAgent.__module__}:{MCTSAgent.__qualname__}",
+            input_profile_id="STATE_DECISION_V1", action_adapter_id="discrete9_lowbranch_v1",
+            inference_stochasticity="stochastic", stateful_within_episode=True,
+            benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True,
+            requires_checkpoint=False,
+            description="UCT MCTS with local bicycle dynamics, constant-velocity actors and guided rollouts.",
+        ),
+        _factory_stage3_mcts,
     )
 
     for policy_class, factory, stage, learned, description in (
