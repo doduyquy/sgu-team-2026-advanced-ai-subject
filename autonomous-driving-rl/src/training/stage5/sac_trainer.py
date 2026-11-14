@@ -30,6 +30,9 @@ from src.training.stage5.observation_encoder import (
     STAGE5_FULL_OBSERVATION_DIM,
     Stage5ObservationEncoder,
 )
+from src.training.stage5.pilot_observation_transform import (
+    WAYPOINT_XY50_V1, WaypointXY50Observation, transform_fingerprint,
+)
 from src.training.stage5.train_sampler import (
     SamplerStrategy,
     TrainCaseSampler,
@@ -149,6 +152,7 @@ class SacBaselineTrainer:
         project_root: Optional[Path] = None,
         device: str = "cpu",
         allowed_geometry_ids: Optional[Sequence[str]] = None,
+        pilot_observation_transform: Optional[str] = None,
     ) -> None:
         """
         Initializes the SAC Baseline Trainer.
@@ -186,6 +190,9 @@ class SacBaselineTrainer:
 
         # 3. Instantiate components
         self.encoder = Stage5ObservationEncoder(core_only=False)
+        if pilot_observation_transform not in (None, "waypoint_xy_div50m_v1"):
+            raise ValueError(f"Unsupported pilot observation transform: {pilot_observation_transform}")
+        self.observation_transform = pilot_observation_transform
         sampler_cfg = self.config.get("dataset_sampler", {})
         strategy = sampler_cfg.get("default_strategy", "ROUND_ROBIN")
 
@@ -213,11 +220,13 @@ class SacBaselineTrainer:
             reward_spec=self.reward_spec,
             project_root=self.project_root,
         )
+        model_env = (WaypointXY50Observation(self.env)
+                     if pilot_observation_transform == "waypoint_xy_div50m_v1" else self.env)
 
         # 5. Instantiate Stable-Baselines3 SAC
         self.model = SAC(
             policy="MlpPolicy",
-            env=self.env,
+            env=model_env,
             learning_rate=self.learning_rate,
             buffer_size=self.buffer_size,
             batch_size=self.batch_size,
@@ -287,6 +296,7 @@ class SacBaselineTrainer:
             model=self.model,
             checkpoint_dir=checkpoint_dir,
             encoder=self.encoder,
+            observation_transform=self.observation_transform,
             total_timesteps=int(self.model.num_timesteps),
             training_root_seed=self.training_root_seed,
             training_config=self.config,

@@ -63,6 +63,8 @@ def evaluate(checkpoint: Path, run_dir: Path, split_path: Path, *, probe: bool =
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", default=datetime.now(timezone.utc).strftime("s5_3a_%Y%m%dT%H%M%SZ"))
+    parser.add_argument("--waypoint-xy50-ablation", action="store_true",
+                        help="Run a separate internal ablation scaling waypoint relative x/y by 50m.")
     parser.add_argument("--skip-full-diagnostics", action="store_true",
                         help="Stop after the pre-registered 10k training run; diagnostics can be resumed manually.")
     args = parser.parse_args()
@@ -74,6 +76,11 @@ def main() -> int:
     split = load_pilot_split(split_path)
     config_path = ROOT / "configs/experiments/stage5_pilot_v1.json"
     config = json.loads(config_path.read_text(encoding="utf-8"))
+    if args.waypoint_xy50_ablation:
+        config["protocol"] = "stage5_pilot_waypoint_xy50_ablation_v1"
+        config["parent_protocol"] = "stage5_pilot_v1"
+        config["normalization"] = "fixed waypoint relative x/y divided by 50m; headings and all other features unchanged"
+        config["single_factor_ablation"] = True
     config["split_sha256"] = split["split_sha256"]
     config["baseline_config_sha256"] = sha256_file(ROOT / "configs/experiments/stage5_rl_baseline_v1.json")
     (run_dir / "pilot_protocol.json").write_text(json.dumps(config, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -94,6 +101,7 @@ def main() -> int:
     try:
         trainer = SacBaselineTrainer(training_root_seed=101, project_root=ROOT,
                                      allowed_geometry_ids=[x["geometry_id"] for x in split["pilot_train"]],
+                                     pilot_observation_transform=("waypoint_xy_div50m_v1" if args.waypoint_xy50_ablation else None),
                                      device="cpu")
         trainer.config["pilot_protocol"] = {
             "protocol": config["protocol"], "split_sha256": split["split_sha256"],
@@ -101,6 +109,10 @@ def main() -> int:
             "training_allowed_geometry_ids_sha256": hashlib.sha256(
                 "\n".join(sorted(x["geometry_id"] for x in split["pilot_train"])).encode()).hexdigest(),
         }
+        if args.waypoint_xy50_ablation:
+            from src.training.stage5.pilot_observation_transform import WAYPOINT_XY50_V1, transform_fingerprint
+            trainer.config["pilot_protocol"]["observation_transform"] = WAYPOINT_XY50_V1
+            trainer.config["pilot_protocol"]["observation_transform_fingerprint"] = transform_fingerprint()
         if trainer.sampler.total_eligible_geometries != 156:
             raise AssertionError("SAC training sampler did not restrict itself to 156 PILOT_TRAIN geometries")
         checkpoints_dir = run_dir / "checkpoints"

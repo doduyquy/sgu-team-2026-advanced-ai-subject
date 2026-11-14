@@ -28,6 +28,7 @@ from stable_baselines3 import SAC
 import torch
 
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
+from src.training.stage5.pilot_observation_transform import WAYPOINT_XY50_V1, transform_fingerprint
 
 
 class CheckpointIntegrityError(ValueError):
@@ -67,6 +68,7 @@ def save_sac_checkpoint(
     training_summary: Optional[Dict[str, Any]] = None,
     save_replay_buffer: bool = False,
     project_root: Optional[Path] = None,
+    observation_transform: Optional[str] = None,
 ) -> Path:
     """
     Saves a complete, verifiable SAC checkpoint bundle with metadata.
@@ -130,6 +132,12 @@ def save_sac_checkpoint(
         "encoder_id": encoder.encoder_id,
         "encoder_version": encoder.encoder_version,
         "encoder_fingerprint": encoder.get_schema_fingerprint(),
+        "observation_transform": (WAYPOINT_XY50_V1 if observation_transform == "waypoint_xy_div50m_v1" else None),
+        "observation_transform_fingerprint": (transform_fingerprint() if observation_transform == "waypoint_xy_div50m_v1" else None),
+        "policy_input_fingerprint": hashlib.sha256((
+            encoder.get_schema_fingerprint() + ":" +
+            (transform_fingerprint() if observation_transform == "waypoint_xy_div50m_v1" else "identity")
+        ).encode("utf-8")).hexdigest(),
         "observation_dim": int(encoder.dimension),
         "action_dim": 2,
         "total_timesteps": int(total_timesteps),

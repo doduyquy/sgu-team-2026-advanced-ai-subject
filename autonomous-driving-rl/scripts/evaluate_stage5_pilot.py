@@ -26,6 +26,9 @@ from src.platform import SAFETY_CRITICAL_FLAGS, get_action_adapter
 from src.training.stage5.checkpoint import load_sac_checkpoint
 from src.training.stage5.env_adapter import Stage5TrainingEnv
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
+from src.training.stage5.pilot_observation_transform import (
+    WAYPOINT_XY50_V1, WaypointXY50Observation, transform_fingerprint,
+)
 from src.training.stage5.pilot_protocol import diagnostic_schedule, load_pilot_split
 from src.training.stage5.train_sampler import SamplerStrategy, TrainCaseSampler
 
@@ -121,6 +124,15 @@ def evaluate_checkpoint(
     progress_file: Optional[Path] = None, progress_phase: str = "DIAGNOSTICS",
 ) -> Dict[str, Any]:
     encoder = Stage5ObservationEncoder(core_only=False)
+    transform = metadata_transform = None
+    metadata_hint = json.loads((checkpoint_dir / "metadata.json").read_text(encoding="utf-8"))
+    if metadata_hint.get("observation_transform"):
+        metadata_transform = metadata_hint["observation_transform"]
+        if metadata_transform != WAYPOINT_XY50_V1:
+            raise ValueError("Unknown checkpoint observation transform; refusing incompatible inference")
+        if metadata_hint.get("observation_transform_fingerprint") != transform_fingerprint():
+            raise ValueError("Checkpoint observation transform fingerprint mismatch")
+        transform = WaypointXY50Observation
     model, metadata = load_sac_checkpoint(
         checkpoint_dir, device="cpu", expected_encoder_fingerprint=encoder.get_schema_fingerprint()
     )
@@ -136,6 +148,8 @@ def evaluate_checkpoint(
         project_root=ROOT,
     )
     env = Stage5TrainingEnv(sampler=sampler, encoder=encoder, project_root=ROOT)
+    if transform is not None:
+        env = transform(env)
     adapter = get_action_adapter("continuous_box2_v1")
     schedule = diagnostic_schedule(load_pilot_split(split_path), schedule_seed)
     if max_cases is not None:
@@ -210,7 +224,12 @@ def evaluate_checkpoint(
     if replay_size_after != replay_size_before:
         raise AssertionError("Evaluation changed checkpoint replay-buffer contents")
     result = {
-        "protocol": "stage5_pilot_diagnostic_v1", "split_sha256": load_pilot_split(split_path)["split_sha256"],
+        "protocol": ("stage5_pilot_waypoint_xy50_ablation_v1" if metadata.get("observation_transform")
+                     else "stage5_pilot_diagnostic_v1"),
+        "observation_transform": metadata.get("observation_transform"),
+        "observation_transform_fingerprint": metadata.get("observation_transform_fingerprint"),
+        "policy_input_fingerprint": metadata.get("policy_input_fingerprint"),
+        "split_sha256": load_pilot_split(split_path)["split_sha256"],
         "checkpoint": str(checkpoint_dir), "checkpoint_sha256": checkpoint_sha,
         "training_step": training_step, "schedule_seed": schedule_seed,
         "planned_cases": len(schedule), "records_file": records_path.name,
