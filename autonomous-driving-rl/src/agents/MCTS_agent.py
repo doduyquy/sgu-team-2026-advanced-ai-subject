@@ -1,4 +1,5 @@
-"""Stage 3 MCTS: 
+"""Stage 3 MCTS:  
+    BUT IT NOT SUITABLE FOR CONTINUOUS DOMAIN 
 
 - Phase 1: Selection
 - Phase 2: Expansion 
