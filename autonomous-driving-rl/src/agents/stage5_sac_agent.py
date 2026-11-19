@@ -110,11 +110,17 @@ class Stage5SacAgent(AgentPolicy):
         transform_spec = metadata.get("observation_transform")
         if transform_spec:
             from src.training.stage5.pilot_observation_transform import (
-                WAYPOINT_XY50_V1, transform_fingerprint,
+                TRANSFORM_SPECS, transform_fingerprint,
             )
-            if transform_spec != WAYPOINT_XY50_V1 or metadata.get("observation_transform_fingerprint") != transform_fingerprint():
+            transform_id = transform_spec.get("transform_id") if isinstance(transform_spec, dict) else None
+            expected_spec = TRANSFORM_SPECS.get(transform_id)
+            expected_transform_fingerprint = (
+                transform_fingerprint(expected_spec) if expected_spec is not None else None
+            )
+            if (expected_spec is None or transform_spec != expected_spec or
+                    metadata.get("observation_transform_fingerprint") != expected_transform_fingerprint):
                 raise ValueError("Checkpoint specifies an unsupported or mismatched observation transform")
-            self._observation_transform = "waypoint_xy_div50m_v1"
+            self._observation_transform = transform_id
         else:
             self._observation_transform = None
 
@@ -137,8 +143,9 @@ class Stage5SacAgent(AgentPolicy):
 
         # 1. Encode public AgentInputV1 into 409D observation vector
         obs_vec = self.encoder.encode(agent_input)
-        if self._observation_transform == "waypoint_xy_div50m_v1":
-            obs_vec[325:385].reshape(20, 3)[:, :2] /= 50.0
+        if self._observation_transform is not None:
+            from src.training.stage5.pilot_observation_transform import apply_observation_transform
+            obs_vec = apply_observation_transform(obs_vec, self._observation_transform)
 
         # 2. Predict action deterministically using frozen policy network
         raw_action, _ = self._model.predict(obs_vec, deterministic=True)

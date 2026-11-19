@@ -30,7 +30,8 @@ from src.training.stage5.checkpoint import load_sac_checkpoint
 from src.training.stage5.env_adapter import Stage5TrainingEnv
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
 from src.training.stage5.pilot_observation_transform import (
-    WAYPOINT_XY50_V1, WaypointXY50Observation, transform_fingerprint,
+    TRANSFORM_SPECS, WAYPOINT_XY50_V1, GroupwisePhysicalObservation,
+    WaypointXY50Observation, transform_fingerprint,
 )
 from src.training.stage5.pilot_protocol import diagnostic_schedule, load_pilot_split
 from src.training.stage5.train_sampler import SamplerStrategy, TrainCaseSampler
@@ -85,13 +86,29 @@ def summarize(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     complete = [row for row in records if not row.get("interrupted", False)]
     n = len(complete)
     summary: Dict[str, Any] = {"episodes_completed": n, "episodes_interrupted": len(records) - n}
+    # Probe diagnostics are descriptive only and deliberately kept separate from
+    # full-episode outcome rates. Censored records never count as timeout/success.
+    for output, field in (
+        ("probe_mean_speed_km_h", "mean_speed_km_h"),
+        ("probe_stationary_fraction", "stationary_fraction"),
+        ("probe_mean_route_progress_delta", "route_progress_delta"),
+        ("probe_mean_throttle", "mean_throttle"),
+        ("probe_mean_brake", "mean_brake"),
+        ("probe_steering_std", "steering_std"),
+        ("probe_longest_sustained_moving_steps", "longest_sustained_moving_steps"),
+    ):
+        summary[output] = _mean(row[field] for row in records if row.get(field) is not None)
+    summary["probe_censored_count"] = sum(row.get("outcome") == "PROBE_CENSORED" for row in records)
+    summary["probe_safety_failure_count"] = sum(bool(row.get("safety_failure")) for row in records)
     if n == 0:
         return summary
-    for field in ("final_route_completion", "max_route_completion", "episode_return", "discounted_episode_return", "stationary_fraction",
-                  "mean_moving_speed_km_h", "mean_throttle", "mean_brake", "mean_steering",
+    for field in ("final_route_completion", "max_route_completion", "route_progress_delta", "max_route_progress_delta",
+                  "episode_return", "discounted_episode_return", "stationary_fraction", "mean_speed_km_h",
+                  "mean_moving_speed_km_h", "mean_throttle", "mean_brake", "mean_steering", "time_to_clean_success_s",
                   "steering_std", "steering_saturation_fraction", "mean_inference_latency_ms", "duration_s"):
         summary[field] = _mean(row[field] for row in complete if row.get(field) is not None)
     summary["median_route_completion"] = float(statistics.median(row["final_route_completion"] for row in complete))
+    summary["median_route_progress_delta"] = float(statistics.median(row["route_progress_delta"] for row in complete))
     summary["clean_success_rate"] = sum(bool(row["clean_success"]) for row in complete) / n
     summary["safety_failure_rate"] = sum(bool(row["safety_failure"]) for row in complete) / n
     summary["timeout_rate"] = sum(bool(row["timeout"]) for row in complete) / n
@@ -108,6 +125,11 @@ def _episode_record(
     outcome = env.last_outcome
     raw = outcome.raw_flags if outcome else {}
     route = float(env._last_route_completion)
+    longest_moving = 0
+    current_moving = 0
+    for speed in speeds:
+        current_moving = current_moving + 1 if speed >= 1.0 else 0
+        longest_moving = max(longest_moving, current_moving)
     return {
         "checkpoint_sha256": checkpoint_sha256, "training_step": int(training_step),
         "geometry_id": schedule_item["geometry_id"], "geometry_sha256": schedule_item["geometry_sha256"],
@@ -131,6 +153,8 @@ def _episode_record(
         "discount_factor": float(gamma),
         "discounted_episode_return": discounted_return(rewards, gamma),
         "duration_s": duration_s, "mean_speed_km_h": _mean(speeds),
+        "time_to_clean_success_s": duration_s if bool(outcome and outcome.clean_success) else None,
+        "longest_sustained_moving_steps": longest_moving,
         "stationary_fraction": sum(speed < 1.0 for speed in speeds) / len(speeds) if speeds else None,
         "mean_moving_speed_km_h": _mean(speed for speed in speeds if speed >= 1.0),
         "mean_throttle": _mean(max(0.0, pair[1]) for pair in controls),
@@ -156,11 +180,16 @@ def evaluate_checkpoint(
     metadata_hint = json.loads((checkpoint_dir / "metadata.json").read_text(encoding="utf-8"))
     if metadata_hint.get("observation_transform"):
         metadata_transform = metadata_hint["observation_transform"]
-        if metadata_transform != WAYPOINT_XY50_V1:
+        transform_id = metadata_transform.get("transform_id") if isinstance(metadata_transform, dict) else None
+        expected_spec = TRANSFORM_SPECS.get(transform_id)
+        if expected_spec is None or metadata_transform != expected_spec:
             raise ValueError("Unknown checkpoint observation transform; refusing incompatible inference")
-        if metadata_hint.get("observation_transform_fingerprint") != transform_fingerprint():
+        if metadata_hint.get("observation_transform_fingerprint") != transform_fingerprint(expected_spec):
             raise ValueError("Checkpoint observation transform fingerprint mismatch")
-        transform = WaypointXY50Observation
+        if transform_id == WAYPOINT_XY50_V1["transform_id"]:
+            transform = WaypointXY50Observation
+        elif transform_id == "pilot_groupwise_physical_v1":
+            transform = GroupwisePhysicalObservation
     model, metadata = load_sac_checkpoint(
         checkpoint_dir, device="cpu", expected_encoder_fingerprint=encoder.get_schema_fingerprint()
     )
@@ -197,11 +226,13 @@ def evaluate_checkpoint(
     output_dir.mkdir(parents=True, exist_ok=True)
     records_path = output_dir / f"step_{training_step:05d}_episodes.jsonl"
     records: List[Dict[str, Any]] = []
+    fixed_policy_observations: List[np.ndarray] = []
     try:
         with records_path.open("w", encoding="utf-8", newline="\n") as sink:
             for case_index, item in enumerate(schedule, start=1):
                 case = sampler.get_case_for_geometry_id(item["geometry_id"], item["environment_seed"])
                 obs, reset_info = env.reset(options={"case": case})
+                fixed_policy_observations.append(np.asarray(obs, dtype=np.float32).copy())
                 initial_route_completion = float(
                     reset_info.get("initial_route_completion", base_env._last_route_completion)
                 )
@@ -285,6 +316,35 @@ def evaluate_checkpoint(
     replay_size_after = replay_buffer_after.size() if replay_buffer_after is not None else None
     if replay_size_after != replay_size_before:
         raise AssertionError("Evaluation changed checkpoint replay-buffer contents")
+    policy_observation_array = np.stack(fixed_policy_observations) if fixed_policy_observations else np.empty((0, 409), dtype=np.float32)
+    actor_diagnostics: Dict[str, Any] = {"fixed_observation_count": int(len(policy_observation_array))}
+    if len(policy_observation_array):
+        deterministic_actions, _ = model.predict(policy_observation_array, deterministic=True)
+        actor_diagnostics.update({
+            "deterministic_action_mean": np.mean(deterministic_actions, axis=0).astype(float).tolist(),
+            "deterministic_action_std_across_fixed_observations": np.std(deterministic_actions, axis=0).astype(float).tolist(),
+            "policy_input_group_std_mean": {
+                "core_259d": float(np.std(policy_observation_array[:, :259], axis=0).mean()),
+                "traffic_actor_56d": float(np.std(policy_observation_array[:, 259:315], axis=0).mean()),
+                "traffic_mask_metrics_10d": float(np.std(policy_observation_array[:, 315:325], axis=0).mean()),
+                "task_waypoints_60d": float(np.std(policy_observation_array[:, 325:385], axis=0).mean()),
+                "task_mask_scalars_24d": float(np.std(policy_observation_array[:, 385:409], axis=0).mean()),
+            },
+        })
+        try:
+            import torch
+            actor = model.policy.actor
+            obs_tensor, _ = model.policy.obs_to_tensor(policy_observation_array)
+            with torch.no_grad():
+                features = actor.extract_features(obs_tensor, actor.features_extractor)
+                first_linear = actor.latent_pi[0]
+                preactivation = first_linear(features)
+                first_activation = actor.latent_pi[1](preactivation)
+            actor_diagnostics["first_layer_preactivation_std_mean"] = float(preactivation.std(dim=0, unbiased=False).mean().cpu())
+            actor_diagnostics["first_layer_nonpositive_fraction"] = float((preactivation <= 0).float().mean().cpu())
+            actor_diagnostics["first_layer_activation_std_mean"] = float(first_activation.std(dim=0, unbiased=False).mean().cpu())
+        except (AttributeError, IndexError, TypeError):
+            actor_diagnostics["first_layer_activation_diagnostics"] = "UNAVAILABLE_FOR_POLICY_ARCHITECTURE"
     result = {
         "protocol": ("stage5_pilot_waypoint_xy50_ablation_v1" if metadata.get("observation_transform")
                      else "stage5_pilot_diagnostic_v1"),
@@ -296,6 +356,7 @@ def evaluate_checkpoint(
         "training_step": training_step, "schedule_seed": schedule_seed,
         "discount_factor": gamma,
         "planned_cases": len(schedule), "records_file": records_path.name,
+        "actor_state_sensitivity": actor_diagnostics,
         "aggregate": summarize(records), "evaluation_state_unchanged": True,
         "optimizer_updates_before": update_count_before,
         "optimizer_updates_after": int(getattr(model, "_n_updates", 0)),

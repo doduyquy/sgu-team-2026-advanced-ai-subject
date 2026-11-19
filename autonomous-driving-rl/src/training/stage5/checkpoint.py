@@ -28,7 +28,9 @@ from stable_baselines3 import SAC
 import torch
 
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
-from src.training.stage5.pilot_observation_transform import WAYPOINT_XY50_V1, transform_fingerprint
+from src.training.stage5.pilot_observation_transform import (
+    WAYPOINT_XY50_V1, transform_fingerprint, transform_spec,
+)
 
 
 class CheckpointIntegrityError(ValueError):
@@ -122,6 +124,11 @@ def save_sac_checkpoint(
     now_utc = datetime.datetime.now(datetime.timezone.utc).isoformat()
     git_sha = get_git_commit_sha(project_root)
 
+    transform_id = observation_transform
+    if transform_id == "waypoint_xy_div50m_v1":
+        transform_id = WAYPOINT_XY50_V1["transform_id"]
+    selected_transform = transform_spec(transform_id) if transform_id else None
+    selected_transform_fingerprint = transform_fingerprint(selected_transform) if selected_transform else None
     metadata: Dict[str, Any] = {
         "model_name": "stage5_sac",
         "algorithm": "SAC",
@@ -132,11 +139,11 @@ def save_sac_checkpoint(
         "encoder_id": encoder.encoder_id,
         "encoder_version": encoder.encoder_version,
         "encoder_fingerprint": encoder.get_schema_fingerprint(),
-        "observation_transform": (WAYPOINT_XY50_V1 if observation_transform == "waypoint_xy_div50m_v1" else None),
-        "observation_transform_fingerprint": (transform_fingerprint() if observation_transform == "waypoint_xy_div50m_v1" else None),
+        "observation_transform": selected_transform,
+        "observation_transform_fingerprint": selected_transform_fingerprint,
         "policy_input_fingerprint": hashlib.sha256((
             encoder.get_schema_fingerprint() + ":" +
-            (transform_fingerprint() if observation_transform == "waypoint_xy_div50m_v1" else "identity")
+            (selected_transform_fingerprint if selected_transform_fingerprint else "identity")
         ).encode("utf-8")).hexdigest(),
         "observation_dim": int(encoder.dimension),
         "action_dim": 2,
