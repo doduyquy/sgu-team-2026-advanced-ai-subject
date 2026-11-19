@@ -4,6 +4,11 @@ This package is the intended home for real Stage 0+ agent implementations.
 
 ## Current state
 
+`MCTSAgent` (`stage3_mcts`, version `3.0.0`) is a SANDBOX/AUDIT candidate.
+It uses UCT, guided rollouts and a local bicycle/constant-velocity model from
+public input; no simulator handle or checkpoint is needed. See the
+[Vietnamese implementation and run guide](../../docs/MCTS_GUIDE.md).
+
 `Stage0RandomNaiveAgent` (`stage0_random_naive`, version `0.1.1`) is implemented and registered for **SANDBOX/AUDIT**. Benchmark eligibility remains disabled. Existing `fixture_*` policies exercise infrastructure and are not scientific baselines.
 
 `AStarAgent` (`stage2_astar`) and `LearnedAStarAgent` (`stage6_astar_learned`), version
