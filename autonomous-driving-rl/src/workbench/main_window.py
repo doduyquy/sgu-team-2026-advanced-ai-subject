@@ -412,6 +412,7 @@ class MainWindow(QMainWindow):
                 self.status_bar.showMessage("Không xác nhận được Stage 5 process đã dừng; cửa sổ vẫn mở.")
                 event.ignore()
                 return
+            self.stage5_pilot_widget.prepare_for_window_close()
             event.accept()
             return
         if self._runner.is_running:
@@ -434,6 +435,7 @@ class MainWindow(QMainWindow):
                 # Bounded force termination on close (Specification Correction 2)
                 terminated = self._runner.force_terminate_and_wait(timeout_ms=2000)
                 if terminated:
+                    self.stage5_pilot_widget.prepare_for_window_close()
                     event.accept()
                 else:
                     # Bounded termination failed: surface diagnostic, do not silently close while worker may still be alive
@@ -451,4 +453,5 @@ class MainWindow(QMainWindow):
         else:
             if self.campaign_controller.active:
                 self.campaign_controller.cancel()
+            self.stage5_pilot_widget.prepare_for_window_close()
             event.accept()

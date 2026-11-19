@@ -60,7 +60,13 @@ The earlier S5.3L trace set is also local/ignored. Its 96 replicate summaries ma
 Stage 5 focused regression:
 
 ```powershell
-python -m unittest tests.test_stage5_training_foundation tests.test_stage5_sac tests.test_stage5_pilot tests.test_stage5_pilot_monitor tests.test_stage5_tau_ab -v
+python -m unittest tests.test_stage5_training_foundation tests.test_stage5_sac tests.test_stage5_pilot tests.test_stage5_pilot_monitor tests.test_stage5_tau_ab tests.test_workbench_comparison -v
+```
+
+Workbench integration and stale tab-count regression:
+
+```powershell
+python -m unittest tests.test_benchmark_campaign.TestBenchmarkCampaign.test_guided_page_is_default_and_manual_form_remains_available tests.test_workbench tests.test_workbench_results tests.test_stage5_pilot_monitor tests.test_workbench_comparison -v
 ```
 
 The repository documents a Windows full-suite Qt preload for import-order stability:
@@ -69,4 +75,6 @@ The repository documents a Windows full-suite Qt preload for import-order stabil
 python -X faulthandler -u -c "from PySide6.QtCore import QProcess; from PySide6.QtWidgets import QApplication; import unittest; suite=unittest.defaultTestLoader.discover('tests',pattern='test_*.py'); result=unittest.TextTestRunner(verbosity=1).run(suite); raise SystemExit(not result.wasSuccessful())"
 ```
 
-The 2026-11-19 final full run discovered 584 tests: 582 passed, 1 skipped, and 1 failed (runner exit code 1). The failure is `tests.test_benchmark_campaign.TestBenchmarkCampaign.test_guided_page_is_default_and_manual_form_remains_available`, which expects 6 Workbench tabs while the current GUI contains 7. It reproduced when run alone in the earlier regression pass and is outside Stage 5. Do not change the other team's GUI behavior to hide this regression; update that test with its owner. The Stage 5 focused regression passed 47/47 immediately before this full run.
+The Prompt 2 full-suite run used `C:\Users\ADMIN\anaconda3\envs\metadrive_sb3\python.exe` with `KMP_DUPLICATE_LIB_OK=TRUE` and Qt preloaded. Result: **602 tests, 601 passed, 1 skipped, 0 failed/errors; exit code 0; 871.327 seconds**. A first attempt through the Anaconda base `python` was invalid because that environment lacks MetaDrive; it failed 44 modules at import time and was not counted as a test result.
+
+The earlier 2026-11-19 baseline full run found a stale assertion expecting 6 tabs; Prompt 2 updates it to assert the existing 7 tabs and SAC tab label. The Stage 5 monitor regression covers pending refresh shutdown, repeated open/close, selected runs/checkpoints, and process completion races. The dedicated Stage 5/Workbench set ran **157 tests, all passed, exit code 0**.

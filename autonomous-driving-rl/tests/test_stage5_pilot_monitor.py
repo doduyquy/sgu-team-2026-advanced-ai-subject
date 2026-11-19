@@ -4,11 +4,13 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
+from PySide6.QtCore import QProcess, QTimer
 from PySide6.QtWidgets import QApplication
 
 from src.workbench.widgets.stage5_pilot_widget import Stage5PilotWidget, discover_pilot_runs
@@ -106,6 +108,74 @@ class TestStage5PilotMonitor(unittest.TestCase):
             finally:
                 widget._timer.stop()
                 widget.close()
+
+    def test_close_stops_timer_and_ignores_queued_refresh(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._make_run(root)
+            widget = Stage5PilotWidget(root)
+            widget.refresh()
+            QTimer.singleShot(0, widget.refresh)
+            widget.close()
+            self.app.processEvents()
+            self.assertTrue(widget._closing)
+            self.assertFalse(widget._timer.isActive())
+
+    def test_close_after_run_and_tier_selection_is_safe(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._make_run(root)
+            widget = Stage5PilotWidget(root)
+            widget.combo_tier.setCurrentIndex(1)
+            widget.refresh()
+            widget.close()
+            self.assertTrue(widget._closing)
+            self.assertFalse(widget._timer.isActive())
+
+    def test_close_is_safe_across_repeated_widget_lifecycles(self):
+        for _ in range(5):
+            widget = Stage5PilotWidget(Path(tempfile.gettempdir()) / "stage5-empty-workbench-test")
+            widget.refresh()
+            widget.close()
+            self.app.processEvents()
+            self.assertFalse(widget._timer.isActive())
+
+    def test_process_completion_is_safe_during_close_race(self):
+        widget = Stage5PilotWidget(Path(tempfile.gettempdir()) / "stage5-empty-workbench-test")
+        process = QProcess(widget)
+        widget._viewer_process = process
+        process.finished.connect(lambda code, _status, p=process: widget._on_process_finished(p, code))
+        process.start(sys.executable, ["-c", "import time; time.sleep(0.15)"])
+        self.assertTrue(process.waitForStarted(2000))
+        # A direct child-widget close cannot bypass MainWindow's process confirmation.
+        widget.close()
+        self.assertFalse(widget._closing)
+        self.assertTrue(widget.is_viewer_running)
+        self.assertTrue(process.waitForFinished(5000))
+        self.app.processEvents()
+        self.assertFalse(widget.is_viewer_running)
+        widget.close()
+        self.assertTrue(widget._closing)
+        self.assertFalse(widget._timer.isActive())
+
+    def test_queued_process_callback_after_shutdown_does_not_touch_qt_children(self):
+        widget = Stage5PilotWidget(Path(tempfile.gettempdir()) / "stage5-empty-workbench-test")
+        process = QProcess(widget)
+        widget._viewer_process = process
+        widget.prepare_for_window_close()
+        widget._on_process_finished(process, 0)
+        self.app.processEvents()
+        self.assertIsNone(widget._viewer_process)
+        self.assertFalse(widget._timer.isActive())
+
+    def test_main_window_close_stops_monitor_timer(self):
+        from src.workbench.main_window import MainWindow
+
+        window = MainWindow()
+        timer = window.stage5_pilot_widget._timer
+        self.assertTrue(timer.isActive())
+        window.close()
+        self.assertFalse(timer.isActive())
 
 
 if __name__ == "__main__":

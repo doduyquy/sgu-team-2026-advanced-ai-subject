@@ -121,6 +121,9 @@ Use the result views for:
 - provenance;
 - artifact integrity;
 - W&B/technical diagnostics.
+- Comparison (an additive presentation view; it does not change canonical result authority).
+
+In **Comparison**, select two sources and check the track/status banner before reading a delta. The canonical track only lists complete integrity-verified runs whose registered agent is benchmark eligible. The Stage 5 track is marked **TRAIN ONLY — NOT BENCHMARK** and shows internal diagnostic records. If case IDs, environment seeds, action adapters, input profiles, inference modes, metric contracts, or protocols do not match, the view labels the pair `NOT DIRECTLY COMPARABLE` and suppresses paired differences. `PROBE_CENSORED` is displayed separately from official timeout. Use **Export comparison JSON…** to save the selected source identities, hashes, reason, and paired records. See `docs/stage5/STAGE5_COMPARISON_GUIDE.md` for Stage 5 specifics.
 
 ## 8. Stage 5 SAC Training
 

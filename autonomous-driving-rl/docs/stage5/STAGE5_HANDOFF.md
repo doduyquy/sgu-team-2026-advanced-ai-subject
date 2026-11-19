@@ -7,8 +7,11 @@
 - A fixed 156/24 internal TRAIN split and compact pilot/evaluation scripts.
 - A fresh S5.3M A/B result with checkpoint SHA-256, fixed paired diagnostic records and a reviewable report.
 - Research Workbench **7. SAC Training** tab: per-run progress, action/speed/route charts, overall/per-tier 0/5k/10k diagnostic table, and deterministic simulator viewer.
+- Results → **Comparison** subtab: provenance-checked canonical track and a separate TRAIN-only S5.3M development track; matched per-case and per-tier differences; explicit censored/timeout distinction; JSON export.
+- Stage 5 monitor shutdown behavior now stops its timer and disables queued UI callbacks only after MainWindow's existing process-confirmation/termination path succeeds.
+- Prompt 2 regression passed: 157 Stage 5/Workbench tests; full repository suite 602 tests (601 passed, 1 skipped), exit code 0. Exact runtime and command are in [STAGE5_REPRODUCTION.md](STAGE5_REPRODUCTION.md).
 
-Workbench is a useful live monitor and single-checkpoint viewer. It does not yet provide a provenance-bound side-by-side comparison of two agents or two training runs.
+See [STAGE5_COMPARISON_GUIDE.md](STAGE5_COMPARISON_GUIDE.md) for use and source trust rules. The comparison screen does not rank agents, repair artifacts, or make unpaired deltas.
 
 ## Available candidate checkpoints
 
@@ -19,15 +22,15 @@ S5.3M produced six verified checkpoint bundles locally:
 
 Bundles are under the ignored local `runs/stage5_tau_ab/s5_3m_tau_ab_seed101_20261119_retry1/` directory. The model/checkpoint bytes are not in GitHub. B is a development candidate for confirmation; A remains the control reference. `stage5_sac` remains `CANDIDATE`, `benchmark_eligible=false`; neither checkpoint is ready for official scoring.
 
-## Gaps before final comparison and official evaluation
+## Dependencies before official evaluation
 
 1. Confirm the `tau=.001` signal with independent training roots under the same fixed protocol before deciding it should replace the reference.
-2. Design a Workbench comparison view that selects verified checkpoint identities, displays their SHA/config/provenance, and runs the exact same case/environment-seed schedule. Show per-case paired route progress, clean success, safety, timeout, censoring, speed and action behavior. Keep development diagnostic measures distinct from Platform V1 primary metrics.
-3. Make checkpoint binding explicit in the frozen resolved experiment plan before canonical evaluation; the run manifest/checkpoint SHA alone is not benchmark binding.
-4. Keep VALIDATION for protocol-compliant selection. Lock the candidate/config first; use TEST only for the final holdout evaluation.
-5. Resolve the full-suite Workbench test mismatch with the GUI owner: the test expects 6 tabs and current GUI renders 7.
+2. Obtain a reviewed, versioned Stage 5 checkpoint-binding extension before canonical planning. Current `CheckpointBindingV1` is specialized to the learned A* workflow; reusing it for SAC would encode false semantics. See the [NO-GO proposal](STAGE5_CHECKPOINT_BINDING_PROPOSAL.md).
+3. Confirm candidate B with independent training roots under a separately approved protocol before selecting it. This is future research, outside the completed bounded A/B sprint.
+4. Keep VALIDATION for protocol-compliant selection. Lock candidate/config and checkpoint identity first; use TEST only for the final holdout evaluation.
+5. The stale Workbench test assertion expecting 6 top-level tabs has been corrected to assert 7 and the `7. SAC Training` label. Existing Workbench/Launcher contract hashes were not changed.
 
-Prompt 2 can focus on the comparison interface and the preconditions for a protocol-correct final evaluation. It should not add another exploratory SAC hyperparameter sweep by default.
+Prompt 2 integration is complete. Any subsequent work should focus on reviewed checkpoint-binding governance and, if approved, final evaluation preparation. Do not repeat the completed A/B experiment or start another SAC sweep by default.
 
 ## Team boundary
 

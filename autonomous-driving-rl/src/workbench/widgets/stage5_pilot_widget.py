@@ -78,7 +78,9 @@ class Stage5PilotWidget(QWidget):
         self._external_busy = False
         self._process: Optional[QProcess] = None
         self._viewer_process: Optional[QProcess] = None
+        self._process_signal_slots = {}
         self._stop_requested = False
+        self._closing = False
         self._build_ui()
 
         self._timer = QTimer(self)
@@ -230,6 +232,10 @@ class Stage5PilotWidget(QWidget):
                                        and not self._external_busy and self._selected_checkpoint_exists()))
 
     def refresh(self) -> None:
+        # A timeout can already be queued when the parent window starts closing.
+        # Once shutdown begins, never touch child widgets from that callback.
+        if self._closing:
+            return
         runs = discover_pilot_runs(self.pilot_root)
         selected = self._selected_run
         self.combo_runs.blockSignals(True)
@@ -460,11 +466,15 @@ class Stage5PilotWidget(QWidget):
         environment = QProcessEnvironment.systemEnvironment()
         environment.insert("PYTHONUNBUFFERED", "1")
         process.setProcessEnvironment(environment)
-        process.readyReadStandardOutput.connect(lambda p=process: self._consume_output(p, "stdout"))
-        process.readyReadStandardError.connect(lambda p=process: self._consume_output(p, "stderr"))
-        process.started.connect(lambda rid=run_id: self._on_process_started(rid))
-        process.finished.connect(lambda code, _status, p=process: self._on_process_finished(p, code))
-        process.errorOccurred.connect(lambda error, p=process: self._on_process_error(p, error))
+        self._connect_process_signal(process, process.readyReadStandardOutput,
+                                     lambda p=process: self._consume_output(p, "stdout"))
+        self._connect_process_signal(process, process.readyReadStandardError,
+                                     lambda p=process: self._consume_output(p, "stderr"))
+        self._connect_process_signal(process, process.started, lambda rid=run_id: self._on_process_started(rid))
+        self._connect_process_signal(process, process.finished,
+                                     lambda code, _status, p=process: self._on_process_finished(p, code))
+        self._connect_process_signal(process, process.errorOccurred,
+                                     lambda error, p=process: self._on_process_error(p, error))
         self._process = process
         self._stop_requested = False
         self.log.clear()
@@ -472,6 +482,8 @@ class Stage5PilotWidget(QWidget):
         self._update_buttons()
 
     def _on_process_started(self, run_id: str) -> None:
+        if self._closing:
+            return
         self.pilot_root.mkdir(parents=True, exist_ok=True)
         expected = self.pilot_root / run_id
         self._selected_run = expected
@@ -480,12 +492,22 @@ class Stage5PilotWidget(QWidget):
         self.log.append(f"Đã khởi chạy pilot {run_id}. Tiến độ và hành vi xe sẽ tự cập nhật.")
 
     def _consume_output(self, process: QProcess, channel: str) -> None:
+        if self._closing:
+            return
         raw = process.readAllStandardOutput() if channel == "stdout" else process.readAllStandardError()
         for line in bytes(raw).decode("utf-8", errors="replace").splitlines():
             if line.strip():
                 self.log.append(line)
 
     def _on_process_finished(self, process: QProcess, exit_code: int) -> None:
+        self._disconnect_process_signals(process)
+        if self._closing:
+            if process is self._process:
+                self._process = None
+            elif process is self._viewer_process:
+                self._viewer_process = None
+            process.deleteLater()
+            return
         if process is self._process:
             self.busyChanged.emit(False)
             run_id = self._selected_run.name if self._selected_run else ""
@@ -502,6 +524,14 @@ class Stage5PilotWidget(QWidget):
             self.refresh()
 
     def _on_process_error(self, process: QProcess, error: QProcess.ProcessError) -> None:
+        self._disconnect_process_signals(process)
+        if self._closing:
+            if process is self._process:
+                self._process = None
+            elif process is self._viewer_process:
+                self._viewer_process = None
+            process.deleteLater()
+            return
         if process is self._process and error == QProcess.ProcessError.FailedToStart:
             self.log.append(f"Không mở được tiến trình SAC: {process.errorString()}")
             self.busyChanged.emit(False)
@@ -557,9 +587,12 @@ class Stage5PilotWidget(QWidget):
             str(script), "--checkpoint", str(self._selected_run / "checkpoints" / f"step_{step:05d}"),
             "--split", str(self.project_root / "results" / "stage5" / "pilot_split_v1.json"),
         ])
-        process.readyReadStandardOutput.connect(lambda p=process: self._consume_output(p, "stdout"))
-        process.readyReadStandardError.connect(lambda p=process: self._consume_output(p, "stderr"))
-        process.finished.connect(lambda code, _status, p=process: self._on_process_finished(p, code))
+        self._connect_process_signal(process, process.readyReadStandardOutput,
+                                     lambda p=process: self._consume_output(p, "stdout"))
+        self._connect_process_signal(process, process.readyReadStandardError,
+                                     lambda p=process: self._consume_output(p, "stderr"))
+        self._connect_process_signal(process, process.finished,
+                                     lambda code, _status, p=process: self._on_process_finished(p, code))
         self._viewer_process = process
         process.start()
         self.busyChanged.emit(True)
@@ -574,6 +607,38 @@ class Stage5PilotWidget(QWidget):
         if not process.waitForFinished(timeout_ms):
             return False
         return process.state() == QProcess.ProcessState.NotRunning
+
+    def prepare_for_window_close(self) -> None:
+        """Stop UI callbacks after the owner has confirmed every child process stopped."""
+        if self.is_running or self.is_viewer_running:
+            raise RuntimeError("Cannot close the SAC monitor while a child process is still running")
+        self._closing = True
+        self._timer.stop()
+        for process in (self._process, self._viewer_process):
+            if process is None:
+                continue
+            self._disconnect_process_signals(process)
+
+    def _connect_process_signal(self, process: QProcess, signal, slot) -> None:
+        signal.connect(slot)
+        self._process_signal_slots.setdefault(id(process), []).append((signal, slot))
+
+    def _disconnect_process_signals(self, process: QProcess) -> None:
+        connections = self._process_signal_slots.pop(id(process), [])
+        for signal, slot in connections:
+            try:
+                signal.disconnect(slot)
+            except (RuntimeError, TypeError):
+                # The sender or slot may already have been destroyed by Qt.
+                pass
+
+    def closeEvent(self, event) -> None:
+        if self.is_running or self.is_viewer_running:
+            # Only MainWindow owns the confirmation and bounded termination flow.
+            event.ignore()
+            return
+        self.prepare_for_window_close()
+        super().closeEvent(event)
 
 
 def _is_number(value: Any) -> bool:
