@@ -8,14 +8,14 @@ Thông điệp xuyên suốt: **nhóm đã xây dựng được pipeline SAC có
 
 **Nói:** “Stage 5 nghiên cứu reinforcement learning không mô hình cho xe tự hành. Câu hỏi là liệu SAC có thể học điều khiển steering và tốc độ liên tục bằng cách tương tác với MetaDrive và nhận reward hay không. Training chạy xong chưa đồng nghĩa xe đã lái tốt; ta phải đo hành vi.”
 
-**Chiếu/mở:** sơ đồ tám Stage của dự án và Workbench.  
+**Chiếu/mở:** sơ đồ tám Stage của dự án và Workbench.
 **Chuyển ý:** “Trước tiên, agent được quan sát và điều khiển những gì?”
 
 ### 2. Observation và action (0:35–1:20)
 
 **Nói:** “Policy nhận observation có cấu trúc, mã hóa thành 409 số thực: 259 core, 66 traffic và 84 task/waypoint. Action có hai số: steering và throttle/brake, mỗi số từ −1 đến +1. Agent ra quyết định 10 lần mỗi giây; mỗi quyết định được MetaDrive giữ qua năm physics substeps, mỗi bước 0,02 giây.”
 
-**Mở code:** [encoder 409D](../../src/training/stage5/observation_encoder.py), [action adapter](../../src/platform/action_adapter.py).  
+**Mở code:** [encoder 409D](../../src/training/stage5/observation_encoder.py), [action adapter](../../src/platform/action_adapter.py).
 **Chuyển ý:** “Action làm thay đổi simulator; reward biến kết quả thành tín hiệu học.”
 
 ### 3. Reward và SAC (1:20–2:15)
@@ -24,7 +24,7 @@ Thông điệp xuyên suốt: **nhóm đã xây dựng được pipeline SAC có
 
 “Reward không phải điểm benchmark. Ta xem riêng clean success, safety, route completion và tốc độ. Actor loss hay critic loss giảm không chứng minh xe đã lái tốt.”
 
-**Mở code:** [RewardSpecV1](../../src/platform/reward.py), sau đó xem sơ đồ trong [tài liệu giải thích](STAGE5_TEACHER_EXPLANATION.md).  
+**Mở code:** [RewardSpecV1](../../src/platform/reward.py), sau đó xem sơ đồ trong [tài liệu giải thích](STAGE5_TEACHER_EXPLANATION.md).
 **Chuyển ý:** “Vậy đối chứng cuối S5.3M thực sự cho thấy điều gì?”
 
 ### 4. Kết quả S5.3M (2:15–3:15)
@@ -33,7 +33,7 @@ Thông điệp xuyên suốt: **nhóm đã xây dựng được pipeline SAC có
 
 “Ở mốc 10k, route-progress delta ghép cặp của B cao hơn A trung bình 0,002675. Nhưng cả hai stationary 100% theo ngưỡng dưới 1 km/h, không có clean success, và cả tám probe mỗi nhánh đều bị censor ở giới hạn 300 bước. Đây là tín hiệu nhỏ, chưa phải chiến thắng.”
 
-**Chiếu:** [báo cáo S5.3M](../../results/stage5/s5_3m_tau_ab_seed101_20261119_retry1/FINAL_REPORT.md) và biểu đồ paired trong Results → Comparison.  
+**Chiếu:** [báo cáo S5.3M](../../results/stage5/s5_3m_tau_ab_seed101_20261119_retry1/FINAL_REPORT.md) và biểu đồ paired trong Results → Comparison.
 **Chuyển ý:** “Ta hãy xem các record và provenance trực tiếp trong Workbench.”
 
 ### 5. Demo Workbench (3:15–4:35)

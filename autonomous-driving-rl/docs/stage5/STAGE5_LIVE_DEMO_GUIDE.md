@@ -79,4 +79,3 @@ Say: “The pipeline, checkpoints, diagnostics and comparison are implemented. T
 - **Comparison has no sources:** ensure the working directory is `autonomous-driving-rl/`, compact S5.3M files are present, and click **Refresh sources**. A/B source validation failure must be reported, not bypassed.
 - **Viewer hangs or must be stopped:** close its native window. The GUI owns it as a separate process; use the application's existing close/termination confirmation. Do not relabel an interrupted preview as a completed episode.
 - **No GUI/display:** run `python -m unittest tests.test_stage5_pilot_monitor tests.test_workbench_comparison -v` in the project environment and say explicitly that the demonstration was offscreen, not visually inspected.
-

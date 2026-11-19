@@ -250,4 +250,3 @@ The treatment had lower anchor Q scale than control. That is a change in critic 
 ## 12. What would be required before further claims?
 
 Future work needs approval for an independent-root confirmation protocol, a versioned checkpoint identity binding compatible with the Platform V1 plan, and frozen candidate selection before the official validation/test process. These are prerequisites, not tasks performed by this document. TEST remains a final holdout and must not be used to tune.
-

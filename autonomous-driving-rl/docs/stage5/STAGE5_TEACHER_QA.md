@@ -147,4 +147,3 @@ Chưa có bằng chứng clean driving. Pipeline đã train và cập nhật wei
 ### 35. Nếu tiếp tục, điều kiện nào cần trước?
 
 Một protocol được duyệt cho xác nhận qua training roots độc lập, checkpoint SHA được bind bằng schema versioned đã review, candidate được freeze trước evaluation và holdout protocol được tuân thủ. Chưa nên nói trước rằng một hyperparameter cụ thể sẽ sửa được policy.
-
