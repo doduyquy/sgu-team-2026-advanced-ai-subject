@@ -47,13 +47,9 @@ from src.platform.protocol import canonical_json_sha256
 
 CONFIG_PATH = (
     Path(__file__).resolve().parents[2]
-    / "configs/experiments/mppi_v1.json"
+    / "configs/experiments/mppi_v2_h30.json"
 )
 
-
-# =============================================================================
-# 1. THAM SỐ: đọc nhóm A và B trước nếu muốn chỉnh hành vi của MPPI
-# =============================================================================
 
 @dataclass(frozen=True)
 class MPPIConfig:
@@ -154,7 +150,7 @@ def load_mppi_config() -> MPPIConfig:
     """Đọc parameters từ JSON; các giá trị này ghi đè mặc định của class."""
     payload = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
 
-    if payload["version"] != "mppi_planner_v1":
+    if payload["version"] not in {"mppi_planner_v1", "mppi_planner_v2"}:
         raise ValueError("Unsupported MPPI configuration")
 
     return MPPIConfig(**payload["parameters"])
