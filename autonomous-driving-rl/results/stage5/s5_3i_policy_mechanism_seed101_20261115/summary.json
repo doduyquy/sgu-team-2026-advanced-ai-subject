@@ -1,0 +1,465 @@
+{
+  "checkpoint_action_summary": {
+    "0": {
+      "critic_grid_summary": {
+        "actor_deterministic": {
+          "argmax_throttle": 1.0,
+          "mean_min_q_at_minus1_minus_plus1": -0.0030106008052825928,
+          "mean_min_q_by_throttle": {
+            "-0.25": -0.2312040701508522,
+            "-0.5": -0.2316361516714096,
+            "-0.75": -0.23206836730241776,
+            "-1.0": -0.23250051960349083,
+            "0.0": -0.23081760853528976,
+            "0.25": -0.23047883808612823,
+            "0.5": -0.23013882339000702,
+            "0.75": -0.22980687022209167,
+            "1.0": -0.22948991879820824
+          }
+        },
+        "zero": {
+          "argmax_throttle": 1.0,
+          "mean_min_q_at_minus1_minus_plus1": -0.0028831548988819122,
+          "mean_min_q_by_throttle": {
+            "-0.25": -0.23136496543884277,
+            "-0.5": -0.23178360611200333,
+            "-0.75": -0.23221555352210999,
+            "-1.0": -0.23264198377728462,
+            "0.0": -0.23102061823010445,
+            "0.25": -0.23068073764443398,
+            "0.5": -0.23034073412418365,
+            "0.75": -0.23003476858139038,
+            "1.0": -0.2297588288784027
+          }
+        }
+      },
+      "critic_q_is_prediction_not_empirical_return": true,
+      "deterministic_steering_mean": -0.3279716372489929,
+      "deterministic_throttle_mean": -0.11713873594999313,
+      "deterministic_throttle_median": -0.15203037858009338,
+      "deterministic_throttle_positive_fraction": 0.0,
+      "n_observations": 8,
+      "stochastic_steering_std_mean": 0.4266410730779171,
+      "stochastic_throttle_mean": -0.07112090184818953,
+      "stochastic_throttle_positive_fraction_mean": 0.439453125,
+      "stochastic_throttle_std_mean": 0.5899560078978539
+    },
+    "10000": {
+      "critic_grid_summary": {
+        "actor_deterministic": {
+          "argmax_throttle": -1.0,
+          "mean_min_q_at_minus1_minus_plus1": 0.025141119956970215,
+          "mean_min_q_by_throttle": {
+            "-0.25": 15.205702185630798,
+            "-0.5": 15.20883047580719,
+            "-0.75": 15.211974143981934,
+            "-1.0": 15.215230107307434,
+            "0.0": 15.202579379081726,
+            "0.25": 15.19945740699768,
+            "0.5": 15.19633436203003,
+            "0.75": 15.193211317062378,
+            "1.0": 15.190088987350464
+          }
+        },
+        "zero": {
+          "argmax_throttle": -1.0,
+          "mean_min_q_at_minus1_minus_plus1": 0.02502894401550293,
+          "mean_min_q_by_throttle": {
+            "-0.25": 15.20488965511322,
+            "-0.5": 15.208016753196716,
+            "-0.75": 15.211161017417908,
+            "-1.0": 15.214304685592651,
+            "0.0": 15.201767444610596,
+            "0.25": 15.198644399642944,
+            "0.5": 15.19552195072174,
+            "0.75": 15.192399024963379,
+            "1.0": 15.189275741577148
+          }
+        }
+      },
+      "critic_q_is_prediction_not_empirical_return": true,
+      "deterministic_steering_mean": -0.07719427347183228,
+      "deterministic_throttle_mean": -0.09272793680429459,
+      "deterministic_throttle_median": -0.0910409688949585,
+      "deterministic_throttle_positive_fraction": 0.0,
+      "n_observations": 8,
+      "stochastic_steering_std_mean": 0.5820271670818329,
+      "stochastic_throttle_mean": -0.029902348178438842,
+      "stochastic_throttle_positive_fraction_mean": 0.51171875,
+      "stochastic_throttle_std_mean": 0.5831068158149719
+    },
+    "5000": {
+      "critic_grid_summary": {
+        "actor_deterministic": {
+          "argmax_throttle": -1.0,
+          "mean_min_q_at_minus1_minus_plus1": 0.012162089347839355,
+          "mean_min_q_by_throttle": {
+            "-0.25": 14.21463394165039,
+            "-0.5": 14.216145277023315,
+            "-0.75": 14.217657685279846,
+            "-1.0": 14.219356417655945,
+            "0.0": 14.213121891021729,
+            "0.25": 14.211609363555908,
+            "0.5": 14.210108637809753,
+            "0.75": 14.208624005317688,
+            "1.0": 14.207194328308105
+          }
+        },
+        "zero": {
+          "argmax_throttle": -1.0,
+          "mean_min_q_at_minus1_minus_plus1": 0.0121229887008667,
+          "mean_min_q_by_throttle": {
+            "-0.25": 14.214199662208557,
+            "-0.5": 14.215711832046509,
+            "-0.75": 14.217223763465881,
+            "-1.0": 14.218899846076965,
+            "0.0": 14.212688088417053,
+            "0.25": 14.211175918579102,
+            "0.5": 14.209677815437317,
+            "0.75": 14.208192944526672,
+            "1.0": 14.206776857376099
+          }
+        }
+      },
+      "critic_q_is_prediction_not_empirical_return": true,
+      "deterministic_steering_mean": -0.03394458442926407,
+      "deterministic_throttle_mean": 0.0007048249244689941,
+      "deterministic_throttle_median": 0.0008095800876617432,
+      "deterministic_throttle_positive_fraction": 0.5,
+      "n_observations": 8,
+      "stochastic_steering_std_mean": 0.575630396604538,
+      "stochastic_throttle_mean": -0.0015770075842738152,
+      "stochastic_throttle_positive_fraction_mean": 0.49609375,
+      "stochastic_throttle_std_mean": 0.6069168969988823
+    }
+  },
+  "provenance": {
+    "checkpoints": {
+      "0": {
+        "git_commit": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+        "model_sha256": "6d36f5969583f11515358b142919934150bfbf10adb204eb358bde142a94f522",
+        "replay_buffer_saved": false,
+        "total_timesteps": 0
+      },
+      "10000": {
+        "git_commit": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+        "model_sha256": "6347ae4d82958bba89147ec39507ce3cb6abaa7e04d82f97101d1c09c2dea073",
+        "replay_buffer_saved": false,
+        "total_timesteps": 10000
+      },
+      "5000": {
+        "git_commit": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+        "model_sha256": "b6ac4bd4c85dbf17e69a8bdc9a6b1dcf19fed87d0a2a70f0981aa86c006fa4a7",
+        "replay_buffer_saved": false,
+        "total_timesteps": 5000
+      }
+    },
+    "code_commit_from_checkpoints": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+    "critic_action_grid_throttle": [
+      -1.0,
+      -0.75,
+      -0.5,
+      -0.25,
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "critic_steering_conditions": [
+      "zero",
+      "checkpoint deterministic actor steering"
+    ],
+    "fixed_observation_case_schedule": [
+      {
+        "environment_seed": 259818,
+        "geometry_generation_seed": 19,
+        "geometry_id": "geom_easy_SCCS_seed19",
+        "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+        "sequence": "SCCS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 737407,
+        "geometry_generation_seed": 12,
+        "geometry_id": "geom_easy_SCS_seed12",
+        "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+        "sequence": "SCS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 968985,
+        "geometry_generation_seed": 0,
+        "geometry_id": "geom_extreme_CrXROSTR_seed0",
+        "geometry_sha256": "7c392abe573ca9823069ef1f88680be6222a9f6b6b6a9d8a065e270cc560db93",
+        "sequence": "CrXROSTR",
+        "tier": "Extreme"
+      },
+      {
+        "environment_seed": 897070,
+        "geometry_generation_seed": 0,
+        "geometry_id": "geom_extreme_SCTXORyCCS_seed0",
+        "geometry_sha256": "886a6ddc9850cb56b8d27ee1b17704e02add3e40f6040708cdbf492b470e35b2",
+        "sequence": "SCTXORyCCS",
+        "tier": "Extreme"
+      },
+      {
+        "environment_seed": 732559,
+        "geometry_generation_seed": 13,
+        "geometry_id": "geom_hard_SCTXrCS_seed13",
+        "geometry_sha256": "6a10dceecff6119d87ee158263659b159de595ff862eac738877b2424f555ccc",
+        "sequence": "SCTXrCS",
+        "tier": "Hard"
+      },
+      {
+        "environment_seed": 867627,
+        "geometry_generation_seed": 0,
+        "geometry_id": "geom_hard_SCXOCS_seed0",
+        "geometry_sha256": "8d90dee7d34fb2f6e90572ec32897400af5f40ebac98f867bafec4bfc383680f",
+        "sequence": "SCXOCS",
+        "tier": "Hard"
+      },
+      {
+        "environment_seed": 747022,
+        "geometry_generation_seed": 11,
+        "geometry_id": "geom_medium_SCTCS_seed11",
+        "geometry_sha256": "6c16b289525e50691cc0414d100e028b490281ee1a797c4f3fc3498c1f38bf09",
+        "sequence": "SCTCS",
+        "tier": "Medium"
+      },
+      {
+        "environment_seed": 37174,
+        "geometry_generation_seed": 17,
+        "geometry_id": "geom_medium_SCXCCS_seed17",
+        "geometry_sha256": "cdbe6998006b897903be0fb2060ab08ff4ad87131c873008ef8f708856ce11e6",
+        "sequence": "SCXCCS",
+        "tier": "Medium"
+      }
+    ],
+    "limitations": [
+      "Checkpoints are from one training seed and one pilot run.",
+      "Step-0 critics are randomly initialized; their Q ranking is not a calibrated value estimate.",
+      "10k replay buffer was not saved; transition-level critic training data cannot be reconstructed.",
+      "Q-grid is offline critic prediction only, not a causal action-value estimate or empirical return.",
+      "Training action-group reward comparisons are state/episode confounded.",
+      "Logged reward-only discounted sums omit entropy terms and bootstrapping semantics.",
+      "All observations and transitions are from internal TRAIN split; no VALIDATION or TEST access."
+    ],
+    "observation_count": 8,
+    "pilot_split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+    "protocol": "S5.3I policy mechanism audit v1",
+    "replay_buffers_available": false,
+    "status": "COMPLETE",
+    "stochastic_samples_per_observation_checkpoint": 64,
+    "training_root_seed": 101
+  },
+  "reward_horizon_audit": {
+    "action_group_caveat": "Descriptive only: action groups occur in different states, episode times, and terminal contexts; no causal comparison.",
+    "action_group_summary_confounded": {
+      "brake": {
+        "mean_progress_reward": 1.0587754253365872e-05,
+        "mean_terminal_reward": -0.0003772873042822109,
+        "mean_time_cost": 0.00012560290106662455,
+        "mean_total_reward": -0.0004923024487862028,
+        "n": 5301,
+        "p_delta_route_positive": 0.4702886247877759,
+        "p_step_reward_positive": 0.036596868515374456,
+        "sum_terminal_reward": -2.0
+      },
+      "throttle": {
+        "mean_progress_reward": 9.14430768041995e-05,
+        "mean_terminal_reward": -0.001276867418599702,
+        "mean_time_cost": 0.00012938358462735893,
+        "mean_total_reward": -0.0013148079230145293,
+        "n": 4699,
+        "p_delta_route_positive": 0.9765907639923388,
+        "p_step_reward_positive": 0.2777186635454352,
+        "sum_terminal_reward": -6.0
+      }
+    },
+    "action_groups": {
+      "brake": {
+        "mean_progress_reward": 1.0587754253365872e-05,
+        "mean_terminal_reward": -0.0003772873042822109,
+        "mean_time_cost": 0.00012560290106662455,
+        "mean_total_reward": -0.0004923024487862028,
+        "n": 5301,
+        "p_delta_route_positive": 0.4702886247877759,
+        "p_step_reward_positive": 0.036596868515374456,
+        "sum_terminal_reward": -2.0
+      },
+      "throttle": {
+        "mean_progress_reward": 9.14430768041995e-05,
+        "mean_terminal_reward": -0.001276867418599702,
+        "mean_time_cost": 0.00012938358462735893,
+        "mean_total_reward": -0.0013148079230145293,
+        "n": 4699,
+        "p_delta_route_positive": 0.9765907639923388,
+        "p_step_reward_positive": 0.2777186635454352,
+        "sum_terminal_reward": -6.0
+      }
+    },
+    "episodes": [
+      {
+        "case_id": "train/Easy/SCCS/geom-0/env-386509",
+        "discounted_logged_reward_gamma_0_99": -0.1767005671233938,
+        "discounted_logged_reward_gamma_0_9991": -0.8678835559927089,
+        "episode_reward_sum_logged": -1.0164363894228927,
+        "episode_steps_logged": 178,
+        "geometry_id": "geom_easy_SCCS_seed0",
+        "horizon_steps": 1758,
+        "primary_reason": "OUT_OF_ROAD",
+        "terminal_observed": true,
+        "terminal_reward_sum": -1.0,
+        "tier": "Easy"
+      },
+      {
+        "case_id": "train/Medium/SCTCS/geom-2/env-821175",
+        "discounted_logged_reward_gamma_0_99": -0.010562600706319116,
+        "discounted_logged_reward_gamma_0_9991": -0.5016120211420472,
+        "episode_reward_sum_logged": -1.0768353005779545,
+        "episode_steps_logged": 892,
+        "geometry_id": "geom_medium_SCTCS_seed2",
+        "horizon_steps": 1642,
+        "primary_reason": "OUT_OF_ROAD",
+        "terminal_observed": true,
+        "terminal_reward_sum": -1.0,
+        "tier": "Medium"
+      },
+      {
+        "case_id": "train/Hard/SCTXrCS/geom-2/env-90740",
+        "discounted_logged_reward_gamma_0_99": -0.3514949013442431,
+        "discounted_logged_reward_gamma_0_9991": -0.915307519603931,
+        "episode_reward_sum_logged": -1.0058095438753298,
+        "episode_steps_logged": 106,
+        "geometry_id": "geom_hard_SCTXrCS_seed2",
+        "horizon_steps": 2208,
+        "primary_reason": "OUT_OF_ROAD",
+        "terminal_observed": true,
+        "terminal_reward_sum": -1.0,
+        "tier": "Hard"
+      },
+      {
+        "case_id": "train/Extreme/CrXROSTR/geom-2/env-516597",
+        "discounted_logged_reward_gamma_0_99": -0.007412723629644316,
+        "discounted_logged_reward_gamma_0_9991": -0.45521689788136155,
+        "episode_reward_sum_logged": -1.0662289388198474,
+        "episode_steps_logged": 989,
+        "geometry_id": "geom_extreme_CrXROSTR_seed2",
+        "horizon_steps": 2616,
+        "primary_reason": "OUT_OF_ROAD",
+        "terminal_observed": true,
+        "terminal_reward_sum": -1.0,
+        "tier": "Extreme"
+      },
+      {
+        "case_id": "train/Easy/SCCS/geom-2/env-88413",
+        "discounted_logged_reward_gamma_0_99": -0.022296179935950945,
+        "discounted_logged_reward_gamma_0_9991": -0.7052784024584722,
+        "episode_reward_sum_logged": -1.0773077069790418,
+        "episode_steps_logged": 492,
+        "geometry_id": "geom_easy_SCCS_seed2",
+        "horizon_steps": 1049,
+        "primary_reason": "OUT_OF_ROAD",
+        "terminal_observed": true,
+        "terminal_reward_sum": -1.0,
+        "tier": "Easy"
+      },
+      {
+        "case_id": "train/Medium/SCTCS/geom-3/env-96513",
+        "discounted_logged_reward_gamma_0_99": -0.010140418157382642,
+        "discounted_logged_reward_gamma_0_9991": -0.07394026319957502,
+        "episode_reward_sum_logged": -0.14762241451834957,
+        "episode_steps_logged": 1857,
+        "geometry_id": "geom_medium_SCTCS_seed3",
+        "horizon_steps": 1857,
+        "primary_reason": "TIMEOUT",
+        "terminal_observed": true,
+        "terminal_reward_sum": 0.0,
+        "tier": "Medium"
+      },
+      {
+        "case_id": "train/Hard/SCTXrCS/geom-3/env-976051",
+        "discounted_logged_reward_gamma_0_99": -0.008389586987294542,
+        "discounted_logged_reward_gamma_0_9991": -0.4366307215418699,
+        "episode_reward_sum_logged": -1.0731767047198915,
+        "episode_steps_logged": 1050,
+        "geometry_id": "geom_hard_SCTXrCS_seed3",
+        "horizon_steps": 2440,
+        "primary_reason": "OUT_OF_ROAD",
+        "terminal_observed": true,
+        "terminal_reward_sum": -1.0,
+        "tier": "Hard"
+      },
+      {
+        "case_id": "train/Extreme/CrXROSTR/geom-3/env-320749",
+        "discounted_logged_reward_gamma_0_99": -0.005054161949580498,
+        "discounted_logged_reward_gamma_0_9991": -0.3437661108054367,
+        "episode_reward_sum_logged": -1.0723010655028418,
+        "episode_steps_logged": 1330,
+        "geometry_id": "geom_extreme_CrXROSTR_seed3",
+        "horizon_steps": 2514,
+        "primary_reason": "OUT_OF_ROAD",
+        "terminal_observed": true,
+        "terminal_reward_sum": -1.0,
+        "tier": "Extreme"
+      },
+      {
+        "case_id": "train/Easy/SCCS/geom-3/env-675503",
+        "discounted_logged_reward_gamma_0_99": -0.8593217572351679,
+        "discounted_logged_reward_gamma_0_9991": -0.9857009345035793,
+        "episode_reward_sum_logged": -0.9991007490580159,
+        "episode_steps_logged": 16,
+        "geometry_id": "geom_easy_SCCS_seed3",
+        "horizon_steps": 1325,
+        "primary_reason": "OUT_OF_ROAD",
+        "terminal_observed": true,
+        "terminal_reward_sum": -1.0,
+        "tier": "Easy"
+      },
+      {
+        "case_id": "train/Medium/SCTCS/geom-5/env-458164",
+        "discounted_logged_reward_gamma_0_99": -0.00889057638212577,
+        "discounted_logged_reward_gamma_0_9991": -0.08449498612125175,
+        "episode_reward_sum_logged": -0.15573952368945498,
+        "episode_steps_logged": 1563,
+        "geometry_id": "geom_medium_SCTCS_seed5",
+        "horizon_steps": 1563,
+        "primary_reason": "TIMEOUT",
+        "terminal_observed": true,
+        "terminal_reward_sum": 0.0,
+        "tier": "Medium"
+      },
+      {
+        "case_id": "train/Hard/SCTXrCS/geom-4/env-595175",
+        "discounted_logged_reward_gamma_0_99": -0.005339789209969407,
+        "discounted_logged_reward_gamma_0_9991": -0.053281298969533555,
+        "episode_reward_sum_logged": -0.0974193740973135,
+        "episode_steps_logged": 1527,
+        "geometry_id": "geom_hard_SCTXrCS_seed4",
+        "horizon_steps": 2614,
+        "primary_reason": null,
+        "terminal_observed": false,
+        "terminal_reward_sum": 0.0,
+        "tier": "Hard"
+      }
+    ],
+    "max_reward_decomposition_abs_residual": 3.987200170030292e-08,
+    "max_time_cost_formula_abs_residual": 0.0,
+    "mean_p_delta_route_positive": 0.7082,
+    "mean_p_progress_exceeds_time_cost": 0.1502,
+    "mean_p_total_reward_positive": 0.1499,
+    "mean_progress_reward": 4.858167032000259e-05,
+    "mean_time_cost": 0.00012737944427181365,
+    "mean_total_reward": -0.0008787977711260934,
+    "n_partial_episode_fragments": 1,
+    "n_recorded_episodes": 11,
+    "n_terminal_episodes": 10,
+    "n_transitions": 10000,
+    "reward_contract_formula": "progress_reward - time_cost + terminal_reward",
+    "reward_discounting_caveat": "Logged discounted reward sums omit SAC entropy terms and critic bootstrap/timeout handling; they are not Q-value targets.",
+    "sum_terminal_reward": -8.0,
+    "time_cost_formula": "0.25 / route_aware_horizon_steps"
+  },
+  "status": "COMPLETE"
+}

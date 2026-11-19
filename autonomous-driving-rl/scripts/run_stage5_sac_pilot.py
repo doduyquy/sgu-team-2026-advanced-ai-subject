@@ -28,6 +28,7 @@ from stable_baselines3.common.callbacks import CallbackList
 
 from src.training.stage5.checkpoint import verify_checkpoint_integrity
 from src.training.stage5.pilot_callbacks import PilotCheckpointCallback
+from src.training.stage5.pilot_action_persistence import ThrottlePersistenceResetCallback
 from src.training.stage5.pilot_protocol import load_pilot_split, save_pilot_split
 from src.training.stage5.sac_trainer import SacBaselineTrainer
 from src.training.stage5.train_sampler import SamplerStrategy
@@ -84,7 +85,11 @@ def main() -> int:
                         help="Optional controlled SAC discount-factor override in (0, 1].")
     parser.add_argument("--balanced-long-horizon", action="store_true",
                         help="Use the pilot-only tier-cycling sampler and gamma=0.9991 protocol; explicit flags can override either factor.")
+    parser.add_argument("--throttle-hold-steps", type=int, default=0,
+                        help="Pilot intervention: hold sampled throttle for N steps while resampling steering every step (0 disables).")
     args = parser.parse_args()
+    if args.throttle_hold_steps not in (0,) and args.throttle_hold_steps < 2:
+        parser.error("--throttle-hold-steps must be 0 (disabled) or >= 2")
     if args.leaky_relu_ablation and not args.waypoint_xy50_ablation:
         parser.error("--leaky-relu-ablation requires --waypoint-xy50-ablation for a controlled comparison")
     run_dir = ROOT / "runs" / "stage5_pilot" / args.run_id
@@ -133,7 +138,23 @@ def main() -> int:
     if args.leaky_relu_ablation:
         config["protocol"] = "stage5_pilot_waypoint_xy50_leakyrelu_ablation_v1"
     config["split_sha256"] = split["split_sha256"]
+    config["action_persistence"] = ({
+        "enabled": True,
+        "throttle_hold_steps": args.throttle_hold_steps,
+        "steering_resampled_every_step": True,
+        "episode_boundary_resets_hold": True,
+        "replay_stores_executed_action": True,
+        "scope": "pilot_behavior_collection_only",
+    } if args.throttle_hold_steps else {"enabled": False})
     config["baseline_config_sha256"] = sha256_file(ROOT / "configs/experiments/stage5_rl_baseline_v1.json")
+    source_files = [
+        "scripts/run_stage5_sac_pilot.py",
+        "src/training/stage5/sac_trainer.py",
+        "src/training/stage5/pilot_action_persistence.py",
+        "src/training/stage5/pilot_callbacks.py",
+    ]
+    config["source_files_sha256"] = {name: sha256_file(ROOT / name) for name in source_files}
+    config["git_worktree_note"] = "Local source file hashes are authoritative for this run; the working tree may contain uncommitted pilot-only code."
     (run_dir / "pilot_protocol.json").write_text(json.dumps(config, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     record = {
         "protocol": config["protocol"], "run_id": args.run_id, "status": "RUNNING",
@@ -141,9 +162,11 @@ def main() -> int:
         "training_sampler_strategy": effective_sampler, "sac_gamma": effective_gamma,
         "code_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
                                        capture_output=True, check=True).stdout.strip(),
+        "source_files_sha256": config["source_files_sha256"],
         "python": platform.python_version(), "platform": platform.platform(),
         "torch": str(torch.__version__) if torch is not None else None,
         "start_utc": datetime.now(timezone.utc).isoformat(), "checkpoint_steps": [0, 5000, 10000],
+        "action_persistence": config["action_persistence"],
     }
     status_path = run_dir / "run_status.json"
     status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -156,6 +179,7 @@ def main() -> int:
                                      allowed_geometry_ids=[x["geometry_id"] for x in split["pilot_train"]],
                                      pilot_observation_transform=("waypoint_xy_div50m_v1" if args.waypoint_xy50_ablation else None),
                                      pilot_actor_activation=("leaky_relu_0.01" if args.leaky_relu_ablation else "relu"),
+                                     pilot_throttle_persistence_steps=args.throttle_hold_steps,
                                      device="cpu")
         trainer.config["pilot_protocol"] = {
             "protocol": config["protocol"], "split_sha256": split["split_sha256"],
@@ -167,6 +191,7 @@ def main() -> int:
             "discount_weight_at_horizon_1860": float(trainer.model.gamma ** 1860),
             "training_allowed_geometry_ids_sha256": hashlib.sha256(
                 "\n".join(sorted(x["geometry_id"] for x in split["pilot_train"])).encode()).hexdigest(),
+            "action_persistence": config["action_persistence"],
         }
         if args.waypoint_xy50_ablation:
             from src.training.stage5.pilot_observation_transform import WAYPOINT_XY50_V1, transform_fingerprint
@@ -196,8 +221,11 @@ def main() -> int:
             trainer, checkpoints_dir, [5000, 10000], requested_timesteps=10000, verbose=1
         )
         started = time.perf_counter()
+        callbacks = [trainer.callback, checkpoint_callback]
+        if args.throttle_hold_steps:
+            callbacks.insert(1, ThrottlePersistenceResetCallback())
         trainer.model.learn(total_timesteps=10000,
-                            callback=CallbackList([trainer.callback, checkpoint_callback]),
+                            callback=CallbackList(callbacks),
                             reset_num_timesteps=True)
         elapsed = time.perf_counter() - started
         summary = trainer.callback.get_summary_metrics()

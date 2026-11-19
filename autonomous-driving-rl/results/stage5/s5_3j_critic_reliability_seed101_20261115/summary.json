@@ -1,0 +1,487 @@
+{
+  "J1_historical_action_support": {
+    "interpretation_limit": "This reconstructs marginal executed-action support from the 10k telemetry, not state-conditional replay support or the exact replay buffer contents.",
+    "missing_state_support": [
+      "observations",
+      "next_observations",
+      "behavior log probabilities",
+      "replay indices",
+      "target-Q samples"
+    ],
+    "n_logged_training_actions": 10000,
+    "replay_buffer_saved": false,
+    "source_log_sha256": "582f0271c36adce05f4d73d0c55b4364ce2ee12cf3ae6bfb2e89a6f8dc9d3810",
+    "steering_distribution": {
+      "fraction_abs_ge_0_95": 0.0378,
+      "max": 0.9991958141326904,
+      "mean": 0.015737555199861527,
+      "min": -0.9982246160507202,
+      "q01_q05_q25_q50_q75_q95_q99": [
+        -0.9642609578371047,
+        -0.8848854839801789,
+        -0.5179318934679031,
+        0.01892530918121338,
+        0.544281929731369,
+        0.9018712341785431,
+        0.9695693135261537
+      ],
+      "std": 0.5890016656434547
+    },
+    "throttle_bins": {
+      "brake": 5046,
+      "near_zero": 490,
+      "throttle": 4464
+    },
+    "throttle_brake_distribution": {
+      "fraction_abs_ge_0_95": 0.0395,
+      "max": 0.9941494464874268,
+      "mean": -0.0353588054895401,
+      "min": -0.9984358549118042,
+      "q01_q05_q25_q50_q75_q95_q99": [
+        -0.971930056810379,
+        -0.9062565624713897,
+        -0.5730695724487305,
+        -0.05914318561553955,
+        0.5020647048950195,
+        0.8938278913497922,
+        0.9679039406776431
+      ],
+      "std": 0.5927867912905691
+    },
+    "throttle_hold_blocks": {
+      "count_of_constant_value_runs": 2007,
+      "max_run_length": 5,
+      "run_length_quantiles": [
+        5.0,
+        5.0,
+        5.0,
+        5.0
+      ]
+    },
+    "training_actions_are_observed_execution_actions": "SAC collector passes its returned actions to env.step; Stage5TrainingEnv reports same canonical action in info. Callback records collector action first. The custom sampler changed actions and replay actions together."
+  },
+  "J1_new_diagnostic_action_support": {
+    "deterministic": {
+      "fraction_steering_within_historical_marginal_minmax": 1.0,
+      "fraction_throttle_braking": 1.0,
+      "fraction_throttle_positive": 0.0,
+      "fraction_throttle_within_historical_marginal_minmax": 1.0,
+      "n": 1200,
+      "steering_q01_q25_q50_q75_q99": [
+        -0.10955251216888427,
+        -0.10940414667129517,
+        -0.06731513142585754,
+        -0.06724391877651215,
+        -0.019737460017204285
+      ],
+      "throttle_q01_q25_q50_q75_q99": [
+        -0.09726667761802674,
+        -0.0971536785364151,
+        -0.09103208780288696,
+        -0.09099702537059784,
+        -0.08600205183029175
+      ]
+    },
+    "stochastic": {
+      "fraction_steering_within_historical_marginal_minmax": 1.0,
+      "fraction_throttle_braking": 0.5258333333333334,
+      "fraction_throttle_positive": 0.4241666666666667,
+      "fraction_throttle_within_historical_marginal_minmax": 1.0,
+      "n": 1200,
+      "steering_q01_q25_q50_q75_q99": [
+        -0.9750255137681961,
+        -0.6258692145347595,
+        -0.12247467041015625,
+        0.42575347423553467,
+        0.9459895384311676
+      ],
+      "throttle_q01_q25_q50_q75_q99": [
+        -0.9733129066228866,
+        -0.602699801325798,
+        -0.09604018926620483,
+        0.43772366642951965,
+        0.9434436762332916
+      ]
+    }
+  },
+  "J2_episode_records": [
+    {
+      "duration_s": 1.1728474000119604,
+      "environment_seed": 259818,
+      "final_route_completion": 0.009858514451890154,
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "initial_route_completion": 0.009848708723066606,
+      "mode": "deterministic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 9.805728823548271e-06,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Easy"
+    },
+    {
+      "duration_s": 1.1993171000212897,
+      "environment_seed": 259818,
+      "final_route_completion": 0.01178584360160346,
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "initial_route_completion": 0.009848708723066606,
+      "mode": "stochastic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 0.0019371348785368545,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Easy"
+    },
+    {
+      "duration_s": 1.1425185999833047,
+      "environment_seed": 737407,
+      "final_route_completion": 0.013818549737562368,
+      "geometry_id": "geom_easy_SCS_seed12",
+      "initial_route_completion": 0.01378880437290448,
+      "mode": "deterministic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 2.974536465788838e-05,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Easy"
+    },
+    {
+      "duration_s": 1.16642010002397,
+      "environment_seed": 737407,
+      "final_route_completion": 0.014817883529827307,
+      "geometry_id": "geom_easy_SCS_seed12",
+      "initial_route_completion": 0.01378880437290448,
+      "mode": "stochastic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 0.0010290791569228276,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Easy"
+    },
+    {
+      "duration_s": 6.19484929999453,
+      "environment_seed": 968985,
+      "final_route_completion": 0.004716229953657264,
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "initial_route_completion": 0.004706513290324426,
+      "mode": "deterministic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 9.716663332838202e-06,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Extreme"
+    },
+    {
+      "duration_s": 6.227610100002494,
+      "environment_seed": 968985,
+      "final_route_completion": 0.005766393981891677,
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "initial_route_completion": 0.004706513290324426,
+      "mode": "stochastic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 0.0010598806915672514,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Extreme"
+    },
+    {
+      "duration_s": 5.862268299999414,
+      "environment_seed": 897070,
+      "final_route_completion": 0.004383595555457694,
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed0",
+      "initial_route_completion": 0.004375692338409323,
+      "mode": "deterministic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 7.90321704837154e-06,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Extreme"
+    },
+    {
+      "duration_s": 5.841075300006196,
+      "environment_seed": 897070,
+      "final_route_completion": 0.004720793640675328,
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed0",
+      "initial_route_completion": 0.004375692338409323,
+      "mode": "stochastic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 0.0003451013022660052,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Extreme"
+    },
+    {
+      "duration_s": 2.9473291999893263,
+      "environment_seed": 732559,
+      "final_route_completion": 0.007150576063808002,
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "initial_route_completion": 0.007135091621579621,
+      "mode": "deterministic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 1.5484442228381155e-05,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Hard"
+    },
+    {
+      "duration_s": 2.9647022999997716,
+      "environment_seed": 732559,
+      "final_route_completion": 0.009135643996350407,
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "initial_route_completion": 0.007135091621579621,
+      "mode": "stochastic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 0.0020005523747707865,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Hard"
+    },
+    {
+      "duration_s": 3.0092103999922983,
+      "environment_seed": 867627,
+      "final_route_completion": 0.008084378293217552,
+      "geometry_id": "geom_hard_SCXOCS_seed0",
+      "initial_route_completion": 0.00806771468803172,
+      "mode": "deterministic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 1.6663605185832098e-05,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Hard"
+    },
+    {
+      "duration_s": 3.023451599990949,
+      "environment_seed": 867627,
+      "final_route_completion": 0.010015005216842232,
+      "geometry_id": "geom_hard_SCXOCS_seed0",
+      "initial_route_completion": 0.00806771468803172,
+      "mode": "stochastic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 0.0019472905288105118,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Hard"
+    },
+    {
+      "duration_s": 1.743329899996752,
+      "environment_seed": 747022,
+      "final_route_completion": 0.009368519783326321,
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "initial_route_completion": 0.009353723506108854,
+      "mode": "deterministic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 1.4796277217466944e-05,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Medium"
+    },
+    {
+      "duration_s": 1.729161999974167,
+      "environment_seed": 747022,
+      "final_route_completion": 0.011305015012138679,
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "initial_route_completion": 0.009353723506108854,
+      "mode": "stochastic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 0.0019512915060298248,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Medium"
+    },
+    {
+      "duration_s": 1.8783233999856748,
+      "environment_seed": 37174,
+      "final_route_completion": 0.00811056096988366,
+      "geometry_id": "geom_medium_SCXCCS_seed17",
+      "initial_route_completion": 0.008098288144937143,
+      "mode": "deterministic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 1.2272824946518018e-05,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Medium"
+    },
+    {
+      "duration_s": 1.8846986999851651,
+      "environment_seed": 37174,
+      "final_route_completion": 0.009692711993201044,
+      "geometry_id": "geom_medium_SCXCCS_seed17",
+      "initial_route_completion": 0.008098288144937143,
+      "mode": "stochastic",
+      "outcome": "PROBE_CENSORED",
+      "probe_censored": true,
+      "route_progress_delta": 0.0015944238482639012,
+      "safety_failure": false,
+      "steps": 150,
+      "tier": "Medium"
+    }
+  ],
+  "J2_soft_bellman_diagnostic": {
+    "entropy_coefficient_alpha": 0.06771416962146759,
+    "formula": "r + gamma*(1-done_mask)*(min(Q_target1,Q_target2) - alpha*log_pi(a_next|s_next))",
+    "gamma": 0.99,
+    "limitations": [
+      "New diagnostic transitions are not historical replay transitions.",
+      "Bellman targets use 8 Monte Carlo next-action samples and have sampling noise.",
+      "The probe is short and uses one checkpoint/training seed.",
+      "Residuals are not a matched empirical return calibration and can be large due stochastic targets."
+    ],
+    "metrics_by_policy_mode": {
+      "deterministic": {
+        "bellman_residual_q50_q90_q99": [
+          0.015861034393310547,
+          0.021806526184082037,
+          0.026697387695312498
+        ],
+        "critic_disagreement_q50_q90_q99": [
+          0.004891395568847656,
+          0.016117095947265625,
+          0.016147613525390625
+        ],
+        "mean_abs_q1_q2_disagreement": 0.006006152629852295,
+        "mean_absolute_bellman_residual": 0.015787991682688397,
+        "mean_signed_min_q_minus_target": 0.015727169513702392,
+        "n_transitions": 1200,
+        "next_soft_value_mc_sd_mean_8_samples": 0.010197630531620235,
+        "q1_mean": 15.207272410392761,
+        "q2_mean": 15.210241930484772,
+        "soft_bellman_target_mean": 15.190026924610137,
+        "terminated_count": 0,
+        "timeout_truncated_count": 0
+      },
+      "stochastic": {
+        "bellman_residual_q50_q90_q99": [
+          0.015592098236083984,
+          0.03708248138427736,
+          0.1701500797271728
+        ],
+        "critic_disagreement_q50_q90_q99": [
+          0.0067920684814453125,
+          0.022754383087158207,
+          0.11305252075195313
+        ],
+        "mean_abs_q1_q2_disagreement": 0.012350234985351562,
+        "mean_absolute_bellman_residual": 0.022474761803944907,
+        "mean_signed_min_q_minus_target": 0.02070657173792521,
+        "n_transitions": 1200,
+        "next_soft_value_mc_sd_mean_8_samples": 0.011425773241595986,
+        "q1_mean": 15.175862050851187,
+        "q2_mean": 15.185447164376576,
+        "soft_bellman_target_mean": 15.15377291838328,
+        "terminated_count": 0,
+        "timeout_truncated_count": 0
+      }
+    },
+    "next_action_monte_carlo_samples": 8,
+    "timeout_bootstrap": "done_mask=0 for truncation/timeout, matching SB3 timeout handling; safety/goal termination uses mask=1; external probe cap is censored and bootstrap mask=0."
+  },
+  "case_schedule": [
+    {
+      "environment_seed": 259818,
+      "geometry_generation_seed": 19,
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+      "sequence": "SCCS",
+      "tier": "Easy"
+    },
+    {
+      "environment_seed": 737407,
+      "geometry_generation_seed": 12,
+      "geometry_id": "geom_easy_SCS_seed12",
+      "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+      "sequence": "SCS",
+      "tier": "Easy"
+    },
+    {
+      "environment_seed": 968985,
+      "geometry_generation_seed": 0,
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "geometry_sha256": "7c392abe573ca9823069ef1f88680be6222a9f6b6b6a9d8a065e270cc560db93",
+      "sequence": "CrXROSTR",
+      "tier": "Extreme"
+    },
+    {
+      "environment_seed": 897070,
+      "geometry_generation_seed": 0,
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed0",
+      "geometry_sha256": "886a6ddc9850cb56b8d27ee1b17704e02add3e40f6040708cdbf492b470e35b2",
+      "sequence": "SCTXORyCCS",
+      "tier": "Extreme"
+    },
+    {
+      "environment_seed": 732559,
+      "geometry_generation_seed": 13,
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "geometry_sha256": "6a10dceecff6119d87ee158263659b159de595ff862eac738877b2424f555ccc",
+      "sequence": "SCTXrCS",
+      "tier": "Hard"
+    },
+    {
+      "environment_seed": 867627,
+      "geometry_generation_seed": 0,
+      "geometry_id": "geom_hard_SCXOCS_seed0",
+      "geometry_sha256": "8d90dee7d34fb2f6e90572ec32897400af5f40ebac98f867bafec4bfc383680f",
+      "sequence": "SCXOCS",
+      "tier": "Hard"
+    },
+    {
+      "environment_seed": 747022,
+      "geometry_generation_seed": 11,
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "geometry_sha256": "6c16b289525e50691cc0414d100e028b490281ee1a797c4f3fc3498c1f38bf09",
+      "sequence": "SCTCS",
+      "tier": "Medium"
+    },
+    {
+      "environment_seed": 37174,
+      "geometry_generation_seed": 17,
+      "geometry_id": "geom_medium_SCXCCS_seed17",
+      "geometry_sha256": "cdbe6998006b897903be0fb2060ab08ff4ad87131c873008ef8f708856ce11e6",
+      "sequence": "SCXCCS",
+      "tier": "Medium"
+    }
+  ],
+  "checkpoint_sha256": "6347ae4d82958bba89147ec39507ce3cb6abaa7e04d82f97101d1c09c2dea073",
+  "code_commit_from_checkpoint": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+  "pilot_split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+  "protocol": "S5.3J action-support and critic reliability diagnostic v1",
+  "raw_transition_npz": "runs/stage5_pilot/s5_3j_critic_reliability_seed101_20261115/transitions.npz",
+  "raw_transition_npz_sha256": "57c40d3ecf08a489b961b5596b8692973b2d4b6f9fcba9b58cce9dfe265b145d",
+  "read_only_isolation": {
+    "normalization_update": false,
+    "optimizer_updates_after": 8999,
+    "optimizer_updates_before": 8999,
+    "policy_fingerprint_after": "b5ffea6ad9224084565dad16f8a6e1d3b7822b9b1f2f51ab899954fe76bda199",
+    "policy_fingerprint_before": "b5ffea6ad9224084565dad16f8a6e1d3b7822b9b1f2f51ab899954fe76bda199",
+    "policy_weights_unchanged": true,
+    "replay_size_after": 0,
+    "replay_size_before": 0,
+    "validation_test_access": false
+  },
+  "source_file_sha256": {
+    "scripts/diagnose_stage5_critic_reliability.py": "a4fbe2c88344c1417cce0e7e97e4f65ff953d3cb9dbea7e27e7b6c9bae0b870d",
+    "src/platform/action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+    "src/platform/reward.py": "ecb206c796f682271ced0b943c2d505734c916318d1a12c44b916d5d2bf76bbf",
+    "src/training/stage5/checkpoint.py": "3f4edba28ba247e648a23f2254e594adb83136103bcb9580838847b70a8fed9b",
+    "src/training/stage5/env_adapter.py": "c34f6fd9c579b6164a850747c7e5b4287ba8b7e8ba8ec3ba2b8d4221e2a64290",
+    "src/training/stage5/pilot_action_persistence.py": "14e4daf4809ff579dce27743efc1a916724c678d2f3a494a89dc2c0ff2b1f066"
+  },
+  "status": "COMPLETE",
+  "training_root_seed": 101,
+  "training_step": 10000,
+  "transition_metadata_sha256": "a41637ec015043d374b107abfa1874de43094424f060b11afb5f9338caf22369"
+}

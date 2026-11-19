@@ -102,6 +102,7 @@ def _episode_record(
     env: Stage5TrainingEnv, schedule_item: Dict[str, Any], checkpoint_sha256: str,
     training_step: int, speeds: List[float], controls: List[List[float]], latencies_ms: List[float],
     rewards: List[float], duration_s: float, interrupted: bool, gamma: float,
+    initial_route_completion: float,
 ) -> Dict[str, Any]:
     case = env.current_case
     outcome = env.last_outcome
@@ -115,11 +116,17 @@ def _episode_record(
         "sequence": getattr(case, "sequence", schedule_item["sequence"]),
         "geometry_generation_seed": schedule_item["geometry_generation_seed"],
         "environment_seed": schedule_item["environment_seed"], "split": "PILOT_DIAGNOSTIC_INTERNAL_TRAIN",
-        "outcome": outcome.primary_reason.value if outcome else "INTERRUPTED_DIAGNOSTIC",
+        "outcome": "PROBE_CENSORED" if interrupted else (
+            outcome.primary_reason.value if outcome else "UNDETERMINED"
+        ),
         "clean_success": bool(outcome.clean_success) if outcome else False,
         "safety_failure": any(bool(raw.get(flag, False)) for flag in SAFETY_CRITICAL_FLAGS),
         "timeout": bool(outcome and outcome.primary_reason.value == "TIMEOUT"),
-        "final_route_completion": route, "max_route_completion": env.max_route_completion,
+        "initial_route_completion": float(initial_route_completion),
+        "final_route_completion": route,
+        "route_progress_delta": route - float(initial_route_completion),
+        "max_route_completion": env.max_route_completion,
+        "max_route_progress_delta": float(env.max_route_completion) - float(initial_route_completion),
         "episode_return": float(sum(rewards)), "episode_steps": len(speeds),
         "discount_factor": float(gamma),
         "discounted_episode_return": discounted_return(rewards, gamma),
@@ -194,7 +201,10 @@ def evaluate_checkpoint(
         with records_path.open("w", encoding="utf-8", newline="\n") as sink:
             for case_index, item in enumerate(schedule, start=1):
                 case = sampler.get_case_for_geometry_id(item["geometry_id"], item["environment_seed"])
-                obs, _ = env.reset(options={"case": case})
+                obs, reset_info = env.reset(options={"case": case})
+                initial_route_completion = float(
+                    reset_info.get("initial_route_completion", base_env._last_route_completion)
+                )
                 speeds: List[float] = []
                 controls: List[List[float]] = []
                 latencies: List[float] = []
@@ -246,7 +256,7 @@ def evaluate_checkpoint(
                         break
                 record = _episode_record(
                     base_env, item, checkpoint_sha, training_step, speeds, controls, latencies, rewards,
-                    time.perf_counter() - started, interrupted, gamma,
+                    time.perf_counter() - started, interrupted, gamma, initial_route_completion,
                 )
                 records.append(record)
                 sink.write(json.dumps(record, sort_keys=True) + "\n")

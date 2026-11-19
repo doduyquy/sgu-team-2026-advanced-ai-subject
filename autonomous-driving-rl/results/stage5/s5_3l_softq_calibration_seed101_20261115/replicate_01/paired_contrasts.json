@@ -1,0 +1,80 @@
+{
+  "discounted_reward_return_observed": {
+    "near_neutral_q50_minus_brake_q15": {
+      "mean": -9.685047762451708e-08,
+      "median": -2.6691057778034655e-08,
+      "n": 4,
+      "negative": 2,
+      "positive": 2,
+      "ties": 0
+    },
+    "throttle_q85_minus_brake_q15": {
+      "mean": -2.4530133134485895e-05,
+      "median": -4.663622284835443e-06,
+      "n": 4,
+      "negative": 2,
+      "positive": 2,
+      "ties": 0
+    },
+    "throttle_q85_minus_near_neutral_q50": {
+      "mean": -2.443328265686138e-05,
+      "median": -4.482782012370755e-06,
+      "n": 4,
+      "negative": 2,
+      "positive": 2,
+      "ties": 0
+    }
+  },
+  "discounted_soft_return_observed": {
+    "near_neutral_q50_minus_brake_q15": {
+      "mean": -5.426349431125743e-06,
+      "median": -3.155748363070643e-06,
+      "n": 4,
+      "negative": 2,
+      "positive": 2,
+      "ties": 0
+    },
+    "throttle_q85_minus_brake_q15": {
+      "mean": 0.00024561283332502626,
+      "median": 0.00015288990591244556,
+      "n": 4,
+      "negative": 1,
+      "positive": 3,
+      "ties": 0
+    },
+    "throttle_q85_minus_near_neutral_q50": {
+      "mean": 0.000251039182756152,
+      "median": 0.0001560456542755162,
+      "n": 4,
+      "negative": 1,
+      "positive": 3,
+      "ties": 0
+    }
+  },
+  "route_progress_delta": {
+    "near_neutral_q50_minus_brake_q15": {
+      "mean": 1.0268192209686444e-05,
+      "median": -3.241879335797934e-06,
+      "n": 4,
+      "negative": 2,
+      "positive": 2,
+      "ties": 0
+    },
+    "throttle_q85_minus_brake_q15": {
+      "mean": 2.6831666174995106e-05,
+      "median": 4.354576968384517e-05,
+      "n": 4,
+      "negative": 2,
+      "positive": 2,
+      "ties": 0
+    },
+    "throttle_q85_minus_near_neutral_q50": {
+      "mean": 1.656347396530866e-05,
+      "median": 1.6986749321054942e-05,
+      "n": 4,
+      "negative": 2,
+      "positive": 2,
+      "ties": 0
+    }
+  }
+}

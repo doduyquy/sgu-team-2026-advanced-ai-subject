@@ -30,6 +30,7 @@ from src.training.stage5.observation_encoder import (
     STAGE5_FULL_OBSERVATION_DIM,
     Stage5ObservationEncoder,
 )
+from src.training.stage5.pilot_action_persistence import ThrottlePersistenceSAC
 from src.training.stage5.pilot_observation_transform import (
     WAYPOINT_XY50_V1, WaypointXY50Observation, transform_fingerprint,
 )
@@ -154,6 +155,7 @@ class SacBaselineTrainer:
         allowed_geometry_ids: Optional[Sequence[str]] = None,
         pilot_observation_transform: Optional[str] = None,
         pilot_actor_activation: str = "relu",
+        pilot_throttle_persistence_steps: int = 0,
     ) -> None:
         """
         Initializes the SAC Baseline Trainer.
@@ -197,6 +199,9 @@ class SacBaselineTrainer:
         if pilot_actor_activation not in ("relu", "leaky_relu_0.01"):
             raise ValueError(f"Unsupported pilot actor activation: {pilot_actor_activation}")
         self.actor_activation = pilot_actor_activation
+        self.pilot_throttle_persistence_steps = int(pilot_throttle_persistence_steps)
+        if self.pilot_throttle_persistence_steps not in (0,) and self.pilot_throttle_persistence_steps < 2:
+            raise ValueError("pilot_throttle_persistence_steps must be 0 (disabled) or >= 2")
         sampler_cfg = self.config.get("dataset_sampler", {})
         strategy = sampler_cfg.get("default_strategy", "ROUND_ROBIN")
 
@@ -230,7 +235,10 @@ class SacBaselineTrainer:
         # 5. Instantiate Stable-Baselines3 SAC
         policy_kwargs = ({"activation_fn": torch.nn.LeakyReLU}
                          if pilot_actor_activation == "leaky_relu_0.01" else None)
-        self.model = SAC(
+        model_class = ThrottlePersistenceSAC if self.pilot_throttle_persistence_steps else SAC
+        model_kwargs = ({"throttle_hold_steps": self.pilot_throttle_persistence_steps}
+                        if self.pilot_throttle_persistence_steps else {})
+        self.model = model_class(
             policy="MlpPolicy",
             env=model_env,
             learning_rate=self.learning_rate,
@@ -246,6 +254,7 @@ class SacBaselineTrainer:
             seed=self.training_root_seed,
             device=self.device,
             verbose=0,
+            **model_kwargs,
         )
 
         self.callback = SacDiagnosticsCallback(verbose=1)
