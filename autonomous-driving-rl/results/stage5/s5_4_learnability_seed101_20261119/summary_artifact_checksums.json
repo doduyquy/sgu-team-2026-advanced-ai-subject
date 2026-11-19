@@ -1,0 +1,13 @@
+{
+  "results/stage5/s5_4_learnability_seed101_20261119/checkpoint_metrics.csv": "435cfc034de62f7f62756e29a709c2a7ebbc35c5f7fadcca8d2d0a02274fc2c0",
+  "results/stage5/s5_4_learnability_seed101_20261119/paired_comparisons.json": "e0e21f2dc665f9519f34af2d689020e942cafff6b48d65a41df18ae311d50438",
+  "results/stage5/s5_4_learnability_seed101_20261119/plots/actor_sensitivity.png": "d563bd5368d8f1dfa61408a8a2fd6562dc17cd726fa791171ad00cbb48fc6674",
+  "results/stage5/s5_4_learnability_seed101_20261119/plots/full_clean_success_rate.png": "26b3ea593f5ff1124760429aab3947fa31c31237511d704ddbdf2f86f5279a1e",
+  "results/stage5/s5_4_learnability_seed101_20261119/plots/full_safety_failure_rate.png": "d68d51e72211d679318d10d1658a868c2b461ad79d612c385762bcc7ef605af4",
+  "results/stage5/s5_4_learnability_seed101_20261119/plots/paired_route_progress_difference.png": "cfdf147b0a468a03bfa6a673685cca79a3ebb989e0203c7f71348d04d50cf1cc",
+  "results/stage5/s5_4_learnability_seed101_20261119/plots/probe_mean_route_progress_delta.png": "622c7943f8d8a25668fe448c04a8ab88e19eba70b890fb2ee2386c5931d62b6a",
+  "results/stage5/s5_4_learnability_seed101_20261119/plots/probe_mean_speed_km_h.png": "0b32ac68a6de6ccf0c4aafab3e2f5973e020f3bdda2f3cf3f5f7f28b36d4258d",
+  "results/stage5/s5_4_learnability_seed101_20261119/plots/probe_stationary_fraction.png": "e6ff369f92d2f7dbca41640dd01111e9272a9d3666c74426d3c88b21c54c3dcd",
+  "results/stage5/s5_4_learnability_seed101_20261119/plots/training_geometry_coverage.png": "f571203319ec616a5dc37beaa5a6e01dc1c025ea941d362fafa43697f3f63c46",
+  "results/stage5/s5_4_learnability_seed101_20261119/scientific_results.json": "03bb69b637e804fbd3c78bfb217f0c96c668aca687c1b25f3b26a7fe85919121"
+}

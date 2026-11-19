@@ -1,0 +1,299 @@
+{
+  "analysis_script_sha256": "ad28dc4102ec87f7e1d21d9a28a1a4ad31887cfa211c01626cb4f65222441154",
+  "anchor_count": 8,
+  "anchor_file_sha256": "7a96ebd959681d239d120402cbb30840b209746002f9beff46de5dd64af567d2",
+  "anchor_names": [
+    "geom_easy_SCCS_seed19",
+    "geom_easy_SCCS_seed4",
+    "geom_extreme_CrXROSTR_seed0",
+    "geom_extreme_CrXROSTR_seed1",
+    "geom_hard_SCTXrCS_seed13",
+    "geom_hard_SCTXrCS_seed15",
+    "geom_medium_SCTCS_seed11",
+    "geom_medium_SCTCS_seed13"
+  ],
+  "checkpoints": {
+    "A": {
+      "0": {
+        "actor": {
+          "deterministic_action_mean": [
+            -0.3572750687599182,
+            -0.17886614799499512
+          ],
+          "deterministic_action_std_across_anchors": [
+            0.028574718162417412,
+            0.04569359868764877
+          ],
+          "entropy_coefficient": 1.0,
+          "first_layer_activation_std": 2.2631430625915527,
+          "first_layer_nonpositive_fraction": 0.4873046875,
+          "first_layer_preactivation_mean": 0.07165484875440598,
+          "first_layer_preactivation_std": 3.9567344188690186
+        },
+        "metadata_sha256": "6c0f9f673e5c7a7748b20041197731397558c20bda79fb9f00e12c6aac5daf1a",
+        "model_sha256": "6def9818dc4ca4d97a597bc6479da7768f9b994706b9884be1550709bf8f65a0",
+        "training_step": 0
+      },
+      "10000": {
+        "actor": {
+          "deterministic_action_mean": [
+            -0.008925214409828186,
+            0.0005316436290740967
+          ],
+          "deterministic_action_std_across_anchors": [
+            0.00020509008027147502,
+            0.00011655021808110178
+          ],
+          "entropy_coefficient": 0.06713342666625977,
+          "first_layer_activation_std": 0.06128621846437454,
+          "first_layer_nonpositive_fraction": 0.99609375,
+          "first_layer_preactivation_mean": -2.633568048477173,
+          "first_layer_preactivation_std": 2.396892786026001
+        },
+        "metadata_sha256": "31306ba9203944eb1d376f7e78cfb4e7b3e035b83f07d0e0f1dbf4d930568b35",
+        "model_sha256": "d074977e99852c796e46c7fbc1a284c1a382265e6d501e9af2812b5b53be0442",
+        "training_step": 10000
+      },
+      "5000": {
+        "actor": {
+          "deterministic_action_mean": [
+            -0.012701712548732758,
+            0.015411987900733948
+          ],
+          "deterministic_action_std_across_anchors": [
+            0.0002962547878269106,
+            0.0032331219408661127
+          ],
+          "entropy_coefficient": 0.30087897181510925,
+          "first_layer_activation_std": 0.3502488136291504,
+          "first_layer_nonpositive_fraction": 0.955078125,
+          "first_layer_preactivation_mean": -2.401200532913208,
+          "first_layer_preactivation_std": 2.4903481006622314
+        },
+        "metadata_sha256": "797de7d0964d3bd046b591ea45e6f20bb955389a3a0b0de2bd5176c680dfddca",
+        "model_sha256": "ffc104bd942d0843623aabaa3e51459e7bfd1620f8ba27caa57b716a3d6bebf6",
+        "training_step": 5000
+      }
+    },
+    "B": {
+      "0": {
+        "actor": {
+          "deterministic_action_mean": [
+            -0.3572750687599182,
+            -0.17886614799499512
+          ],
+          "deterministic_action_std_across_anchors": [
+            0.028574718162417412,
+            0.04569359868764877
+          ],
+          "entropy_coefficient": 1.0,
+          "first_layer_activation_std": 2.2631430625915527,
+          "first_layer_nonpositive_fraction": 0.4873046875,
+          "first_layer_preactivation_mean": 0.07165484875440598,
+          "first_layer_preactivation_std": 3.9567344188690186
+        },
+        "metadata_sha256": "d2a5ed3b380e95634cb18830070668ee30926d6bdc18d17da11402a57e2543db",
+        "model_sha256": "d431c9565ca90b2265c74b4a42b772d80866edbf14a424826aec96b13fb6c11e",
+        "training_step": 0
+      },
+      "10000": {
+        "actor": {
+          "deterministic_action_mean": [
+            -0.007678717374801636,
+            0.0018775612115859985
+          ],
+          "deterministic_action_std_across_anchors": [
+            1.1180042747582775e-05,
+            7.059400377329439e-05
+          ],
+          "entropy_coefficient": 0.06713414937257767,
+          "first_layer_activation_std": 0.09228940308094025,
+          "first_layer_nonpositive_fraction": 0.99609375,
+          "first_layer_preactivation_mean": -2.647961139678955,
+          "first_layer_preactivation_std": 2.409874439239502
+        },
+        "metadata_sha256": "6378142b9064aff9dcb68e75a2bbbf87db53cbf963544f60165429ecfbf35d03",
+        "model_sha256": "a50d3c8dd755b81172be1a952e5bf1d91756842e9e84d86fd1fffce46ba1398c",
+        "training_step": 10000
+      },
+      "5000": {
+        "actor": {
+          "deterministic_action_mean": [
+            -0.013056434690952301,
+            0.016362488269805908
+          ],
+          "deterministic_action_std_across_anchors": [
+            0.003734840778633952,
+            0.00117398239672184
+          ],
+          "entropy_coefficient": 0.30088192224502563,
+          "first_layer_activation_std": 0.3391672670841217,
+          "first_layer_nonpositive_fraction": 0.94384765625,
+          "first_layer_preactivation_mean": -2.4207024574279785,
+          "first_layer_preactivation_std": 2.518695831298828
+        },
+        "metadata_sha256": "a3c423e66a6b1a7ce54b70226f2f5b2ff580144b96dc1ff98df17c794f2b0cc9",
+        "model_sha256": "0884cc368ab54fe06e7602d995c6b9575f0d38eb45762a91a6b586e76f13300a",
+        "training_step": 5000
+      }
+    }
+  },
+  "direct_measurements": [
+    "Deterministic actions across the same eight real, distinct fixed reset observations.",
+    "First-layer preactivation/activation statistics for the historical 409D ReLU actor.",
+    "Raw feature-group ranges and across-anchor dispersion.",
+    "Previously recorded deterministic probes and training action summaries; no new simulation was run."
+  ],
+  "feature_group_statistics_raw_409d": {
+    "core_259d": {
+      "per_feature_abs_max_mean": 0.9569888710975647,
+      "per_feature_std_mean_across_eight_reset_anchors": 0.001136290025897324,
+      "raw_max": 1.0,
+      "raw_min": 0.0
+    },
+    "task_masks_scalars_24d": {
+      "per_feature_abs_max_mean": 0.9280624389648438,
+      "per_feature_std_mean_across_eight_reset_anchors": 0.013609230518341064,
+      "raw_max": 1.0,
+      "raw_min": 0.0
+    },
+    "task_waypoints_60d": {
+      "per_feature_abs_max_mean": 11.08543872833252,
+      "per_feature_std_mean_across_eight_reset_anchors": 0.5067340135574341,
+      "raw_max": 50.0,
+      "raw_min": -0.08420000225305557
+    },
+    "traffic_actor_56d": {
+      "per_feature_abs_max_mean": 0.0,
+      "per_feature_std_mean_across_eight_reset_anchors": 0.0,
+      "raw_max": 0.0,
+      "raw_min": 0.0
+    },
+    "traffic_masks_metrics_10d": {
+      "per_feature_abs_max_mean": 0.0,
+      "per_feature_std_mean_across_eight_reset_anchors": 0.0,
+      "raw_max": 0.0,
+      "raw_min": 0.0
+    }
+  },
+  "historical_diagnostic_behavior": {
+    "A": {
+      "0": {
+        "clean_success_count": 0,
+        "mean_brake": 0.17986338327328363,
+        "mean_route_progress_delta": 1.6370866761577477e-05,
+        "mean_speed_km_h": 0.015089875771926308,
+        "mean_throttle": 0.0,
+        "probe_censored": 8,
+        "safety_failure_count": 0,
+        "stationary_fraction": 1.0
+      },
+      "10000": {
+        "clean_success_count": 0,
+        "mean_brake": 0.0,
+        "mean_route_progress_delta": 0.0010495632418361985,
+        "mean_speed_km_h": 0.08365074443582111,
+        "mean_throttle": 0.0005335227648417155,
+        "probe_censored": 8,
+        "safety_failure_count": 0,
+        "stationary_fraction": 1.0
+      },
+      "5000": {
+        "clean_success_count": 0,
+        "mean_brake": 0.0,
+        "mean_route_progress_delta": 0.02945311119073189,
+        "mean_speed_km_h": 2.5412930400465337,
+        "mean_throttle": 0.018727033297897457,
+        "probe_censored": 6,
+        "safety_failure_count": 2,
+        "stationary_fraction": 0.2226464191030955
+      }
+    },
+    "B": {
+      "0": {
+        "clean_success_count": 0,
+        "mean_brake": 0.17986338327328363,
+        "mean_route_progress_delta": 1.6370866761577477e-05,
+        "mean_speed_km_h": 0.015089875771926308,
+        "mean_throttle": 0.0,
+        "probe_censored": 8,
+        "safety_failure_count": 0,
+        "stationary_fraction": 1.0
+      },
+      "10000": {
+        "clean_success_count": 0,
+        "mean_brake": 0.0,
+        "mean_route_progress_delta": 0.0037249573920784436,
+        "mean_speed_km_h": 0.29695625921259305,
+        "mean_throttle": 0.001897402803103129,
+        "probe_censored": 8,
+        "safety_failure_count": 0,
+        "stationary_fraction": 1.0
+      },
+      "5000": {
+        "clean_success_count": 0,
+        "mean_brake": 0.0,
+        "mean_route_progress_delta": 0.029377543571036564,
+        "mean_speed_km_h": 2.5421385989817282,
+        "mean_throttle": 0.01861993185551024,
+        "probe_censored": 6,
+        "safety_failure_count": 2,
+        "stationary_fraction": 0.21383582791720038
+      }
+    }
+  },
+  "historical_source_run": "s5_3m_tau_ab_seed101_20261119_retry1",
+  "historical_training_action_summary": {
+    "A": {
+      "brake_fraction": 0.4741,
+      "mean_steering": -0.006174001437425613,
+      "mean_throttle_brake": 0.006066296577453613,
+      "near_zero_fraction": 0.0473,
+      "steps": 10000,
+      "throttle_fraction": 0.4786
+    },
+    "B": {
+      "brake_fraction": 0.4743,
+      "mean_steering": -0.00613026978969574,
+      "mean_throttle_brake": 0.006242735069990158,
+      "near_zero_fraction": 0.0468,
+      "steps": 10000,
+      "throttle_fraction": 0.4789
+    }
+  },
+  "limitations": [
+    "The eight anchors are reset observations, not a representative replay-buffer or moving-state distribution.",
+    "The sampled reset observations have zero traffic actor values, so traffic scaling cannot be judged from these anchors.",
+    "Historical replay buffers are unavailable; this analysis cannot reconstruct exact training state coverage.",
+    "The S5.3L Q-return gap does not prove a stationary-policy cause or wrong relative action ranking."
+  ],
+  "mechanism_decision": {
+    "alternatives_not_selected": [
+      "reward scaling",
+      "entropy coefficient modification",
+      "gamma change",
+      "architecture/activation change"
+    ],
+    "decision": "EXPLORATORY_HYPOTHESIS",
+    "freeze_before_training": true,
+    "rationale": "Across eight fixed anchors, actor action dispersion collapsed from the shared initialization to near-constant outputs by 10k; first-layer nonpositive fraction rose markedly, while waypoint/task physical fields showed much larger raw scale dispersion than the normalized core. This supports testing fixed, public-field unit scaling as one isolated intervention; it does not establish normalization as root cause.",
+    "selected_treatment": "pilot_groupwise_physical_v1"
+  },
+  "protocol": "stage5_s54_bounded_mechanism_analysis_v1",
+  "read_only": true,
+  "reward_and_objective": {
+    "entropy_coefficient_at_10k": {
+      "A": 0.06713342666625977,
+      "B": 0.06713414937257767
+    },
+    "gamma": 0.99,
+    "historical_q_diagnostic": "Mean min(Q1,Q2)=15.232; mean full soft-return estimate=9.097; mean Q-return gap=+6.135 over 96 TRAIN-only stochastic rollouts. This is local absolute Q overestimation evidence, not proof it caused stationary behavior.",
+    "reward_contract_unchanged": true,
+    "reward_spec": "delta_route - 0.25 / horizon + terminal_reward"
+  },
+  "runtime": {
+    "python": "3.10.21",
+    "torch": "2.14.1+cpu"
+  },
+  "source_commit": "a66e1535363f660e51a4c7acd37c87c002951be3"
+}

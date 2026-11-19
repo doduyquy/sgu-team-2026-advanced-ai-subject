@@ -129,6 +129,7 @@ class TestPilotProtocol(unittest.TestCase):
                 "infos": [{
                     "case_id": "case-a", "geometry_id": "geom-a", "tier": "Easy",
                     "step_index": 3, "speed_km_h": 4.0, "route_completion": 0.2,
+                    "action_steering": 0.25, "action_throttle_brake": -0.4,
                     "delta_route": 0.01,
                     "reward_breakdown": {"progress_reward": 0.01, "time_cost": 0.001,
                                          "terminal_reward": 0.0, "total_reward": 0.009},
@@ -145,6 +146,7 @@ class TestPilotProtocol(unittest.TestCase):
             self.assertAlmostEqual(record["throttle_brake"], -0.4, places=6)
             self.assertEqual(record["progress_reward"], 0.01)
             self.assertFalse(record["terminated_or_truncated"])
+            self.assertTrue(callback.last_step_context["action_fidelity"])
             actions = json.loads((Path(temp_dir) / "training_action_summary.json").read_text())
             self.assertEqual(actions["brake_fraction"], 1.0)
             coverage = json.loads((Path(temp_dir) / "training_geometry_coverage.json").read_text())

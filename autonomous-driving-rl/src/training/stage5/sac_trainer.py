@@ -32,7 +32,8 @@ from src.training.stage5.observation_encoder import (
 )
 from src.training.stage5.pilot_action_persistence import ThrottlePersistenceSAC
 from src.training.stage5.pilot_observation_transform import (
-    WAYPOINT_XY50_V1, WaypointXY50Observation, transform_fingerprint,
+    GROUPWISE_PHYSICAL_V1, WAYPOINT_XY50_V1, GroupwisePhysicalObservation,
+    WaypointXY50Observation,
 )
 from src.training.stage5.train_sampler import (
     SamplerStrategy,
@@ -193,7 +194,9 @@ class SacBaselineTrainer:
 
         # 3. Instantiate components
         self.encoder = Stage5ObservationEncoder(core_only=False)
-        if pilot_observation_transform not in (None, "waypoint_xy_div50m_v1"):
+        if pilot_observation_transform not in (
+            None, "waypoint_xy_div50m_v1", GROUPWISE_PHYSICAL_V1["transform_id"]
+        ):
             raise ValueError(f"Unsupported pilot observation transform: {pilot_observation_transform}")
         self.observation_transform = pilot_observation_transform
         if pilot_actor_activation not in ("relu", "leaky_relu_0.01"):
@@ -229,8 +232,12 @@ class SacBaselineTrainer:
             reward_spec=self.reward_spec,
             project_root=self.project_root,
         )
-        model_env = (WaypointXY50Observation(self.env)
-                     if pilot_observation_transform == "waypoint_xy_div50m_v1" else self.env)
+        if pilot_observation_transform == "waypoint_xy_div50m_v1":
+            model_env = WaypointXY50Observation(self.env)
+        elif pilot_observation_transform == GROUPWISE_PHYSICAL_V1["transform_id"]:
+            model_env = GroupwisePhysicalObservation(self.env)
+        else:
+            model_env = self.env
 
         # 5. Instantiate Stable-Baselines3 SAC
         policy_kwargs = ({"activation_fn": torch.nn.LeakyReLU}
@@ -308,6 +315,12 @@ class SacBaselineTrainer:
     ) -> Path:
         """Persists the trained model and metadata."""
         summary = self.callback.get_summary_metrics()
+        summary["optimizer_updates"] = int(getattr(self.model, "_n_updates", 0))
+        log_ent_coef = getattr(self.model, "log_ent_coef", None)
+        summary["entropy_coefficient"] = (
+            float(log_ent_coef.detach().exp().cpu().item()) if log_ent_coef is not None
+            else float(self.model.ent_coef) if isinstance(self.model.ent_coef, (int, float)) else None
+        )
         return save_sac_checkpoint(
             model=self.model,
             checkpoint_dir=checkpoint_dir,

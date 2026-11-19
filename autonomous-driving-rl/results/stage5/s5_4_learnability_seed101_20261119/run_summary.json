@@ -1,0 +1,13 @@
+{
+  "actual_steps": {
+    "A": 100000,
+    "B": 100000
+  },
+  "arms": {
+    "A": "COMPLETE",
+    "B": "COMPLETE"
+  },
+  "completed_at_utc": "2026-11-19T15:40:12.532175+00:00",
+  "protocol_sha256": "f3ca16a6ab452b53735e59bd03d59dab28a34cc70ca4d573d53fa72f7eebca25",
+  "training_complete": true
+}

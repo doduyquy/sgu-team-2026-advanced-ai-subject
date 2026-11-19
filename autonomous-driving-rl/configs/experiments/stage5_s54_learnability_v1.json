@@ -1,0 +1,61 @@
+{
+  "protocol": "stage5_s54_learnability_v1",
+  "training_root_seed": 101,
+  "maximum_training_steps_per_arm": 100000,
+  "checkpoint_steps": [0, 10000, 30000, 50000, 100000],
+  "sampler": {
+    "strategy": "ROUND_ROBIN",
+    "pool_split": "PILOT_TRAIN",
+    "pool_tier": "Easy",
+    "pool_geometry_count": 8,
+    "selection_rule": "Sort PILOT_TRAIN Easy records by sequence family, geometry_generation_seed, then geometry_id; choose 3 SCCS, 3 SCSS and 2 SCS.",
+    "environment_seed_rule": "SHA256(train_env_seed:{training_root_seed}:{episode_index}) first 32 bits modulo 1000000; sampler episode index begins at 1.",
+    "environment_seed_channel": "Separate from geometry_generation_seed."
+  },
+  "diagnostic": {
+    "split": "PILOT_DIAGNOSTIC Easy only",
+    "geometry_count": 6,
+    "schedule_seed": 5404,
+    "fast_probe_decisions": 300,
+    "full_episode_checkpoints": [30000, 100000],
+    "conditional_50000_full_episode_rule": "Run if mean 300-step route_progress_delta >= 0.02, mean stationary_fraction <= 0.90, and no safety failure is observed in that checkpoint's fixed probe.",
+    "censored_label": "PROBE_CENSORED",
+    "holdouts_accessed": false
+  },
+  "arms": {
+    "A": {
+      "label": "control",
+      "observation_transform": null
+    },
+    "B": {
+      "label": "treatment",
+      "observation_transform": "pilot_groupwise_physical_v1"
+    }
+  },
+  "only_registered_arm_difference": "fixed post-encoder group-wise physical unit scaling in pilot_groupwise_physical_v1; frozen 409D encoder contract remains unchanged",
+  "early_transfer_rule": {
+    "primary_seed": 5404,
+    "confirmation_seed": 5405,
+    "minimum_distinct_clean_success_geometries_primary": 2,
+    "minimum_clean_successes_confirmation": 1,
+    "max_safety_failures_for_non_dominated_safety": "must not exceed clean successes",
+    "minimum_actor_action_std_across_fixed_observations": 0.01,
+    "full_episode_mean_stationary_fraction_max": 0.70,
+    "action": "Stop Easy-only learnability campaign at the qualifying checkpoint; do not start multi-map training."
+  },
+  "sac_common_parameters": {
+    "algorithm": "SAC",
+    "learning_rate": 0.0003,
+    "buffer_size": 100000,
+    "batch_size": 256,
+    "gamma": 0.99,
+    "tau": 0.005,
+    "learning_starts": 1000,
+    "ent_coef": "auto",
+    "train_freq": 1,
+    "gradient_steps": 1,
+    "architecture": "SB3 MlpPolicy, two 256-unit ReLU layers",
+    "reward_contract": "RewardSpecV1 unchanged"
+  },
+  "resume_policy": "No partial run will be silently resumed. If interrupted without all state restored and tested, preserve it as incomplete and do not concatenate a new segment."
+}

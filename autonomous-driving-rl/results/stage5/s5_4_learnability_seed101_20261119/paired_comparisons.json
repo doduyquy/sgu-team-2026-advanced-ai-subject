@@ -1,0 +1,2107 @@
+[
+  {
+    "data_kind": "PROBE_CENSORED_DIAGNOSTIC",
+    "metrics": {
+      "mean_brake": {
+        "control_a_better_count": 3,
+        "mean_delta_b_minus_a": 0.004016733401351493,
+        "median_delta_b_minus_a": 0.03751296977202097,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.023575647075970967,
+            "delta_b_minus_a": 0.10228969514369964,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.1258653422196706
+          },
+          {
+            "control_a": 0.2590920360883077,
+            "delta_b_minus_a": -0.12770762840906782,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.1313844076792399
+          },
+          {
+            "control_a": 0.2591929628451665,
+            "delta_b_minus_a": -0.12781460464000702,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.1313783582051595
+          },
+          {
+            "control_a": 0.023614049951235453,
+            "delta_b_minus_a": 0.10225159247716267,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.12586564242839812
+          },
+          {
+            "control_a": 0.15452457149823506,
+            "delta_b_minus_a": -0.027225652933120736,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.12729891856511433
+          },
+          {
+            "control_a": 0.02355859657128652,
+            "delta_b_minus_a": 0.10230699876944223,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.12586559534072875
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 3
+      },
+      "mean_speed_km_h": {
+        "control_a_better_count": 3,
+        "mean_delta_b_minus_a": 0.0001358080626580755,
+        "median_delta_b_minus_a": 7.888159861055722e-05,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.014188565462094384,
+            "delta_b_minus_a": 0.0008063045819225959,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.01499487004401698
+          },
+          {
+            "control_a": 0.015312453784683799,
+            "delta_b_minus_a": -0.0004320288083835191,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.01488042497630028
+          },
+          {
+            "control_a": 0.015201543475572045,
+            "delta_b_minus_a": -0.0003523912952479863,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.014849152180324059
+          },
+          {
+            "control_a": 0.0142119695808857,
+            "delta_b_minus_a": 0.0005101544924691007,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.014722124073354801
+          },
+          {
+            "control_a": 0.015318082205305835,
+            "delta_b_minus_a": -0.00041829970166095895,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.014899782503644876
+          },
+          {
+            "control_a": 0.0141325374735831,
+            "delta_b_minus_a": 0.0007011091068492206,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.014833646580432321
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 3
+      },
+      "mean_throttle": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      },
+      "route_progress_delta": {
+        "control_a_better_count": 2,
+        "mean_delta_b_minus_a": -4.791943866081297e-06,
+        "median_delta_b_minus_a": 5.667733209848737e-06,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 2.5214060370514976e-05,
+            "delta_b_minus_a": 3.6283075139243587e-06,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 2.8842367884439335e-05
+          },
+          {
+            "control_a": 1.5464338519394563e-05,
+            "delta_b_minus_a": 7.707158905773115e-06,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 2.3171497425167678e-05
+          },
+          {
+            "control_a": 2.722651771174152e-05,
+            "delta_b_minus_a": -2.986713870268415e-05,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": -2.64062099094263e-06
+          },
+          {
+            "control_a": 4.533108873510869e-05,
+            "delta_b_minus_a": 1.1974597715690843e-05,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 5.730568645079953e-05
+          },
+          {
+            "control_a": 3.393496376487455e-05,
+            "delta_b_minus_a": -3.130495804799793e-05,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 2.6300057168766183e-06
+          },
+          {
+            "control_a": 3.5040549352631165e-05,
+            "delta_b_minus_a": 9.110369418805983e-06,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 4.415091877143715e-05
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 4
+      },
+      "stationary_fraction": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 1.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      }
+    },
+    "paired_case_count": 6,
+    "pairing_keys": [
+      "geometry_id",
+      "environment_seed"
+    ],
+    "training_step": 0
+  },
+  {
+    "data_kind": "PROBE_CENSORED_DIAGNOSTIC",
+    "metrics": {
+      "mean_brake": {
+        "control_a_better_count": 6,
+        "mean_delta_b_minus_a": -0.0027292447951104905,
+        "median_delta_b_minus_a": -0.003010824124018351,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.004214037458101908,
+            "delta_b_minus_a": -0.004214037458101908,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0009623754024505615,
+            "delta_b_minus_a": -0.0009623754024505615,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0009624409675598144,
+            "delta_b_minus_a": -0.0009624409675598144,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.004214581648508708,
+            "delta_b_minus_a": -0.004214581648508708,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.001807610789934794,
+            "delta_b_minus_a": -0.001807610789934794,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.004214422504107158,
+            "delta_b_minus_a": -0.004214422504107158,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 0
+      },
+      "mean_speed_km_h": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.46798401798956485,
+        "median_delta_b_minus_a": 0.47075155168840954,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.014304165561072071,
+            "delta_b_minus_a": 0.48558334163313543,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.4998875071942075
+          },
+          {
+            "control_a": 0.015773420492554934,
+            "delta_b_minus_a": 0.43796754305100316,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.4537409635435581
+          },
+          {
+            "control_a": 0.015218972496866538,
+            "delta_b_minus_a": 0.46831239755629306,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.4835313700531596
+          },
+          {
+            "control_a": 0.014294378537253074,
+            "delta_b_minus_a": 0.4731907058205261,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.48748508435777915
+          },
+          {
+            "control_a": 0.01464200399599938,
+            "delta_b_minus_a": 0.4833858584671755,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.49802786246317493
+          },
+          {
+            "control_a": 0.01430644892395812,
+            "delta_b_minus_a": 0.4594642614092557,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.47377071033321383
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "mean_throttle": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0030177831649780273,
+        "median_delta_b_minus_a": 0.0030177831649780273,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0030177831649780273,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0030177831649780273
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0030177831649780273,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.0030177831649780273
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0030177831649780273,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.0030177831649780273
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0030177831649780273,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.0030177831649780273
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0030177831649780273,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.0030177831649780273
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0030177831649780273,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0030177831649780273
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "route_progress_delta": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.009741988255229792,
+        "median_delta_b_minus_a": 0.00992249898110506,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 6.944785337291252e-05,
+            "delta_b_minus_a": 0.008091847097021994,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.008161294950394906
+          },
+          {
+            "control_a": 8.556399367874896e-05,
+            "delta_b_minus_a": 0.006176653870355221,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.00626221786403397
+          },
+          {
+            "control_a": 0.0001032012559884915,
+            "delta_b_minus_a": 0.009704219130873715,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.009807420386862206
+          },
+          {
+            "control_a": 2.8675120832131334e-05,
+            "delta_b_minus_a": 0.012990103213783692,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.013018778334615823
+          },
+          {
+            "control_a": 3.549455715498237e-05,
+            "delta_b_minus_a": 0.011348327388007725,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.011383821945162707
+          },
+          {
+            "control_a": 5.9958741276237154e-05,
+            "delta_b_minus_a": 0.010140778831336404,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.010200737572612641
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "stationary_fraction": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 1.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      }
+    },
+    "paired_case_count": 6,
+    "pairing_keys": [
+      "geometry_id",
+      "environment_seed"
+    ],
+    "training_step": 10000
+  },
+  {
+    "data_kind": "PROBE_CENSORED_DIAGNOSTIC",
+    "metrics": {
+      "mean_brake": {
+        "control_a_better_count": 6,
+        "mean_delta_b_minus_a": -0.022046344081560754,
+        "median_delta_b_minus_a": -0.022360241512457524,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.9242422854900361,
+            "delta_b_minus_a": -0.023959723711013847,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.9002825617790222
+          },
+          {
+            "control_a": 0.9210487014055252,
+            "delta_b_minus_a": -0.020766139626502977,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.9002825617790222
+          },
+          {
+            "control_a": 0.9192044407129287,
+            "delta_b_minus_a": -0.01892187893390651,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.9002825617790222
+          },
+          {
+            "control_a": 0.9242369051774343,
+            "delta_b_minus_a": -0.02395434339841207,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.9002825617790222
+          },
+          {
+            "control_a": 0.9209342338641484,
+            "delta_b_minus_a": -0.020651672085126194,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.9002825617790222
+          },
+          {
+            "control_a": 0.9243068685134251,
+            "delta_b_minus_a": -0.024024306734402923,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.9002825617790222
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 0
+      },
+      "mean_speed_km_h": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0028376222851548617,
+        "median_delta_b_minus_a": 0.0025784371655237,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.021240435586967,
+            "delta_b_minus_a": 0.002763371468447611,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.024003807055414612
+          },
+          {
+            "control_a": 0.019810520397522683,
+            "delta_b_minus_a": 0.002171015576281278,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.02198153597380396
+          },
+          {
+            "control_a": 0.02273515025393792,
+            "delta_b_minus_a": 0.002214413086112036,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.024949563340049954
+          },
+          {
+            "control_a": 0.02172678397293825,
+            "delta_b_minus_a": 0.003627072470392158,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.025353856443330408
+          },
+          {
+            "control_a": 0.02044427645671072,
+            "delta_b_minus_a": 0.003856358247096299,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.024300634703807018
+          },
+          {
+            "control_a": 0.02163048307326169,
+            "delta_b_minus_a": 0.002393502862599789,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.02402398593586148
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "mean_throttle": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      },
+      "route_progress_delta": {
+        "control_a_better_count": 3,
+        "mean_delta_b_minus_a": 1.2603801485966636e-06,
+        "median_delta_b_minus_a": 1.5787625464811633e-06,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": -8.810128004299589e-05,
+            "delta_b_minus_a": 1.6785266264907756e-05,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": -7.131601377808813e-05
+          },
+          {
+            "control_a": -4.45859182397982e-05,
+            "delta_b_minus_a": -1.3434926943917125e-05,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": -5.802084518371532e-05
+          },
+          {
+            "control_a": -0.00010880572024810076,
+            "delta_b_minus_a": -7.666319005963929e-06,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": -0.00011647203925406469
+          },
+          {
+            "control_a": -0.00015374621419157394,
+            "delta_b_minus_a": 1.0823844098926255e-05,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": -0.0001429223700926477
+          },
+          {
+            "control_a": -0.00011142808221268133,
+            "delta_b_minus_a": -2.363586137758139e-05,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": -0.00013506394359026272
+          },
+          {
+            "control_a": -0.0001234600599199498,
+            "delta_b_minus_a": 2.4690277855208415e-05,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": -9.876978206474138e-05
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 3
+      },
+      "stationary_fraction": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 1.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      }
+    },
+    "paired_case_count": 6,
+    "pairing_keys": [
+      "geometry_id",
+      "environment_seed"
+    ],
+    "training_step": 30000
+  },
+  {
+    "data_kind": "FULL_EPISODE",
+    "metrics": {
+      "clean_success": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      },
+      "episode_return": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.00014019939044565555,
+        "median_delta_b_minus_a": 0.00014759362795155329,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": -0.2500852271871194,
+            "delta_b_minus_a": 0.00020647539971618833,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": -0.2498787517874032
+          },
+          {
+            "control_a": -0.25001775338139265,
+            "delta_b_minus_a": 5.215571870215152e-05,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": -0.2499655976626905
+          },
+          {
+            "control_a": -0.2500475638501236,
+            "delta_b_minus_a": 9.046839861046041e-05,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": -0.24995709545151315
+          },
+          {
+            "control_a": -0.25015105753751454,
+            "delta_b_minus_a": 0.00021516327137649505,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": -0.24993589426613805
+          },
+          {
+            "control_a": -0.25011142808221193,
+            "delta_b_minus_a": 7.221469697599181e-05,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": -0.25003921338523594
+          },
+          {
+            "control_a": -0.2501209901650737,
+            "delta_b_minus_a": 0.00020471885729264616,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": -0.24991627130778107
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "final_route_completion": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0001401993904412641,
+        "median_delta_b_minus_a": 0.00014759362794574803,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.00976348153595465,
+            "delta_b_minus_a": 0.00020647539971356023,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.00996995693566821
+          },
+          {
+            "control_a": 0.008307724991724875,
+            "delta_b_minus_a": 5.2155718693868217e-05,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.008359880710418743
+          },
+          {
+            "control_a": 0.012187927958089154,
+            "delta_b_minus_a": 9.046839860750618e-05,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.01227839635669666
+          },
+          {
+            "control_a": 0.015959124364366195,
+            "delta_b_minus_a": 0.00021516327137462848,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.016174287635740824
+          },
+          {
+            "control_a": 0.013677376290691799,
+            "delta_b_minus_a": 7.221469697403157e-05,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.01374959098766583
+          },
+          {
+            "control_a": 0.012867337127511794,
+            "delta_b_minus_a": 0.0002047188572839899,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.013072055984795784
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "mean_speed_km_h": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0009047238708624405,
+        "median_delta_b_minus_a": 0.0008576905402285515,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.014406804637362007,
+            "delta_b_minus_a": 0.0008315306940651929,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0152383353314272
+          },
+          {
+            "control_a": 0.014206636599252156,
+            "delta_b_minus_a": 0.00036358929046685813,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.014570225889719015
+          },
+          {
+            "control_a": 0.01535006535446383,
+            "delta_b_minus_a": 0.0006418992165649409,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.01599196457102877
+          },
+          {
+            "control_a": 0.015430348724094604,
+            "delta_b_minus_a": 0.0013387638618894068,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.01676911258598401
+          },
+          {
+            "control_a": 0.014812411320429498,
+            "delta_b_minus_a": 0.0013687097757963344,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.016181121096225833
+          },
+          {
+            "control_a": 0.015043526470110855,
+            "delta_b_minus_a": 0.00088385038639191,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.015927376856502765
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "route_progress_delta": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0001401993904412641,
+        "median_delta_b_minus_a": 0.00014759362794574803,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": -8.522718711195636e-05,
+            "delta_b_minus_a": 0.00020647539971356023,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.00012124821260160387
+          },
+          {
+            "control_a": -1.7753381387977316e-05,
+            "delta_b_minus_a": 5.2155718693868217e-05,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 3.44023373058909e-05
+          },
+          {
+            "control_a": -4.7563850124970886e-05,
+            "delta_b_minus_a": 9.046839860750618e-05,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 4.290454848253529e-05
+          },
+          {
+            "control_a": -0.00015105753751689516,
+            "delta_b_minus_a": 0.00021516327137462848,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 6.410573385773333e-05
+          },
+          {
+            "control_a": -0.00011142808221268133,
+            "delta_b_minus_a": 7.221469697403157e-05,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": -3.9213385238649756e-05
+          },
+          {
+            "control_a": -0.00012099016507003887,
+            "delta_b_minus_a": 0.0002047188572839899,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 8.372869221395102e-05
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "safety_failure": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      },
+      "stationary_fraction": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 1.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      }
+    },
+    "paired_case_count": 6,
+    "pairing_keys": [
+      "geometry_id",
+      "environment_seed"
+    ],
+    "training_step": 30000
+  },
+  {
+    "data_kind": "PROBE_CENSORED_DIAGNOSTIC",
+    "metrics": {
+      "mean_brake": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.010928452014923096,
+        "median_delta_b_minus_a": 0.010928452014923096,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.9733304977416992,
+            "delta_b_minus_a": 0.010928452014923096,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.9842589497566223
+          },
+          {
+            "control_a": 0.9733304977416992,
+            "delta_b_minus_a": 0.010928452014923096,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.9842589497566223
+          },
+          {
+            "control_a": 0.9733304977416992,
+            "delta_b_minus_a": 0.010928452014923096,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.9842589497566223
+          },
+          {
+            "control_a": 0.9733304977416992,
+            "delta_b_minus_a": 0.010928452014923096,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.9842589497566223
+          },
+          {
+            "control_a": 0.9733304977416992,
+            "delta_b_minus_a": 0.010928452014923096,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.9842589497566223
+          },
+          {
+            "control_a": 0.9733304977416992,
+            "delta_b_minus_a": 0.010928452014923096,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.9842589497566223
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "mean_speed_km_h": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0020814414718298394,
+        "median_delta_b_minus_a": 0.00242609079808955,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.020698258692991064,
+            "delta_b_minus_a": 0.0026877229962983945,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.02338598168928946
+          },
+          {
+            "control_a": 0.019875608552298894,
+            "delta_b_minus_a": 0.00029063718393055465,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.020166245736229448
+          },
+          {
+            "control_a": 0.021356621130316385,
+            "delta_b_minus_a": 0.0023066169643239653,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.02366323809464035
+          },
+          {
+            "control_a": 0.021208742463423642,
+            "delta_b_minus_a": 0.0025455646318551343,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.023754307095278777
+          },
+          {
+            "control_a": 0.020775161922687867,
+            "delta_b_minus_a": 0.0027692113296198563,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.023544373252307724
+          },
+          {
+            "control_a": 0.02174626599442211,
+            "delta_b_minus_a": 0.001888895724951132,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.023635161719373243
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "mean_throttle": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      },
+      "route_progress_delta": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 1.0611889175857724e-05,
+        "median_delta_b_minus_a": 6.663905775772597e-06,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": -8.18196024211671e-05,
+            "delta_b_minus_a": 5.691831098726674e-06,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": -7.612777132244043e-05
+          },
+          {
+            "control_a": -6.296892536304666e-05,
+            "delta_b_minus_a": 5.326014416393368e-06,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": -5.764291094665329e-05
+          },
+          {
+            "control_a": -0.00011103210330188663,
+            "delta_b_minus_a": 7.63598045281852e-06,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": -0.00010339612284906811
+          },
+          {
+            "control_a": -0.00014316051002669083,
+            "delta_b_minus_a": 1.8017206493699256e-05,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": -0.00012514330353299158
+          },
+          {
+            "control_a": -0.00011575707162266198,
+            "delta_b_minus_a": 4.543334875907468e-06,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": -0.00011121373674675451
+          },
+          {
+            "control_a": -0.00012423670188128205,
+            "delta_b_minus_a": 2.2456967717601056e-05,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": -0.000101779734163681
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "stationary_fraction": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 1.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      }
+    },
+    "paired_case_count": 6,
+    "pairing_keys": [
+      "geometry_id",
+      "environment_seed"
+    ],
+    "training_step": 50000
+  },
+  {
+    "data_kind": "PROBE_CENSORED_DIAGNOSTIC",
+    "metrics": {
+      "mean_brake": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.017613708972930908,
+        "median_delta_b_minus_a": 0.017613708972930908,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.9524125456809998,
+            "delta_b_minus_a": 0.017613708972930908,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.9700262546539307
+          },
+          {
+            "control_a": 0.9524125456809998,
+            "delta_b_minus_a": 0.017613708972930908,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.9700262546539307
+          },
+          {
+            "control_a": 0.9524125456809998,
+            "delta_b_minus_a": 0.017613708972930908,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.9700262546539307
+          },
+          {
+            "control_a": 0.9524125456809998,
+            "delta_b_minus_a": 0.017613708972930908,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.9700262546539307
+          },
+          {
+            "control_a": 0.9524125456809998,
+            "delta_b_minus_a": 0.017613708972930908,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.9700262546539307
+          },
+          {
+            "control_a": 0.9524125456809998,
+            "delta_b_minus_a": 0.017613708972930908,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.9700262546539307
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "mean_speed_km_h": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0040581234001457476,
+        "median_delta_b_minus_a": 0.004005874157308204,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.01969208123452521,
+            "delta_b_minus_a": 0.0032584699101107194,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.022950551144635928
+          },
+          {
+            "control_a": 0.01850438753502441,
+            "delta_b_minus_a": 0.0031561085959879963,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.021660496131012407
+          },
+          {
+            "control_a": 0.01969265534665255,
+            "delta_b_minus_a": 0.004865628330284224,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.024558283676936774
+          },
+          {
+            "control_a": 0.01969216998729968,
+            "delta_b_minus_a": 0.004355662357465838,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.024047832344765516
+          },
+          {
+            "control_a": 0.01969210208049602,
+            "delta_b_minus_a": 0.0036560859571505705,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.02334818803764659
+          },
+          {
+            "control_a": 0.019772681263033384,
+            "delta_b_minus_a": 0.005056785249875136,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.02482946651290852
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "mean_throttle": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      },
+      "route_progress_delta": {
+        "control_a_better_count": 6,
+        "mean_delta_b_minus_a": -1.6940327554848707e-05,
+        "median_delta_b_minus_a": -1.4224901650902559e-05,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": -6.826440334248285e-05,
+            "delta_b_minus_a": -7.16644740649322e-07,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": -6.898104808313217e-05
+          },
+          {
+            "control_a": -4.3499754297992785e-05,
+            "delta_b_minus_a": -4.231751883794488e-05,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": -8.581727313593766e-05
+          },
+          {
+            "control_a": -8.479858977189329e-05,
+            "delta_b_minus_a": -1.0163415303186471e-05,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": -9.496200507507976e-05
+          },
+          {
+            "control_a": -0.00011167380158617901,
+            "delta_b_minus_a": -2.0011436392977644e-05,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": -0.00013168523797915666
+          },
+          {
+            "control_a": -9.557309274848234e-05,
+            "delta_b_minus_a": -1.0146562055715277e-05,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": -0.00010571965480419762
+          },
+          {
+            "control_a": -9.144556529065533e-05,
+            "delta_b_minus_a": -1.8286387998618647e-05,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": -0.00010973195328927397
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 0
+      },
+      "stationary_fraction": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 1.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      }
+    },
+    "paired_case_count": 6,
+    "pairing_keys": [
+      "geometry_id",
+      "environment_seed"
+    ],
+    "training_step": 100000
+  },
+  {
+    "data_kind": "FULL_EPISODE",
+    "metrics": {
+      "clean_success": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      },
+      "episode_return": {
+        "control_a_better_count": 1,
+        "mean_delta_b_minus_a": 0.00010086364979266145,
+        "median_delta_b_minus_a": 0.00012824165893798867,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": -0.2500682644033449,
+            "delta_b_minus_a": 0.00012861753716345015,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": -0.24993964686618145
+          },
+          {
+            "control_a": -0.25004349975430057,
+            "delta_b_minus_a": -0.00012281512938761008,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": -0.2501663148836882
+          },
+          {
+            "control_a": -0.25008479858976523,
+            "delta_b_minus_a": 0.00018973264389032796,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": -0.2498950659458749
+          },
+          {
+            "control_a": -0.25011167380158617,
+            "delta_b_minus_a": 0.0001278657807125272,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": -0.24998380802087364
+          },
+          {
+            "control_a": -0.2500955730927479,
+            "delta_b_minus_a": 0.00010642844134647889,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": -0.2499891446514014
+          },
+          {
+            "control_a": -0.25009161773950345,
+            "delta_b_minus_a": 0.00017535262503079463,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": -0.24991626511447265
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 5
+      },
+      "final_route_completion": {
+        "control_a_better_count": 1,
+        "mean_delta_b_minus_a": 0.00010086364979172528,
+        "median_delta_b_minus_a": 0.00012824165893529898,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.009780444319724123,
+            "delta_b_minus_a": 0.0001286175371561591,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.009909061856880282
+          },
+          {
+            "control_a": 0.00828197861881486,
+            "delta_b_minus_a": -0.00012281512939340752,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.008159163489421452
+          },
+          {
+            "control_a": 0.012150693218442232,
+            "delta_b_minus_a": 0.00018973264389187013,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.012340425862334102
+          },
+          {
+            "control_a": 0.01599850810029691,
+            "delta_b_minus_a": 0.00012786578071443885,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.01612637388101135
+          },
+          {
+            "control_a": 0.013693231280155998,
+            "delta_b_minus_a": 0.00010642844134489508,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.013799659721500893
+          },
+          {
+            "control_a": 0.012896709553076464,
+            "delta_b_minus_a": 0.00017535262503639605,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.01307206217811286
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 5
+      },
+      "mean_speed_km_h": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0013934020400657476,
+        "median_delta_b_minus_a": 0.0014844699615211478,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.013966405461771568,
+            "delta_b_minus_a": 0.0010595258442987424,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.01502593130607031
+          },
+          {
+            "control_a": 0.013552178011814343,
+            "delta_b_minus_a": 0.0009593405118614486,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.014511518523675791
+          },
+          {
+            "control_a": 0.014307656929639563,
+            "delta_b_minus_a": 0.001583800536198424,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.015891457465837987
+          },
+          {
+            "control_a": 0.014701792181112946,
+            "delta_b_minus_a": 0.0016710937169762824,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.016372885898089228
+          },
+          {
+            "control_a": 0.014528787639624894,
+            "delta_b_minus_a": 0.0013851393868438717,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.015913927026468766
+          },
+          {
+            "control_a": 0.014435677823394985,
+            "delta_b_minus_a": 0.0017015122442157159,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0161371900676107
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 6
+      },
+      "route_progress_delta": {
+        "control_a_better_count": 1,
+        "mean_delta_b_minus_a": 0.00010086364979172528,
+        "median_delta_b_minus_a": 0.00012824165893529898,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": -6.826440334248285e-05,
+            "delta_b_minus_a": 0.0001286175371561591,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 6.0353133813676255e-05
+          },
+          {
+            "control_a": -4.3499754297992785e-05,
+            "delta_b_minus_a": -0.00012281512939340752,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": -0.0001663148836914003
+          },
+          {
+            "control_a": -8.479858977189329e-05,
+            "delta_b_minus_a": 0.00018973264389187013,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.00010493405411997683
+          },
+          {
+            "control_a": -0.00011167380158617901,
+            "delta_b_minus_a": 0.00012786578071443885,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 1.6191979128259842e-05
+          },
+          {
+            "control_a": -9.557309274848234e-05,
+            "delta_b_minus_a": 0.00010642844134489508,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 1.085534859641274e-05
+          },
+          {
+            "control_a": -9.161773950536883e-05,
+            "delta_b_minus_a": 0.00017535262503639605,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 8.373488553102722e-05
+          }
+        ],
+        "ties": 0,
+        "treatment_b_better_count": 5
+      },
+      "safety_failure": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 0.0
+          },
+          {
+            "control_a": 0.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 0.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      },
+      "stationary_fraction": {
+        "control_a_better_count": 0,
+        "mean_delta_b_minus_a": 0.0,
+        "median_delta_b_minus_a": 0.0,
+        "paired_n": 6,
+        "per_case": [
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 666005,
+            "geometry_id": "geom_easy_SCCS_seed19",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 925389,
+            "geometry_id": "geom_easy_SCCS_seed4",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 406573,
+            "geometry_id": "geom_easy_SCSS_seed18",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 88306,
+            "geometry_id": "geom_easy_SCSS_seed2",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 882172,
+            "geometry_id": "geom_easy_SCS_seed12",
+            "treatment_b": 1.0
+          },
+          {
+            "control_a": 1.0,
+            "delta_b_minus_a": 0.0,
+            "environment_seed": 647459,
+            "geometry_id": "geom_easy_SCS_seed16",
+            "treatment_b": 1.0
+          }
+        ],
+        "ties": 6,
+        "treatment_b_better_count": 0
+      }
+    },
+    "paired_case_count": 6,
+    "pairing_keys": [
+      "geometry_id",
+      "environment_seed"
+    ],
+    "training_step": 100000
+  }
+]

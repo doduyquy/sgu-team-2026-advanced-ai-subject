@@ -17,7 +17,8 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 class PilotCheckpointCallback(BaseCallback):
     def __init__(self, trainer: Any, output_root: Path, checkpoints: Iterable[int],
-                 requested_timesteps: int = 10000, stop_file: Path | None = None, verbose: int = 0):
+                 requested_timesteps: int = 10000, stop_file: Path | None = None, verbose: int = 0,
+                 write_step_log: bool = True):
         super().__init__(verbose)
         self.trainer = trainer
         self.output_root = Path(output_root)
@@ -30,6 +31,8 @@ class PilotCheckpointCallback(BaseCallback):
         self.started = 0.0
         self.process = psutil.Process()
         self._step_sink = None
+        self.write_step_log = bool(write_step_log)
+        self.last_step_context: Dict[str, Any] = {}
         self.action_counts = {"throttle": 0, "brake": 0, "near_zero": 0, "steps": 0}
         self.action_sums = {"steering": 0.0, "throttle_brake": 0.0}
         self.geometry_step_counts: Dict[str, int] = {}
@@ -38,7 +41,8 @@ class PilotCheckpointCallback(BaseCallback):
     def _on_training_start(self) -> None:
         self.started = time.perf_counter()
         self.output_root.mkdir(parents=True, exist_ok=True)
-        self._step_sink = (self.output_root / "training_steps.jsonl").open("w", encoding="utf-8", newline="\n")
+        if self.write_step_log:
+            self._step_sink = (self.output_root / "training_steps.jsonl").open("w", encoding="utf-8", newline="\n")
 
     def _on_step(self) -> bool:
         step = int(self.model.num_timesteps)
@@ -74,6 +78,24 @@ class PilotCheckpointCallback(BaseCallback):
                 "total_reward": float(rewards[idx]) if idx < len(rewards) else None,
                 "terminated_or_truncated": bool(dones[idx]) if idx < len(dones) else False,
                 "clean_success": info.get("clean_success"), "primary_reason": info.get("primary_reason"),
+            }
+            self.last_step_context = {
+                "training_step": step,
+                "episode_active_after_step": not (bool(dones[idx]) if idx < len(dones) else False),
+                "case_id": row["case_id"], "geometry_id": row["geometry_id"],
+                "tier": row["tier"], "geometry_generation_seed": row["geometry_generation_seed"],
+                "environment_seed": row["environment_seed"], "episode_step": row["episode_step"],
+                "route_completion": row["route_completion"], "speed_km_h": row["speed_km_h"],
+                "steering": steering, "throttle_brake": throttle_brake,
+                "executed_steering": info.get("action_steering"),
+                "executed_throttle_brake": info.get("action_throttle_brake"),
+                "action_fidelity": (
+                    abs(float(steering) - float(info["action_steering"])) < 1e-6
+                    and abs(float(throttle_brake) - float(info["action_throttle_brake"])) < 1e-6
+                    if steering is not None and throttle_brake is not None
+                    and info.get("action_steering") is not None and info.get("action_throttle_brake") is not None
+                    else None
+                ),
             }
             if self._step_sink is not None:
                 self._step_sink.write(json.dumps(row, sort_keys=True) + "\n")
@@ -160,6 +182,9 @@ class PilotCheckpointCallback(BaseCallback):
     def _save(self, step: int) -> None:
         target = self.output_root / f"step_{step:05d}"
         self.trainer.save_checkpoint(target, save_replay_buffer=False)
+        (target / "checkpoint_context.json").write_text(
+            json.dumps(self.last_step_context, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
         self.saved_steps.append(step)
         if self.verbose:
             print(f"[PILOT CHECKPOINT] step={step} path={target}")
