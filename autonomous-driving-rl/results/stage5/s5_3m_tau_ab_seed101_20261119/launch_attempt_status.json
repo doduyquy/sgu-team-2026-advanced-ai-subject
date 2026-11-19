@@ -1,0 +1,14 @@
+{
+  "run_id": "s5_3m_tau_ab_seed101_20261119",
+  "protocol_sha256": "4bdbff24e7b65669ca1035ff301702cd11f0b4365443ca95e2db0487e7ac7946",
+  "source_commit": "f9f2c8cf173d89eded420b674fec483ae9ba6c9d",
+  "status": "FAILED_BEFORE_TRAINING",
+  "failure": "The process-log helper created the arm_A directory before the arm worker's no-overwrite guard, so the fresh arm refused to start.",
+  "training_steps": 0,
+  "optimizer_updates": 0,
+  "simulated_episodes": 0,
+  "shared_initial_model_created": true,
+  "initial_model_sha256": "af0972a8081937b5b7f150eb298fcf32ea614094110567e9a39e2aa16edc7ebc",
+  "included_in_scientific_results": false,
+  "preserved_raw_log": "runs/stage5_tau_ab/s5_3m_tau_ab_seed101_20261119/process_logs/arm_A_training.stderr.log"
+}

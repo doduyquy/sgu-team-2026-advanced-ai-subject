@@ -300,6 +300,8 @@ def _run_evaluations(run_root: Path, protocol_path: Path) -> None:
     geometry_ids = list(protocol["diagnostic_geometry_ids"])
     python_script = str(ROOT / "scripts/evaluate_stage5_pilot.py")
     anchor_dir = run_root / "anchor_observations"
+    if anchor_dir.exists():
+        raise FileExistsError(f"Refusing to overwrite fixed anchor artifacts: {anchor_dir}")
     _child([sys.executable, python_script, "--checkpoint",
             str(run_root / "arm_A/checkpoints/step_00000"), "--split",
             str(ROOT / protocol["pilot_split_path"]), "--output", str(anchor_dir / "records"),
@@ -311,6 +313,8 @@ def _run_evaluations(run_root: Path, protocol_path: Path) -> None:
         for step in CHECKPOINT_STEPS:
             cp = run_root / f"arm_{arm}/checkpoints/step_{step:05d}"
             output = run_root / f"arm_{arm}/diagnostics/step_{step:05d}"
+            if output.exists():
+                raise FileExistsError(f"Refusing to overwrite evaluation artifacts: {output}")
             command = [sys.executable, python_script, "--checkpoint", str(cp), "--split",
                        str(ROOT / protocol["pilot_split_path"]), "--output", str(output),
                        "--schedule-seed", str(protocol["diagnostic_schedule_seed"]),
@@ -341,6 +345,8 @@ def main() -> int:
         if not protocol_path.is_file():
             parser.error(f"Missing preregistered protocol: {protocol_path}")
         _run_evaluations(run_root, protocol_path)
+        from scripts.analyze_stage5_tau_ab import analyze
+        analyze(run_root, results_dir, protocol_path)
         return 0
 
     protocol_path = _make_protocol_and_initial(run_root, results_dir, args.run_id)
@@ -350,6 +356,8 @@ def main() -> int:
                     "--run-root", str(run_root), "--protocol", str(protocol_path)],
                    run_root / f"process_logs/arm_{arm}_training")
         _run_evaluations(run_root, protocol_path)
+        from scripts.analyze_stage5_tau_ab import analyze
+        analyze(run_root, results_dir, protocol_path)
     except BaseException:
         raise
     return 0

@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.training.stage5.checkpoint import load_sac_checkpoint
+from src.training.stage5.checkpoint import compute_file_sha256, load_sac_checkpoint, verify_checkpoint_integrity
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
 
 
@@ -44,10 +44,13 @@ def _summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         ) if any(row.get("route_progress_delta") is not None for row in rows) else None,
         "mean_max_route_progress_delta": _mean(row.get("max_route_progress_delta") for row in rows),
         "mean_speed_km_h": _mean(row.get("mean_speed_km_h") for row in rows),
+        "mean_episode_return": _mean(row.get("episode_return") for row in rows),
         "stationary_fraction": _mean(row.get("stationary_fraction") for row in rows),
         "mean_throttle": _mean(row.get("mean_throttle") for row in rows),
         "mean_brake": _mean(row.get("mean_brake") for row in rows),
         "mean_steering": _mean(row.get("mean_steering") for row in rows),
+        "mean_inference_latency_ms": _mean(row.get("mean_inference_latency_ms") for row in rows),
+        "mean_probe_duration_s": _mean(row.get("duration_s") for row in rows),
         "clean_success_count": sum(bool(row.get("clean_success")) for row in rows),
         "safety_failure_count": sum(bool(row.get("safety_failure")) for row in rows),
         "official_timeout_count": sum(bool(row.get("timeout")) for row in rows),
@@ -126,7 +129,13 @@ def _critic_rows(checkpoint: Path, arm: str, step: int, anchors: Dict[str, np.nd
     return rows
 
 
-def analyze(run_root: Path, results_dir: Path, protocol_path: Path) -> Dict[str, Any]:
+def analyze(run_root: Path, results_dir: Path, protocol_path: Path, *, overwrite: bool = False) -> Dict[str, Any]:
+    protected = [results_dir / name for name in (
+        "anchor_observations.json", "q_anchor_diagnostics.json", "analysis.json", "artifact_manifest.json"
+    )]
+    existing = [path for path in protected if path.exists()]
+    if existing and not overwrite:
+        raise FileExistsError(f"Refusing to overwrite Stage 5 analysis artifacts: {existing}")
     protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
     schedule = {row["geometry_id"]: row for row in protocol["diagnostic_schedule"]}
     rows: List[Dict[str, Any]] = []
@@ -162,7 +171,8 @@ def analyze(run_root: Path, results_dir: Path, protocol_path: Path) -> Dict[str,
     for step in STEPS:
         pairs = [(by_key[("B", step, geom)], by_key[("A", step, geom)]) for geom in sorted(schedule)]
         metric_names = ("route_progress_delta", "max_route_progress_delta", "mean_speed_km_h",
-                        "stationary_fraction", "mean_throttle", "mean_brake", "mean_steering")
+                        "stationary_fraction", "mean_episode_return", "mean_throttle", "mean_brake",
+                        "mean_steering", "mean_inference_latency_ms")
         contrasts: Dict[str, Any] = {}
         for metric in metric_names:
             differences = [float(b[metric]) - float(a[metric]) for b, a in pairs
@@ -170,6 +180,9 @@ def analyze(run_root: Path, results_dir: Path, protocol_path: Path) -> Dict[str,
             contrasts[metric + "_B_minus_A"] = {
                 "n_pairs": len(differences), "mean": _mean(differences),
                 "median": statistics.median(differences) if differences else None,
+                "positive_pairs": sum(value > 0 for value in differences),
+                "negative_pairs": sum(value < 0 for value in differences),
+                "ties": sum(value == 0 for value in differences),
                 "case_differences": differences,
             }
         paired[str(step)] = contrasts
@@ -198,24 +211,92 @@ def analyze(run_root: Path, results_dir: Path, protocol_path: Path) -> Dict[str,
         "definition": "online and target critic Q on the exact same fixed reset observations; stochastic actor action samples; no environment rollouts in this analysis",
         "records": q_rows,
     }
-    (results_dir / "q_anchor_diagnostics.json").write_text(json.dumps(q_result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    q_path = results_dir / "q_anchor_diagnostics.json"
+    q_path.write_text(json.dumps(q_result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     result = {
         "protocol_sha256": protocol["protocol_sha256"], "arms": grouped, "paired_B_minus_A": paired,
         "diagnostic_records": rows, "q_anchor_diagnostics_path": "q_anchor_diagnostics.json",
         "holdouts_accessed": False, "candidate_selection_split": "internal PILOT_DIAGNOSTIC only",
     }
-    (results_dir / "analysis.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    analysis_path = results_dir / "analysis.json"
+    analysis_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    initial_path = run_root / "common_initial_model.zip"
+    initial_state = json.loads((run_root / "common_initial_state.json").read_text(encoding="utf-8"))
+    checkpoint_manifest: Dict[str, Any] = {}
+    diagnostic_manifest: Dict[str, Any] = {}
+    encoder_fingerprint = Stage5ObservationEncoder(core_only=False).get_schema_fingerprint()
+    for arm in ("A", "B"):
+        checkpoint_manifest[arm] = []
+        diagnostic_manifest[arm] = []
+        for step in STEPS:
+            checkpoint = run_root / f"arm_{arm}/checkpoints/step_{step:05d}"
+            metadata = verify_checkpoint_integrity(
+                checkpoint, expected_encoder_fingerprint=encoder_fingerprint
+            )
+            records_path = run_root / f"arm_{arm}/diagnostics/step_{step:05d}/step_{step:05d}_episodes.jsonl"
+            checkpoint_manifest[arm].append({
+                "training_step": step,
+                "model_sha256": metadata["model_sha256"],
+                "metadata_sha256": compute_file_sha256(checkpoint / "metadata.json"),
+                "checksums_sha256": compute_file_sha256(checkpoint / "CHECKSUMS.sha256"),
+                "verified": True,
+            })
+            diagnostic_manifest[arm].append({
+                "training_step": step,
+                "path": str(records_path.relative_to(ROOT)).replace("\\", "/"),
+                "sha256": compute_file_sha256(records_path),
+                "bytes": records_path.stat().st_size,
+                "episodes": len(_read_jsonl(records_path)),
+            })
+    run_manifest = {
+        "protocol": "stage5_tau_ab_v1",
+        "run_id": protocol["run_id"],
+        "protocol_sha256": protocol["protocol_sha256"],
+        "training_source_commit": protocol["code_commit"],
+        "pilot_split_sha256": protocol["pilot_split_sha256"],
+        "registered_config_sha256": protocol["registered_config_sha256"],
+        "initial_model": {
+            "path": str(initial_path.relative_to(ROOT)).replace("\\", "/"),
+            "sha256": compute_file_sha256(initial_path),
+            "policy_entropy_fingerprint": initial_state["policy_and_entropy_fingerprint"],
+        },
+        "checkpoints": checkpoint_manifest,
+        "diagnostic_records": diagnostic_manifest,
+        "arm_run_status": {
+            arm: {
+                "status": json.loads((run_root / f"arm_{arm}/run_status.json").read_text(encoding="utf-8"))["status"],
+                "sha256": compute_file_sha256(run_root / f"arm_{arm}/run_status.json"),
+                "training_summary": json.loads((run_root / f"arm_{arm}/run_status.json").read_text(encoding="utf-8"))["training_summary"],
+            } for arm in ("A", "B")
+        },
+        "anchors_sha256": compute_file_sha256(anchor_path),
+        "q_diagnostics_sha256": compute_file_sha256(q_path),
+        "analysis_sha256": compute_file_sha256(analysis_path),
+        "postprocessing_source_sha256": {
+            "scripts/analyze_stage5_tau_ab.py": compute_file_sha256(ROOT / "scripts/analyze_stage5_tau_ab.py"),
+            "scripts/evaluate_stage5_pilot.py": compute_file_sha256(ROOT / "scripts/evaluate_stage5_pilot.py"),
+        },
+        "raw_artifacts_root": str(run_root.relative_to(ROOT)).replace("\\", "/"),
+        "raw_artifacts_gitignored": True,
+        "holdouts_accessed": False,
+    }
+    (results_dir / "artifact_manifest.json").write_text(
+        json.dumps(run_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return result
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", default="s5_3m_tau_ab_seed101_20261119")
+    parser.add_argument("--overwrite", action="store_true",
+                        help="Explicitly replace compact derived analysis files; raw runs/checkpoints are never modified.")
     args = parser.parse_args()
     run_root = ROOT / "runs/stage5_tau_ab" / args.run_id
     results_dir = ROOT / "results/stage5" / args.run_id
-    result = analyze(run_root, results_dir, results_dir / "protocol.json")
+    result = analyze(run_root, results_dir, results_dir / "protocol.json", overwrite=args.overwrite)
     print(json.dumps({"protocol_sha256": result["protocol_sha256"], "paired_B_minus_A": result["paired_B_minus_A"]}, indent=2))
     return 0
 

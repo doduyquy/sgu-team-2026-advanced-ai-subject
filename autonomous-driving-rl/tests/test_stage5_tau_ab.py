@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from types import SimpleNamespace
 
-from scripts.analyze_stage5_tau_ab import _summary
+from scripts.analyze_stage5_tau_ab import _summary, analyze
 from scripts.evaluate_stage5_pilot import _episode_record
 from scripts.run_stage5_tau_ab import _protocol
 
@@ -54,6 +54,13 @@ class TestStage5TauAB(unittest.TestCase):
         self.assertEqual(summary["probe_censored"], 1)
         self.assertEqual(summary["official_timeout_count"], 0)
         self.assertAlmostEqual(summary["mean_route_progress_delta"], 0.02)
+
+    def test_analysis_refuses_to_overwrite_existing_compact_results_by_default(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            results_dir = Path(temp_dir)
+            (results_dir / "analysis.json").write_text("{}", encoding="utf-8")
+            with self.assertRaisesRegex(FileExistsError, "Refusing to overwrite"):
+                analyze(Path(temp_dir) / "missing_run", results_dir, results_dir / "missing_protocol.json")
 
 
 if __name__ == "__main__":
