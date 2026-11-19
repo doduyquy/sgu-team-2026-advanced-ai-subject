@@ -348,7 +348,7 @@ def main() -> int:
         for arm in ("A", "B"):
             _child([sys.executable, str(Path(__file__).resolve()), "--arm", arm,
                     "--run-root", str(run_root), "--protocol", str(protocol_path)],
-                   run_root / f"arm_{arm}/training")
+                   run_root / f"process_logs/arm_{arm}_training")
         _run_evaluations(run_root, protocol_path)
     except BaseException:
         raise
