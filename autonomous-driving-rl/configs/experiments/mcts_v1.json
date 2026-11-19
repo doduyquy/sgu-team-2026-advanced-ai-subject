@@ -10,7 +10,7 @@
     "max_speed_kmh": 80.0,
     "target_speed_m_s": 5.0,
     "wheelbase_m": 2.5,
-    "max_steering_deg": 40.0,
+    "max_steering_deg": 40.0, 
     "steering_sign": 1.0,
     "acceleration_m_s2": 2.8,
     "braking_m_s2": 5.0,

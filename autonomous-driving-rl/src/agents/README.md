@@ -2,6 +2,11 @@
 
 This package is the intended home for real Stage 0+ agent implementations.
 
+`MPPIAgent` (`stage3_mppi`) is a SANDBOX/AUDIT candidate with the continuous
+`continuous_box2_v1` adapter. It optimizes steering/throttle sequences with NumPy
+kinematic bicycle rollouts, moving actors and public LiDAR. See the
+[Vietnamese algorithm and run guide](../../docs/MPPI_GUIDE_VI.md).
+
 ## Current state
 
 `MCTSAgent` (`stage3_mcts`, version `3.0.0`) is a SANDBOX/AUDIT candidate.

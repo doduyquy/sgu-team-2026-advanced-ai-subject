@@ -17,6 +17,7 @@ from src.agents.astar_agent import AStarAgent, LearnedAStarAgent
 from src.agents.graph_search_agents import BFSAgent, DijkstraAgent
 from src.agents.hybrid_astar_agent import HybridAStarAgent
 from src.agents.MCTS_agent import MCTSAgent
+from src.agents.MPPI import MPPIAgent
 from src.platform import (
     AgentPolicy,
     DeterministicConstantFixtureAgent,
@@ -118,6 +119,10 @@ def _factory_stage2_astar() -> AStarAgent:
 
 def _factory_stage3_mcts() -> MCTSAgent:
     return MCTSAgent()
+
+
+def _factory_stage3_mppi() -> MPPIAgent:
+    return MPPIAgent()
 
 
 def _factory_stage6_astar_learned() -> LearnedAStarAgent:
@@ -333,6 +338,21 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             description="UCT MCTS with local bicycle dynamics, constant-velocity actors and guided rollouts.",
         ),
         _factory_stage3_mcts,
+    )
+
+    _factory_stage3_mppi.experiment_parameters = MPPIAgent.experiment_parameters
+    registry.register(
+        AgentRegistrationV1(
+            agent_id=MPPIAgent.agent_id, agent_version=MPPIAgent.agent_version,
+            stage_label="STAGE_3", method_family=MPPIAgent.method_family, purpose="CANDIDATE",
+            implementation_ref=f"{MPPIAgent.__module__}:{MPPIAgent.__qualname__}",
+            input_profile_id="STATE_DECISION_V1", action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="stochastic", stateful_within_episode=True,
+            benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True,
+            requires_checkpoint=False,
+            description="Continuous MPPI with kinematic bicycle rollouts, moving actors and public LiDAR.",
+        ),
+        _factory_stage3_mppi,
     )
 
     for policy_class, factory, stage, learned, description in (
