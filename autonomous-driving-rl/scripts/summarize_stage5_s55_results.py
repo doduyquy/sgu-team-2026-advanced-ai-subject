@@ -56,6 +56,17 @@ def mean(values: list[float]) -> float | None:
     return sum(values) / len(values) if values else None
 
 
+def training_episode_outcomes(data: dict[str, Any]) -> tuple[dict[str, int] | None, str]:
+    """Summarize persisted episode outcomes without treating absent telemetry as zero."""
+    episodes = data.get("episodes")
+    if not isinstance(episodes, list):
+        return None, "NOT_PERSISTED_BY_RUNNER"
+    outcome_counts: dict[str, int] = defaultdict(int)
+    for episode in episodes:
+        outcome_counts[str(episode.get("outcome", "UNKNOWN"))] += 1
+    return dict(sorted(outcome_counts.items())), "PERSISTED"
+
+
 def checkpoint_fingerprints() -> tuple[dict[str, Any], list[str]]:
     bundles: dict[str, Any] = {}
     initial_fingerprints: list[str] = []
@@ -109,10 +120,7 @@ def training_summaries() -> dict[str, Any]:
         if seen != expected_geometry:
             raise ValueError(f"Arm {arm} did not visit exactly the registered eight training geometries")
         initial_fingerprints.add(data["initial_weights_fingerprint"])
-        episodes = data.get("episodes", [])
-        outcome_counts: dict[str, int] = defaultdict(int)
-        for episode in episodes:
-            outcome_counts[str(episode.get("outcome", "UNKNOWN"))] += 1
+        outcome_counts, outcome_status = training_episode_outcomes(data)
         checkpoint_windows = {}
         for checkpoint in data.get("checkpoint_summaries", []):
             summary = checkpoint["summary"]
@@ -142,7 +150,8 @@ def training_summaries() -> dict[str, Any]:
             "actual_environment_steps": data["actual_training_steps"],
             "optimizer_updates": data["optimizer_updates"],
             "completed_episodes": data["completed_episodes"],
-            "training_episode_outcomes": dict(sorted(outcome_counts.items())),
+            "training_episode_outcomes": outcome_counts,
+            "training_episode_outcomes_status": outcome_status,
             "unique_training_geometry_count": len(seen),
             "geometry_steps": data["geometry_steps"],
             "completed_episodes_per_geometry": data["geometry_completed_episodes"],
