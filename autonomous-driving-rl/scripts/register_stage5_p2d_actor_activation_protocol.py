@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "results/stage5/p2_correlated_exploration_seed101_20261120/protocol.json"
-OUT = ROOT / "results/stage5/p2d_actor_activation_seed101_20261121/protocol_v2.json"
+OUT = ROOT / "results/stage5/p2d_actor_activation_seed101_20261121/protocol_v3.json"
 SOURCES = (
     "scripts/run_stage5_p2d_actor_activation.py",
     "scripts/evaluate_stage5_p2d_actor_activation.py",

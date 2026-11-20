@@ -62,4 +62,3 @@ def tensor_state_fingerprint(module: torch.nn.Module) -> str:
         digest.update(name.encode("utf-8")); digest.update(str(value.dtype).encode())
         digest.update(str(value.shape).encode()); digest.update(value.tobytes())
     return digest.hexdigest()
-

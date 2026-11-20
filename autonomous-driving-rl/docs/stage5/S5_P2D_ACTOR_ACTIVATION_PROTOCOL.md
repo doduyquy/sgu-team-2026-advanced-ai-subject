@@ -1,8 +1,10 @@
 # Stage 5 P2-D — Actor-Only Activation Ablation
 
-**Status:** preregistered development experiment; TRAIN only.  
-**Machine protocol:** [`protocol_v2.json`](../../results/stage5/p2d_actor_activation_seed101_20261121/protocol_v2.json).  
-**Protocol SHA-256:** `52ff88e85db0e20630260b9a54d4af5d68ba469eb057dfac5b29889aa45c0b8a`.
+**Status:** preregistered development experiment; TRAIN only.
+
+**Machine protocol:** [`protocol_v3.json`](../../results/stage5/p2d_actor_activation_seed101_20261121/protocol_v3.json).
+
+**Protocol SHA-256:** `92f6180d3217f8133d214d929fc1315eb1c24cf538b4acbad8ddd92c060bacb8`.
 
 ## Question
 

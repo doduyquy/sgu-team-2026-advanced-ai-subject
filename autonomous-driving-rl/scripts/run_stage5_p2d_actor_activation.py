@@ -23,7 +23,7 @@ from src.training.stage5.actor_activation_ablation import (
 from src.training.stage5.checkpoint import save_sac_checkpoint, verify_checkpoint_integrity
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
 
-PROTOCOL_PATH = ROOT / "results/stage5/p2d_actor_activation_seed101_20261121/protocol_v2.json"
+PROTOCOL_PATH = ROOT / "results/stage5/p2d_actor_activation_seed101_20261121/protocol_v3.json"
 RUN_ID = "s5_p2d_actor_activation_seed101_20261121"
 TRAIN_STEPS = 10_000
 CHECKPOINTS = (2_000, 5_000, 10_000)
