@@ -7,6 +7,7 @@ import hashlib
 import json
 import math
 import statistics
+import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -355,6 +356,14 @@ def feature_group_summary(anchors: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def checkpoint_transform_id(metadata: dict[str, Any]) -> Any:
+    """Read both the versioned transform object and legacy string metadata."""
+    transform = metadata.get("observation_transform")
+    if isinstance(transform, dict):
+        return transform.get("transform_id")
+    return transform
+
+
 def episode_metrics(records: list[dict[str, Any]]) -> dict[str, Any]:
     if not records:
         return {"episodes": 0}
@@ -393,6 +402,18 @@ def main() -> None:
     steps_to_eval = [int(value) for value in args.checkpoints.split(",") if value]
     evaluation_root = RUNS / "evaluation"
     evaluation_root.mkdir(parents=True, exist_ok=True)
+    expected_outputs = [
+        evaluation_root / "policy_response_anchors.jsonl.gz",
+        evaluation_root / "case_records.jsonl.gz",
+        evaluation_root / "observation_anchors.jsonl.gz",
+        RESULTS / "evaluation_summary.json",
+    ]
+    existing_outputs = [str(path) for path in expected_outputs if path.exists()]
+    if existing_outputs:
+        raise FileExistsError(
+            "Refusing to overwrite existing S5.5 evaluation artifacts: "
+            + ", ".join(existing_outputs)
+        )
     anchor_records, anchor_source = collect_reference_anchors(protocol)
     with gzip.open(evaluation_root / "policy_response_anchors.jsonl.gz", "wt", encoding="utf-8") as f:
         for anchor in anchor_records:
@@ -409,7 +430,7 @@ def main() -> None:
                 continue
             integrity = verify_checkpoint_integrity(checkpoint_dir)
             metadata = json.loads((checkpoint_dir / "metadata.json").read_text(encoding="utf-8"))
-            if metadata.get("observation_transform") != TRANSFORM_ID:
+            if checkpoint_transform_id(metadata) != TRANSFORM_ID:
                 raise RuntimeError(f"Checkpoint {checkpoint_dir} has unexpected observation transform")
             model = SAC.load(str(checkpoint_dir / "model.zip"), device="cpu")
             model_hash_before = state_fingerprint(model)
@@ -508,6 +529,9 @@ def main() -> None:
     summary_out = {
         "protocol_sha256": protocol["protocol_sha256"],
         "source_commit": protocol["source_commit"],
+        "evaluation_source_commit": subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+        ).strip(),
         "benchmark_eligible": False,
         "split": "TRAIN_ONLY_PILOT_DIAGNOSTIC",
         "censored_is_not_timeout": True,
