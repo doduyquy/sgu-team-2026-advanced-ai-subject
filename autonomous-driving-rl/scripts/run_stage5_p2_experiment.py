@@ -32,8 +32,8 @@ from src.training.stage5.pilot_observation_transform import GROUPWISE_PHYSICAL_V
 from src.training.stage5.temporal_exploration import TemporalExplorationSAC
 from src.training.stage5.train_sampler import SamplerStrategy, TrainCaseSampler
 
-RUN_ID = "s5_p2_correlated_exploration_seed101_20261120"
-RESULT_ID = "s5_p2_correlated_exploration_seed101_20261120"
+RUN_ID = "s5_p2_correlated_exploration_seed101_20261121_retry1"
+RESULT_ID = RUN_ID
 PROTOCOL_PATH = ROOT / "results/stage5/p2_correlated_exploration_seed101_20261120/protocol.json"
 TRAIN_STEPS = 10_000
 CHECKPOINT_STEPS = (2_000, 5_000, 10_000)
@@ -267,6 +267,7 @@ class P2TrainingCallback(BaseCallback):
     def __init__(self, arm_dir: Path, arm: str, protocol: dict[str, Any], initial_fingerprint: str) -> None:
         super().__init__(verbose=0)
         self.arm_dir, self.arm, self.protocol = arm_dir, arm, protocol
+        self.geometry_lookup = {item["geometry_id"]: item for item in protocol["geometry"]["training_pool"]}
         self.initial_fingerprint = initial_fingerprint
         self.training_started = time.perf_counter()
         self.last_sample_time = self.training_started
@@ -301,7 +302,9 @@ class P2TrainingCallback(BaseCallback):
         assert self.action_file is not None
         self.action_file.write(json.dumps(record, separators=(",", ":"), allow_nan=False) + "\n")
         self.action_records.append(record)
-        if int(record["training_step"]) % 500 == 0:
+        # Flush by observed rows, not the pre-step SB3 counter, so live
+        # monitoring remains reliable even if that counter is zero-based.
+        if len(self.action_records) % 100 == 0:
             self.action_file.flush()
 
     def _on_step(self) -> bool:
@@ -310,11 +313,12 @@ class P2TrainingCallback(BaseCallback):
         self.episode_return += float(self.locals["rewards"][0])
         self.episode_progress += float(info.get("delta_route", 0.0))
         geom = info.get("geometry_id", "UNKNOWN")
+        geometry_identity = self.geometry_lookup.get(str(geom), {})
         self.episode_geom = {
             "case_id": info.get("case_id"), "geometry_id": geom,
             "geometry_generation_seed": info.get("geometry_generation_seed"),
-            "geometry_sha256": info.get("geometry_sha256"), "environment_seed": info.get("environment_seed"),
-            "tier": info.get("tier"), "sequence": info.get("sequence"),
+            "geometry_sha256": geometry_identity.get("geometry_sha256"), "environment_seed": info.get("environment_seed"),
+            "tier": info.get("tier"), "sequence": geometry_identity.get("sequence"),
         }
         self.geometry_steps[str(geom)] += 1
         step = int(self.model.num_timesteps)

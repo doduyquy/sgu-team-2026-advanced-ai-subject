@@ -274,6 +274,11 @@
     "path": "results/stage5/p2_mechanism_audit/historical_mechanism_audit.json",
     "sha256": "9e5452ed83b11887c06d1dde75f17e10319898c9fcd0d9cc01441280981a1bd2"
   },
+  "implementation_amendment_after_interrupted_attempt": {
+    "amended_at": "2026-11-21T00:18:35+07:00",
+    "interrupted_attempt": "runs/stage5_p2/s5_p2_correlated_exploration_seed101_20261120; control arm only, 6,150 recorded transitions, checkpoints 0/2k/5k, excluded from scientific comparison; artifacts preserved.",
+    "reason": "Flush live action telemetry every 100 recorded transitions and add geometry sequence/hash to episode ledger. This is instrumentation/provenance only; no scientific variable, arm, seed, budget, or evaluation schedule changed."
+  },
   "observation": {
     "canonical_encoder": "stage5_flat409_v1",
     "dimension": 409,
@@ -297,7 +302,7 @@
     "id": "reference_route_station_proposal_v1"
   },
   "protocol": "stage5_p2_ou_ar1_exploration_v1",
-  "protocol_sha256": "14e26db5de58f5b62d6493785cfaa7dbafb40ee9aaea115ef62a8a0bc6affea7",
+  "protocol_sha256": "6a54151d0a3e52bcd237811f0b9a7d3912adadb512615e92eab71281f7564652",
   "registered_at_utc": "2026-11-20T16:58:27Z",
   "registration_note": "Protocol and implementation hashes are committed before scientific training. Exact training source commit is recorded in each run manifest.",
   "reward": {
@@ -328,8 +333,8 @@
   },
   "source_files_sha256": {
     "scripts/audit_stage5_p2_mechanism.py": "f6a7f72d0198631628f1b1544c535d57fcf3b3a6ea1d1e8a32f380ecad6e520d",
-    "scripts/evaluate_stage5_p2.py": "15efeb81658a9e37465305bb30b69162442c95cca7f05c24280703b263dce0c4",
-    "scripts/run_stage5_p2_experiment.py": "1aa122545a09678290783f2d65112e332a220a58327518dd7aca33361aa597cf",
+    "scripts/evaluate_stage5_p2.py": "c8f66b73f7a0cc1951bece775b4810a6c3c562d0868f440cb857783f28742239",
+    "scripts/run_stage5_p2_experiment.py": "7ca3686e46bcf33222aa14492cead015854b7fa32faec14a18ea2764642033e3",
     "scripts/smoke_stage5_p2.py": "981c4a5456d9815a991485d66afcf011093211b467599c89bc39c77851dc6577",
     "src/training/stage5/temporal_exploration.py": "ac6508f35195b86265e43838d6283342627ebf8958201afa6bb9762eae7ff6f5",
     "tests/test_stage5_p2_temporal_exploration.py": "0062cd89cf219f9b8432f881dc85bb5c94aff34190c8fab8fd753b6aa92c667c"

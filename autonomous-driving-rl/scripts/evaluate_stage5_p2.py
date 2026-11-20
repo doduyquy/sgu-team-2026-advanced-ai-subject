@@ -220,7 +220,7 @@ def run_one(checkpoint: Path, protocol: dict[str, Any], output: Path, cap: int |
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--protocol", type=Path, default=ROOT / "results/stage5/p2_correlated_exploration_seed101_20261120/protocol.json")
-    parser.add_argument("--run-dir", type=Path, default=ROOT / "runs/stage5_p2/s5_p2_correlated_exploration_seed101_20261120")
+    parser.add_argument("--run-dir", type=Path, default=ROOT / "runs/stage5_p2/s5_p2_correlated_exploration_seed101_20261121_retry1")
     parser.add_argument("--arm", choices=("A", "B", "BOTH"), default="BOTH")
     parser.add_argument("--checkpoint-step", type=int, choices=(0, 2000, 5000, 10000), action="append")
     args = parser.parse_args()

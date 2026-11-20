@@ -38,6 +38,11 @@ def main() -> None:
         "registered_at_utc": "2026-11-20T16:58:27Z",
         "parent_commit": "8d38c4a8135ff41258fd08eb9a230e59efff5edd",
         "registration_note": "Protocol and implementation hashes are committed before scientific training. Exact training source commit is recorded in each run manifest.",
+        "implementation_amendment_after_interrupted_attempt": {
+            "amended_at": "2026-11-21T00:18:35+07:00",
+            "reason": "Flush live action telemetry every 100 recorded transitions and add geometry sequence/hash to episode ledger. This is instrumentation/provenance only; no scientific variable, arm, seed, budget, or evaluation schedule changed.",
+            "interrupted_attempt": "runs/stage5_p2/s5_p2_correlated_exploration_seed101_20261120; control arm only, 6,150 recorded transitions, checkpoints 0/2k/5k, excluded from scientific comparison; artifacts preserved.",
+        },
         "source_files_sha256": {name: sha256(ROOT / name) for name in source_files},
         "historical_mechanism_audit": {
             "path": "results/stage5/p2_mechanism_audit/historical_mechanism_audit.json",
