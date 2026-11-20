@@ -1,0 +1,146 @@
+{
+  "arms": {
+    "A": {
+      "tau": 0.005
+    },
+    "B": {
+      "tau": 0.001
+    }
+  },
+  "candidate_eligibility": {
+    "agent_id": "stage5_sac",
+    "benchmark_eligible": false,
+    "status": "CANDIDATE"
+  },
+  "checkpoint_steps": [
+    0,
+    5000,
+    10000
+  ],
+  "code_commit": "f9f2c8cf173d89eded420b674fec483ae9ba6c9d",
+  "common_hyperparameters": {
+    "algorithm": "SAC",
+    "architecture": "S5.2 MlpPolicy ReLU",
+    "batch_size": 256,
+    "buffer_size": 100000,
+    "ent_coef": "auto",
+    "gamma": 0.99,
+    "gradient_steps": 1,
+    "learning_rate": 0.0003,
+    "learning_starts": 1000,
+    "normalization": "none",
+    "observation_dim": 409,
+    "reward_contract": {
+      "progress_weight": 1.0,
+      "safety_penalty": 1.0,
+      "spec_version": "1.0.0",
+      "success_bonus": 1.0,
+      "time_penalty_budget": 0.25,
+      "timeout_penalty": 0.0,
+      "unknown_termination_penalty": 1.0
+    },
+    "train_freq": 1
+  },
+  "created_utc": "2026-11-19T06:07:25.642406+00:00",
+  "device": "cpu",
+  "diagnostic_geometry_ids": [
+    "geom_easy_SCCS_seed19",
+    "geom_easy_SCCS_seed4",
+    "geom_medium_SCTCS_seed11",
+    "geom_medium_SCTCS_seed13",
+    "geom_hard_SCTXrCS_seed13",
+    "geom_hard_SCTXrCS_seed15",
+    "geom_extreme_CrXROSTR_seed0",
+    "geom_extreme_CrXROSTR_seed1"
+  ],
+  "diagnostic_interrupted_label": "PROBE_CENSORED",
+  "diagnostic_max_steps_per_probe": 300,
+  "diagnostic_schedule": [
+    {
+      "environment_seed": 259818,
+      "geometry_generation_seed": 19,
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+      "sequence": "SCCS",
+      "tier": "Easy"
+    },
+    {
+      "environment_seed": 155029,
+      "geometry_generation_seed": 4,
+      "geometry_id": "geom_easy_SCCS_seed4",
+      "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+      "sequence": "SCCS",
+      "tier": "Easy"
+    },
+    {
+      "environment_seed": 747022,
+      "geometry_generation_seed": 11,
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "geometry_sha256": "6c16b289525e50691cc0414d100e028b490281ee1a797c4f3fc3498c1f38bf09",
+      "sequence": "SCTCS",
+      "tier": "Medium"
+    },
+    {
+      "environment_seed": 786113,
+      "geometry_generation_seed": 13,
+      "geometry_id": "geom_medium_SCTCS_seed13",
+      "geometry_sha256": "c4032c6365d8b900674fc655bc28f37140609b20e9bbfff11bd22a8a33339b8b",
+      "sequence": "SCTCS",
+      "tier": "Medium"
+    },
+    {
+      "environment_seed": 732559,
+      "geometry_generation_seed": 13,
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "geometry_sha256": "6a10dceecff6119d87ee158263659b159de595ff862eac738877b2424f555ccc",
+      "sequence": "SCTXrCS",
+      "tier": "Hard"
+    },
+    {
+      "environment_seed": 963555,
+      "geometry_generation_seed": 15,
+      "geometry_id": "geom_hard_SCTXrCS_seed15",
+      "geometry_sha256": "d9fb18c962685e99fe1e48dca40cb764c67596c78305c2b8b8423faea2736b2b",
+      "sequence": "SCTXrCS",
+      "tier": "Hard"
+    },
+    {
+      "environment_seed": 968985,
+      "geometry_generation_seed": 0,
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "geometry_sha256": "7c392abe573ca9823069ef1f88680be6222a9f6b6b6a9d8a065e270cc560db93",
+      "sequence": "CrXROSTR",
+      "tier": "Extreme"
+    },
+    {
+      "environment_seed": 161563,
+      "geometry_generation_seed": 1,
+      "geometry_id": "geom_extreme_CrXROSTR_seed1",
+      "geometry_sha256": "e3708d0406ed0df4be57706a90a98775429051df4df63a07eff8f7056f1303b0",
+      "sequence": "CrXROSTR",
+      "tier": "Extreme"
+    }
+  ],
+  "diagnostic_schedule_seed": 5302,
+  "historical_checkpoints_used_for_initialization": false,
+  "holdouts_accessed": false,
+  "only_registered_arm_difference": "sac_hyperparameters.tau",
+  "pilot_split_path": "results/stage5/pilot_split_v1.json",
+  "pilot_split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+  "pilot_train_geometry_ids_sha256": "5ac460415ef833407fc4f9d12cb41bc1cd28d2ed40faa3e4ad5fc52533e08467",
+  "protocol": "stage5_tau_ab_v1",
+  "protocol_sha256": "4bdbff24e7b65669ca1035ff301702cd11f0b4365443ca95e2db0487e7ac7946",
+  "registered_config_sha256": "d7f8dbaa75249119a45fd87e19105a7d3708d697acd4c1e406d2af71f5d144b7",
+  "reproducibility_note": "One shared initialization and root seed; MetaDrive and CPU runtime do not guarantee bitwise-identical trajectories.",
+  "run_id": "s5_3m_tau_ab_seed101_20261119",
+  "runtime": {
+    "platform": "Windows-10-10.0.26300-SP0",
+    "python": "3.10.21",
+    "torch": "2.14.1+cpu"
+  },
+  "sampler_strategy": "TIER_ROUND_ROBIN",
+  "source_manifest": "results/audits/evaluation_protocol/geometry_split_manifest.csv",
+  "status": "PRE_REGISTERED",
+  "training_root_seed": 101,
+  "training_steps": 10000
+}

@@ -1,0 +1,6 @@
+{
+  "scripts/diagnose_stage5_policy_mechanism.py": "a51613f458efe205ddea394be6575a6298df30ca956b8b55e71a332d4146d257",
+  "src/platform/reward.py": "ecb206c796f682271ced0b943c2d505734c916318d1a12c44b916d5d2bf76bbf",
+  "src/training/stage5/checkpoint.py": "3f4edba28ba247e648a23f2254e594adb83136103bcb9580838847b70a8fed9b",
+  "src/training/stage5/env_adapter.py": "c34f6fd9c579b6164a850747c7e5b4287ba8b7e8ba8ec3ba2b8d4221e2a64290"
+}

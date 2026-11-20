@@ -1,0 +1,196 @@
+{
+  "action_fidelity_runtime_audit": {
+    "artifact": "action_fidelity_runtime_audit.json",
+    "historical_s5_3g_replay_buffer_saved": false,
+    "limitation": "Validates the same custom SAC sampler and SB3 collector path with a synthetic Gymnasium Box(2) environment; the historical pilot replay buffer was not persisted, so its stored arrays cannot be inspected retrospectively.",
+    "phases": [
+      "uniform_warmup",
+      "post_learning_starts"
+    ],
+    "replay_equals_environment_action": true,
+    "sb3_version": "2.9.2",
+    "status": "PASS",
+    "transitions_captured": 2
+  },
+  "action_intervention": {
+    "enabled": true,
+    "episode_boundary_resets_hold": true,
+    "replay_stores_executed_action": true,
+    "scope": "pilot_behavior_collection_only",
+    "steering_resampled_every_step": true,
+    "throttle_hold_steps": 5
+  },
+  "baseline_checkpoint_sha256": "c52793eda0b75afb27c0934d1a0c1eae14c3c5399fd233c0a1989876cdb28140",
+  "checkpoint_sha256": {
+    "0": "6d36f5969583f11515358b142919934150bfbf10adb204eb358bde142a94f522",
+    "10000": "6347ae4d82958bba89147ec39507ce3cb6abaa7e04d82f97101d1c09c2dea073",
+    "5000": "b6ac4bd4c85dbf17e69a8bdc9a6b1dcf19fed87d0a2a70f0981aa86c006fa4a7"
+  },
+  "code_commit": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+  "deterministic_10k_aggregate": {
+    "clean_success_rate": 0.0,
+    "discounted_episode_return": -0.014611299040546531,
+    "duration_s": 47.82920519166388,
+    "episode_return": -0.24991166182858102,
+    "episodes_completed": 24,
+    "episodes_interrupted": 0,
+    "final_route_completion": 0.008910732753139635,
+    "max_route_completion": 0.008912333799439311,
+    "mean_brake": 0.09180170455026712,
+    "mean_inference_latency_ms": 1.7181881966733707,
+    "mean_moving_speed_km_h": null,
+    "mean_steering": -0.06931517583251771,
+    "mean_throttle": 0.0,
+    "median_route_completion": 0.008384366608266521,
+    "safety_failure_rate": 0.0,
+    "stationary_fraction": 1.0,
+    "steering_saturation_fraction": 0.0,
+    "steering_std": 9.155260411069598e-05,
+    "timeout_rate": 1.0
+  },
+  "diagnostic_case_count": 24,
+  "diagnostic_checkpoint_sha256": "6347ae4d82958bba89147ec39507ce3cb6abaa7e04d82f97101d1c09c2dea073",
+  "diagnostic_environment_schedule_seed": 5302,
+  "final_ram_mb": 423.5,
+  "gamma": 0.99,
+  "limitations": [
+    "Single training seed; exploratory pilot only.",
+    "No replay buffer was preserved, so critic updates cannot be reconstructed.",
+    "Training geometry coverage differs because altered behavior changed episode lengths and sampler reset frequency.",
+    "The full 0-step diagnostic was interrupted after 7 of 24 episodes; those records are retained but excluded from full evaluation claims.",
+    "The 10k paired evaluation uses identical diagnostic geometry and environment seeds; no official VALIDATION or TEST was used.",
+    "Weights and MetaDrive outcomes are not guaranteed bit-for-bit reproducible from seeds alone."
+  ],
+  "metadrive": "0.4.3",
+  "optimizer_updates": 9000,
+  "paired_per_tier": {
+    "Easy": {
+      "mean_paired_final_route_difference": -3.4359690025709905e-05,
+      "median_paired_final_route_difference": -2.726190407172091e-05,
+      "n": 6,
+      "negative_cases": 3,
+      "positive_cases": 3,
+      "ties": 0
+    },
+    "Extreme": {
+      "mean_paired_final_route_difference": 3.143804202631019e-05,
+      "median_paired_final_route_difference": 6.129740004843544e-05,
+      "n": 6,
+      "negative_cases": 1,
+      "positive_cases": 5,
+      "ties": 0
+    },
+    "Hard": {
+      "mean_paired_final_route_difference": 8.588009038177887e-05,
+      "median_paired_final_route_difference": 8.067833630146654e-05,
+      "n": 6,
+      "negative_cases": 1,
+      "positive_cases": 5,
+      "ties": 0
+    },
+    "Medium": {
+      "mean_paired_final_route_difference": 6.828051487066447e-06,
+      "median_paired_final_route_difference": 2.987969604430034e-05,
+      "n": 6,
+      "negative_cases": 2,
+      "positive_cases": 4,
+      "ties": 0
+    }
+  },
+  "paired_vs_baseline_10k": {
+    "mean": 2.2446623467361402e-05,
+    "median": 5.031808903678374e-05,
+    "negative_cases": 7,
+    "positive_cases": 17,
+    "ties": 0
+  },
+  "pilot_split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "progress_from_reward_on_timeout_episodes": {
+    "baseline_mean": 6.589154795050636e-05,
+    "baseline_n": 24,
+    "intervention_mean": 8.83381714189858e-05,
+    "intervention_n": 24,
+    "note": "For completed timeout episodes, total time cost is 0.25 and terminal reward is zero; delta route is therefore episode_return + 0.25."
+  },
+  "python": "3.10.21",
+  "replay_action_consistency": {
+    "bucket_action_mismatch_count": 0,
+    "global_5step_buckets": 2007,
+    "logged_steps": 10000,
+    "mismatch_examples": []
+  },
+  "research_label": "S5.3G controlled throttle persistence pilot",
+  "reward": "RewardSpecV1 unchanged",
+  "run_id": "s5_3g_throttle_hold5_seed101_20261115",
+  "sampler": "TIER_ROUND_ROBIN",
+  "sb3": "2.9.2",
+  "source_files_sha256": {
+    "scripts/run_stage5_sac_pilot.py": "d3c18221c221ff7d612fc041e788a2f1a4580ca9d9cba9249d378f2821187a3d",
+    "src/training/stage5/pilot_action_persistence.py": "14e4daf4809ff579dce27743efc1a916724c678d2f3a494a89dc2c0ff2b1f066",
+    "src/training/stage5/pilot_callbacks.py": "cad3275b8fb281b4a36bcf0ec365978eab76ff35a2e191524c0297ca07eaee1e",
+    "src/training/stage5/sac_trainer.py": "ef7772630bc81a6bf2952a8aaad853d9a7172644ec07e4a4524fc2498d58b627"
+  },
+  "status": {
+    "full_0_5k_10k_suite": "INCOMPLETE; 0-step diagnostic stopped after 7/24 cases to limit evaluation cost",
+    "target_checkpoint_evaluation": "COMPLETE_24_OF_24",
+    "training": "COMPLETE_10000_STEPS"
+  },
+  "temporal_action_comparison_post_warmup": {
+    "baseline": {
+      "direct_sign_flips_per_1000_steps": 461.2476370510397,
+      "n_steps": 9000,
+      "positive_run_mean_steps": 1.86229652441707,
+      "positive_run_median_steps": 1
+    },
+    "hold5": {
+      "direct_sign_flips_per_1000_steps": 91.10122358175751,
+      "n_steps": 9000,
+      "positive_run_mean_steps": 8.76431718061674,
+      "positive_run_median_steps": 5.0
+    }
+  },
+  "torch": "2.14.1+cpu",
+  "training_collection_comparison_after_warmup": {
+    "baseline": {
+      "completed_episode_outcomes": {
+        "OUT_OF_ROAD": 1,
+        "TIMEOUT": 5
+      },
+      "environment_steps": 9000,
+      "mean_speed_km_h": 0.5835782009825757,
+      "sum_delta_route": 0.09785272321057933
+    },
+    "interpretation": "The intervention increased motion and route progress in collected experience, while out-of-road terminal outcomes also increased. Episode counts and geometry exposure differ, so these training summaries are descriptive, not paired causal estimates.",
+    "throttle_hold5": {
+      "completed_episode_outcomes": {
+        "OUT_OF_ROAD": 7,
+        "TIMEOUT": 2
+      },
+      "environment_steps": 9000,
+      "mean_speed_km_h": 1.2814000410078117,
+      "sum_delta_route": 0.42124401960238067
+    }
+  },
+  "training_episode_outcomes": {
+    "OUT_OF_ROAD": 8,
+    "TIMEOUT": 2
+  },
+  "training_geometry_count": 11,
+  "training_geometry_ids": [
+    "geom_easy_SCCS_seed0",
+    "geom_easy_SCCS_seed2",
+    "geom_easy_SCCS_seed3",
+    "geom_extreme_CrXROSTR_seed2",
+    "geom_extreme_CrXROSTR_seed3",
+    "geom_hard_SCTXrCS_seed2",
+    "geom_hard_SCTXrCS_seed3",
+    "geom_medium_SCTCS_seed2",
+    "geom_medium_SCTCS_seed3",
+    "geom_medium_SCTCS_seed5"
+  ],
+  "training_root_seed": 101,
+  "training_steps": 10000,
+  "training_steps_per_second": 11.515119759591546,
+  "training_wall_time_s": 868.4234475000121
+}

@@ -65,6 +65,7 @@ class Stage5SacAgent(AgentPolicy):
         self._metadata: Optional[Dict[str, Any]] = None
         self._checkpoint_path: Optional[Path] = None
         self._ready = False
+        self._observation_transform = None
 
         if checkpoint_path is not None:
             self.load_checkpoint(checkpoint_path, expected_sha256=expected_sha256)
@@ -106,6 +107,16 @@ class Stage5SacAgent(AgentPolicy):
         self._model = model
         self._metadata = metadata
         self._checkpoint_path = ckpt_path
+        transform_spec = metadata.get("observation_transform")
+        if transform_spec:
+            from src.training.stage5.pilot_observation_transform import (
+                WAYPOINT_XY50_V1, transform_fingerprint,
+            )
+            if transform_spec != WAYPOINT_XY50_V1 or metadata.get("observation_transform_fingerprint") != transform_fingerprint():
+                raise ValueError("Checkpoint specifies an unsupported or mismatched observation transform")
+            self._observation_transform = "waypoint_xy_div50m_v1"
+        else:
+            self._observation_transform = None
 
     def reset(self, public_context: AgentPublicEpisodeContext, agent_seed: Optional[int] = None) -> None:
         """Resets the agent before a new episode begins."""
@@ -126,6 +137,8 @@ class Stage5SacAgent(AgentPolicy):
 
         # 1. Encode public AgentInputV1 into 409D observation vector
         obs_vec = self.encoder.encode(agent_input)
+        if self._observation_transform == "waypoint_xy_div50m_v1":
+            obs_vec[325:385].reshape(20, 3)[:, :2] /= 50.0
 
         # 2. Predict action deterministically using frozen policy network
         raw_action, _ = self._model.predict(obs_vec, deterministic=True)
@@ -147,3 +160,4 @@ class Stage5SacAgent(AgentPolicy):
         self._ready = False
         self._model = None
         self._metadata = None
+        self._observation_transform = None

@@ -1,0 +1,59 @@
+{
+  "entropy_coefficient_alpha": 0.06771416962146759,
+  "formula": "r + gamma*(1-done_mask)*(min(Q_target1,Q_target2) - alpha*log_pi(a_next|s_next))",
+  "gamma": 0.99,
+  "limitations": [
+    "New diagnostic transitions are not historical replay transitions.",
+    "Bellman targets use 8 Monte Carlo next-action samples and have sampling noise.",
+    "The probe is short and uses one checkpoint/training seed.",
+    "Residuals are not a matched empirical return calibration and can be large due stochastic targets."
+  ],
+  "metrics_by_policy_mode": {
+    "deterministic": {
+      "bellman_residual_q50_q90_q99": [
+        0.015861034393310547,
+        0.021806526184082037,
+        0.026697387695312498
+      ],
+      "critic_disagreement_q50_q90_q99": [
+        0.004891395568847656,
+        0.016117095947265625,
+        0.016147613525390625
+      ],
+      "mean_abs_q1_q2_disagreement": 0.006006152629852295,
+      "mean_absolute_bellman_residual": 0.015787991682688397,
+      "mean_signed_min_q_minus_target": 0.015727169513702392,
+      "n_transitions": 1200,
+      "next_soft_value_mc_sd_mean_8_samples": 0.010197630531620235,
+      "q1_mean": 15.207272410392761,
+      "q2_mean": 15.210241930484772,
+      "soft_bellman_target_mean": 15.190026924610137,
+      "terminated_count": 0,
+      "timeout_truncated_count": 0
+    },
+    "stochastic": {
+      "bellman_residual_q50_q90_q99": [
+        0.015592098236083984,
+        0.03708248138427736,
+        0.1701500797271728
+      ],
+      "critic_disagreement_q50_q90_q99": [
+        0.0067920684814453125,
+        0.022754383087158207,
+        0.11305252075195313
+      ],
+      "mean_abs_q1_q2_disagreement": 0.012350234985351562,
+      "mean_absolute_bellman_residual": 0.022474761803944907,
+      "mean_signed_min_q_minus_target": 0.02070657173792521,
+      "n_transitions": 1200,
+      "next_soft_value_mc_sd_mean_8_samples": 0.011425773241595986,
+      "q1_mean": 15.175862050851187,
+      "q2_mean": 15.185447164376576,
+      "soft_bellman_target_mean": 15.15377291838328,
+      "terminated_count": 0,
+      "timeout_truncated_count": 0
+    }
+  },
+  "next_action_monte_carlo_samples": 8,
+  "timeout_bootstrap": "done_mask=0 for truncation/timeout, matching SB3 timeout handling; safety/goal termination uses mask=1; external probe cap is censored and bootstrap mask=0."
+}
