@@ -113,10 +113,8 @@ class Stage5SacAgent(AgentPolicy):
             load_replay_buffer=False,
             task_context_producer_id=self.task_context_producer_id,
         )
-        self._model = model
-        self._metadata = metadata
-        self._checkpoint_path = ckpt_path
         transform_spec = metadata.get("observation_transform")
+        transform_id = None
         if transform_spec:
             from src.training.stage5.pilot_observation_transform import (
                 TRANSFORM_SPECS, transform_fingerprint,
@@ -129,9 +127,11 @@ class Stage5SacAgent(AgentPolicy):
             if (expected_spec is None or transform_spec != expected_spec or
                     metadata.get("observation_transform_fingerprint") != expected_transform_fingerprint):
                 raise ValueError("Checkpoint specifies an unsupported or mismatched observation transform")
-            self._observation_transform = transform_id
-        else:
-            self._observation_transform = None
+        self._model = model
+        self._metadata = metadata
+        self._checkpoint_path = ckpt_path
+        self._observation_transform = transform_id
+        self._ready = False
 
     def reset(self, public_context: AgentPublicEpisodeContext, agent_seed: Optional[int] = None) -> None:
         """Resets the agent before a new episode begins."""

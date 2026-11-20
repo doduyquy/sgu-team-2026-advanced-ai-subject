@@ -17,6 +17,7 @@ except ImportError:
     pass
 
 import argparse
+import json
 import math
 from pathlib import Path
 import sys
@@ -29,7 +30,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import numpy as np
 
-from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, TASK_PRODUCERS, task_producer_identity
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, TASK_PRODUCERS
 from src.training.stage5.checkpoint import load_sac_checkpoint
 from src.training.stage5.env_adapter import Stage5TrainingEnv
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
@@ -60,6 +61,7 @@ def run_training_session(
     out_path = Path(output_dir).resolve() if output_dir else (PROJECT_ROOT / "runs" / "checkpoints" / "stage5_sac_smoke")
 
     trainer = None
+    run_manifest = None
     try:
         config_overrides = {
             "task_context_producer_id": task_context_producer_id,
@@ -76,6 +78,15 @@ def run_training_session(
             project_root=PROJECT_ROOT,
             device="cpu",
         )
+        run_record = {
+            "status": "RUNNING", "training_root_seed": training_root_seed, "timesteps_requested": timesteps,
+            "task_context_producer": trainer.config["task_context_producer"], "effective_config": trainer.config,
+        }
+        out_path.mkdir(parents=True, exist_ok=True)
+        manifest_path = out_path / "training_run.json"
+        with manifest_path.open("x", encoding="utf-8") as stream:
+            json.dump(run_record, stream, indent=2)
+        run_manifest = manifest_path
 
         # 1. Run Diagnostic Case Probe before training
         print("\n--- Diagnostic Pre-Training Probe on Easy/SCS/geom-0 ---")
@@ -141,9 +152,14 @@ def run_training_session(
         print("\n" + "=" * 70)
         print("STAGE 5 SAC TRAINING SMOKE COMPLETE (SUCCESS)")
         print("=" * 70)
+        run_record.update(status="COMPLETE", actual_timesteps=int(trainer.model.num_timesteps))
+        run_manifest.write_text(json.dumps(run_record, indent=2) + "\n", encoding="utf-8")
         return True
 
     except Exception as e:
+        if run_manifest is not None:
+            run_record.update(status="FAILED", error=str(e))
+            run_manifest.write_text(json.dumps(run_record, indent=2) + "\n", encoding="utf-8")
         print(f"\n[TRAINING FAILURE] Error during SAC training: {e}")
         import traceback
         traceback.print_exc()
