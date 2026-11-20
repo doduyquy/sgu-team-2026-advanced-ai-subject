@@ -55,6 +55,8 @@ def main() -> None:
     source_hashes = {name: sha256(ROOT / name) for name in SOURCES}
     protocol = {
         "protocol": "stage5_p2f_training_only_remaining_route_distance_curriculum_v1",
+        "protocol_revision": 2,
+        "supersedes_protocol_sha256": "8f0257bc144ee02009753483072eeae8b617f9e7c03faedea12d23f0658042ae",
         "status": "PRE_REGISTERED",
         "registered_at_utc": datetime.now(timezone.utc).isoformat(),
         "implementation_parent_commit": p2.git_head(),
@@ -104,6 +106,12 @@ def main() -> None:
             "ent_coef": parent["sac"]["ent_coef"], "exploration": "standard SB3 SAC stochastic sampling; no OU, no action hold",
             "root_seed": 101, "initial_actor_critic_entropy_shared": True,
             "optimizer_and_replay_states": "fresh and independent per arm",
+        },
+        "exploration": {
+            "mode": "standard_sb3_sac_stochastic",
+            "ou_action_noise": False,
+            "compatibility_parameters_for_shared_runner": {"rho": 0.85, "stationary_std": 0.15},
+            "compatibility_parameters_effective": False,
         },
         "observation": parent["observation"],
         "anchors": parent["anchors"],

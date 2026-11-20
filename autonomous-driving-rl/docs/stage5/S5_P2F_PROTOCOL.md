@@ -44,3 +44,7 @@ conda run -n metadrive_sb3 python scripts/evaluate_stage5_p2f_curriculum.py
 ```
 
 Protocol JSON, protocol SHA-256, source hashes, geometry manifest, producer fingerprint, initial weight identity, checkpoint/model hashes và output run manifest là nguồn xác minh. Raw checkpoints và replay được lưu dưới `runs/stage5_p2f/`, không commit vào Git.
+
+## Protocol revision 2
+
+A first technical launch halted before model construction because the inherited helper expected inert OU compatibility parameters in a shared protocol shape. No optimizer step or environment transition occurred. Revision 2 adds explicit metadata for standard SB3 stochastic sampling and those inert compatibility defaults; OU noise remains disabled. Revision 2 supersedes protocol SHA-256 8f0257bc144ee02009753483072eeae8b617f9e7c03faedea12d23f0658042ae. The failed pre-model launch is preserved separately and is not counted as a scientific run.
