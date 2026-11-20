@@ -1,0 +1,425 @@
+{
+  "analysis_source_commit": "2c572ea620e4254667665814f74485ddf57815e6",
+  "audit_script_sha256": "fefe21b0cefd8665d9d54a0c81d82a27a75498520ecfbc33d2e5fda4735ece00",
+  "base_matches_expected": true,
+  "benchmark_eligible": false,
+  "classification": {
+    "CONFIRMED": [
+      "RewardSpecV1 accounting matches all recorded transition rows within 2e-9; clipping is disabled; signed progress and initial reset progress are preserved.",
+      "On these four full episodes from one TRAIN geometry/environment seed, all reward variants rank the clean episode above stationary timeout and the two safety failures at full-episode return.",
+      "Gymnasium timeout is truncation; installed SB3 2.9.2 VecEnv preserves terminal_observation and TimeLimit.truncated, and ReplayBuffer masks timeout done to zero, so critic bootstraps at timeout.",
+      "Gamma discounts late terminal rewards sharply; see exact weights in discount_horizon."
+    ],
+    "HYPOTHESIS": [
+      "A pre-terminal progress-only segment can favor fast movement before later safety outcome is observed; this may make safe-speed/turn behavior difficult to credit, but these traces do not establish causal overspeed or a defective reward formula.",
+      "The combination of reward scale, delayed terminal safety feedback, SAC entropy and sparse successful transitions may contribute to failed learning; this audit does not isolate their effects."
+    ],
+    "UNKNOWN": [
+      "Relative ranking of clean-fast and clean-slow runs matched by geometry and environment seed; only one clean episode exists.",
+      "Unsafe-slow outcome ranking; no authentic unsafe-slow full trace is present.",
+      "Whether a versioned shaping candidate improves policy learning or resolves stationary/actor collapse.",
+      "Whether historical trajectories used corrected TaskContext producer; the historical protocol predates and does not record that identity."
+    ]
+  },
+  "current_registered_corrected_producer_identity": {
+    "configuration": {
+      "checkpoint_window": 1,
+      "implementation_sha256": "948d6f7ae2e33b4052544220e85ea4ff90fc9d054f0567df96da6345946c972f",
+      "lookahead_count": 20,
+      "reference_lane": "first_on_each_route_edge",
+      "seam_tolerance_m": 0.001,
+      "spacing_m": 2.5,
+      "unlocalized_policy": "abort_on_first_sample"
+    },
+    "fingerprint": "a7df3942bb874b40ea16474be43c7b7a48796646c9d59cf61da5d71ba5291725",
+    "id": "reference_route_station_proposal_v1"
+  },
+  "decision": "REWARD_V1_RETAIN",
+  "decision_rationale": "No replay-integrity defect or full-episode reward inversion is demonstrated on available traces; a new reward candidate cannot be justified without matched clean speed outcomes and a real unsafe-slow trace. Retain canonical RewardSpecV1 for now; this is not evidence that reward is sufficient or that SAC learns.",
+  "discount_horizon": {
+    "0.9": {
+      "discount_at_clean_terminal_index": 8.300923972273261e-20,
+      "discount_at_timeout_terminal_index": 1.0929216882086227e-56,
+      "effective_horizon_decisions_1_over_1_minus_gamma": 10.000000000000002,
+      "effective_horizon_seconds_at_10hz": 1.0000000000000002
+    },
+    "0.99": {
+      "discount_at_clean_terminal_index": 0.015131296700674854,
+      "discount_at_timeout_terminal_index": 4.590320324600126e-06,
+      "effective_horizon_decisions_1_over_1_minus_gamma": 99.99999999999991,
+      "effective_horizon_seconds_at_10hz": 9.999999999999991
+    },
+    "0.999": {
+      "discount_at_clean_terminal_index": 0.65888343675233,
+      "discount_at_timeout_terminal_index": 0.2941657461824041,
+      "effective_horizon_decisions_1_over_1_minus_gamma": 999.9999999999991,
+      "effective_horizon_seconds_at_10hz": 99.99999999999991
+    },
+    "0.9999": {
+      "discount_at_clean_terminal_index": 0.9591554846855128,
+      "discount_at_timeout_terminal_index": 0.8848774524168519,
+      "effective_horizon_decisions_1_over_1_minus_gamma": 10000.0000000011,
+      "effective_horizon_seconds_at_10hz": 1000.0000000001102
+    },
+    "1": {
+      "discount_at_clean_terminal_index": 1.0,
+      "discount_at_timeout_terminal_index": 1.0,
+      "effective_horizon_decisions_1_over_1_minus_gamma": null,
+      "effective_horizon_seconds_at_10hz": null
+    }
+  },
+  "env_adapter_source_sha256": "95e6e875abd4299b72f793d04f2dc9d22d47a35653f38db31d3abd10428b5106",
+  "environment_seed": 0,
+  "expected_pr42_base": "2c572ea620e4254667665814f74485ddf57815e6",
+  "geometry_id": "geom_easy_SCS_seed0",
+  "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+  "historical_task_context_producer": "NOT_RECORDED; generated before F09 producer version integration; reward replay itself consumes recorded delta_p/terminal only",
+  "historical_trace_rows": {
+    "s54_a_100k_deterministic": {
+      "case_id": "train/Easy/SCS/geom-0/env-0",
+      "clean_success": false,
+      "environment_seed": 0,
+      "fixed_window": {
+        "Meter": {
+          "mean_speed_km_h_same_window": 0.01255835774236598,
+          "return_50_steps_zero_based_49_99": -0.43374411107066146
+        },
+        "Scale": {
+          "mean_speed_km_h_same_window": 0.01255835774236598,
+          "return_50_steps_zero_based_49_99": -0.4337472270807504
+        },
+        "V1": {
+          "mean_speed_km_h_same_window": 0.01255835774236598,
+          "return_50_steps_zero_based_49_99": -0.010214278213142572
+        }
+      },
+      "full_episode": true,
+      "geometry_id": "geom_easy_SCS_seed0",
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "horizon_steps": 1224,
+      "mean_speed_km_h": 0.013973993957467595,
+      "moving_mean_speed_ge_1_km_h": null,
+      "outcome": "TIMEOUT",
+      "policy_kind": "sac_deterministic",
+      "returns": {
+        "Meter": {
+          "discounted_by_gamma": {
+            "0.9": -0.08807203579132847,
+            "0.99": -0.8696101840402531,
+            "0.999": -6.126972319706572,
+            "0.9999": -9.995157883447956,
+            "1": -10.618685327001126
+          },
+          "undiscounted": -10.618685327001126
+        },
+        "Scale": {
+          "discounted_by_gamma": {
+            "0.9": -0.08812700761481694,
+            "0.99": -0.8697037337264616,
+            "0.999": -6.127073476950649,
+            "0.9999": -9.995259923863339,
+            "1": -10.61878746201692
+          },
+          "undiscounted": -10.61878746201692
+        },
+        "V1": {
+          "discounted_by_gamma": {
+            "0.9": -0.002075295742932538,
+            "0.99": -0.02048058257127977,
+            "0.999": -0.14428595554869006,
+            "0.9999": -0.23537756393773449,
+            "1": -0.2500609632786849
+          },
+          "undiscounted": -0.2500609632786849
+        }
+      },
+      "route_progress_delta": -6.096327868487447e-05,
+      "safety_failure": false,
+      "split": "TRAIN",
+      "steps": 1224,
+      "terminal_reward_sum": 0.0,
+      "timeout": true
+    },
+    "stage0_random_stress_seed101": {
+      "case_id": "train/Easy/SCS/geom-0/env-0",
+      "clean_success": false,
+      "environment_seed": 0,
+      "fixed_window": {
+        "Meter": {
+          "mean_speed_km_h_same_window": 43.7676495668072,
+          "return_50_steps_zero_based_49_99": 5.605723843564959
+        },
+        "Scale": {
+          "mean_speed_km_h_same_window": 43.7676495668072,
+          "return_50_steps_zero_based_49_99": 5.853781028180223
+        },
+        "V1": {
+          "mean_speed_km_h_same_window": 43.7676495668072,
+          "return_50_steps_zero_based_49_99": 0.1378502138747209
+        }
+      },
+      "full_episode": true,
+      "geometry_id": "geom_easy_SCS_seed0",
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "horizon_steps": 1224,
+      "mean_speed_km_h": 29.627640673193227,
+      "moving_mean_speed_ge_1_km_h": 29.92088427342238,
+      "outcome": "OUT_OF_ROAD",
+      "policy_kind": "stage0_random",
+      "returns": {
+        "Meter": {
+          "discounted_by_gamma": {
+            "0.9": 0.06447496406820559,
+            "0.99": -11.934747418763308,
+            "0.999": -31.674130791711825,
+            "0.9999": -34.83478587034435,
+            "1": -35.20408780269832
+          },
+          "undiscounted": -35.20408780269832
+        },
+        "Scale": {
+          "discounted_by_gamma": {
+            "0.9": 0.07073696666211439,
+            "0.99": -11.757491528394647,
+            "0.999": -31.36148506544128,
+            "0.9999": -34.50313133603483,
+            "1": -34.87024301771375
+          },
+          "undiscounted": -34.87024301771375
+        },
+        "V1": {
+          "discounted_by_gamma": {
+            "0.9": 0.0016657790812945419,
+            "0.99": -0.27687621283013286,
+            "0.999": -0.7385290640165787,
+            "0.9999": -0.8125114368172014,
+            "1": -0.8211565199851104
+          },
+          "undiscounted": -0.8211565199851104
+        }
+      },
+      "route_progress_delta": 0.19926831661619676,
+      "safety_failure": true,
+      "split": "TRAIN",
+      "steps": 100,
+      "terminal_reward_sum": -1.0,
+      "timeout": false
+    },
+    "stage0_random_stress_seed42": {
+      "case_id": "train/Easy/SCS/geom-0/env-0",
+      "clean_success": false,
+      "environment_seed": 0,
+      "fixed_window": {
+        "Meter": {
+          "mean_speed_km_h_same_window": 43.155132175450554,
+          "return_50_steps_zero_based_49_99": 5.450953183164568
+        },
+        "Scale": {
+          "mean_speed_km_h_same_window": 43.155132175450554,
+          "return_50_steps_zero_based_49_99": 5.692653440839367
+        },
+        "V1": {
+          "mean_speed_km_h_same_window": 43.155132175450554,
+          "return_50_steps_zero_based_49_99": 0.1340558334103461
+        }
+      },
+      "full_episode": true,
+      "geometry_id": "geom_easy_SCS_seed0",
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "horizon_steps": 1224,
+      "mean_speed_km_h": 29.87937898970289,
+      "moving_mean_speed_ge_1_km_h": 30.166465800871475,
+      "outcome": "CRASH_SIDEWALK",
+      "policy_kind": "stage0_random",
+      "returns": {
+        "Meter": {
+          "discounted_by_gamma": {
+            "0.9": 0.06481316999787236,
+            "0.99": -11.433796295354028,
+            "0.999": -31.46368258631756,
+            "0.9999": -34.71700273936021,
+            "1": -35.097746294691845
+          },
+          "undiscounted": -35.097746294691845
+        },
+        "Scale": {
+          "discounted_by_gamma": {
+            "0.9": 0.07107513972074152,
+            "0.99": -11.254730717630808,
+            "0.999": -31.146161389744872,
+            "0.9999": -34.379970529033415,
+            "1": -34.758464994566495
+          },
+          "undiscounted": -34.758464994566495
+        },
+        "V1": {
+          "discounted_by_gamma": {
+            "0.9": 0.001673742691179162,
+            "0.99": -0.2650367393414621,
+            "0.999": -0.7334584242703789,
+            "0.9999": -0.8096111329786396,
+            "1": -0.8185242683987997
+          },
+          "undiscounted": -0.8185242683987997
+        }
+      },
+      "route_progress_delta": 0.20251331330054673,
+      "safety_failure": true,
+      "split": "TRAIN",
+      "steps": 103,
+      "terminal_reward_sum": -1.0,
+      "timeout": false
+    },
+    "stage1_reference_clean": {
+      "case_id": "train/Easy/SCS/geom-0/env-0",
+      "clean_success": true,
+      "environment_seed": 0,
+      "fixed_window": {
+        "Meter": {
+          "mean_speed_km_h_same_window": 38.80969031525384,
+          "return_50_steps_zero_based_49_99": 4.9164740419292166
+        },
+        "Scale": {
+          "mean_speed_km_h_same_window": 38.80969031525384,
+          "return_50_steps_zero_based_49_99": 5.13622152868964
+        },
+        "V1": {
+          "mean_speed_km_h_same_window": 38.80969031525384,
+          "return_50_steps_zero_based_49_99": 0.12095246351534938
+        }
+      },
+      "full_episode": true,
+      "geometry_id": "geom_easy_SCS_seed0",
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "horizon_steps": 1224,
+      "mean_speed_km_h": 34.22761619276928,
+      "moving_mean_speed_ge_1_km_h": 34.30838550306861,
+      "outcome": "SUCCESS",
+      "policy_kind": "stage1_reference",
+      "returns": {
+        "Meter": {
+          "discounted_by_gamma": {
+            "0.9": 0.05303755410446708,
+            "0.99": 7.391534604724389,
+            "0.999": 57.168090236260284,
+            "0.9999": 76.10977763717574,
+            "1": 78.628922749341
+          },
+          "undiscounted": 78.628922749341
+        },
+        "Scale": {
+          "discounted_by_gamma": {
+            "0.9": 0.05877840528287138,
+            "0.99": 7.703827771699588,
+            "0.999": 58.488720402961725,
+            "0.9999": 77.70877184815889,
+            "1": 80.26320889432992
+          },
+          "undiscounted": 80.26320889432992
+        },
+        "V1": {
+          "discounted_by_gamma": {
+            "0.9": 0.0013841678908815829,
+            "0.99": 0.18141681434109622,
+            "0.999": 1.3773461251784282,
+            "0.9999": 1.8299575552351515,
+            "1": 1.890111785714397
+          },
+          "undiscounted": 1.890111785714397
+        }
+      },
+      "route_progress_delta": 0.9754876027078611,
+      "safety_failure": false,
+      "split": "TRAIN",
+      "steps": 418,
+      "terminal_reward_sum": 1.0,
+      "timeout": false
+    }
+  },
+  "historical_trajectory_source_commit": "1baaeedf9bd9d69f4507d5ff9b27b75dcc9d5639",
+  "manifest_sha256": "ec1099eb93252f445d7afa95fd19270e72d5a8f37282701d6935e283a0997134",
+  "preflight_file_sha256": "14b29045c06a4b9f92c1d85e78d597b254a7e9e08bde5db62ad7cc31ca797264",
+  "producer_effect_on_historical_reward_replay": "none; recorded transition reward inputs are route progress, horizon and terminal component; historical policy observation provenance is not retroactively upgraded",
+  "protocol": "stage5_task_reward_alignment_preflight_v1",
+  "protocol_file_sha256": "106870818ca32ab7f744c7adb2aba2ee31cf6bab1bcccae5a5fb5d5e4acda34a",
+  "protocol_sha256": "ea7bd56c112498ca6d462510624a3e4e7130dd2290231969c444da19fe7a5d99",
+  "raw_trace_path": "runs/stage5_meter_reward/s5_5_meter_reward_seed101_20261120/preflight/reward_traces.jsonl.gz",
+  "raw_trace_sha256": "fa19c1e9bb547f4abc5ce1371fe429603e8a1b65922c026df8dfd14adcc67ec3",
+  "raw_trace_size_bytes": 95263,
+  "reward_formula_integrity": {
+    "failed": 0,
+    "max_abs_delta_from_progress": 0.0,
+    "max_abs_meter_distance": 0.0,
+    "max_abs_meter_formula": 0.0,
+    "max_abs_production_helper": 0.0,
+    "max_abs_reward_used": 0.0,
+    "max_abs_scale_formula": 0.0,
+    "max_abs_time_cost": 0.0,
+    "max_abs_v1_env": 0.0,
+    "max_abs_v1_formula": 0.0,
+    "rows": 1845,
+    "sequence_contiguous": true,
+    "single_geometry_environment": true,
+    "terminal_at_end_only": true,
+    "terminal_nonzero_rows": 3,
+    "terminal_rows": 4
+  },
+  "reward_rankings_by_full_episode": {
+    "Meter": [
+      "stage1_reference_clean",
+      "s54_a_100k_deterministic",
+      "stage0_random_stress_seed42",
+      "stage0_random_stress_seed101"
+    ],
+    "Scale": [
+      "stage1_reference_clean",
+      "s54_a_100k_deterministic",
+      "stage0_random_stress_seed42",
+      "stage0_random_stress_seed101"
+    ],
+    "V1": [
+      "stage1_reference_clean",
+      "s54_a_100k_deterministic",
+      "stage0_random_stress_seed42",
+      "stage0_random_stress_seed101"
+    ]
+  },
+  "reward_source_sha256": "ecb206c796f682271ced0b943c2d505734c916318d1a12c44b916d5d2bf76bbf",
+  "reward_spec": {
+    "progress_weight": 1.0,
+    "safety_penalty": 1.0,
+    "spec_version": "1.0.0",
+    "success_bonus": 1.0,
+    "time_penalty_budget": 0.25,
+    "timeout_penalty": 0.0,
+    "unknown_termination_penalty": 1.0
+  },
+  "reward_spec_sha256": "71c5e371ea193bc65d758f2eba8cb15b55a17e96f07b39107e9ebe29e55f13e8",
+  "runtime_versions": {
+    "Python": "3.10.21",
+    "gymnasium": "1.3.0",
+    "metadrive-simulator": "0.4.3",
+    "stable-baselines3": "2.9.2",
+    "torch": "2.14.1"
+  },
+  "sac_config_file_sha256": "7100195a8719f88fab5e6f19a9a4ca750e54ae6e28671a806f0866c615dd5443",
+  "split": "TRAIN_ONLY",
+  "stationary_timeout": {
+    "discounted_return_closed_form_by_gamma": {
+      "0.9": -0.0020424836601307178,
+      "0.99": -0.020424743782330012,
+      "0.999": -0.14422557589129437,
+      "0.9999": -0.2353166571250053,
+      "1": -0.25
+    },
+    "observed_reward_sum_is_not_full_sac_target": true,
+    "step_cost": 0.0002042483660130719,
+    "timeout_bootstrapped_by_sac": true,
+    "undiscounted_return": -0.25
+  },
+  "teacher_trajectories_used_for_training": false,
+  "training_performed": false,
+  "trajectory_count": 4,
+  "transition_count": 1845,
+  "validation_test_accessed": false
+}
