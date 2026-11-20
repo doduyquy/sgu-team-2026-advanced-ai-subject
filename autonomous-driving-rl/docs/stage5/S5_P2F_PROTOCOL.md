@@ -48,3 +48,5 @@ Protocol JSON, protocol SHA-256, source hashes, geometry manifest, producer fing
 ## Protocol revision 2
 
 A first technical launch halted before model construction because the inherited helper expected inert OU compatibility parameters in a shared protocol shape. No optimizer step or environment transition occurred. Revision 2 adds explicit metadata for standard SB3 stochastic sampling and those inert compatibility defaults; OU noise remains disabled. Revision 2 supersedes protocol SHA-256 8f0257bc144ee02009753483072eeae8b617f9e7c03faedea12d23f0658042ae. The failed pre-model launch is preserved separately and is not counted as a scientific run.
+
+Revision 3 follows a second failed pre-training launch: the shared P2 helper requires ho and stationary_std as direct exploration keys. The process stopped before constructing a model or taking a transition. Revision 3 exposes these explicitly as inert compatibility fields; standard SAC sampling remains in force and OU noise is disabled. It supersedes protocol SHA-256 3b3beae47f519967bd500cd3550c31b9711f0d4d5307c211f97179c0aff5c96e. Both failed launch directories are preserved and excluded from scientific results.

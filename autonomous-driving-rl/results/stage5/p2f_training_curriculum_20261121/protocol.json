@@ -221,7 +221,9 @@
       "stationary_std": 0.15
     },
     "mode": "standard_sb3_sac_stochastic",
-    "ou_action_noise": false
+    "ou_action_noise": false,
+    "rho": 0.85,
+    "stationary_std": 0.15
   },
   "feasibility": {
     "case_distance_combinations": 16,
@@ -360,7 +362,7 @@
       }
     ]
   },
-  "implementation_parent_commit": "eb84262623e6301b3f6b572c62f776cc9bf25e12",
+  "implementation_parent_commit": "c97a87ece534f0558cf9e8573fe709e863415a0c",
   "metrics": [
     "clean_success",
     "safety_failure",
@@ -392,10 +394,10 @@
   },
   "preregistration_note": "Only reset start-state distribution differs between A/B. The MetaDrive route and destination remain the original case destination; no route shortening, terminal relabeling or horizon change.",
   "protocol": "stage5_p2f_training_only_remaining_route_distance_curriculum_v1",
-  "protocol_revision": 2,
-  "protocol_sha256": "3b3beae47f519967bd500cd3550c31b9711f0d4d5307c211f97179c0aff5c96e",
+  "protocol_revision": 3,
+  "protocol_sha256": "5f9bfb65a268547946b8edd7134e369ebb267cd200954b3b35aaab8d9a1b5d78",
   "question": "Does a fixed remaining-route-distance curriculum create useful clean trajectory support and transfer to the original full-start TRAIN task?",
-  "registered_at_utc": "2026-11-20T21:01:55.773374+00:00",
+  "registered_at_utc": "2026-11-20T21:03:13.816104+00:00",
   "reward": {
     "changed": false,
     "only_stage5_reward": true,
@@ -456,7 +458,7 @@
     "tests/test_stage5_start_curriculum.py": "19ef5ee59850d7ecdb0f3aa02717f12eb2188d6889f6d500cfb3cc40680f0218"
   },
   "status": "PRE_REGISTERED",
-  "supersedes_protocol_sha256": "8f0257bc144ee02009753483072eeae8b617f9e7c03faedea12d23f0658042ae",
+  "supersedes_protocol_sha256": "3b3beae47f519967bd500cd3550c31b9711f0d4d5307c211f97179c0aff5c96e",
   "training": {
     "checkpoint_steps": [
       0,
