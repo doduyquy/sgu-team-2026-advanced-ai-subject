@@ -21,6 +21,10 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from src.platform.task_context_producer import (
+    LEGACY_TASK_PRODUCER, REFERENCE_TASK_PRODUCER, TASK_PRODUCERS, TaskContextLocalizationError,
+)
+
 
 class InputProfileId(str, Enum):
     """Certified information profiles for Research Platform V1."""
@@ -552,6 +556,25 @@ def extract_traffic_context(
     )
 
 
+def _task_lane_width_and_goal(navigation):
+    lane_width = float(navigation.get_current_lane_width())
+
+    # Direction to next navigation checkpoint
+    navi_info = navigation.get_navi_info()
+    if len(navi_info) >= 2:
+        # Checkpoint vector in ego frame
+        cp_dx = float(navi_info[0]) - 0.5
+        cp_dy = float(navi_info[1]) - 0.5
+        norm = math.hypot(cp_dx, cp_dy)
+        if norm > 1e-4:
+            goal_dir = (float(round(cp_dx / norm, 4)), float(round(cp_dy / norm, 4)))
+        else:
+            goal_dir = (1.0, 0.0)
+    else:
+        goal_dir = (1.0, 0.0)
+    return round(lane_width, 2), goal_dir
+
+
 def extract_task_context(
     navigation: Any,
     ego_vehicle: Any,
@@ -569,21 +592,7 @@ def extract_task_context(
     sin_th = math.sin(ego_theta)
 
     current_lane = navigation.current_lane
-    lane_width = float(navigation.get_current_lane_width())
-
-    # Direction to next navigation checkpoint
-    navi_info = navigation.get_navi_info()
-    if len(navi_info) >= 2:
-        # Checkpoint vector in ego frame
-        cp_dx = float(navi_info[0]) - 0.5
-        cp_dy = float(navi_info[1]) - 0.5
-        norm = math.hypot(cp_dx, cp_dy)
-        if norm > 1e-4:
-            goal_dir = (float(round(cp_dx / norm, 4)), float(round(cp_dy / norm, 4)))
-        else:
-            goal_dir = (1.0, 0.0)
-    else:
-        goal_dir = (1.0, 0.0)
+    lane_width, goal_dir = _task_lane_width_and_goal(navigation)
 
     # Collect route lanes from current checkpoint index onwards
     ckpt_idx = navigation._target_checkpoints_index[0]
@@ -671,13 +680,22 @@ def build_agent_input(
     traffic_capacity: int = 8,
     traffic_radius_m: float = 50.0,
     task_lookahead_count: int = 20,
-    task_lookahead_spacing_m: float = 2.5
+    task_lookahead_spacing_m: float = 2.5,
+    *,
+    task_context_producer_id: str = LEGACY_TASK_PRODUCER,
 ) -> AgentInputV1:
     """
     Constructs an authoritative AgentInputV1 adhering strictly to information profile.
     Main profile STATE_DECISION_V1 provides CoreObservation + TrafficContext + TaskContext.
     CORE_ONLY_V1 provides CoreObservation with masked empty traffic and task contexts.
     """
+    if task_context_producer_id not in TASK_PRODUCERS:
+        raise ValueError(f"Unknown TaskContext producer: {task_context_producer_id!r}")
+    if task_context_producer_id == REFERENCE_TASK_PRODUCER and (
+        profile_id != InputProfileId.STATE_DECISION_V1 or
+        (task_lookahead_count, task_lookahead_spacing_m) != (20, 2.5)
+    ):
+        raise ValueError("Corrected TaskContext requires STATE_DECISION_V1 with 20 waypoints at 2.5 m")
     core_obs = extract_core_observation(raw_obs)
 
     if profile_id == InputProfileId.STATE_DECISION_V1:
@@ -687,13 +705,27 @@ def build_agent_input(
             capacity=traffic_capacity,
             radius_m=traffic_radius_m
         )
-        task_ctx = extract_task_context(
-            navigation=navigation,
-            ego_vehicle=ego_vehicle,
-            road_network=road_network,
-            lookahead_count=task_lookahead_count,
-            lookahead_spacing_m=task_lookahead_spacing_m
-        )
+        if task_context_producer_id == REFERENCE_TASK_PRODUCER:
+            from dataclasses import replace
+            from src.platform.reference_station import corrected_task_context
+
+            width, direction = _task_lane_width_and_goal(navigation)
+            template = replace(TaskContextV1.empty(), current_lane_width=width,
+                               navigation_goal_direction=direction)
+            task_ctx = corrected_task_context(navigation, ego_vehicle, road_network, template)
+            if not task_ctx.validity_mask.any() and not task_ctx.route_end_within_lookahead:
+                raise TaskContextLocalizationError(
+                    f"{task_context_producer_id}: no localized route at decision {step_index}; "
+                    "aborting before an invalid observation reaches the policy or replay"
+                )
+        else:
+            task_ctx = extract_task_context(
+                navigation=navigation,
+                ego_vehicle=ego_vehicle,
+                road_network=road_network,
+                lookahead_count=task_lookahead_count,
+                lookahead_spacing_m=task_lookahead_spacing_m
+            )
     elif profile_id == InputProfileId.CORE_ONLY_V1:
         traffic_ctx = TrafficContextV1.empty(capacity=traffic_capacity, radius_m=traffic_radius_m)
         task_ctx = TaskContextV1.empty(lookahead_count=task_lookahead_count, lookahead_spacing_m=task_lookahead_spacing_m)

@@ -28,6 +28,7 @@ from stable_baselines3 import SAC
 import torch
 
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, require_checkpoint_producer, task_producer_identity
 from src.training.stage5.pilot_observation_transform import (
     WAYPOINT_XY50_V1, transform_fingerprint, transform_spec,
 )
@@ -60,6 +61,13 @@ def get_git_commit_sha(project_root: Optional[Path] = None) -> str:
         return "UNKNOWN"
 
 
+def _environment_producer_ids(env):
+    if env is None:
+        return set()
+    bases = env.get_attr("unwrapped") if hasattr(env, "get_attr") else [getattr(env, "unwrapped", env)]
+    return {getattr(base, "task_context_producer_id", LEGACY_TASK_PRODUCER) for base in bases}
+
+
 def save_sac_checkpoint(
     model: SAC,
     checkpoint_dir: Path,
@@ -71,6 +79,7 @@ def save_sac_checkpoint(
     save_replay_buffer: bool = False,
     project_root: Optional[Path] = None,
     observation_transform: Optional[str] = None,
+    task_context_producer_id: str = LEGACY_TASK_PRODUCER,
 ) -> Path:
     """
     Saves a complete, verifiable SAC checkpoint bundle with metadata.
@@ -89,6 +98,18 @@ def save_sac_checkpoint(
     Returns:
         Path to the validated checkpoint directory.
     """
+    producer = task_producer_identity(task_context_producer_id)
+    effective_config = dict(training_config or {})
+    for key, value in (("task_context_producer_id", task_context_producer_id),
+                       ("task_context_producer", producer)):
+        if key in effective_config and effective_config[key] != value:
+            raise CheckpointIntegrityError(f"Training config {key} disagrees with checkpoint producer")
+        effective_config[key] = value
+    env_ids = _environment_producer_ids(model.get_env())
+    if env_ids != {task_context_producer_id} and (env_ids or task_context_producer_id != LEGACY_TASK_PRODUCER):
+        raise CheckpointIntegrityError(f"Checkpoint producer does not match training env: {env_ids} vs {task_context_producer_id}")
+    if task_context_producer_id != LEGACY_TASK_PRODUCER and encoder.is_core_only:
+        raise CheckpointIntegrityError("Corrected TaskContext requires a 409D encoder")
     checkpoint_dir = Path(checkpoint_dir).resolve()
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
@@ -139,11 +160,12 @@ def save_sac_checkpoint(
         "encoder_id": encoder.encoder_id,
         "encoder_version": encoder.encoder_version,
         "encoder_fingerprint": encoder.get_schema_fingerprint(),
+        "task_context_producer": producer,
         "observation_transform": selected_transform,
         "observation_transform_fingerprint": selected_transform_fingerprint,
         "policy_input_fingerprint": hashlib.sha256((
             encoder.get_schema_fingerprint() + ":" +
-            (selected_transform_fingerprint if selected_transform_fingerprint else "identity")
+            (selected_transform_fingerprint if selected_transform_fingerprint else "identity") + ":" + producer["fingerprint"]
         ).encode("utf-8")).hexdigest(),
         "observation_dim": int(encoder.dimension),
         "action_dim": 2,
@@ -165,7 +187,7 @@ def save_sac_checkpoint(
             "They do NOT guarantee bit-for-bit deterministic training resume because PRNG seeds, case sampler cursor, "
             "optimizer momentum/hyperparameter schedules, and MetaDrive simulator internal states are not fully restored."
         ),
-        "training_config": training_config or {},
+        "training_config": effective_config,
         "training_summary": training_summary or {},
     }
 
@@ -193,6 +215,8 @@ def verify_checkpoint_integrity(
     checkpoint_dir: Path,
     expected_sha256: Optional[str] = None,
     expected_encoder_fingerprint: Optional[str] = None,
+    *,
+    task_context_producer_id: str = LEGACY_TASK_PRODUCER,
 ) -> Dict[str, Any]:
     """
     Verifies that a checkpoint directory is structurally complete and cryptographically valid.
@@ -314,6 +338,10 @@ def verify_checkpoint_integrity(
                 "Evaluating model on incompatible observation schema is strictly forbidden."
             )
 
+    try:
+        require_checkpoint_producer(metadata, task_context_producer_id)
+    except ValueError as exc:
+        raise CheckpointIntegrityError(str(exc)) from exc
     return metadata
 
 
@@ -324,6 +352,8 @@ def load_sac_checkpoint(
     expected_sha256: Optional[str] = None,
     expected_encoder_fingerprint: Optional[str] = None,
     load_replay_buffer: bool = False,
+    *,
+    task_context_producer_id: str = LEGACY_TASK_PRODUCER,
 ) -> Tuple[SAC, Dict[str, Any]]:
     """
     Loads and cryptographically verifies a saved SAC checkpoint bundle.
@@ -343,7 +373,10 @@ def load_sac_checkpoint(
         checkpoint_dir,
         expected_sha256=expected_sha256,
         expected_encoder_fingerprint=expected_encoder_fingerprint,
+        task_context_producer_id=task_context_producer_id,
     )
+    if env is not None and _environment_producer_ids(env) != {task_context_producer_id}:
+        raise CheckpointIntegrityError("Attached environment TaskContext producer mismatch")
 
     model_path = checkpoint_dir / "model.zip"
     model = SAC.load(str(model_path), env=env, device=device)

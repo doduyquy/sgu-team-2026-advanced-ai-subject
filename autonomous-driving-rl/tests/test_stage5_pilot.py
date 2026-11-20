@@ -201,7 +201,8 @@ class TestPilotProtocol(unittest.TestCase):
                 return type("Case", (), {"geometry_id": geometry_id, "environment_seed": environment_seed})()
 
         class FakeEnv:
-            def __init__(self, sampler, encoder, project_root):
+            def __init__(self, sampler, encoder, project_root, task_context_producer_id):
+                self.task_context_producer_id = task_context_producer_id
                 self.sampler = sampler
                 self.observation_space = type("Space", (), {"contains": lambda _, obs: True})()
                 self.current_case = None

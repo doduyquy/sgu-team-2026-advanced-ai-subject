@@ -26,6 +26,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.platform import SAFETY_CRITICAL_FLAGS, get_action_adapter
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, TASK_PRODUCERS, task_producer_identity
 from src.training.stage5.checkpoint import load_sac_checkpoint
 from src.training.stage5.env_adapter import Stage5TrainingEnv
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
@@ -174,6 +175,7 @@ def evaluate_checkpoint(
     max_steps_per_episode: Optional[int] = None, max_cases: Optional[int] = None,
     progress_file: Optional[Path] = None, progress_phase: str = "DIAGNOSTICS",
     trace_dir: Optional[Path] = None, geometry_ids: Optional[List[str]] = None,
+    *, task_context_producer_id: str = LEGACY_TASK_PRODUCER,
 ) -> Dict[str, Any]:
     encoder = Stage5ObservationEncoder(core_only=False)
     transform = metadata_transform = None
@@ -191,9 +193,11 @@ def evaluate_checkpoint(
         elif transform_id == "pilot_groupwise_physical_v1":
             transform = GroupwisePhysicalObservation
     model, metadata = load_sac_checkpoint(
-        checkpoint_dir, device="cpu", expected_encoder_fingerprint=encoder.get_schema_fingerprint()
+        checkpoint_dir, device="cpu", expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
+        task_context_producer_id=task_context_producer_id
     )
     checkpoint_sha = metadata["model_sha256"]
+    producer = task_producer_identity(task_context_producer_id)
     training_step = int(metadata["total_timesteps"])
     gamma = float(getattr(model, "gamma", metadata.get("training_config", {}).get("sac_hyperparameters", {}).get("gamma", 0.99)))
     if not 0.0 < gamma <= 1.0:
@@ -207,7 +211,8 @@ def evaluate_checkpoint(
         allowed_geometry_ids=[x["geometry_id"] for x in load_pilot_split(split_path)["pilot_diagnostic"]],
         project_root=ROOT,
     )
-    base_env = Stage5TrainingEnv(sampler=sampler, encoder=encoder, project_root=ROOT)
+    base_env = Stage5TrainingEnv(sampler=sampler, encoder=encoder, project_root=ROOT,
+                                task_context_producer_id=task_context_producer_id)
     env = transform(base_env) if transform is not None else base_env
     adapter = get_action_adapter("continuous_box2_v1")
     schedule = diagnostic_schedule(load_pilot_split(split_path), schedule_seed)
@@ -289,6 +294,7 @@ def evaluate_checkpoint(
                     base_env, item, checkpoint_sha, training_step, speeds, controls, latencies, rewards,
                     time.perf_counter() - started, interrupted, gamma, initial_route_completion,
                 )
+                record["task_context_producer"] = producer
                 records.append(record)
                 sink.write(json.dumps(record, sort_keys=True) + "\n")
                 sink.flush()
@@ -348,6 +354,7 @@ def evaluate_checkpoint(
     result = {
         "protocol": ("stage5_pilot_waypoint_xy50_ablation_v1" if metadata.get("observation_transform")
                      else "stage5_pilot_diagnostic_v1"),
+        "task_context_producer": producer,
         "observation_transform": metadata.get("observation_transform"),
         "observation_transform_fingerprint": metadata.get("observation_transform_fingerprint"),
         "policy_input_fingerprint": metadata.get("policy_input_fingerprint"),
@@ -373,6 +380,7 @@ def evaluate_checkpoint(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--task-context-producer", choices=TASK_PRODUCERS, default=LEGACY_TASK_PRODUCER)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--split", type=Path, default=ROOT / "results/stage5/pilot_split_v1.json")
     parser.add_argument("--output", type=Path, required=True)
@@ -391,7 +399,8 @@ def main() -> None:
     print(json.dumps(evaluate_checkpoint(args.checkpoint, args.split, args.output, args.schedule_seed,
                                          args.max_steps_per_episode, args.max_cases,
                                          args.progress_file, args.progress_phase,
-                                         args.trace_dir, args.geometry_id), indent=2))
+                                         args.trace_dir, args.geometry_id,
+                                         task_context_producer_id=args.task_context_producer), indent=2))
 
 
 if __name__ == "__main__":

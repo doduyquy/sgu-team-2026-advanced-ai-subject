@@ -583,8 +583,17 @@ class Stage5PilotWidget(QWidget):
         process = QProcess(self)
         process.setWorkingDirectory(str(self.project_root))
         process.setProgram(sys.executable)
+        checkpoint = self._selected_run / "checkpoints" / f"step_{step:05d}"
+        metadata = _read_json(checkpoint / "metadata.json")
+        producer = metadata.get("task_context_producer", {"id": "legacy_v1"})
+        if not isinstance(producer, dict) or not isinstance(producer.get("id"), str):
+            process.deleteLater()
+            QMessageBox.critical(self, "TaskContext producer kh?ng h?p l?", str(checkpoint))
+            return
+        self.log.append(f"Checkpoint viewer TaskContext producer: {producer['id']}")
         process.setArguments([
-            str(script), "--checkpoint", str(self._selected_run / "checkpoints" / f"step_{step:05d}"),
+            str(script), "--checkpoint", str(checkpoint),
+            "--task-context-producer", producer["id"],
             "--split", str(self.project_root / "results" / "stage5" / "pilot_split_v1.json"),
         ])
         self._connect_process_signal(process, process.readyReadStandardOutput,

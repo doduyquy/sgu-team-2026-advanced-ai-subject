@@ -29,6 +29,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import numpy as np
 
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, TASK_PRODUCERS, task_producer_identity
 from src.training.stage5.checkpoint import load_sac_checkpoint
 from src.training.stage5.env_adapter import Stage5TrainingEnv
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
@@ -44,6 +45,7 @@ def run_training_session(
     output_dir: Optional[str] = None,
     training_root_seed: int = 101,
     save_replay: bool = False,
+    *, task_context_producer_id: str = LEGACY_TASK_PRODUCER,
 ) -> bool:
     """Executes the SAC training session and verifies checkpoint integrity."""
     print("=" * 70)
@@ -60,6 +62,7 @@ def run_training_session(
     trainer = None
     try:
         config_overrides = {
+            "task_context_producer_id": task_context_producer_id,
             "sac_hyperparameters": {
                 "buffer_size": buffer_size,
                 "batch_size": batch_size,
@@ -77,6 +80,7 @@ def run_training_session(
         # 1. Run Diagnostic Case Probe before training
         print("\n--- Diagnostic Pre-Training Probe on Easy/SCS/geom-0 ---")
         diag_env = Stage5TrainingEnv(
+            task_context_producer_id=task_context_producer_id,
             sampler_strategy=SamplerStrategy.FIXED,
             tier_filter="Easy",
             sequence_filter="SCS",
@@ -122,7 +126,7 @@ def run_training_session(
 
         # 5. Verify Checkpoint Load & Prediction Parity
         print(f"\n--- Verifying Checkpoint Load and Prediction Parity ---")
-        loaded_model, metadata = load_sac_checkpoint(saved_dir, device="cpu")
+        loaded_model, metadata = load_sac_checkpoint(saved_dir, device="cpu", task_context_producer_id=task_context_producer_id)
         print(f"  Model SHA-256:       {metadata['model_sha256']}")
         print(f"  Encoder Fingerprint: {metadata['encoder_fingerprint'][:16]}...")
         print(f"  Total Steps:         {metadata['total_timesteps']}")
@@ -153,6 +157,7 @@ def run_training_session(
 
 def main():
     parser = argparse.ArgumentParser(description="Stage 5 SAC Training Pipeline (Gate S5.2)")
+    parser.add_argument("--task-context-producer", choices=TASK_PRODUCERS, default=LEGACY_TASK_PRODUCER)
     parser.add_argument("--timesteps", type=int, default=5000, help="Total environment steps to train (default: 5000)")
     parser.add_argument("--learning-starts", type=int, default=500, help="Steps before gradient updates begin")
     parser.add_argument("--buffer-size", type=int, default=50000, help="Replay buffer capacity")
@@ -170,6 +175,7 @@ def main():
         output_dir=args.output_dir,
         training_root_seed=args.seed,
         save_replay=args.save_replay,
+        task_context_producer_id=args.task_context_producer,
     )
     sys.exit(0 if success else 1)
 

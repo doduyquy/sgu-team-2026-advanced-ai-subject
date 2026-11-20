@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, TASK_PRODUCERS
 from src.launcher.cases import (
     LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256,
     LOCKED_TEST_CASE_MANIFEST_SHA256,
@@ -79,6 +80,7 @@ def _add_plan_arguments(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--wandb", choices=["AUTO", "DISABLED", "OFFLINE", "ONLINE", "auto", "disabled", "offline", "online"], default="AUTO", help="W&B tracking mode (AUTO defaults to OFFLINE for benchmarks, DISABLED for sandbox)")
     subparser.add_argument("--runs-root", default=None, help="Custom runs storage directory override")
     subparser.add_argument("--run-id", "--custom-run-id", default=None, dest="custom_run_id", help="Custom run_id identifier")
+    subparser.add_argument("--task-context-producer", choices=TASK_PRODUCERS, default=LEGACY_TASK_PRODUCER)
     subparser.add_argument("--checkpoint", default=None, help="Explicit checkpoint bundle directory for candidate RL agents (e.g. stage5_sac)")
     subparser.add_argument("--json", action="store_true", help="Output structured JSON")
 
@@ -148,6 +150,9 @@ def handle_cases(args: argparse.Namespace) -> int:
 
 
 def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
+    if getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER) != LEGACY_TASK_PRODUCER:
+        if args.agent != "stage5_sac" or args.mode != "SANDBOX":
+            raise ValueError("Corrected TaskContext producer is only available for Stage 5 SANDBOX")
     """Builds LaunchRequestV1 from parsed CLI arguments."""
     mode = LauncherMode(args.mode.upper())
     wandb_arg = args.wandb.upper()
@@ -191,7 +196,8 @@ def handle_plan(args: argparse.Namespace) -> int:
         ckpt_dir = Path(args.checkpoint).resolve()
         encoder = Stage5ObservationEncoder(core_only=False)
         try:
-            meta = verify_checkpoint_integrity(ckpt_dir, expected_encoder_fingerprint=encoder.get_schema_fingerprint())
+            meta = verify_checkpoint_integrity(ckpt_dir, expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
+                                               task_context_producer_id=getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER))
             if not args.json:
                 print(f"[OK] Verified SAC checkpoint bundle: {ckpt_dir} (SHA256: {meta.get('model_sha256')[:16]}...)")
         except (CheckpointIntegrityError, ValueError, FileNotFoundError) as exc:
@@ -242,8 +248,9 @@ def handle_run(args: argparse.Namespace) -> int:
         ckpt_dir = Path(args.checkpoint).resolve()
         encoder = Stage5ObservationEncoder(core_only=False)
         try:
-            meta = verify_checkpoint_integrity(ckpt_dir, expected_encoder_fingerprint=encoder.get_schema_fingerprint())
-            agent_factory = make_sac_agent_factory(ckpt_dir)
+            meta = verify_checkpoint_integrity(ckpt_dir, expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
+                                               task_context_producer_id=getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER))
+            agent_factory = make_sac_agent_factory(ckpt_dir, task_context_producer_id=getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER))
         except (CheckpointIntegrityError, ValueError, FileNotFoundError) as exc:
             print(f"[ERROR] SAC checkpoint verification failed: {exc}", file=sys.stderr)
             return 1
