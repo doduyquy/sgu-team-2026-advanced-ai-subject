@@ -25,6 +25,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 from src.launcher.cases import get_default_project_root
 from src.platform.reward import RewardSpecV1
 from src.training.stage5.checkpoint import save_sac_checkpoint
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, task_producer_identity
 from src.training.stage5.env_adapter import Stage5TrainingEnv
 from src.training.stage5.observation_encoder import (
     STAGE5_FULL_OBSERVATION_DIM,
@@ -225,11 +226,16 @@ class SacBaselineTrainer:
             timeout_penalty=float(reward_cfg.get("timeout_penalty", 0.0)),
         )
 
+        self.task_context_producer_id = self.config.get("task_context_producer_id", LEGACY_TASK_PRODUCER)
+        self.config["task_context_producer_id"] = self.task_context_producer_id
+        self.config["task_context_producer"] = task_producer_identity(self.task_context_producer_id)
+
         # 4. Instantiate Gymnasium training environment
         self.env = Stage5TrainingEnv(
             sampler=self.sampler,
             encoder=self.encoder,
             reward_spec=self.reward_spec,
+            task_context_producer_id=self.task_context_producer_id,
             project_root=self.project_root,
         )
         if pilot_observation_transform == "waypoint_xy_div50m_v1":
@@ -294,6 +300,7 @@ class SacBaselineTrainer:
         print(f"  Device:          {self.device}")
         print(f"  Root Seed:       {self.training_root_seed}")
 
+        print(f"TaskContext producer: {self.config['task_context_producer']}")
         self.model.learn(total_timesteps=total_timesteps, callback=self.callback)
 
         summary = self.callback.get_summary_metrics()
@@ -306,6 +313,7 @@ class SacBaselineTrainer:
         print(f"  Throughput:        {summary['throughput_steps_per_sec']} steps/sec")
         print(f"  Wall Time:         {summary['wall_time_s']} s")
         print(f"==================================================================")
+        summary["task_context_producer"] = self.config["task_context_producer"]
         return summary
 
     def save_checkpoint(
@@ -326,6 +334,7 @@ class SacBaselineTrainer:
             checkpoint_dir=checkpoint_dir,
             encoder=self.encoder,
             observation_transform=self.observation_transform,
+            task_context_producer_id=self.task_context_producer_id,
             total_timesteps=int(self.model.num_timesteps),
             training_root_seed=self.training_root_seed,
             training_config=self.config,

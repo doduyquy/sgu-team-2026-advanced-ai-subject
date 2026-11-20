@@ -41,6 +41,7 @@ from src.launcher.models import (
     validate_custom_run_id,
 )
 from src.launcher.preflight import run_preflight
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, task_producer_identity
 from src.platform import (
     AgentPolicy,
     AgentPublicEpisodeContext,
@@ -167,6 +168,16 @@ def build_metadrive_case_config(
     return cfg
 
 
+def build_launcher_agent_input(env, raw_obs, step_idx, profile_id, producer_id=LEGACY_TASK_PRODUCER):
+    tm = env.engine.traffic_manager
+    traffic = list(getattr(tm, "traffic_vehicles", []))
+    return build_agent_input(
+        raw_obs=raw_obs, ego_vehicle=env.agent, traffic_vehicles=traffic,
+        navigation=env.agent.navigation, road_network=env.current_map.road_network,
+        step_index=step_idx, profile_id=InputProfileId(profile_id), task_context_producer_id=producer_id,
+    )
+
+
 @dataclass(frozen=True)
 class ExecutionReportV1:
     """Summary record returned upon completion or interruption of an experiment execution."""
@@ -263,6 +274,18 @@ class ExperimentExecutor:
         if checkpoint is not None:
             algorithm_parameters["checkpoint"] = checkpoint.semantic_identity()
 
+        is_stage5 = self.plan.agent_registration.agent_id == "stage5_sac"
+        producer_id = LEGACY_TASK_PRODUCER
+        if is_stage5:
+            recorded = algorithm_parameters.get("sac_checkpoint", {}).get("task_context_producer")
+            if recorded is not None:
+                producer_id = recorded["id"]
+                if recorded != task_producer_identity(producer_id):
+                    raise ValueError("Launcher TaskContext producer identity mismatch")
+            if self.plan.canonical_run and producer_id != LEGACY_TASK_PRODUCER:
+                raise ValueError("Corrected TaskContext is development-only")
+            algorithm_parameters["task_context_producer"] = task_producer_identity(producer_id)
+
         # 2. Build Gate-7 ExperimentRunConfig
         run_config = ExperimentRunConfig(
             run_kind=self.plan.run_kind,
@@ -325,6 +348,8 @@ class ExperimentExecutor:
 
             # 4. Instantiate agent policy ONCE per ExperimentRun (Section 9)
             agent = self.agent_factory()
+            if is_stage5 and getattr(agent, "task_context_producer_id", None) != producer_id:
+                raise ValueError("Launcher/agent TaskContext producer mismatch")
             if checkpoint is not None:
                 from src.launcher.checkpoints import validate_checkpoint_binding
                 checkpoint_path = validate_checkpoint_binding(checkpoint, self.project_root)
@@ -435,21 +460,14 @@ class ExperimentExecutor:
 
                     while not (terminated or truncated) and step_idx < case.horizon_steps:
                         # 1. Assemble clean AgentInputV1 (no evaluator metadata)
-                        tm = env.engine.traffic_manager
-                        traffic_v = list(getattr(tm, "traffic_vehicles", [])) if hasattr(tm, "traffic_vehicles") else []
-                        agent_input = build_agent_input(
-                            raw_obs=raw_obs,
-                            ego_vehicle=env.agent,
-                            traffic_vehicles=traffic_v,
-                            navigation=env.agent.navigation,
-                            road_network=env.current_map.road_network,
-                            step_index=step_idx,
-                            profile_id=InputProfileId(self.plan.agent_registration.input_profile_id)
+                        agent_input = build_launcher_agent_input(
+                            env, raw_obs, step_idx, self.plan.agent_registration.input_profile_id, producer_id
                         )
 
                         # 2. High-resolution decision latency timer wrapping agent.act() strictly
                         t0 = time.perf_counter_ns()
-                        decision = agent.act(agent_input)
+                        decision = (agent.act(agent_input, task_context_producer_id=producer_id)
+                                    if is_stage5 else agent.act(agent_input))
                         t1 = time.perf_counter_ns()
                         latencies_ms.append((t1 - t0) / 1e6)
 

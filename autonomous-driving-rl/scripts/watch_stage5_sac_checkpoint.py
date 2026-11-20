@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, TASK_PRODUCERS, task_producer_identity
+from src.training.stage5.pilot_observation_transform import apply_observation_transform, transform_fingerprint, transform_spec
 from src.training.stage5.checkpoint import load_sac_checkpoint
 from src.training.stage5.env_adapter import Stage5TrainingEnv
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
@@ -22,11 +24,21 @@ from src.training.stage5.pilot_protocol import diagnostic_schedule, load_pilot_s
 from src.training.stage5.train_sampler import SamplerStrategy, TrainCaseSampler
 
 
-def watch(checkpoint: Path, split_path: Path, geometry_id: str | None, delay_s: float) -> None:
+def watch(checkpoint: Path, split_path: Path, geometry_id: str | None, delay_s: float, *,
+          task_context_producer_id: str = LEGACY_TASK_PRODUCER) -> None:
     encoder = Stage5ObservationEncoder(core_only=False)
     model, metadata = load_sac_checkpoint(
-        checkpoint, device="cpu", expected_encoder_fingerprint=encoder.get_schema_fingerprint()
+        checkpoint, device="cpu", expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
+        task_context_producer_id=task_context_producer_id
     )
+    transform_id = None
+    if metadata.get("observation_transform") is not None:
+        transform = metadata["observation_transform"]
+        transform_id = transform["transform_id"]
+        if (transform != transform_spec(transform_id)
+                or metadata.get("observation_transform_fingerprint") != transform_fingerprint(transform)):
+            raise ValueError("Checkpoint observation transform mismatch")
+    print(f"TaskContext producer: {task_producer_identity(task_context_producer_id)}")
     split = load_pilot_split(split_path)
     schedule = diagnostic_schedule(split)
     selected = next((row for row in schedule if row["geometry_id"] == geometry_id), None) if geometry_id else schedule[0]
@@ -40,7 +52,7 @@ def watch(checkpoint: Path, split_path: Path, geometry_id: str | None, delay_s: 
     )
     case = sampler.get_case_for_geometry_id(selected["geometry_id"], selected["environment_seed"])
     env = Stage5TrainingEnv(sampler=sampler, encoder=encoder, project_root=ROOT,
-                            simulator_render_mode="NATIVE")
+                            simulator_render_mode="NATIVE", task_context_producer_id=task_context_producer_id)
     try:
         observation, info = env.reset(options={"case": case})
         print(f"Checkpoint: {checkpoint} (training_step={metadata['total_timesteps']})")
@@ -49,7 +61,7 @@ def watch(checkpoint: Path, split_path: Path, geometry_id: str | None, delay_s: 
         print("Frozen deterministic policy. Close the simulator window or press Ctrl+C to stop.")
         terminated = truncated = False
         while not (terminated or truncated):
-            action, _ = model.predict(observation, deterministic=True)
+            action, _ = model.predict(apply_observation_transform(observation, transform_id), deterministic=True)
             observation, reward, terminated, truncated, info = env.step(action)
             env.render()
             if int(info.get("step_index", 0)) % 10 == 0:
@@ -67,12 +79,14 @@ def watch(checkpoint: Path, split_path: Path, geometry_id: str | None, delay_s: 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--task-context-producer", choices=TASK_PRODUCERS, default=LEGACY_TASK_PRODUCER)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--split", type=Path, default=ROOT / "results/stage5/pilot_split_v1.json")
     parser.add_argument("--geometry-id", default=None, help="Must belong to the fixed internal diagnostic split")
     parser.add_argument("--delay", type=float, default=0.03, help="Wall-clock delay per simulated step")
     args = parser.parse_args()
-    watch(args.checkpoint, args.split, args.geometry_id, args.delay)
+    watch(args.checkpoint, args.split, args.geometry_id, args.delay,
+          task_context_producer_id=args.task_context_producer)
 
 
 if __name__ == "__main__":

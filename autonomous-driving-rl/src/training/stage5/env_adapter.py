@@ -41,6 +41,7 @@ from src.platform import (
     get_action_adapter,
 )
 from src.platform.agent_input import build_agent_input
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, task_producer_identity
 from src.training.stage5.observation_encoder import (
     Stage5ObservationEncoder,
 )
@@ -70,6 +71,7 @@ class Stage5TrainingEnv(gym.Env):
         core_only: bool = False,
         project_root: Optional[Path] = None,
         simulator_render_mode: str = "OFF",
+        task_context_producer_id: str = LEGACY_TASK_PRODUCER,
     ) -> None:
         """
         Initializes the Stage 5 Training Environment.
@@ -107,6 +109,9 @@ class Stage5TrainingEnv(gym.Env):
         # 2. Observation Encoder
         self.encoder = encoder or Stage5ObservationEncoder(core_only=core_only)
         self.observation_space = self.encoder.observation_space
+        self._task_context_producer_id = task_producer_identity(task_context_producer_id)["id"]
+        if self.encoder.is_core_only and task_context_producer_id != LEGACY_TASK_PRODUCER:
+            raise ValueError("Corrected TaskContext requires the full 409D encoder")
 
         # 3. Action Space: Box(2) continuous in [-1.0, 1.0]
         self.action_adapter = get_action_adapter("continuous_box2_v1")
@@ -225,6 +230,8 @@ class Stage5TrainingEnv(gym.Env):
 
             # 6. Diagnostic info (strictly for training instrumentation, not passed to policy)
             info_dict: Dict[str, Any] = {
+                "task_context_producer_id": self.task_context_producer_id,
+                "valid_task_waypoints": int(agent_input.task_context.validity_mask.sum()),
                 "step_index": 0,
                 "case_id": case.case_id,
                 "geometry_id": self._current_geometry_id,
@@ -314,6 +321,8 @@ class Stage5TrainingEnv(gym.Env):
             # 7. Construct info dictionary
             speed_kmh = read_vehicle_speed_kmh(self._env.agent)
             info_dict: Dict[str, Any] = {
+                "task_context_producer_id": self.task_context_producer_id,
+                "valid_task_waypoints": int(agent_input.task_context.validity_mask.sum()),
                 "step_index": self._step_idx,
                 "case_id": self._current_case.case_id,
                 "geometry_id": self._current_geometry_id,
@@ -350,6 +359,10 @@ class Stage5TrainingEnv(gym.Env):
     # Private Simulator Helpers
     # ==========================================================================
 
+    @property
+    def task_context_producer_id(self) -> str:
+        return self._task_context_producer_id
+
     def _build_agent_input(self, raw_obs: np.ndarray, step_idx: int) -> AgentInputV1:
         """Constructs an authoritative AgentInputV1 from current simulator state."""
         tm = getattr(self._env.engine, "traffic_manager", None)
@@ -365,6 +378,7 @@ class Stage5TrainingEnv(gym.Env):
             road_network=self._env.current_map.road_network,
             step_index=step_idx,
             profile_id=profile_id,
+            task_context_producer_id=self.task_context_producer_id,
         )
 
     # ==========================================================================

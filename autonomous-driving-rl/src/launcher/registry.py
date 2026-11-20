@@ -17,6 +17,7 @@ from src.agents.astar_agent import AStarAgent, LearnedAStarAgent
 from src.agents.graph_search_agents import BFSAgent, DijkstraAgent
 from src.agents.hybrid_astar_agent import HybridAStarAgent
 from src.agents.MCTS_agent import MCTSAgent
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, task_producer_identity
 from src.platform import (
     AgentPolicy,
     DeterministicConstantFixtureAgent,
@@ -141,7 +142,8 @@ def _factory_stage5_sac():
     return Stage5SacAgent()
 
 
-def make_sac_agent_factory(checkpoint_path: Union[Path, str]):
+def make_sac_agent_factory(checkpoint_path: Union[Path, str], *,
+                           task_context_producer_id: str = LEGACY_TASK_PRODUCER):
     """
     Creates a configured runtime factory for Stage5SacAgent with verified checkpoint provenance.
 
@@ -160,13 +162,16 @@ def make_sac_agent_factory(checkpoint_path: Union[Path, str]):
 
     ckpt_path = Path(checkpoint_path).resolve()
     encoder = Stage5ObservationEncoder(core_only=False)
-    meta = verify_checkpoint_integrity(ckpt_path, expected_encoder_fingerprint=encoder.get_schema_fingerprint())
+    meta = verify_checkpoint_integrity(ckpt_path, expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
+                                       task_context_producer_id=task_context_producer_id)
     bound_model_sha = str(meta["model_sha256"])
 
     def _factory() -> Stage5SacAgent:
-        return Stage5SacAgent(checkpoint_path=ckpt_path, expected_sha256=bound_model_sha)
+        return Stage5SacAgent(checkpoint_path=ckpt_path, expected_sha256=bound_model_sha,
+                              task_context_producer_id=task_context_producer_id)
 
     _factory.experiment_parameters = lambda: {
+        "task_context_producer": task_producer_identity(task_context_producer_id),
         "model_name": meta.get("model_name", "stage5_sac"),
         "algorithm": meta.get("algorithm", "SAC"),
         "checkpoint_path": str(ckpt_path),
