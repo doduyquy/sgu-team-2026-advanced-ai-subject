@@ -55,8 +55,8 @@ def main() -> None:
     source_hashes = {name: sha256(ROOT / name) for name in SOURCES}
     protocol = {
         "protocol": "stage5_p2f_training_only_remaining_route_distance_curriculum_v1",
-        "protocol_revision": 3,
-        "supersedes_protocol_sha256": "3b3beae47f519967bd500cd3550c31b9711f0d4d5307c211f97179c0aff5c96e",
+        "protocol_revision": 4,
+        "supersedes_protocol_sha256": "5f9bfb65a268547946b8edd7134e369ebb267cd200954b3b35aaab8d9a1b5d78",
         "status": "PRE_REGISTERED",
         "registered_at_utc": datetime.now(timezone.utc).isoformat(),
         "implementation_parent_commit": p2.git_head(),
@@ -102,7 +102,8 @@ def main() -> None:
             "learning_rate": parent["sac"]["learning_rate"], "buffer_size": parent["sac"]["buffer_size"],
             "batch_size": parent["sac"]["batch_size"], "gamma": parent["sac"]["gamma"],
             "tau": parent["sac"]["tau"], "learning_starts": parent["sac"]["learning_starts"],
-            "train_frequency": parent["sac"]["train_freq"], "gradient_steps": parent["sac"]["gradient_steps"],
+            "train_freq": parent["sac"]["train_freq"], "train_frequency": parent["sac"]["train_freq"],
+            "gradient_steps": parent["sac"]["gradient_steps"],
             "ent_coef": parent["sac"]["ent_coef"], "exploration": "standard SB3 SAC stochastic sampling; no OU, no action hold",
             "root_seed": 101, "initial_actor_critic_entropy_shared": True,
             "optimizer_and_replay_states": "fresh and independent per arm",
