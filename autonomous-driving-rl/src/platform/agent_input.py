@@ -709,15 +709,14 @@ def build_agent_input(
             from dataclasses import replace
             from src.platform.reference_station import corrected_task_context
 
-            width, direction = _task_lane_width_and_goal(navigation)
-            template = replace(TaskContextV1.empty(), current_lane_width=width,
-                               navigation_goal_direction=direction)
-            task_ctx = corrected_task_context(navigation, ego_vehicle, road_network, template)
+            task_ctx = corrected_task_context(navigation, ego_vehicle, road_network, TaskContextV1.empty())
             if not task_ctx.validity_mask.any() and not task_ctx.route_end_within_lookahead:
                 raise TaskContextLocalizationError(
                     f"{task_context_producer_id}: no localized route at decision {step_index}; "
                     "aborting before an invalid observation reaches the policy or replay"
                 )
+            width, direction = _task_lane_width_and_goal(navigation)
+            task_ctx = replace(task_ctx, current_lane_width=width, navigation_goal_direction=direction)
         else:
             task_ctx = extract_task_context(
                 navigation=navigation,

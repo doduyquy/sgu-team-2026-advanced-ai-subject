@@ -29,8 +29,8 @@ class TestTaskProducer(unittest.TestCase):
 
     def test_unlocalized_observation_aborts_at_first_sample(self):
         ego = SimpleNamespace(position=(0, 0), velocity=(0, 0), heading_theta=0)
-        nav = SimpleNamespace(checkpoints=None, current_lane=None, get_current_lane_width=lambda: 3.5,
-                              get_navi_info=lambda: [0.5] * 10)
+        # The native lane-width getter cannot be called before localization succeeds.
+        nav = SimpleNamespace(checkpoints=None, current_lane=None)
         with self.assertRaisesRegex(TaskContextLocalizationError, "at decision 7"):
             build_agent_input(np.zeros(259, np.float32), ego, [], nav,
                               SimpleNamespace(graph={}), 7,
@@ -53,6 +53,9 @@ class TestTaskProducer(unittest.TestCase):
                 factory = make_sac_agent_factory(path, task_context_producer_id=REFERENCE_TASK_PRODUCER)
                 agent = factory()
                 try:
+                    agent.reset(None)
+                    with self.assertRaisesRegex(ValueError, "Policy input TaskContext producer mismatch"):
+                        agent.act(None)
                     self.assertEqual(agent.checkpoint_provenance["task_context_producer"],
                                      trainer.config["task_context_producer"])
                     _, meta = load_sac_checkpoint(path, task_context_producer_id=REFERENCE_TASK_PRODUCER)
