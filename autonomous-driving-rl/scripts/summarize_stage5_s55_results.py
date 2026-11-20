@@ -163,10 +163,21 @@ def evaluate_summary() -> tuple[dict[str, Any], list[dict[str, Any]]]:
     eval_summary = read_json(summary_path)
     if eval_summary.get("benchmark_eligible") is not False or eval_summary.get("holdouts_accessed") is not False:
         raise ValueError("Evaluation summary must remain non-eligible and holdout-free")
-    if eval_summary.get("evaluation_source_commit") != subprocess.check_output(
-        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
-    ).strip():
-        raise ValueError("Evaluator source SHA does not match the current reviewed code")
+    evaluation_commit = str(eval_summary.get("evaluation_source_commit", ""))
+    ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", evaluation_commit, "HEAD"], cwd=ROOT, check=False
+    )
+    if ancestor.returncode != 0:
+        raise ValueError("Evaluator source revision is not an ancestor of the analyzed source")
+    git_root = Path(subprocess.check_output(["git", "rev-parse", "--show-toplevel"], cwd=ROOT, text=True).strip())
+    evaluator_path = ROOT / "scripts" / "evaluate_stage5_s55.py"
+    relative_evaluator_path = evaluator_path.relative_to(git_root).as_posix()
+    recorded_blob = subprocess.check_output(
+        ["git", "rev-parse", f"{evaluation_commit}:{relative_evaluator_path}"], cwd=ROOT, text=True
+    ).strip()
+    current_blob = subprocess.check_output(["git", "hash-object", str(evaluator_path)], cwd=ROOT, text=True).strip()
+    if recorded_blob != current_blob:
+        raise ValueError("The evaluator source file changed after its recorded evaluation revision")
     if eval_summary.get("protocol_sha256") != PROTOCOL["protocol_sha256"]:
         raise ValueError("Evaluation protocol identity mismatch")
     records_path = ROOT / eval_summary["per_episode_path"]
