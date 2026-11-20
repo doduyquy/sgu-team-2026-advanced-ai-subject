@@ -297,7 +297,7 @@
     "id": "reference_route_station_proposal_v1"
   },
   "protocol": "stage5_p2_ou_ar1_exploration_v1",
-  "protocol_sha256": "9e5f12a3984c72053a154c9421e19744ed5906e377320bdafbe65c6de10d5177",
+  "protocol_sha256": "14e26db5de58f5b62d6493785cfaa7dbafb40ee9aaea115ef62a8a0bc6affea7",
   "registered_at_utc": "2026-11-20T16:58:27Z",
   "registration_note": "Protocol and implementation hashes are committed before scientific training. Exact training source commit is recorded in each run manifest.",
   "reward": {
@@ -331,7 +331,7 @@
     "scripts/evaluate_stage5_p2.py": "15efeb81658a9e37465305bb30b69162442c95cca7f05c24280703b263dce0c4",
     "scripts/run_stage5_p2_experiment.py": "1aa122545a09678290783f2d65112e332a220a58327518dd7aca33361aa597cf",
     "scripts/smoke_stage5_p2.py": "981c4a5456d9815a991485d66afcf011093211b467599c89bc39c77851dc6577",
-    "src/training/stage5/temporal_exploration.py": "baca0d5cb590144d36745a546c9856b8143dc0e54e13bb7020a3dcbcf0f9fd5c",
+    "src/training/stage5/temporal_exploration.py": "ac6508f35195b86265e43838d6283342627ebf8958201afa6bb9762eae7ff6f5",
     "tests/test_stage5_p2_temporal_exploration.py": "0062cd89cf219f9b8432f881dc85bb5c94aff34190c8fab8fd753b6aa92c667c"
   },
   "status": "PRE_REGISTERED",

@@ -165,4 +165,3 @@ class TemporalExplorationSAC(SAC):
                 self.ou_process.reset_episode()
                 self.ou_episode_resets += 1
             self.episode_index += 1
-

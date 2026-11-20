@@ -1,7 +1,7 @@
 # S5 P2 — Correlated Exploration Protocol
 
-**Protocol ID:** `stage5_p2_ou_ar1_exploration_v1`  
-**Status:** preregistered before training  
+**Protocol ID:** `stage5_p2_ou_ar1_exploration_v1`
+**Status:** preregistered before training
 **Decision scope:** development-only, TRAIN geometries; `benchmark_eligible=false`.
 
 ## Question and registered contrast
