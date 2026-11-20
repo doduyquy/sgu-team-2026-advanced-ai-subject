@@ -1,0 +1,350 @@
+{
+  "protocol": "stage5_s5_5_meter_reward_v1",
+  "status": "PRE_REGISTERED",
+  "registered_at_utc": "2026-11-20T07:51:55.481375+00:00",
+  "source_commit": "1baaeedf9bd9d69f4507d5ff9b27b75dcc9d5639",
+  "source_geometry_manifest": "results/audits/evaluation_protocol/geometry_split_manifest.csv",
+  "source_geometry_manifest_file_sha256": "ec1099eb93252f445d7afa95fd19270e72d5a8f37282701d6935e283a0997134",
+  "source_geometry_manifest_canonical_sha256": "3b07e94b99766f409b000455304ae2980a05467156734ee519ccf27068bdc481",
+  "source_s5_4_protocol_sha256": "5ac406b43e30d54d7aef904449bd262737d585ee9886dd99f17358a10da2201a",
+  "pilot_split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+  "training_root_seed": 101,
+  "training_geometry_selection": "exact S5.4 eight Easy PILOT_TRAIN geometry IDs and hashes",
+  "training_geometry_pool": [
+    {
+      "geometry_id": "geom_easy_SCCS_seed0",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "df9c8bb722fc6517de55dc18838470b91ec43b89767ede19d93b72dc94674f9b",
+      "manifest_route_length_m": 585.8845678629121
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed2",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "314a2830c26cf72879d740f97d450f1d657beeb050f602c1cbece838fd40d8f5",
+      "manifest_route_length_m": 349.4610596116287
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed3",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "63cc884fe4ab7df2035db6e9ab3e08289f93caafd22304c7dbf71ab28ae6627e",
+      "manifest_route_length_m": 441.40147740540124
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed0",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "f315580c575a221a020c9996f8c7c1ba64f936d0362f9eed316d08289feccf90",
+      "manifest_route_length_m": 448.0778267515151
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed3",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 3,
+      "geometry_sha256": "68fbae08cc6d34648bcc19bbb1ba0438430f4b2cd748927704d921969ae6b91c",
+      "manifest_route_length_m": 401.0839496971649
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed4",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "a6494d940761821e33150c767b561220d94586dba307df944131baa1e8457456",
+      "manifest_route_length_m": 453.06866406160725
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed0",
+      "sequence": "SCS",
+      "geometry_generation_seed": 0,
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "manifest_route_length_m": 407.89441610698384
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed1",
+      "sequence": "SCS",
+      "geometry_generation_seed": 1,
+      "geometry_sha256": "7b721ddea0699aeff3168ff3a9f5de5f11209a374d591a86a0eaaf08bcbb6bbb",
+      "manifest_route_length_m": 246.9110221328001
+    }
+  ],
+  "training_pool_sha256": "3f388a82be58b3cd773ab7c6f7c52e9f5622a9f5b29f2f9d36979beb6b93b73f",
+  "diagnostic_pool": [
+    {
+      "geometry_id": "geom_easy_SCCS_seed4",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 4,
+      "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+      "environment_seed": 925389
+    },
+    {
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "sequence": "SCCS",
+      "geometry_generation_seed": 19,
+      "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+      "environment_seed": 666005
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed12",
+      "sequence": "SCS",
+      "geometry_generation_seed": 12,
+      "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+      "environment_seed": 882172
+    },
+    {
+      "geometry_id": "geom_easy_SCS_seed16",
+      "sequence": "SCS",
+      "geometry_generation_seed": 16,
+      "geometry_sha256": "e47823d49334b770a839479b69babaae498f3b97c8d2dc2ed8e2587a346841d1",
+      "environment_seed": 647459
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed2",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 2,
+      "geometry_sha256": "31004866d9c8401f88cb76ed9b289d9a7d60d056bb91c4c696aed307d87351f6",
+      "environment_seed": 88306
+    },
+    {
+      "geometry_id": "geom_easy_SCSS_seed18",
+      "sequence": "SCSS",
+      "geometry_generation_seed": 18,
+      "geometry_sha256": "38e304e7d4c97e9fc0ea21faade3f8982dcde2c38ca4afcde480cbe0aab281c2",
+      "environment_seed": 406573
+    }
+  ],
+  "diagnostic_pool_sha256": "e326928bdb02f36367786c8acd0bc96a3a9f843e5676a1ff56eede0d7e69281c",
+  "sampler": {
+    "strategy": "ROUND_ROBIN",
+    "episode_index_starts_at": 1,
+    "environment_seed_derivation": "SHA256(train_env_seed:{root_seed}:{episode_index}) first 32-bit word modulo 1,000,000",
+    "pool_order": [
+      "geom_easy_SCCS_seed0",
+      "geom_easy_SCCS_seed2",
+      "geom_easy_SCCS_seed3",
+      "geom_easy_SCSS_seed0",
+      "geom_easy_SCSS_seed3",
+      "geom_easy_SCSS_seed4",
+      "geom_easy_SCS_seed0",
+      "geom_easy_SCS_seed1"
+    ]
+  },
+  "observations": {
+    "canonical_encoder": "stage5_flat409_v1",
+    "dimension": 409,
+    "post_encoder_transform": "pilot_groupwise_physical_v1",
+    "transform_sha256": "265103242e3ba3ad6f8c493d8f0bad39644c375a2696dbcdad4857052796797e",
+    "same_for_all_arms": true,
+    "policy_input_contract_changed": false
+  },
+  "actions": {
+    "adapter": "continuous_box2_v1",
+    "shape": [
+      2
+    ],
+    "range": [
+      -1.0,
+      1.0
+    ],
+    "order": [
+      "steering",
+      "throttle_brake"
+    ],
+    "frequency_hz": 10
+  },
+  "reward_variants": {
+    "version": "stage5_meter_reward_experiment_v1",
+    "platform_reward_spec_unchanged": "RewardSpecV1",
+    "clipping": "none",
+    "route_progress_definition": "signed route_completion delta from Stage5TrainingEnv; initialized from reset progress",
+    "formula_v1": "delta_p - 0.25/H + T_t",
+    "formula_scale": "k * (delta_p - 0.25/H + T_t)",
+    "formula_meter": "L_effective_m * delta_p / 10 + k * (T_t - 0.25/H)",
+    "median_training_manifest_route_length_m": 424.64794675619254,
+    "k": 42.46479467561925,
+    "progress_unit": "signed route metres",
+    "time_penalty_budget": 0.25,
+    "terminal_component_source": "RewardSpecV1 breakdown exactly once on terminal transition"
+  },
+  "arms": {
+    "A": {
+      "reward": "V1"
+    },
+    "B": {
+      "reward": "SCALE"
+    },
+    "C": {
+      "reward": "METER"
+    },
+    "only_arm_difference": "training reward signal"
+  },
+  "sac": {
+    "algorithm": "SAC",
+    "policy": "MlpPolicy",
+    "net_arch": [
+      256,
+      256
+    ],
+    "activation": "ReLU",
+    "learning_rate": 0.0003,
+    "gamma": 0.99,
+    "tau": 0.005,
+    "buffer_size": 100000,
+    "batch_size": 256,
+    "learning_starts": 1000,
+    "ent_coef": "auto",
+    "train_freq": 1,
+    "gradient_steps": 1,
+    "total_steps_max_per_arm": 30000,
+    "checkpoint_steps": [
+      0,
+      2000,
+      5000,
+      10000,
+      30000
+    ],
+    "shared_fresh_initial_model": true,
+    "initial_model_root_seed": 101
+  },
+  "evaluation": {
+    "fast_probe_cap_steps": 300,
+    "probe_cases": [
+      {
+        "environment_seed": 925389,
+        "geometry_generation_seed": 4,
+        "geometry_id": "geom_easy_SCCS_seed4",
+        "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+        "sequence": "SCCS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 666005,
+        "geometry_generation_seed": 19,
+        "geometry_id": "geom_easy_SCCS_seed19",
+        "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+        "sequence": "SCCS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 882172,
+        "geometry_generation_seed": 12,
+        "geometry_id": "geom_easy_SCS_seed12",
+        "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+        "sequence": "SCS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 647459,
+        "geometry_generation_seed": 16,
+        "geometry_id": "geom_easy_SCS_seed16",
+        "geometry_sha256": "e47823d49334b770a839479b69babaae498f3b97c8d2dc2ed8e2587a346841d1",
+        "sequence": "SCS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 88306,
+        "geometry_generation_seed": 2,
+        "geometry_id": "geom_easy_SCSS_seed2",
+        "geometry_sha256": "31004866d9c8401f88cb76ed9b289d9a7d60d056bb91c4c696aed307d87351f6",
+        "sequence": "SCSS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 406573,
+        "geometry_generation_seed": 18,
+        "geometry_id": "geom_easy_SCSS_seed18",
+        "geometry_sha256": "38e304e7d4c97e9fc0ea21faade3f8982dcde2c38ca4afcde480cbe0aab281c2",
+        "sequence": "SCSS",
+        "tier": "Easy"
+      }
+    ],
+    "full_episode_checkpoints": [
+      10000,
+      30000
+    ],
+    "full_episode_cases": [
+      {
+        "environment_seed": 925389,
+        "geometry_generation_seed": 4,
+        "geometry_id": "geom_easy_SCCS_seed4",
+        "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+        "sequence": "SCCS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 666005,
+        "geometry_generation_seed": 19,
+        "geometry_id": "geom_easy_SCCS_seed19",
+        "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+        "sequence": "SCCS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 882172,
+        "geometry_generation_seed": 12,
+        "geometry_id": "geom_easy_SCS_seed12",
+        "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+        "sequence": "SCS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 647459,
+        "geometry_generation_seed": 16,
+        "geometry_id": "geom_easy_SCS_seed16",
+        "geometry_sha256": "e47823d49334b770a839479b69babaae498f3b97c8d2dc2ed8e2587a346841d1",
+        "sequence": "SCS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 88306,
+        "geometry_generation_seed": 2,
+        "geometry_id": "geom_easy_SCSS_seed2",
+        "geometry_sha256": "31004866d9c8401f88cb76ed9b289d9a7d60d056bb91c4c696aed307d87351f6",
+        "sequence": "SCSS",
+        "tier": "Easy"
+      },
+      {
+        "environment_seed": 406573,
+        "geometry_generation_seed": 18,
+        "geometry_id": "geom_easy_SCSS_seed18",
+        "geometry_sha256": "38e304e7d4c97e9fc0ea21faade3f8982dcde2c38ca4afcde480cbe0aab281c2",
+        "sequence": "SCSS",
+        "tier": "Easy"
+      }
+    ],
+    "outcome_classes": [
+      "CLEAN_SUCCESS",
+      "SAFETY_FAILURE",
+      "TIMEOUT"
+    ],
+    "censor_label": "PROBE_CENSORED",
+    "holdouts_accessed": false
+  },
+  "preflight_trace_schedule": {
+    "geometry_id": "geom_easy_SCS_seed0",
+    "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+    "environment_seed": 0,
+    "stage1_reference": {
+      "agent_version": "0.6.1",
+      "source_worktree_commit": "c3714be7720c372fc5842159a4db426564928c28"
+    },
+    "stationary_reference": {
+      "source": "S5.4 historical A 100k frozen checkpoint",
+      "relative_path": "runs/stage5_learnability/s5_4_learnability_seed101_20261119/arm_A/checkpoints/step_100000"
+    },
+    "stage0_safety_stress_agent_seeds": [
+      42,
+      101
+    ],
+    "trace_use": "reward sanity only; never enters SAC replay or training"
+  },
+  "dependency_versions": {
+    "python": "3.10.21",
+    "metadrive": "0.4.3",
+    "stable_baselines3": "2.9.2",
+    "torch": "2.14.1+cpu",
+    "gymnasium": "1.3.0"
+  },
+  "reproducibility_note": "One root seed and CPU simulator; deterministic protocol and hashes are recorded, but bitwise repeatability is not claimed.",
+  "protocol_sha256": "ea7bd56c112498ca6d462510624a3e4e7130dd2290231969c444da19fe7a5d99"
+}

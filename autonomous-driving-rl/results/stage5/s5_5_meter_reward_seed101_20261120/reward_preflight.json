@@ -1,0 +1,559 @@
+{
+  "protocol_sha256": "ea7bd56c112498ca6d462510624a3e4e7130dd2290231969c444da19fe7a5d99",
+  "source_commit": "1baaeedf9bd9d69f4507d5ff9b27b75dcc9d5639",
+  "trace_source": {
+    "path": "D:\\SGU\\CNTT\\TTNTNC\\sgu-team-2026-advanced-ai-subject-khoa-s55-readonly\\autonomous-driving-rl\\runs\\s55_trace_ref_scs0_20261120\\current\\episode_000\\decisions.jsonl.gz",
+    "sha256": "387b1078b4bc7f26867cc3ecd8fdda579422c3e168cf52f6544c686c63e68479",
+    "stage1_result": {
+      "case_id": "sandbox/Easy/SCS/0/0",
+      "variant": "current",
+      "agent_version": "0.6.1",
+      "tier": "Easy",
+      "sequence": "SCS",
+      "geometry_seed": 0,
+      "environment_seed": 0,
+      "steps": 418,
+      "clean_success": true,
+      "terminal_reason": "SUCCESS",
+      "crash": false,
+      "out_of_road": false,
+      "boundary_contact": false,
+      "route_completion": 0.9877456768627388,
+      "mean_speed_kmh": 34.207673152999455,
+      "max_speed_kmh": 44.99975833298939,
+      "max_abs_lane_offset_m": 0.32137693102114895,
+      "simulation_time_s": 41.800000000000004,
+      "min_observed_gap_m": null,
+      "act_latency_p95_ms": 1.725775,
+      "technical_error": null
+    }
+  },
+  "stationary_checkpoint": {
+    "action_dim": 2,
+    "activation_negative_slope": null,
+    "actor_critic_activation": "ReLU",
+    "algorithm": "SAC",
+    "created_at_utc": "2026-11-19T14:54:37.935332+00:00",
+    "encoder_fingerprint": "5bf7c890b5f1098594b985a62c01b598d0c62bd41d7da7f70afbf8d3e3717c2a",
+    "encoder_id": "stage5_flat409_v1",
+    "encoder_version": "1.0.0",
+    "framework": "stable-baselines3",
+    "framework_version": "2.9.2",
+    "git_commit": "f7c7ccef2c9f35e57ab67228f119908709b838a7",
+    "gymnasium_version": "1.3.0",
+    "model_name": "stage5_sac",
+    "model_sha256": "5bf42121d7820056d9b946582c7d6765bd64db1142f7626dd1b8913d95c64a5d",
+    "observation_dim": 409,
+    "observation_transform": null,
+    "observation_transform_fingerprint": null,
+    "policy_input_fingerprint": "0f18e597b80a996280dc835fc678e81b3970521d9cdcdc275db1ce76f13ef786",
+    "replay_buffer_saved": false,
+    "replay_buffer_sha256": null,
+    "torch_version": "2.14.1+cpu",
+    "total_timesteps": 100000,
+    "training_config": {
+      "contract_compliance": "Platform V1 (Gate S5.1 Foundation)",
+      "control_actuator": "continuous_box2_v1",
+      "dataset_sampler": {
+        "allowed_split": "TRAIN",
+        "default_root_seed": 101,
+        "default_strategy": "ROUND_ROBIN",
+        "holdout_protection": "STRICT_ISOLATION_ASSERTED",
+        "total_train_geometries": 180
+      },
+      "dependency_compatibility_notes": {
+        "compatibility_rationale": "Gymnasium 1.3.0 officially requires Stable-Baselines3 2.9.x, which in turn requires PyTorch >=2.8.0. Pinned MetaDrive and Panda3D must remain untouched.",
+        "gymnasium_version": "1.3.0",
+        "metadrive_version": "0.4.3 (commit 85e5dadc)",
+        "proposed_framework": "Stable-Baselines3",
+        "proposed_sb3_version": "2.9.0",
+        "proposed_torch_version": ">=2.8.0",
+        "python_version": "3.10.21",
+        "status": "NOT_INSTALLED / PROPOSED_FOR_S5.2"
+      },
+      "environment": {
+        "action_dim": 2,
+        "control_frequency_hz": 10.0,
+        "env_class": "Stage5TrainingEnv",
+        "observation_dim": 409,
+        "observation_encoder_id": "stage5_flat409_v1",
+        "render_mode": "OFF",
+        "traffic_mode": "Trigger"
+      },
+      "presets": {
+        "full": {
+          "evaluation_interval_steps": 10000,
+          "total_env_steps": 100000,
+          "training_seeds": [
+            101,
+            202,
+            303
+          ]
+        },
+        "pilot": {
+          "evaluation_interval_steps": 5000,
+          "total_env_steps": 25000,
+          "training_seeds": [
+            101
+          ]
+        },
+        "smoke": {
+          "evaluation_interval_steps": 500,
+          "total_env_steps": 1000,
+          "training_seeds": [
+            101
+          ]
+        }
+      },
+      "reward_contract": {
+        "progress_weight": 1.0,
+        "safety_penalty": 1.0,
+        "spec_version": "1.0.0",
+        "success_bonus": 1.0,
+        "time_penalty_budget": 0.25,
+        "timeout_penalty": 0.0,
+        "unknown_termination_penalty": 1.0
+      },
+      "sac_hyperparameters": {
+        "batch_size": 256,
+        "buffer_size": 100000,
+        "ent_coef": "auto",
+        "gamma": 0.99,
+        "gradient_steps": 1,
+        "learning_rate": 0.0003,
+        "learning_starts": 1000,
+        "tau": 0.005,
+        "train_freq": 1
+      },
+      "stage5_s54": {
+        "arm": "A",
+        "common_initial_model_sha256": "4487d10128f16b471c1d89b70260c26ce0f1dc4123d29e1597e7e7fb7db7e5ff",
+        "common_initial_policy_entropy_fingerprint": "1b0ae6cecd39eeef28aa61f1482b39b42b1a7dc73e86fdcaab46b6ddeb93d17d",
+        "only_arm_difference": "fixed post-encoder group-wise physical unit scaling in pilot_groupwise_physical_v1; frozen 409D encoder contract remains unchanged",
+        "protocol_sha256": "f3ca16a6ab452b53735e59bd03d59dab28a34cc70ca4d573d53fa72f7eebca25"
+      },
+      "target_algorithm": "SAC",
+      "version": "stage5_rl_baseline_v1"
+    },
+    "training_resume_notice": "model.zip and replay_buffer.pkl preserve neural network parameters and transition buffers. They do NOT guarantee bit-for-bit deterministic training resume because PRNG seeds, case sampler cursor, optimizer momentum/hyperparameter schedules, and MetaDrive simulator internal states are not fully restored.",
+    "training_root_seed": 101,
+    "training_summary": {
+      "actor_loss": -0.14169073104858398,
+      "clean_success_count": 0,
+      "clean_success_rate": 0.0,
+      "completed_episodes": 79,
+      "critic_loss": 3.815134277829202e-06,
+      "ent_coef": 1.5306972272810526e-05,
+      "entropy_coefficient": 1.5309937225538306e-05,
+      "final_ram_mb": 621.3,
+      "mean_episode_return": -0.29101131237652716,
+      "mean_route_completion": 0.016684203032722878,
+      "optimizer_updates": 98999,
+      "throughput_steps_per_sec": 16.6,
+      "total_timesteps": 100000,
+      "training_geometry_ids": [
+        "geom_easy_SCCS_seed0",
+        "geom_easy_SCCS_seed2",
+        "geom_easy_SCCS_seed3",
+        "geom_easy_SCSS_seed0",
+        "geom_easy_SCSS_seed3",
+        "geom_easy_SCSS_seed4",
+        "geom_easy_SCS_seed0",
+        "geom_easy_SCS_seed1"
+      ],
+      "unique_training_geometries": 8,
+      "wall_time_s": 6032.84
+    }
+  },
+  "effective_route_length_validation": {
+    "geometry_id": "geom_easy_SCS_seed0",
+    "manifest_route_length_m": 407.89441610698384,
+    "metadrive_node_network_navigation_total_length_m": 407.89441610698384,
+    "matches_within_1e_5_m": true,
+    "source_semantics": "MetaDrive 0.4.3 NodeNetworkNavigation.route_completion = travelled_length / total_length"
+  },
+  "trace_summaries": [
+    {
+      "trace_id": "stage1_reference_clean",
+      "policy_kind": "stage1_reference",
+      "random_agent_seed": null,
+      "case_id": "train/Easy/SCS/geom-0/env-0",
+      "split": "TRAIN",
+      "geometry_id": "geom_easy_SCS_seed0",
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "geometry_generation_seed": 0,
+      "environment_seed": 0,
+      "horizon_steps": 1224,
+      "steps": 418,
+      "initial_route_completion": 0.012258074154877825,
+      "final_route_completion": 0.9877456768627388,
+      "route_progress_delta": 0.9754876027078611,
+      "manifest_route_length_m": 407.89441610698384,
+      "effective_route_length_m": 407.89441610698384,
+      "effective_vs_manifest_delta_m": 0.0,
+      "max_route_progress_delta_m": 397.8959461261244,
+      "mean_speed_km_h": 34.22761619276928,
+      "peak_speed_km_h": 44.99975833298939,
+      "stationary_fraction_speed_lt_1_km_h": 0.0023923444976076554,
+      "negative_progress_steps": 0,
+      "negative_progress_total_m": 0.0,
+      "terminal_nonzero_reward_steps": 1,
+      "terminal_reward_sum": 1.0,
+      "outcome": "SUCCESS",
+      "clean_success": true,
+      "safety_failure": false,
+      "timeout": false,
+      "terminal_transition_count": 1,
+      "road_block_or_road_key_transitions": 3,
+      "road_key_boundary_events": [
+        {
+          "step_index": 78,
+          "from_road_key": ">",
+          "to_road_key": "S",
+          "route_completion_before": 0.1217835066020263,
+          "route_completion_after": 0.1246419501102261,
+          "delta_route": 0.00285844350819979,
+          "delta_s_m": 1.1659431457519518
+        },
+        {
+          "step_index": 138,
+          "from_road_key": "S",
+          "to_road_key": "C",
+          "route_completion_before": 0.2970209215176593,
+          "route_completion_after": 0.2993959794981772,
+          "delta_route": 0.002375057980517903,
+          "delta_s_m": 0.9687728881835822
+        },
+        {
+          "step_index": 340,
+          "from_road_key": "C",
+          "to_road_key": "S",
+          "route_completion_before": 0.8147828713593656,
+          "route_completion_after": 0.8178471224557237,
+          "delta_route": 0.003064251096358106,
+          "delta_s_m": 1.2498909117541748
+        }
+      ],
+      "max_abs_delta_route_at_road_key_transition": 0.003064251096358106,
+      "reset_road_key": ">",
+      "first_curve_step_from_public_task_waypoints": 104,
+      "pre_curve_or_initial_50step_returns": {
+        "start_step": 54,
+        "end_step_exclusive": 104,
+        "V1_undiscounted": 0.12669247844418263,
+        "Scale_undiscounted": 5.379970084077531,
+        "Meter_undiscounted": 5.150606045713396
+      },
+      "returns": {
+        "V1": {
+          "undiscounted": 1.8901117857143972,
+          "discounted_gamma_0_99": 0.18141681434109622,
+          "reward_positive_fraction": 0.9856459330143541,
+          "reward_mean": 0.004521798530417218
+        },
+        "Scale": {
+          "undiscounted": 80.26320889432992,
+          "discounted_gamma_0_99": 7.703827771699582,
+          "reward_positive_fraction": 0.9856459330143541,
+          "reward_mean": 0.192017246158684
+        },
+        "Meter": {
+          "undiscounted": 78.62892274934104,
+          "discounted_gamma_0_99": 7.3915346047243835,
+          "reward_positive_fraction": 0.9856459330143541,
+          "reward_mean": 0.18810747069220335
+        }
+      },
+      "all_v1_steps_match_environment": true,
+      "terminal_penalty_applied_exactly_once": true
+    },
+    {
+      "trace_id": "s54_a_100k_deterministic",
+      "policy_kind": "sac_deterministic",
+      "random_agent_seed": null,
+      "case_id": "train/Easy/SCS/geom-0/env-0",
+      "split": "TRAIN",
+      "geometry_id": "geom_easy_SCS_seed0",
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "geometry_generation_seed": 0,
+      "environment_seed": 0,
+      "horizon_steps": 1224,
+      "steps": 1224,
+      "initial_route_completion": 0.012258074154877825,
+      "final_route_completion": 0.01219711087619295,
+      "route_progress_delta": -6.096327868487447e-05,
+      "manifest_route_length_m": 407.89441610698384,
+      "effective_route_length_m": 407.89441610698384,
+      "effective_vs_manifest_delta_m": 0.0,
+      "max_route_progress_delta_m": 0.005572795867919977,
+      "mean_speed_km_h": 0.013973993957467595,
+      "peak_speed_km_h": 0.5441315549467896,
+      "stationary_fraction_speed_lt_1_km_h": 1.0,
+      "negative_progress_steps": 614,
+      "negative_progress_total_m": -0.07021713256848848,
+      "terminal_nonzero_reward_steps": 0,
+      "terminal_reward_sum": 0.0,
+      "outcome": "TIMEOUT",
+      "clean_success": false,
+      "safety_failure": false,
+      "timeout": true,
+      "terminal_transition_count": 1,
+      "road_block_or_road_key_transitions": 0,
+      "road_key_boundary_events": [],
+      "max_abs_delta_route_at_road_key_transition": 0.0,
+      "reset_road_key": ">",
+      "first_curve_step_from_public_task_waypoints": null,
+      "pre_curve_or_initial_50step_returns": {
+        "start_step": 1174,
+        "end_step_exclusive": 1224,
+        "V1_undiscounted": -0.01021241830065359,
+        "Scale_undiscounted": -0.43366824627879136,
+        "Meter_undiscounted": -0.43366824627879136
+      },
+      "returns": {
+        "V1": {
+          "undiscounted": -0.25006096327868416,
+          "discounted_gamma_0_99": -0.020480582571279708,
+          "reward_positive_fraction": 0.0,
+          "reward_mean": -0.00020429817261330465
+        },
+        "Scale": {
+          "undiscounted": -10.618787462016796,
+          "discounted_gamma_0_99": -0.8697037337264627,
+          "reward_positive_fraction": 0.0,
+          "reward_mean": -0.008675479952628202
+        },
+        "Meter": {
+          "undiscounted": -10.618685327001156,
+          "discounted_gamma_0_99": -0.8696101840402515,
+          "reward_positive_fraction": 0.0,
+          "reward_mean": -0.008675396508987849
+        }
+      },
+      "all_v1_steps_match_environment": true,
+      "terminal_penalty_applied_exactly_once": true
+    },
+    {
+      "trace_id": "stage0_random_stress_seed42",
+      "policy_kind": "stage0_random",
+      "random_agent_seed": 42,
+      "case_id": "train/Easy/SCS/geom-0/env-0",
+      "split": "TRAIN",
+      "geometry_id": "geom_easy_SCS_seed0",
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "geometry_generation_seed": 0,
+      "environment_seed": 0,
+      "horizon_steps": 1224,
+      "steps": 103,
+      "initial_route_completion": 0.012258074154877825,
+      "final_route_completion": 0.21477138745542454,
+      "route_progress_delta": 0.20251331330054673,
+      "manifest_route_length_m": 407.89441610698384,
+      "effective_route_length_m": 407.89441610698384,
+      "effective_vs_manifest_delta_m": 0.0,
+      "max_route_progress_delta_m": 82.60404968261719,
+      "mean_speed_km_h": 29.87937898970289,
+      "peak_speed_km_h": 52.495415496828564,
+      "stationary_fraction_speed_lt_1_km_h": 0.009708737864077669,
+      "negative_progress_steps": 0,
+      "negative_progress_total_m": 0.0,
+      "terminal_nonzero_reward_steps": 1,
+      "terminal_reward_sum": -1.0,
+      "outcome": "CRASH_SIDEWALK",
+      "clean_success": false,
+      "safety_failure": true,
+      "timeout": false,
+      "terminal_transition_count": 1,
+      "road_block_or_road_key_transitions": 1,
+      "road_key_boundary_events": [
+        {
+          "step_index": 75,
+          "from_road_key": ">",
+          "to_road_key": "S",
+          "route_completion_before": 0.12258579171970999,
+          "route_completion_after": 0.1256001171706691,
+          "delta_route": 0.0030143254509591155,
+          "delta_s_m": 1.229526519775389
+        }
+      ],
+      "max_abs_delta_route_at_road_key_transition": 0.0030143254509591155,
+      "reset_road_key": ">",
+      "first_curve_step_from_public_task_waypoints": 93,
+      "pre_curve_or_initial_50step_returns": {
+        "start_step": 43,
+        "end_step_exclusive": 93,
+        "V1_undiscounted": 0.12646946663670489,
+        "Scale_undiscounted": 5.370499933462751,
+        "Meter_undiscounted": 5.141509518613788
+      },
+      "returns": {
+        "V1": {
+          "undiscounted": -0.8185242683987997,
+          "discounted_gamma_0_99": -0.26503673934146205,
+          "reward_positive_fraction": 0.941747572815534,
+          "reward_mean": -0.0079468375572699
+        },
+        "Scale": {
+          "undiscounted": -34.7584649945665,
+          "discounted_gamma_0_99": -11.254730717630807,
+          "reward_positive_fraction": 0.941747572815534,
+          "reward_mean": -0.33746082518996595
+        },
+        "Meter": {
+          "undiscounted": -35.09774629469184,
+          "discounted_gamma_0_99": -11.433796295354027,
+          "reward_positive_fraction": 0.9320388349514563,
+          "reward_mean": -0.34075481839506644
+        }
+      },
+      "all_v1_steps_match_environment": true,
+      "terminal_penalty_applied_exactly_once": true
+    },
+    {
+      "trace_id": "stage0_random_stress_seed101",
+      "policy_kind": "stage0_random",
+      "random_agent_seed": 101,
+      "case_id": "train/Easy/SCS/geom-0/env-0",
+      "split": "TRAIN",
+      "geometry_id": "geom_easy_SCS_seed0",
+      "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+      "geometry_generation_seed": 0,
+      "environment_seed": 0,
+      "horizon_steps": 1224,
+      "steps": 100,
+      "initial_route_completion": 0.012258074154877825,
+      "final_route_completion": 0.21152639077107457,
+      "route_progress_delta": 0.19926831661619676,
+      "manifest_route_length_m": 407.89441610698384,
+      "effective_route_length_m": 407.89441610698384,
+      "effective_vs_manifest_delta_m": 0.0,
+      "max_route_progress_delta_m": 81.28043365478517,
+      "mean_speed_km_h": 29.627640673193227,
+      "peak_speed_km_h": 56.67131881714117,
+      "stationary_fraction_speed_lt_1_km_h": 0.01,
+      "negative_progress_steps": 0,
+      "negative_progress_total_m": 0.0,
+      "terminal_nonzero_reward_steps": 1,
+      "terminal_reward_sum": -1.0,
+      "outcome": "OUT_OF_ROAD",
+      "clean_success": false,
+      "safety_failure": true,
+      "timeout": false,
+      "terminal_transition_count": 1,
+      "road_block_or_road_key_transitions": 1,
+      "road_key_boundary_events": [
+        {
+          "step_index": 75,
+          "from_road_key": ">",
+          "to_road_key": "S",
+          "route_completion_before": 0.12258579171970999,
+          "route_completion_after": 0.1256001171706691,
+          "delta_route": 0.0030143254509591155,
+          "delta_s_m": 1.229526519775389
+        }
+      ],
+      "max_abs_delta_route_at_road_key_transition": 0.0030143254509591155,
+      "reset_road_key": ">",
+      "first_curve_step_from_public_task_waypoints": 96,
+      "pre_curve_or_initial_50step_returns": {
+        "start_step": 46,
+        "end_step_exclusive": 96,
+        "V1_undiscounted": 0.13333361220626713,
+        "Scale_undiscounted": 5.661984465697774,
+        "Meter_undiscounted": 5.421494183530779
+      },
+      "returns": {
+        "V1": {
+          "undiscounted": -0.8211565199851104,
+          "discounted_gamma_0_99": -0.27687621283013286,
+          "reward_positive_fraction": 0.94,
+          "reward_mean": -0.008211565199851105
+        },
+        "Scale": {
+          "undiscounted": -34.87024301771375,
+          "discounted_gamma_0_99": -11.757491528394645,
+          "reward_positive_fraction": 0.94,
+          "reward_mean": -0.3487024301771375
+        },
+        "Meter": {
+          "undiscounted": -35.20408780269832,
+          "discounted_gamma_0_99": -11.934747418763306,
+          "reward_positive_fraction": 0.93,
+          "reward_mean": -0.3520408780269832
+        }
+      },
+      "all_v1_steps_match_environment": true,
+      "terminal_penalty_applied_exactly_once": true
+    }
+  ],
+  "preflight": {
+    "status": "PASS",
+    "checks": {
+      "stage1_reference_replay_matches_real_clean_episode": true,
+      "real_near_stationary_episode": true,
+      "real_moving_safety_failure_episode": true,
+      "effective_route_length_matches_locked_manifest": true,
+      "v1_reward_parity_all_steps_all_traces": true,
+      "terminal_reward_exactly_once": true,
+      "all_traces_full_episode": true
+    },
+    "scientific_training_authorized_by_preflight": true,
+    "limitations": [
+      "",
+      "Stage0 safety stress trajectories are reward-integrity traces only, never SAC training data"
+    ]
+  },
+  "reward_return_rankings": {
+    "stage1_reference_clean": {
+      "undiscounted_return_descending": [
+        "Scale",
+        "Meter",
+        "V1"
+      ],
+      "discounted_gamma_0_99_descending": [
+        "Scale",
+        "Meter",
+        "V1"
+      ]
+    },
+    "s54_a_100k_deterministic": {
+      "undiscounted_return_descending": [
+        "V1",
+        "Meter",
+        "Scale"
+      ],
+      "discounted_gamma_0_99_descending": [
+        "V1",
+        "Meter",
+        "Scale"
+      ]
+    },
+    "stage0_random_stress_seed42": {
+      "undiscounted_return_descending": [
+        "V1",
+        "Scale",
+        "Meter"
+      ],
+      "discounted_gamma_0_99_descending": [
+        "V1",
+        "Scale",
+        "Meter"
+      ]
+    },
+    "stage0_random_stress_seed101": {
+      "undiscounted_return_descending": [
+        "V1",
+        "Scale",
+        "Meter"
+      ],
+      "discounted_gamma_0_99_descending": [
+        "V1",
+        "Scale",
+        "Meter"
+      ]
+    }
+  },
+  "raw_trace_path": "runs/stage5_meter_reward/s5_5_meter_reward_seed101_20261120/preflight/reward_traces.jsonl.gz",
+  "raw_trace_sha256": "fa19c1e9bb547f4abc5ce1371fe429603e8a1b65922c026df8dfd14adcc67ec3",
+  "raw_trace_size_bytes": 95263
+}

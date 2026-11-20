@@ -1,0 +1,19 @@
+{
+  "status": "FRESH_UNTRAINED_INITIALIZATION",
+  "training_root_seed": 101,
+  "weights_fingerprint": "f91771d432a8c99e8ba4f9e36bbf2f47716ac1331adbdbc5027fa6e35050ea68",
+  "model_zip_sha256": "61669c6ec6df0a55c2f76dbeec55c0ea33c0b6f3bc3a4f26fb6c3c2dc71a62a0",
+  "protocol_sha256": "ea7bd56c112498ca6d462510624a3e4e7130dd2290231969c444da19fe7a5d99",
+  "source_commit": "1baaeedf9bd9d69f4507d5ff9b27b75dcc9d5639",
+  "runtime_versions": {
+    "python": "3.10.21",
+    "numpy": "2.2.6",
+    "torch": "2.14.1+cpu",
+    "gymnasium": "1.3.0",
+    "stable_baselines3": "2.9.2",
+    "metadrive": "0.4.3",
+    "device": "cpu"
+  },
+  "replay_buffer": "empty; each arm receives an independent new buffer",
+  "optimizers": "fresh SB3 initial optimizer state; loaded from the same saved initialization for each arm"
+}
