@@ -439,6 +439,14 @@ class S55TrainingCallback(BaseCallback):
             "source_commit": self.source_commit,
         }
         summary_path.write_text(json.dumps(output, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        write_completed_episodes(self.arm_dir, self.episode_records)
+
+
+def write_completed_episodes(arm_dir: Path, episodes: list[dict[str, Any]]) -> None:
+    """Keep completed episode records independent of the compact run summary."""
+    payload = json.dumps(episodes, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+    with (arm_dir / "completed_episodes.json").open("x", encoding="utf-8") as stream:
+        stream.write(payload)
 
 
 def run_arm(protocol: dict[str, Any], arm: str, initial_model_path: Path,
@@ -522,6 +530,7 @@ def run_arm(protocol: dict[str, Any], arm: str, initial_model_path: Path,
             "actual_training_steps": int(model.num_timesteps),
             "optimizer_updates": int(getattr(model, "_n_updates", 0)),
             "completed_episodes": len(callback.episode_records),
+            "episodes": callback.episode_records,
             "geometry_steps": dict(callback.geometry_steps),
             "geometry_completed_episodes": dict(callback.geometry_episodes),
             "checkpoint_summaries": callback.checkpoint_summaries,
