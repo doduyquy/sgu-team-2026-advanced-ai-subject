@@ -1,0 +1,118 @@
+{
+  "run_id": "s5_5_meter_reward_seed101_20261120",
+  "status": "COMPLETE",
+  "protocol_sha256": "ea7bd56c112498ca6d462510624a3e4e7130dd2290231969c444da19fe7a5d99",
+  "training_source_commit": "1baaeedf9bd9d69f4507d5ff9b27b75dcc9d5639",
+  "evaluation_source_commit": "877d94a846ba366b2257b696e63d209bae1a409e",
+  "analysis_source_commit": "493d533d2254e9455a620aa16296127fd9a7db0f",
+  "training_root_seed": 101,
+  "split": "TRAIN_ONLY_PILOT_DIAGNOSTIC",
+  "holdouts_accessed": false,
+  "benchmark_eligible": false,
+  "training_episode_outcomes_status": "NOT_PERSISTED_BY_RUNNER",
+  "compact_results": [
+    {
+      "path": "results/stage5/s5_5_meter_reward_seed101_20261120/protocol.json",
+      "size_bytes": 12394,
+      "sha256": "106870818ca32ab7f744c7adb2aba2ee31cf6bab1bcccae5a5fb5d5e4acda34a"
+    },
+    {
+      "path": "results/stage5/s5_5_meter_reward_seed101_20261120/protocol.sha256",
+      "size_bytes": 81,
+      "sha256": "825f65877078027add6fea993742c7e4b969d8859285b3a27577fa2df5cdf15e"
+    },
+    {
+      "path": "results/stage5/s5_5_meter_reward_seed101_20261120/initialization.json",
+      "size_bytes": 823,
+      "sha256": "3675d6710192a32a6a3dd4cc8dcd066c963ec9e001d84f3e82b4a788d0795a7f"
+    },
+    {
+      "path": "results/stage5/s5_5_meter_reward_seed101_20261120/reward_preflight.json",
+      "size_bytes": 21237,
+      "sha256": "14b29045c06a4b9f92c1d85e78d597b254a7e9e08bde5db62ad7cc31ca797264"
+    },
+    {
+      "path": "results/stage5/s5_5_meter_reward_seed101_20261120/evaluation_summary.json",
+      "size_bytes": 215733,
+      "sha256": "e23434215f912ff758328d25fdbd40a500fafe7719d1bb9c243acb5d8f97188a"
+    },
+    {
+      "path": "results/stage5/s5_5_meter_reward_seed101_20261120/analysis_summary.json",
+      "size_bytes": 307487,
+      "sha256": "45fd1834df8dd8eda7c2a3b0bfc5b246d8f4ac59a7a8f0d0ea9e7a1881143d5d"
+    }
+  ],
+  "large_or_raw_local_artifacts": [
+    {
+      "path": "runs/stage5_meter_reward/s5_5_meter_reward_seed101_20261120/preflight/reward_traces.jsonl.gz",
+      "size_bytes": 95263,
+      "sha256": "fa19c1e9bb547f4abc5ce1371fe429603e8a1b65922c026df8dfd14adcc67ec3",
+      "gitignored": true
+    },
+    {
+      "path": "runs/stage5_meter_reward/s5_5_meter_reward_seed101_20261120/evaluation/per_episode.jsonl.gz",
+      "size_bytes": 22236,
+      "sha256": "de7b0d741c9fd0680bb614f03ce9cbce5870818fed0795c65d2f4da4f3030467",
+      "gitignored": true
+    },
+    {
+      "path": "runs/stage5_meter_reward/s5_5_meter_reward_seed101_20261120/evaluation/policy_response_eval_states.jsonl.gz",
+      "size_bytes": 204830,
+      "sha256": "3ac58093aebb2ea33f1f03ff02669bbe05d0a882820413d293aa9508ae739e85",
+      "gitignored": true
+    }
+  ],
+  "checkpoint_model_sha256_by_arm_step": {
+    "A": {
+      "0": "61669c6ec6df0a55c2f76dbeec55c0ea33c0b6f3bc3a4f26fb6c3c2dc71a62a0",
+      "2000": "de28d03f972c2c088e7108eba3613f3adea29669b30469951f441ba73a407484",
+      "5000": "64db950bbc65cc3398fc558bad3c4cbe3325ffad96ef89c40411fb353556b798",
+      "10000": "f0f5310db9895f79a0c77e7ff8d9d3702c21b0ae8e61101545d3ae2b6f9f9dc3",
+      "30000": "807ac7357f480af461624486994991ae975635f2cb49faa81692560a46805501"
+    },
+    "B": {
+      "0": "aa0d29e9eca6d8d3ac32a5d6b8d25907d6bed6c5b6a6aab6c41204fbecd1cc04",
+      "2000": "4ff0c29bb4a8900a7c90780ba47435bba45e204f44193f7fc7a0b959b4f6fd71",
+      "5000": "5ceb2c45604eb3b8b92ee30c6651f62382826be5d026d2b1040b321f6be77469",
+      "10000": "bdc90b13266991f0cc803440615956f97223ad2341bea05f8504d7cf7bb8cac4",
+      "30000": "e51623c7757a2e23748c11e6a879d15954f28656e22bc1e4dcc154eadb1a4b7c"
+    },
+    "C": {
+      "0": "9da101bb07cb636202c78a57d7671f070865c821cd3b7dccd5ca12f98f8330d7",
+      "2000": "9df6f09be455f7be1b1d46dd151c2cf6f5855a819d8554ef1c20a91e5f060499",
+      "5000": "6da700307f7a282322d2a1a05dd44db4a14445d9fd7c0f14d9e5cf43b8ecb512",
+      "10000": "aaf59e8e9dbcc36401df367790f5e50cf1bb26c91bdf80f60209607c22d28b3f",
+      "30000": "c9340a69e03e91a06fcc05676511983dae26feb89cacbe7c58e281c1b85dc4e7"
+    }
+  },
+  "superseded_or_analysis_only_local_artifacts": [
+    {
+      "path": "runs/stage5_meter_reward/s5_5_meter_reward_seed101_20261120/preflight/stage1_reference_decisions.jsonl.gz",
+      "size_bytes": 333475,
+      "sha256": "387b1078b4bc7f26867cc3ecd8fdda579422c3e168cf52f6544c686c63e68479",
+      "gitignored": true,
+      "status": "SUPERSEDED_OR_ANALYSIS_ONLY"
+    },
+    {
+      "path": "runs/stage5_meter_reward/s5_5_meter_reward_seed101_20261120/preflight/reward_traces.precommit.jsonl.gz",
+      "size_bytes": 95263,
+      "sha256": "b7f6c50a8a546bc53ad823f0e935b8964c78411efda6fa4e35eea217b49f22bf",
+      "gitignored": true,
+      "status": "SUPERSEDED_OR_ANALYSIS_ONLY"
+    },
+    {
+      "path": "runs/stage5_meter_reward/s5_5_meter_reward_seed101_20261120/analysis_archive/analysis_summary.precommit.json",
+      "size_bytes": 307271,
+      "sha256": "1d3d32a48bd4bb801fcfe998c78c72475ccbdb228b300cd680e7fb371a938f23",
+      "gitignored": true,
+      "status": "SUPERSEDED_OR_ANALYSIS_ONLY"
+    },
+    {
+      "path": "runs/stage5_meter_reward/s5_5_meter_reward_seed101_20261120/analysis_archive/reward_preflight.precommit.json",
+      "size_bytes": 21237,
+      "sha256": "54d37dd96bec1abb228bc3566d7882f561b5427eb93191b715d8cf01070d1aea",
+      "gitignored": true,
+      "status": "SUPERSEDED_OR_ANALYSIS_ONLY"
+    }
+  ]
+}
