@@ -1,0 +1,811 @@
+{
+  "analysis_limitations": [
+    "Offline gradients at saved weights and samples do not reconstruct per-update gradients.",
+    "The 2k and 5k replay observation samples are deterministic subsamples, not full replay buffers.",
+    "Critic Q values remain estimates; this audit does not establish action ranking correctness."
+  ],
+  "anchors_sha256": "6ded06b27deec488dac1952b8a4a7d22755b8bbbca0d774854d53fe58ac6f13a",
+  "arms": {
+    "A": {
+      "0": {
+        "checkpoint_sha256": "49317ba85029d80ed1f552f98cbca202c818961ceab4bfe0e0a6c3d45b66bf7e",
+        "fixed_201_anchors": {
+          "actor_loss_gradient_norms_by_layer": {
+            "combined": {
+              "latent_pi.0": 0.34306879849011107,
+              "latent_pi.2": 0.2505966309118877,
+              "log_std": 0.07560146705770819,
+              "mu": 0.2512623851514586
+            },
+            "entropy": {
+              "latent_pi.0": 0.33530865907469004,
+              "latent_pi.2": 0.2446438305122726,
+              "log_std": 0.07657539562570673,
+              "mu": 0.2441956419943303
+            },
+            "negative_q": {
+              "latent_pi.0": 0.009754130139517609,
+              "latent_pi.2": 0.007026678640857755,
+              "log_std": 0.0010228286950191192,
+              "mu": 0.0075382928602304175
+            },
+            "q_snapshot": {
+              "q1_mean": 0.018787993118166924,
+              "q2_mean": -0.13188603520393372,
+              "twin_gap_mean_abs": 0.15067404508590698,
+              "warning": "Q values are model estimates and are not ground-truth returns"
+            }
+          },
+          "count": 201
+        }
+      },
+      "10000": {
+        "checkpoint_sha256": "46874728028afeacc823392f934ffb95e4a6defb28efa1a765090d68ba728464",
+        "fixed_201_anchors": {
+          "actor_loss_gradient_norms_by_layer": {
+            "combined": {
+              "latent_pi.0": 0.0,
+              "latent_pi.2": 0.0030228727498566393,
+              "log_std": 0.00591978308371432,
+              "mu": 0.005743857733455067
+            },
+            "entropy": {
+              "latent_pi.0": 0.0,
+              "latent_pi.2": 0.002876504812266861,
+              "log_std": 0.005925685927460426,
+              "mu": 0.005154050612325262
+            },
+            "negative_q": {
+              "latent_pi.0": 0.0,
+              "latent_pi.2": 0.00045154140582062094,
+              "log_std": 8.236959650347918e-05,
+              "mu": 0.0016521596785466373
+            },
+            "q_snapshot": {
+              "q1_mean": 14.759843826293945,
+              "q2_mean": 14.76720142364502,
+              "twin_gap_mean_abs": 0.007356648333370686,
+              "warning": "Q values are model estimates and are not ground-truth returns"
+            }
+          },
+          "count": 201
+        },
+        "replay_sample": {
+          "all_sample": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.002296571811385771,
+                "log_std": 0.003055624542465993,
+                "mu": 0.006778644991799314
+              },
+              "entropy": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.002289707090766808,
+                "log_std": 0.0031015608217750336,
+                "mu": 0.006846927618475657
+              },
+              "negative_q": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.00046547129092842335,
+                "log_std": 5.0453658364533076e-05,
+                "mu": 0.0017030270313563851
+              },
+              "q_snapshot": {
+                "q1_mean": 14.756397247314453,
+                "q2_mean": 14.763694763183594,
+                "twin_gap_mean_abs": 0.0072983913123607635,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 1024
+          },
+          "moving": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.004275240377225951,
+                "log_std": 0.010104114258625166,
+                "mu": 0.0037671699068962347
+              },
+              "entropy": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.004122729326819454,
+                "log_std": 0.010111183468089075,
+                "mu": 0.0023858701478236956
+              },
+              "negative_q": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.0004635607540698301,
+                "log_std": 4.947482969601303e-05,
+                "mu": 0.0016960699231172358
+              },
+              "q_snapshot": {
+                "q1_mean": 14.758718490600586,
+                "q2_mean": 14.766022682189941,
+                "twin_gap_mean_abs": 0.007303299847990274,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 170
+          },
+          "positive_progress": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.0026871259338558,
+                "log_std": 0.005282771684199732,
+                "mu": 0.005504756771495007
+              },
+              "entropy": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.002458588941916407,
+                "log_std": 0.005332117683914786,
+                "mu": 0.0041005614122836135
+              },
+              "negative_q": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.00047195174531566365,
+                "log_std": 5.520273635320465e-05,
+                "mu": 0.001729052663346565
+              },
+              "q_snapshot": {
+                "q1_mean": 14.753654479980469,
+                "q2_mean": 14.760952949523926,
+                "twin_gap_mean_abs": 0.007295717019587755,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 579
+          },
+          "sha256": "ac9836b2d75eda909f714d08cb035c96971f5121ae4dda3e803bdc16fd228913"
+        }
+      },
+      "2000": {
+        "checkpoint_sha256": "e525bba4261232f4aa86c37ab11f58c4dd2dfe69f676c600a3f71785e10f874b",
+        "fixed_201_anchors": {
+          "actor_loss_gradient_norms_by_layer": {
+            "combined": {
+              "latent_pi.0": 0.12431541285830564,
+              "latent_pi.2": 0.085158222480774,
+              "log_std": 0.11193421458676373,
+              "mu": 0.09459057120989246
+            },
+            "entropy": {
+              "latent_pi.0": 0.12559087688519965,
+              "latent_pi.2": 0.08646337653212725,
+              "log_std": 0.11180088193645057,
+              "mu": 0.0987814288774311
+            },
+            "negative_q": {
+              "latent_pi.0": 0.0013610258346388306,
+              "latent_pi.2": 0.00212456843963792,
+              "log_std": 0.0001336305063723989,
+              "mu": 0.004292002705350532
+            },
+            "q_snapshot": {
+              "q1_mean": 6.051387310028076,
+              "q2_mean": 6.032711982727051,
+              "twin_gap_mean_abs": 0.018675070255994797,
+              "warning": "Q values are model estimates and are not ground-truth returns"
+            }
+          },
+          "count": 201
+        },
+        "replay_sample": {
+          "all_sample": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.0846396837191414,
+                "latent_pi.2": 0.06366499844669554,
+                "log_std": 0.07734208610941251,
+                "mu": 0.09589857462700326
+              },
+              "entropy": {
+                "latent_pi.0": 0.0859801063994091,
+                "latent_pi.2": 0.06519640874912395,
+                "log_std": 0.07728500441149955,
+                "mu": 0.10002567680591612
+              },
+              "negative_q": {
+                "latent_pi.0": 0.0013969817819579852,
+                "latent_pi.2": 0.00207374819005303,
+                "log_std": 0.0001249193911994252,
+                "mu": 0.00420257826341668
+              },
+              "q_snapshot": {
+                "q1_mean": 6.074948310852051,
+                "q2_mean": 6.0620036125183105,
+                "twin_gap_mean_abs": 0.012944458052515984,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 1024
+          },
+          "moving": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.1580126564478945,
+                "latent_pi.2": 0.10931719163384541,
+                "log_std": 0.14588451587179174,
+                "mu": 0.11821054891971573
+              },
+              "entropy": {
+                "latent_pi.0": 0.15925572125657683,
+                "latent_pi.2": 0.11056176774430479,
+                "log_std": 0.14567785120563803,
+                "mu": 0.12229801493913105
+              },
+              "negative_q": {
+                "latent_pi.0": 0.001362501111791285,
+                "latent_pi.2": 0.002105288272698209,
+                "log_std": 0.00020723418978379397,
+                "mu": 0.0042472351701663144
+              },
+              "q_snapshot": {
+                "q1_mean": 6.076372146606445,
+                "q2_mean": 6.063739776611328,
+                "twin_gap_mean_abs": 0.012632244266569614,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 159
+          },
+          "positive_progress": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.10428142533216879,
+                "latent_pi.2": 0.07004780916584104,
+                "log_std": 0.12319416736847345,
+                "mu": 0.03892175980249966
+              },
+              "entropy": {
+                "latent_pi.0": 0.10569430968740214,
+                "latent_pi.2": 0.07061915696947299,
+                "log_std": 0.12321420486389048,
+                "mu": 0.04206309320356039
+              },
+              "negative_q": {
+                "latent_pi.0": 0.0015020364602760458,
+                "latent_pi.2": 0.0021138252535300183,
+                "log_std": 7.066604807203453e-05,
+                "mu": 0.004257680988215171
+              },
+              "q_snapshot": {
+                "q1_mean": 6.075150012969971,
+                "q2_mean": 6.062305927276611,
+                "twin_gap_mean_abs": 0.012844533659517765,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 574
+          },
+          "sha256": "da4c7900faa8514d8cf85197ea589ed02297cd341c8fbe3b9948f7f14f8d7455"
+        }
+      },
+      "5000": {
+        "checkpoint_sha256": "c84b18034caa0143881b0cdfaee26665136814e57801f5ae4da0e3162a91e0ee",
+        "fixed_201_anchors": {
+          "actor_loss_gradient_norms_by_layer": {
+            "combined": {
+              "latent_pi.0": 0.0,
+              "latent_pi.2": 0.015549735970121594,
+              "log_std": 0.028278783987616355,
+              "mu": 0.028014594168385563
+            },
+            "entropy": {
+              "latent_pi.0": 0.0,
+              "latent_pi.2": 0.015461247081859343,
+              "log_std": 0.028264404294214257,
+              "mu": 0.027724432553551802
+            },
+            "negative_q": {
+              "latent_pi.0": 0.0,
+              "latent_pi.2": 0.00028471066857898593,
+              "log_std": 3.3468550202736845e-05,
+              "mu": 0.0009403017103466187
+            },
+            "q_snapshot": {
+              "q1_mean": 13.575780868530273,
+              "q2_mean": 13.550467491149902,
+              "twin_gap_mean_abs": 0.025311697274446487,
+              "warning": "Q values are model estimates and are not ground-truth returns"
+            }
+          },
+          "count": 201
+        },
+        "replay_sample": {
+          "all_sample": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.01151614205722962,
+                "log_std": 0.014420956336722987,
+                "mu": 0.030653602720448026
+              },
+              "entropy": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.011521419579809854,
+                "log_std": 0.014424935351572105,
+                "mu": 0.030742894479451707
+              },
+              "negative_q": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.00029127594003351605,
+                "log_std": 2.3882973237425664e-05,
+                "mu": 0.000960920424852911
+              },
+              "q_snapshot": {
+                "q1_mean": 13.581376075744629,
+                "q2_mean": 13.55589771270752,
+                "twin_gap_mean_abs": 0.02547963336110115,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 1024
+          },
+          "moving": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.021815606307917332,
+                "log_std": 0.042333269773213646,
+                "mu": 0.03296945436506876
+              },
+              "entropy": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.021705265410878565,
+                "log_std": 0.04231134268982488,
+                "mu": 0.03251690441374869
+              },
+              "negative_q": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.0002930021263118337,
+                "log_std": 4.2468682910192724e-05,
+                "mu": 0.0009639423183511068
+              },
+              "q_snapshot": {
+                "q1_mean": 13.585944175720215,
+                "q2_mean": 13.560538291931152,
+                "twin_gap_mean_abs": 0.025406332686543465,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 176
+          },
+          "positive_progress": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.010883419545936012,
+                "log_std": 0.014705512247711935,
+                "mu": 0.027864043147657953
+              },
+              "entropy": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.010873281824442227,
+                "log_std": 0.014701419372861653,
+                "mu": 0.027904227327694816
+              },
+              "negative_q": {
+                "latent_pi.0": 0.0,
+                "latent_pi.2": 0.0002920230527083518,
+                "log_std": 1.9838182938136765e-05,
+                "mu": 0.0009632679478681556
+              },
+              "q_snapshot": {
+                "q1_mean": 13.579849243164062,
+                "q2_mean": 13.554342269897461,
+                "twin_gap_mean_abs": 0.025506198406219482,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 606
+          },
+          "sha256": "60c8e2b3a5d915b8abab58d021f87c777d2299b4fb56d52a41d0d8b800b7f19e"
+        }
+      }
+    },
+    "B": {
+      "0": {
+        "checkpoint_sha256": "2fcc8efcfc79bdafffb05f0f61a34bebeddcf2dd78cccea3d0999b33a58342c1",
+        "fixed_201_anchors": {
+          "actor_loss_gradient_norms_by_layer": {
+            "combined": {
+              "latent_pi.0": 0.3462065467176883,
+              "latent_pi.2": 0.2519050245427955,
+              "log_std": 0.0706287794030266,
+              "mu": 0.25514130437906396
+            },
+            "entropy": {
+              "latent_pi.0": 0.3382523636021516,
+              "latent_pi.2": 0.24587601062500777,
+              "log_std": 0.07161272969520154,
+              "mu": 0.24806705715645783
+            },
+            "negative_q": {
+              "latent_pi.0": 0.009771930729026363,
+              "latent_pi.2": 0.007022277929448758,
+              "log_std": 0.0010263670055438328,
+              "mu": 0.007537682769039955
+            },
+            "q_snapshot": {
+              "q1_mean": 0.018787188455462456,
+              "q2_mean": -0.13189062476158142,
+              "twin_gap_mean_abs": 0.15067781507968903,
+              "warning": "Q values are model estimates and are not ground-truth returns"
+            }
+          },
+          "count": 201
+        }
+      },
+      "10000": {
+        "checkpoint_sha256": "7e29ec40f2269141c4fb57347bc20b4cbea7376e18f776920ce8c0d2a91581db",
+        "fixed_201_anchors": {
+          "actor_loss_gradient_norms_by_layer": {
+            "combined": {
+              "latent_pi.0": 0.00019870356269192943,
+              "latent_pi.2": 0.0030388396043722708,
+              "log_std": 0.00588927746776379,
+              "mu": 0.007236537552310204
+            },
+            "entropy": {
+              "latent_pi.0": 0.00019487396880436684,
+              "latent_pi.2": 0.003023911699778389,
+              "log_std": 0.0059239398343656855,
+              "mu": 0.0068995774280177
+            },
+            "negative_q": {
+              "latent_pi.0": 2.4454964476649323e-05,
+              "latent_pi.2": 0.00034100036065290397,
+              "log_std": 5.333650842794165e-05,
+              "mu": 0.001595819891876921
+            },
+            "q_snapshot": {
+              "q1_mean": 14.83317756652832,
+              "q2_mean": 14.819032669067383,
+              "twin_gap_mean_abs": 0.014147255569696426,
+              "warning": "Q values are model estimates and are not ground-truth returns"
+            }
+          },
+          "count": 201
+        },
+        "replay_sample": {
+          "all_sample": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.00015963989591212516,
+                "latent_pi.2": 0.0023017348472778366,
+                "log_std": 0.0030069910563569227,
+                "mu": 0.008434089475239848
+              },
+              "entropy": {
+                "latent_pi.0": 0.0001480600536335148,
+                "latent_pi.2": 0.002165249748986608,
+                "log_std": 0.003004025258318199,
+                "mu": 0.007618199001988741
+              },
+              "negative_q": {
+                "latent_pi.0": 2.442956744796975e-05,
+                "latent_pi.2": 0.00034145421391991633,
+                "log_std": 4.852399611616827e-05,
+                "mu": 0.0015993125750040076
+              },
+              "q_snapshot": {
+                "q1_mean": 14.831493377685547,
+                "q2_mean": 14.817232131958008,
+                "twin_gap_mean_abs": 0.014259738847613335,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 1024
+          },
+          "moving": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.00028717254440767235,
+                "latent_pi.2": 0.004481526374122728,
+                "log_std": 0.009988843518139676,
+                "mu": 0.007882726003173001
+              },
+              "entropy": {
+                "latent_pi.0": 0.00028617043774295097,
+                "latent_pi.2": 0.004507827816542569,
+                "log_std": 0.010050128044072567,
+                "mu": 0.007820315591409771
+              },
+              "negative_q": {
+                "latent_pi.0": 2.4924787453353196e-05,
+                "latent_pi.2": 0.0003486502463043665,
+                "log_std": 7.69129530138516e-05,
+                "mu": 0.001626606881286267
+              },
+              "q_snapshot": {
+                "q1_mean": 14.836207389831543,
+                "q2_mean": 14.822004318237305,
+                "twin_gap_mean_abs": 0.014205285347998142,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 168
+          },
+          "positive_progress": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.00018358600186848086,
+                "latent_pi.2": 0.0026583910949552992,
+                "log_std": 0.004975410399894537,
+                "mu": 0.008897790622604157
+              },
+              "entropy": {
+                "latent_pi.0": 0.00017225905328823777,
+                "latent_pi.2": 0.002524410536423803,
+                "log_std": 0.004973389478288823,
+                "mu": 0.008063088103075074
+              },
+              "negative_q": {
+                "latent_pi.0": 2.444267490627522e-05,
+                "latent_pi.2": 0.0003418087665143225,
+                "log_std": 4.717409018853308e-05,
+                "mu": 0.0016017847357410152
+              },
+              "q_snapshot": {
+                "q1_mean": 14.829851150512695,
+                "q2_mean": 14.815589904785156,
+                "twin_gap_mean_abs": 0.01426131185144186,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 590
+          },
+          "sha256": "07d7c41a7f22f6f234248c8216cb47f26facd41e10eb8353bfcfd53b27e39d7d"
+        }
+      },
+      "2000": {
+        "checkpoint_sha256": "c03e7e5e72e1513649ce9d42d20fcf37397c8871b2d88311b84f2209752dc01a",
+        "fixed_201_anchors": {
+          "actor_loss_gradient_norms_by_layer": {
+            "combined": {
+              "latent_pi.0": 0.1038812333580083,
+              "latent_pi.2": 0.08105117146782637,
+              "log_std": 0.10924841589101099,
+              "mu": 0.09416128877545414
+            },
+            "entropy": {
+              "latent_pi.0": 0.10478186098692356,
+              "latent_pi.2": 0.08227143433790784,
+              "log_std": 0.10911271458605895,
+              "mu": 0.09832410965885746
+            },
+            "negative_q": {
+              "latent_pi.0": 0.00100277827695758,
+              "latent_pi.2": 0.0019866070838314904,
+              "log_std": 0.00013621277212450813,
+              "mu": 0.004242475318915032
+            },
+            "q_snapshot": {
+              "q1_mean": 6.054935455322266,
+              "q2_mean": 6.034323692321777,
+              "twin_gap_mean_abs": 0.020611777901649475,
+              "warning": "Q values are model estimates and are not ground-truth returns"
+            }
+          },
+          "count": 201
+        },
+        "replay_sample": {
+          "all_sample": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.07073982466229659,
+                "latent_pi.2": 0.06208699737191151,
+                "log_std": 0.07678422030724467,
+                "mu": 0.09628807332380004
+              },
+              "entropy": {
+                "latent_pi.0": 0.07172400292504282,
+                "latent_pi.2": 0.06351485976925958,
+                "log_std": 0.07671262530907819,
+                "mu": 0.10043438818460368
+              },
+              "negative_q": {
+                "latent_pi.0": 0.00102492744099873,
+                "latent_pi.2": 0.001967908453934995,
+                "log_std": 0.0001351364414350783,
+                "mu": 0.0042394252269395295
+              },
+              "q_snapshot": {
+                "q1_mean": 6.078254699707031,
+                "q2_mean": 6.063361167907715,
+                "twin_gap_mean_abs": 0.014893637970089912,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 1024
+          },
+          "moving": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.1289436022510147,
+                "latent_pi.2": 0.10565304438706034,
+                "log_std": 0.1438044820558058,
+                "mu": 0.11776047345828893
+              },
+              "entropy": {
+                "latent_pi.0": 0.12980583485461056,
+                "latent_pi.2": 0.10679691105753382,
+                "log_std": 0.14358152411158276,
+                "mu": 0.12189227663365433
+              },
+              "negative_q": {
+                "latent_pi.0": 0.0009764620368225501,
+                "latent_pi.2": 0.0019766102329780984,
+                "log_std": 0.00022302192365166002,
+                "mu": 0.004275044124373259
+              },
+              "q_snapshot": {
+                "q1_mean": 6.079638481140137,
+                "q2_mean": 6.065188407897949,
+                "twin_gap_mean_abs": 0.014449695125222206,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 159
+          },
+          "positive_progress": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.09140824441667922,
+                "latent_pi.2": 0.06877021119936239,
+                "log_std": 0.12203799392122966,
+                "mu": 0.039864467629362035
+              },
+              "entropy": {
+                "latent_pi.0": 0.09244217048140115,
+                "latent_pi.2": 0.06931839472513522,
+                "log_std": 0.12204094342747546,
+                "mu": 0.04295046441642726
+              },
+              "negative_q": {
+                "latent_pi.0": 0.0011080796178722114,
+                "latent_pi.2": 0.001994105872599634,
+                "log_std": 7.100340138921906e-05,
+                "mu": 0.004287354818187055
+              },
+              "q_snapshot": {
+                "q1_mean": 6.078350067138672,
+                "q2_mean": 6.0635986328125,
+                "twin_gap_mean_abs": 0.014751550741493702,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 574
+          },
+          "sha256": "41b24b0c3d685a86fad7bfd6b012b0265fb1205bf82eab259017a0ac485f2bf3"
+        }
+      },
+      "5000": {
+        "checkpoint_sha256": "4e123c9a839f2f4101b8d2500a08513353418bba3732a657f444fc689759c6fc",
+        "fixed_201_anchors": {
+          "actor_loss_gradient_norms_by_layer": {
+            "combined": {
+              "latent_pi.0": 0.001158058712750455,
+              "latent_pi.2": 0.014073783947709783,
+              "log_std": 0.0284310684702738,
+              "mu": 0.02801938364982252
+            },
+            "entropy": {
+              "latent_pi.0": 0.0011548332489109032,
+              "latent_pi.2": 0.014030145033126204,
+              "log_std": 0.028414110403337484,
+              "mu": 0.027937849757382817
+            },
+            "negative_q": {
+              "latent_pi.0": 1.4578759504475764e-05,
+              "latent_pi.2": 0.00020769793035168023,
+              "log_std": 2.8503031585812506e-05,
+              "mu": 0.0007843758556995497
+            },
+            "q_snapshot": {
+              "q1_mean": 13.57502269744873,
+              "q2_mean": 13.552571296691895,
+              "twin_gap_mean_abs": 0.02245088294148445,
+              "warning": "Q values are model estimates and are not ground-truth returns"
+            }
+          },
+          "count": 201
+        },
+        "replay_sample": {
+          "all_sample": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.0007929495137557889,
+                "latent_pi.2": 0.010330548941528827,
+                "log_std": 0.014878951985689372,
+                "mu": 0.03065833793609464
+              },
+              "entropy": {
+                "latent_pi.0": 0.0007954783019836411,
+                "latent_pi.2": 0.010368534872655611,
+                "log_std": 0.014878784498791695,
+                "mu": 0.03088915018811236
+              },
+              "negative_q": {
+                "latent_pi.0": 1.4741765869957294e-05,
+                "latent_pi.2": 0.00021015008536033454,
+                "log_std": 2.450697901743405e-05,
+                "mu": 0.0007929552031155752
+              },
+              "q_snapshot": {
+                "q1_mean": 13.580872535705566,
+                "q2_mean": 13.558252334594727,
+                "twin_gap_mean_abs": 0.022620033472776413,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 1024
+          },
+          "moving": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.0017007516447922284,
+                "latent_pi.2": 0.020424031213316957,
+                "log_std": 0.04395487932869198,
+                "mu": 0.034175309684228175
+              },
+              "entropy": {
+                "latent_pi.0": 0.0016964203552114717,
+                "latent_pi.2": 0.020362728239727304,
+                "log_std": 0.043928293734159955,
+                "mu": 0.03396984552277877
+              },
+              "negative_q": {
+                "latent_pi.0": 1.4992335496145627e-05,
+                "latent_pi.2": 0.00021310172035719874,
+                "log_std": 3.713263977575421e-05,
+                "mu": 0.0008010774894695597
+              },
+              "q_snapshot": {
+                "q1_mean": 13.585997581481934,
+                "q2_mean": 13.563470840454102,
+                "twin_gap_mean_abs": 0.022524304687976837,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 175
+          },
+          "positive_progress": {
+            "actor_loss_gradient_norms_by_layer": {
+              "combined": {
+                "latent_pi.0": 0.0006378531191671883,
+                "latent_pi.2": 0.00757818407678906,
+                "log_std": 0.019704263092380856,
+                "mu": 0.01244684708450575
+              },
+              "entropy": {
+                "latent_pi.0": 0.0006404734005437661,
+                "latent_pi.2": 0.007631654039715348,
+                "log_std": 0.019695778485278988,
+                "mu": 0.013204429528688942
+              },
+              "negative_q": {
+                "latent_pi.0": 1.4656098261686783e-05,
+                "latent_pi.2": 0.00020965181235233917,
+                "log_std": 8.700649515857952e-06,
+                "mu": 0.0007962513932505738
+              },
+              "q_snapshot": {
+                "q1_mean": 13.579620361328125,
+                "q2_mean": 13.55695629119873,
+                "twin_gap_mean_abs": 0.022664185613393784,
+                "warning": "Q values are model estimates and are not ground-truth returns"
+              }
+            },
+            "count": 603
+          },
+          "sha256": "092ad6b4c545db9c7afff448ea956e1648547bdd2807b27380c259a02e1de38c"
+        }
+      }
+    }
+  },
+  "protocol_sha256": "92f6180d3217f8133d214d929fc1315eb1c24cf538b4acbad8ddd92c060bacb8"
+}
