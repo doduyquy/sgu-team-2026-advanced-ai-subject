@@ -1,0 +1,368 @@
+{
+  "action": {
+    "contract": "continuous_box2_v1",
+    "decision_frequency_hz": 10,
+    "order": [
+      "steering",
+      "throttle_brake"
+    ],
+    "range": [
+      -1,
+      1
+    ],
+    "shape": [
+      2
+    ]
+  },
+  "arms": {
+    "A": {
+      "id": "control_standard_sac_v1",
+      "sampler": "SB3 standard SAC action collection; random warm-up then stochastic actor sampling"
+    },
+    "B": {
+      "id": "treatment_ou_ar1_v1",
+      "sampler": "OU AR(1) additive action perturbation after warm-up; perturbed normalized action is used by both env and replay"
+    },
+    "only_registered_difference": "exploration sampler; reward, observation, network and SAC hyperparameters unchanged"
+  },
+  "constraints": {
+    "benchmark_eligible": false,
+    "platform_contracts_changed": false,
+    "stage3_used": false,
+    "teacher_data_used": false,
+    "training_started": false,
+    "validation_test_accessed": false
+  },
+  "evaluation": {
+    "censored_is_not_timeout_or_safe": true,
+    "dataset": "TRAIN/PILOT_DIAGNOSTIC only",
+    "fast_probe_checkpoints": [
+      0,
+      2000,
+      5000,
+      10000
+    ],
+    "fast_probe_steps": 300,
+    "fixed_cases": [
+      {
+        "environment_seed": 925389,
+        "geometry_generation_seed": 4,
+        "geometry_id": "geom_easy_SCCS_seed4",
+        "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 666005,
+        "geometry_generation_seed": 19,
+        "geometry_id": "geom_easy_SCCS_seed19",
+        "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 882172,
+        "geometry_generation_seed": 12,
+        "geometry_id": "geom_easy_SCS_seed12",
+        "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 647459,
+        "geometry_generation_seed": 16,
+        "geometry_id": "geom_easy_SCS_seed16",
+        "geometry_sha256": "e47823d49334b770a839479b69babaae498f3b97c8d2dc2ed8e2587a346841d1",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 88306,
+        "geometry_generation_seed": 2,
+        "geometry_id": "geom_easy_SCSS_seed2",
+        "geometry_sha256": "31004866d9c8401f88cb76ed9b289d9a7d60d056bb91c4c696aed307d87351f6",
+        "sequence": "SCSS"
+      },
+      {
+        "environment_seed": 406573,
+        "geometry_generation_seed": 18,
+        "geometry_id": "geom_easy_SCSS_seed18",
+        "geometry_sha256": "38e304e7d4c97e9fc0ea21faade3f8982dcde2c38ca4afcde480cbe0aab281c2",
+        "sequence": "SCSS"
+      }
+    ],
+    "frozen_deterministic_policy": true,
+    "full_episode_cases": [
+      {
+        "environment_seed": 925389,
+        "geometry_generation_seed": 4,
+        "geometry_id": "geom_easy_SCCS_seed4",
+        "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 666005,
+        "geometry_generation_seed": 19,
+        "geometry_id": "geom_easy_SCCS_seed19",
+        "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 882172,
+        "geometry_generation_seed": 12,
+        "geometry_id": "geom_easy_SCS_seed12",
+        "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 647459,
+        "geometry_generation_seed": 16,
+        "geometry_id": "geom_easy_SCS_seed16",
+        "geometry_sha256": "e47823d49334b770a839479b69babaae498f3b97c8d2dc2ed8e2587a346841d1",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 88306,
+        "geometry_generation_seed": 2,
+        "geometry_id": "geom_easy_SCSS_seed2",
+        "geometry_sha256": "31004866d9c8401f88cb76ed9b289d9a7d60d056bb91c4c696aed307d87351f6",
+        "sequence": "SCSS"
+      },
+      {
+        "environment_seed": 406573,
+        "geometry_generation_seed": 18,
+        "geometry_id": "geom_easy_SCSS_seed18",
+        "geometry_sha256": "38e304e7d4c97e9fc0ea21faade3f8982dcde2c38ca4afcde480cbe0aab281c2",
+        "sequence": "SCSS"
+      }
+    ],
+    "full_episode_checkpoints": [
+      10000
+    ],
+    "outcome_labels": [
+      "CLEAN_SUCCESS",
+      "SAFETY_FAILURE",
+      "TIMEOUT",
+      "PROBE_CENSORED"
+    ],
+    "separate_environment_no_training_replay_or_optimizer": true
+  },
+  "exploration": {
+    "action_dimensions": [
+      "steering",
+      "throttle_brake"
+    ],
+    "applied_after_learning_starts_only": true,
+    "clip": "componentwise to [-1,1]",
+    "innovation_std": 0.07905694150420949,
+    "mode": "ou_ar1_v1",
+    "not_action_hold": true,
+    "process": "stationary zero-mean AR(1): n[t]=rho*n[t-1]+epsilon[t]",
+    "random_warmup_steps": 1000,
+    "reset": "zero OU state after every terminated or truncated episode",
+    "rho": 0.85,
+    "seed": 101,
+    "stationary_std": 0.15
+  },
+  "geometry": {
+    "diagnostic_pool": [
+      {
+        "environment_seed": 925389,
+        "geometry_generation_seed": 4,
+        "geometry_id": "geom_easy_SCCS_seed4",
+        "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 666005,
+        "geometry_generation_seed": 19,
+        "geometry_id": "geom_easy_SCCS_seed19",
+        "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 882172,
+        "geometry_generation_seed": 12,
+        "geometry_id": "geom_easy_SCS_seed12",
+        "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 647459,
+        "geometry_generation_seed": 16,
+        "geometry_id": "geom_easy_SCS_seed16",
+        "geometry_sha256": "e47823d49334b770a839479b69babaae498f3b97c8d2dc2ed8e2587a346841d1",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 88306,
+        "geometry_generation_seed": 2,
+        "geometry_id": "geom_easy_SCSS_seed2",
+        "geometry_sha256": "31004866d9c8401f88cb76ed9b289d9a7d60d056bb91c4c696aed307d87351f6",
+        "sequence": "SCSS"
+      },
+      {
+        "environment_seed": 406573,
+        "geometry_generation_seed": 18,
+        "geometry_id": "geom_easy_SCSS_seed18",
+        "geometry_sha256": "38e304e7d4c97e9fc0ea21faade3f8982dcde2c38ca4afcde480cbe0aab281c2",
+        "sequence": "SCSS"
+      }
+    ],
+    "diagnostic_pool_sha256": "e326928bdb02f36367786c8acd0bc96a3a9f843e5676a1ff56eede0d7e69281c",
+    "diagnostic_pool_source_protocol": "results/stage5/s5_5_meter_reward_seed101_20261120/protocol.json",
+    "manifest": "results/audits/evaluation_protocol/geometry_split_manifest.csv",
+    "manifest_sha256": "ec1099eb93252f445d7afa95fd19270e72d5a8f37282701d6935e283a0997134",
+    "training_pool": [
+      {
+        "geometry_generation_seed": 0,
+        "geometry_id": "geom_easy_SCCS_seed0",
+        "geometry_sha256": "df9c8bb722fc6517de55dc18838470b91ec43b89767ede19d93b72dc94674f9b",
+        "manifest_route_length_m": 585.8845678629121,
+        "sequence": "SCCS"
+      },
+      {
+        "geometry_generation_seed": 2,
+        "geometry_id": "geom_easy_SCCS_seed2",
+        "geometry_sha256": "314a2830c26cf72879d740f97d450f1d657beeb050f602c1cbece838fd40d8f5",
+        "manifest_route_length_m": 349.4610596116287,
+        "sequence": "SCCS"
+      },
+      {
+        "geometry_generation_seed": 3,
+        "geometry_id": "geom_easy_SCCS_seed3",
+        "geometry_sha256": "63cc884fe4ab7df2035db6e9ab3e08289f93caafd22304c7dbf71ab28ae6627e",
+        "manifest_route_length_m": 441.40147740540124,
+        "sequence": "SCCS"
+      },
+      {
+        "geometry_generation_seed": 0,
+        "geometry_id": "geom_easy_SCSS_seed0",
+        "geometry_sha256": "f315580c575a221a020c9996f8c7c1ba64f936d0362f9eed316d08289feccf90",
+        "manifest_route_length_m": 448.0778267515151,
+        "sequence": "SCSS"
+      },
+      {
+        "geometry_generation_seed": 3,
+        "geometry_id": "geom_easy_SCSS_seed3",
+        "geometry_sha256": "68fbae08cc6d34648bcc19bbb1ba0438430f4b2cd748927704d921969ae6b91c",
+        "manifest_route_length_m": 401.0839496971649,
+        "sequence": "SCSS"
+      },
+      {
+        "geometry_generation_seed": 4,
+        "geometry_id": "geom_easy_SCSS_seed4",
+        "geometry_sha256": "a6494d940761821e33150c767b561220d94586dba307df944131baa1e8457456",
+        "manifest_route_length_m": 453.06866406160725,
+        "sequence": "SCSS"
+      },
+      {
+        "geometry_generation_seed": 0,
+        "geometry_id": "geom_easy_SCS_seed0",
+        "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+        "manifest_route_length_m": 407.89441610698384,
+        "sequence": "SCS"
+      },
+      {
+        "geometry_generation_seed": 1,
+        "geometry_id": "geom_easy_SCS_seed1",
+        "geometry_sha256": "7b721ddea0699aeff3168ff3a9f5de5f11209a374d591a86a0eaaf08bcbb6bbb",
+        "manifest_route_length_m": 246.9110221328001,
+        "sequence": "SCS"
+      }
+    ],
+    "training_pool_sha256": "3f388a82be58b3cd773ab7c6f7c52e9f5622a9f5b29f2f9d36979beb6b93b73f",
+    "training_pool_source_protocol": "results/stage5/s5_5_meter_reward_seed101_20261120/protocol.json"
+  },
+  "historical_mechanism_audit": {
+    "path": "results/stage5/p2_mechanism_audit/historical_mechanism_audit.json",
+    "sha256": "9e5452ed83b11887c06d1dde75f17e10319898c9fcd0d9cc01441280981a1bd2"
+  },
+  "implementation_amendment_after_interrupted_attempt": {
+    "amended_at": "2026-11-21T00:18:35+07:00",
+    "interrupted_attempt": "runs/stage5_p2/s5_p2_correlated_exploration_seed101_20261120; control arm only, 6,150 recorded transitions, checkpoints 0/2k/5k, excluded from scientific comparison; artifacts preserved.",
+    "reason": "Flush live action telemetry every 100 recorded transitions and add geometry sequence/hash to episode ledger. This is instrumentation/provenance only; no scientific variable, arm, seed, budget, or evaluation schedule changed."
+  },
+  "observation": {
+    "canonical_encoder": "stage5_flat409_v1",
+    "dimension": 409,
+    "post_encoder_transform": "pilot_groupwise_physical_v1",
+    "same_both_arms": true,
+    "task_context_producer_id": "reference_route_station_proposal_v1",
+    "transform_fingerprint": "265103242e3ba3ad6f8c493d8f0bad39644c375a2696dbcdad4857052796797e"
+  },
+  "parent_commit": "8d38c4a8135ff41258fd08eb9a230e59efff5edd",
+  "producer": {
+    "configuration": {
+      "checkpoint_window": 1,
+      "implementation_sha256": "948d6f7ae2e33b4052544220e85ea4ff90fc9d054f0567df96da6345946c972f",
+      "lookahead_count": 20,
+      "reference_lane": "first_on_each_route_edge",
+      "seam_tolerance_m": 0.001,
+      "spacing_m": 2.5,
+      "unlocalized_policy": "abort_on_first_sample"
+    },
+    "fingerprint": "a7df3942bb874b40ea16474be43c7b7a48796646c9d59cf61da5d71ba5291725",
+    "id": "reference_route_station_proposal_v1"
+  },
+  "protocol": "stage5_p2_ou_ar1_exploration_v1",
+  "protocol_sha256": "6a54151d0a3e52bcd237811f0b9a7d3912adadb512615e92eab71281f7564652",
+  "registered_at_utc": "2026-11-20T16:58:27Z",
+  "registration_note": "Protocol and implementation hashes are committed before scientific training. Exact training source commit is recorded in each run manifest.",
+  "reward": {
+    "changed": false,
+    "only_stage5_reward": true,
+    "version": "RewardSpecV1"
+  },
+  "sac": {
+    "activation": "ReLU",
+    "algorithm": "SAC",
+    "batch_size": 256,
+    "buffer_size": 100000,
+    "device": "cpu",
+    "ent_coef": "auto",
+    "gamma": 0.99,
+    "gradient_steps": 1,
+    "learning_rate": 0.0003,
+    "learning_starts": 1000,
+    "net_arch": [
+      256,
+      256
+    ],
+    "optimizer_and_replay": "independent per arm",
+    "policy": "MlpPolicy",
+    "shared_fresh_initial_policy_and_entropy_state": true,
+    "tau": 0.005,
+    "train_freq": 1
+  },
+  "source_files_sha256": {
+    "scripts/audit_stage5_p2_mechanism.py": "f6a7f72d0198631628f1b1544c535d57fcf3b3a6ea1d1e8a32f380ecad6e520d",
+    "scripts/evaluate_stage5_p2.py": "c8f66b73f7a0cc1951bece775b4810a6c3c562d0868f440cb857783f28742239",
+    "scripts/run_stage5_p2_experiment.py": "7ca3686e46bcf33222aa14492cead015854b7fa32faec14a18ea2764642033e3",
+    "scripts/smoke_stage5_p2.py": "981c4a5456d9815a991485d66afcf011093211b467599c89bc39c77851dc6577",
+    "src/training/stage5/temporal_exploration.py": "ac6508f35195b86265e43838d6283342627ebf8958201afa6bb9762eae7ff6f5",
+    "tests/test_stage5_p2_temporal_exploration.py": "0062cd89cf219f9b8432f881dc85bb5c94aff34190c8fab8fd753b6aa92c667c"
+  },
+  "status": "PRE_REGISTERED",
+  "telemetry": {
+    "activation_and_actor_sensitivity": true,
+    "alpha": true,
+    "checkpoint_integrity_and_hashes": true,
+    "geometry_and_seed_exposure": true,
+    "optimizer_actor_critic_entropy_gradients_losses": true,
+    "per_episode_outcomes": true,
+    "per_step_requested_executed_replay_actions": true,
+    "replay_q_td_snapshot_at_checkpoints": true,
+    "runtime_and_memory": true
+  },
+  "training": {
+    "checkpoint_steps": [
+      0,
+      2000,
+      5000,
+      10000
+    ],
+    "environment_seed_derivation": "SHA256(train_env_seed:{root_seed}:{episode_index}) first 32-bit word modulo 1,000,000",
+    "max_environment_steps_per_arm": 10000,
+    "root_seed": 101,
+    "same_pool_and_sampler_rule": true,
+    "sampler_strategy": "ROUND_ROBIN",
+    "seed_schedule_note": "Same seed derivation and ordered pool in both arms; episode counts may diverge as policies diverge, so actual per-episode exposure is recorded rather than forced to match."
+  }
+}

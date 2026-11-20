@@ -1,0 +1,25 @@
+{
+  "run_id": "s5_p2_correlated_exploration_seed101_20261120",
+  "status": "INTERRUPTED_INCOMPLETE_NOT_SCIENTIFIC_RESULT",
+  "protocol_sha256_at_run_start": "14e26db5de58f5b62d6493785cfaa7dbafb40ee9aaea115ef62a8a0bc6affea7",
+  "training_source_commit": "2d555f2360fc2b4071af3c0249b4a48b2e5d258d",
+  "completed_arms": ["A"],
+  "arm_A_actual_recorded_transitions": 6150,
+  "arm_A_actual_optimizer_updates_at_last_verified_checkpoint": 4000,
+  "arm_A_completed_episodes": 4,
+  "arm_A_episode_outcomes": {"TIMEOUT": 4},
+  "arm_A_checkpoint_model_sha256": {
+    "0": "80759b6aef43d042641c6767c582bfd08588472461ad7c6437bb305e3eeb3f5f",
+    "2000": "53f6528ab233847df6b7c9e48c730f2147c6806c7c77cd0e1e52ed628d947aff",
+    "5000": "4b9373e99cfdeba180bcf7fa2e2c9a236ebb6a29df6daf87bb6a8877e40afd74"
+  },
+  "action_replay_mismatches": 0,
+  "interruption_reason": "Operator stopped the process after mistakenly treating zero on-disk length of still-buffered telemetry files as missing telemetry. Closing the process flushed the logs. The arm did not reach its 10,000-step budget and arm B was not started.",
+  "scientific_use": "Excluded from A/B inference. Raw files and checkpoints remain preserved under the ignored runs/ path.",
+  "raw_artifact_sha256": {
+    "arm_A/replay_action_trace.jsonl": "60f54a0c73b3e94e3a408642a84c0e4e6a2b61fdfd07fed619a82dd3307d9f15",
+    "arm_A/training_episodes.jsonl": "eb03c88f0f154ee84ad4388f7c6571abd25c2177efbc48405d8b9bd58b1dc6685",
+    "arm_A/checkpoint_telemetry.json": "e050d963335a5a3e8a8502563a98f398fe8022b304061400ec071e1b6c1e6969"
+  },
+  "source_control": "No source or protocol changes were made during this partial run. A new run_id and source commit are used for the complete attempt."
+}
