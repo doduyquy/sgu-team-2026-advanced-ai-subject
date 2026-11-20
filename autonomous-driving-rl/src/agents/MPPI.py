@@ -156,10 +156,7 @@ def load_mppi_config() -> MPPIConfig:
     return MPPIConfig(**payload["parameters"])
 
 
-# =============================================================================
-# 2. KINEMATIC BICYCLE MODEL: dự đoán chuyển động, chưa chọn action
-# =============================================================================
-
+# 2. KINEMATIC BICYCLE MODEL: dự đoán chuyển động, chưa chọn action (được chọn bởi MPPI)
 class BicycleModel:
     """Xấp xỉ xe không trượt bánh bằng một bánh trước và một bánh sau.
 
@@ -278,10 +275,7 @@ class BicycleModel:
         return traj
 
 
-# =============================================================================
 # 3. CẢNH CỤC BỘ: đường tham chiếu và vật cản tại thời điểm gọi act()
-# =============================================================================
-
 class MPPIScene:
     """Giữ cố định hệ ego ở đầu act(): gốc tại xe, +x trước, +y trái.
 
@@ -508,10 +502,7 @@ class MPPIScene:
         return collision, outside
 
 
-# =============================================================================
 # 4. HÀM COST: quỹ đạo nào có tổng chi phí thấp hơn thì được ưu tiên hơn
-# =============================================================================
-
 def cost_fn(traj, U, scene: MPPIScene, last_action, dt):
     """Chấm K quỹ đạo; trả (cost shape (K,), có va chạm shape (K,)).
 
@@ -589,10 +580,7 @@ def cost_fn(traj, U, scene: MPPIScene, last_action, dt):
     return total_cost, collision.any(axis=1)
 
 
-# =============================================================================
 # 5. MPPI: lấy mẫu -> rollout -> cost -> trọng số -> action đầu tiên
-# =============================================================================
-
 class MPPI:
     """Tối ưu chuỗi điều khiển, dùng chuỗi lần trước để khởi tạo lần tiếp theo.
 
@@ -713,10 +701,7 @@ class MPPI:
         return action
 
 
-# =============================================================================
 # 6. ADAPTER CỦA PROJECT: public input -> MPPI -> AgentDecision
-# =============================================================================
-
 class MPPIAgent:
     """Agent dùng action liên tục, có seed và kế hoạch riêng cho mỗi episode.
 

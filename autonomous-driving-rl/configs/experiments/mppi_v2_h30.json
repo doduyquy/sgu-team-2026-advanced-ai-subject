@@ -9,7 +9,7 @@
     "noise_correlation": 0.8,
     "integration_dt_s": 0.02,
     "max_speed_kmh": 80.0,
-    "target_speed_m_s": 16.0,
+    "target_speed_m_s": 17.0,
     "wheelbase_m": 2.46894,
     "max_steering_deg": 40.0,
     "steering_sign": 1.0,
