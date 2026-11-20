@@ -49,6 +49,15 @@ from src.training.stage5.train_sampler import (
     SamplerStrategy,
     TrainCaseSampler,
 )
+from src.training.stage5.start_curriculum import (
+    CONTROL_FINGERPRINT,
+    CURRICULUM_FINGERPRINT,
+    CONTROL_TASK_ID,
+    CURRICULUM_TASK_ID,
+    apply_route_spawn_plan,
+    curriculum_stage,
+    resolve_route_spawn_plan,
+)
 
 
 class Stage5TrainingEnv(gym.Env):
@@ -72,6 +81,8 @@ class Stage5TrainingEnv(gym.Env):
         project_root: Optional[Path] = None,
         simulator_render_mode: str = "OFF",
         task_context_producer_id: str = LEGACY_TASK_PRODUCER,
+        training_start_curriculum: bool = False,
+        training_task_id: Optional[str] = None,
     ) -> None:
         """
         Initializes the Stage 5 Training Environment.
@@ -112,6 +123,22 @@ class Stage5TrainingEnv(gym.Env):
         self._task_context_producer_id = task_producer_identity(task_context_producer_id)["id"]
         if self.encoder.is_core_only and task_context_producer_id != LEGACY_TASK_PRODUCER:
             raise ValueError("Corrected TaskContext requires the full 409D encoder")
+        if training_start_curriculum and training_task_id not in (None, CURRICULUM_TASK_ID):
+            raise ValueError("training_start_curriculum can only use the registered P2-F task ID")
+        if training_start_curriculum:
+            training_task_id = CURRICULUM_TASK_ID
+        if training_task_id not in (None, CONTROL_TASK_ID, CURRICULUM_TASK_ID):
+            raise ValueError(f"Unknown Stage 5 training task ID: {training_task_id!r}")
+        if training_task_id == CURRICULUM_TASK_ID and not training_start_curriculum:
+            raise ValueError("The P2-F curriculum task ID requires training_start_curriculum=True")
+        self.training_start_curriculum = bool(training_start_curriculum)
+        self.training_task_id = training_task_id
+        self.training_task_fingerprint = (
+            CURRICULUM_FINGERPRINT if training_task_id == CURRICULUM_TASK_ID
+            else CONTROL_FINGERPRINT if training_task_id == CONTROL_TASK_ID else None
+        )
+        self._curriculum_episode_index = 0
+        self._training_start_metadata: Dict[str, Any] = {}
 
         # 3. Action Space: Box(2) continuous in [-1.0, 1.0]
         self.action_adapter = get_action_adapter("continuous_box2_v1")
@@ -129,7 +156,7 @@ class Stage5TrainingEnv(gym.Env):
         self._env: Optional[MetaDriveEnv] = None
         self._current_case: Optional[ResolvedCaseV1] = None
         self._current_geometry_id: Optional[str] = None
-        self._current_sim_key: Optional[Tuple[str, str, int, int]] = None
+        self._current_sim_key: Optional[Tuple[Any, ...]] = None
         self._blocks_cache: Dict[Tuple[str, int], List[Any]] = {}
 
         # Episode state variables
@@ -197,8 +224,36 @@ class Stage5TrainingEnv(gym.Env):
             self._blocks_cache[cache_key] = blocks
         blocks = self._blocks_cache[cache_key]
 
+        curriculum_episode_index = self._curriculum_episode_index
+        if options and "curriculum_episode_index" in options:
+            if not self.training_start_curriculum:
+                raise ValueError("curriculum_episode_index is valid only for the registered Stage 5 curriculum task")
+            curriculum_episode_index = int(options["curriculum_episode_index"])
+            if not 0 <= curriculum_episode_index <= 5:
+                raise ValueError("Evaluation curriculum_episode_index must select a preregistered 60m or 120m stage")
+        curriculum = curriculum_stage(curriculum_episode_index) if self.training_start_curriculum else None
+        requested_remaining = curriculum.requested_remaining_route_distance_m if curriculum else None
+        spawn_plan = None
+        if requested_remaining is not None:
+            # MetaDrive owns a process-global engine singleton; close the live
+            # training instance before the isolated route-resolution probe.
+            if self._env is not None:
+                self._env.close()
+                self._env = None
+                self._current_sim_key = None
+            spawn_plan = resolve_route_spawn_plan(
+                case=case,
+                blocks=blocks,
+                project_root=self.project_root,
+                requested_remaining_route_distance_m=requested_remaining,
+                render_mode=self.simulator_render_mode,
+            )
+
         # 3. Simulator instance management and initial step observation in exception-safe block
-        sim_key = (case.tier, case.sequence, case.geometry_generation_seed, case.environment_seed)
+        sim_key = (
+            case.tier, case.sequence, case.geometry_generation_seed, case.environment_seed,
+            curriculum.stage_id if curriculum else "official_start",
+        )
         try:
             # Recreate simulator if simulator is None or if geometry/environment seed changed
             if self._env is None or self._current_sim_key != sim_key:
@@ -208,10 +263,51 @@ class Stage5TrainingEnv(gym.Env):
 
                 from metadrive.envs.metadrive_env import MetaDriveEnv
                 env_config = build_metadrive_case_config(case, blocks, render_mode=self.simulator_render_mode)
+                if spawn_plan is not None:
+                    env_config = apply_route_spawn_plan(env_config, spawn_plan)
                 self._env = MetaDriveEnv(env_config)
                 self._current_sim_key = sim_key
 
             raw_obs, info = self._env.reset(seed=case.environment_seed)
+
+            if spawn_plan is not None:
+                navigation = self._env.agent.navigation
+                position = np.asarray(self._env.agent.position, dtype=np.float64)
+                expected_position = np.asarray(spawn_plan.spawn_position_xy, dtype=np.float64)
+                position_error = float(np.linalg.norm(position - expected_position))
+                current_reference_lane = navigation.current_ref_lanes[0]
+                projected_station = float(current_reference_lane.local_coordinates(position)[0])
+                route_remaining = float(navigation.total_length - navigation.travelled_length)
+                heading_error = abs(
+                    (float(self._env.agent.heading_theta) - float(spawn_plan.spawn_heading_rad) + np.pi)
+                    % (2.0 * np.pi) - np.pi
+                )
+                if tuple(str(x) for x in navigation.checkpoints) != spawn_plan.expected_checkpoint_suffix:
+                    raise RuntimeError("P2-F reset changed the registered route checkpoint suffix")
+                if str(navigation.checkpoints[-1]) != spawn_plan.original_destination:
+                    raise RuntimeError("P2-F reset changed the official MetaDrive destination")
+                if tuple(current_reference_lane.index) != spawn_plan.reference_lane_index:
+                    raise RuntimeError("P2-F reset localized the vehicle to a different reference lane")
+                if position_error > 0.05:
+                    raise RuntimeError(f"P2-F spawn position mismatch: {position_error:.6f}m")
+                if abs(projected_station - spawn_plan.reference_lane_local_station_m) > 0.05:
+                    raise RuntimeError(
+                        "P2-F projected reference station mismatch: "
+                        f"expected={spawn_plan.reference_lane_local_station_m:.4f}, got={projected_station:.4f}"
+                    )
+                if heading_error > 1e-3:
+                    raise RuntimeError(f"P2-F spawn heading mismatch: {heading_error:.6f}rad")
+                if abs(route_remaining - requested_remaining) > 0.10:
+                    raise RuntimeError(
+                        f"P2-F route remaining mismatch: expected {requested_remaining:.3f}m, got {route_remaining:.3f}m"
+                    )
+                if not np.isfinite(raw_obs).all() or float(self._env.agent.speed_km_h) != 0.0:
+                    raise RuntimeError("P2-F reset observation/speed is invalid")
+                if any(bool(info.get(flag, False)) for flag in (
+                    "arrive_dest", "out_of_road", "crash_vehicle", "crash_object",
+                    "crash_building", "crash_human", "crash_sidewalk", "max_step",
+                )):
+                    raise RuntimeError("P2-F reset produced an initial terminal or safety flag")
 
             # 4. Reset episodic tracking variables
             self._step_idx = 0
@@ -224,8 +320,28 @@ class Stage5TrainingEnv(gym.Env):
             self._env_flags = {}
             self._last_outcome = None
 
+            self._training_start_metadata = {
+                "training_task_id": self.training_task_id,
+                "training_task_fingerprint": self.training_task_fingerprint,
+                "curriculum_episode_index": curriculum_episode_index if self.training_start_curriculum else None,
+                "curriculum_stage_id": curriculum.stage_id if curriculum else None,
+                "requested_remaining_route_distance_m": requested_remaining,
+                "effective_remaining_route_distance_m": (
+                    float(self._env.agent.navigation.total_length - self._env.agent.navigation.travelled_length)
+                    if self.training_start_curriculum else None
+                ),
+                "curriculum_reference_station_m": spawn_plan.reference_station_m if spawn_plan else None,
+                "original_destination": spawn_plan.original_destination if spawn_plan else None,
+                "route_completion_reset": initial_route_completion,
+                "horizon_steps": int(case.horizon_steps),
+            }
+            if self.training_start_curriculum and not (options and "curriculum_episode_index" in options):
+                self._curriculum_episode_index += 1
+
             # 5. Build public AgentInputV1 and encode observation
             agent_input = self._build_agent_input(raw_obs, step_idx=0)
+            if self.training_start_curriculum and int(agent_input.task_context.validity_mask.sum()) <= 0:
+                raise RuntimeError("P2-F reset has no valid F09 TaskContext waypoint")
             obs = self.encoder.encode(agent_input)
 
             # 6. Diagnostic info (strictly for training instrumentation, not passed to policy)
@@ -242,6 +358,7 @@ class Stage5TrainingEnv(gym.Env):
                 "horizon_steps": case.horizon_steps,
                 "traffic_density": case.traffic_density,
                 "initial_route_completion": initial_route_completion,
+                **self._training_start_metadata,
             }
 
             return obs, info_dict
@@ -335,6 +452,7 @@ class Stage5TrainingEnv(gym.Env):
                 "route_completion": curr_route,
                 "delta_route": delta_route,
                 "reward_breakdown": breakdown.to_dict(),
+                **self._training_start_metadata,
             }
 
             if self._terminated or self._truncated:
