@@ -32,6 +32,7 @@ from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, require_che
 from src.training.stage5.pilot_observation_transform import (
     WAYPOINT_XY50_V1, transform_fingerprint, transform_spec,
 )
+from src.training.stage5.actor_activation_ablation import activation_inventory
 
 
 class CheckpointIntegrityError(ValueError):
@@ -150,6 +151,17 @@ def save_sac_checkpoint(
         transform_id = WAYPOINT_XY50_V1["transform_id"]
     selected_transform = transform_spec(transform_id) if transform_id else None
     selected_transform_fingerprint = transform_fingerprint(selected_transform) if selected_transform else None
+    activations = activation_inventory(model.policy)
+    activation_fingerprint = hashlib.sha256(
+        json.dumps(activations, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    actor_activation = activations["actor_id"]
+    critic_activation = "+".join(activations["critic_module_types"]) or "unknown"
+    actor_critic_activation = (
+        "ReLU" if actor_activation == "actor_relu_v1" and critic_activation == "ReLU"
+        else "mixed" if actor_activation != "unknown" and critic_activation != "unknown"
+        else "unknown"
+    )
     metadata: Dict[str, Any] = {
         "model_name": "stage5_sac",
         "algorithm": "SAC",
@@ -169,12 +181,12 @@ def save_sac_checkpoint(
         ).encode("utf-8")).hexdigest(),
         "observation_dim": int(encoder.dimension),
         "action_dim": 2,
-        "actor_critic_activation": getattr(
-            model.policy_kwargs.get("activation_fn"), "__name__", "ReLU"
-        ),
-        "activation_negative_slope": (
-            0.01 if getattr(model.policy_kwargs.get("activation_fn"), "__name__", "") == "LeakyReLU" else None
-        ),
+        "actor_critic_activation": actor_critic_activation,
+        "actor_activation": actor_activation,
+        "critic_activation": critic_activation,
+        "activation_negative_slope": 0.01 if actor_activation == "actor_leaky_relu_001_v1" else None,
+        "activation_inventory": activations,
+        "activation_fingerprint": activation_fingerprint,
         "total_timesteps": int(total_timesteps),
         "training_root_seed": int(training_root_seed),
         "model_sha256": model_sha256,
@@ -354,6 +366,7 @@ def load_sac_checkpoint(
     load_replay_buffer: bool = False,
     *,
     task_context_producer_id: str = LEGACY_TASK_PRODUCER,
+    expected_actor_activation_id: Optional[str] = None,
 ) -> Tuple[SAC, Dict[str, Any]]:
     """
     Loads and cryptographically verifies a saved SAC checkpoint bundle.
@@ -380,6 +393,22 @@ def load_sac_checkpoint(
 
     model_path = checkpoint_dir / "model.zip"
     model = SAC.load(str(model_path), env=env, device=device)
+
+    if expected_actor_activation_id is not None:
+        loaded_activation_inventory = activation_inventory(model.policy)
+        actual_activation_id = loaded_activation_inventory["actor_id"]
+        recorded_activation_id = metadata.get("actor_activation")
+        actual_activation_fingerprint = hashlib.sha256(
+            json.dumps(loaded_activation_inventory, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        if actual_activation_id != expected_actor_activation_id or recorded_activation_id != expected_actor_activation_id:
+            raise CheckpointIntegrityError(
+                "Checkpoint actor activation mismatch: "
+                f"metadata={recorded_activation_id!r}, loaded_policy={actual_activation_id!r}, "
+                f"expected={expected_actor_activation_id!r}"
+            )
+        if metadata.get("activation_fingerprint") != actual_activation_fingerprint:
+            raise CheckpointIntegrityError("Checkpoint activation fingerprint does not match the reconstructed policy")
 
     # Replay buffer loading for resume workflows
     if load_replay_buffer:
