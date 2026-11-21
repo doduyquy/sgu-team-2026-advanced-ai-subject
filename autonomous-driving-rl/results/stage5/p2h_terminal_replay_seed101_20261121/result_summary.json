@@ -1,0 +1,2535 @@
+{
+  "arms": {
+    "A": {
+      "checkpoint_evaluations": [
+        {
+          "alpha": 1.0,
+          "checkpoint_identity": null,
+          "full_episode": null,
+          "metadata_sha256": "b6aea8e4abb6188a2f8561eb05a14dd18895691f92032cb06806912126dcb35f",
+          "model_sha256": "94ed119fdca176b600851c7804a4178e996b62f3ed868d66779a20f9c38425e8",
+          "model_size_bytes": 3471464,
+          "optimizer_updates": 0,
+          "probe": {
+            "actor_responsiveness": {
+              "deterministic_action_mean": [
+                -0.02694135531783104,
+                -0.1291254758834839
+              ],
+              "deterministic_action_std_across_real_states": [
+                0.0020404397509992123,
+                0.002391971182078123
+              ],
+              "first_layer_activation_std_mean": 0.008663978427648544,
+              "first_layer_nonpositive_fraction": 0.4661458432674408,
+              "first_layer_preactivation_std_mean": 0.015388892963528633,
+              "observation_count": 360,
+              "observation_group_std_mean": {
+                "ego_core_9d": 0.039947766810655594,
+                "lidar_240d": 0.0,
+                "navigation_10d": 0.00629024812951684,
+                "task_masks_scalars_24d": 0.024279197677969933,
+                "task_waypoints_60d": 0.02095024473965168,
+                "traffic_actor_56d": 0.0,
+                "traffic_masks_metrics_10d": 0.0
+              }
+            },
+            "aggregate": {
+              "censored": 6,
+              "clean_successes": 0,
+              "mean_speed_kmh": {
+                "max": 0.0150736401531211,
+                "mean": 0.014864202796118617,
+                "median": 0.014800538418287918,
+                "min": 0.014768959425310578
+              },
+              "route_progress_delta": {
+                "max": 4.6816731766142344e-05,
+                "mean": 2.8868969669465564e-05,
+                "median": 2.656118307232773e-05,
+                "min": 1.776672346800491e-05
+              },
+              "safety_failures": 0,
+              "stationary_fraction": {
+                "max": 1.0,
+                "mean": 1.0,
+                "median": 1.0,
+                "min": 1.0
+              },
+              "timeouts": 0
+            },
+            "cases": [
+              {
+                "clean_success": false,
+                "environment_seed": 925389,
+                "final_route_completion": 0.008356032291832538,
+                "geometry_id": "geom_easy_SCCS_seed4",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.014768959425310578,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 3.055391871968627e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 3.0466085837521395e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 666005,
+                "final_route_completion": 0.009869651092374908,
+                "geometry_id": "geom_easy_SCCS_seed19",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.0150736401531211,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 2.0942369308302178e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 3.0440757271146446e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 882172,
+                "final_route_completion": 0.013835621104670622,
+                "geometry_id": "geom_easy_SCS_seed12",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.014953380593002948,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 4.6816731766142344e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 3.3348341489749167e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 647459,
+                "final_route_completion": 0.013010895740006802,
+                "geometry_id": "geom_easy_SCS_seed16",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.01480326533630602,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 2.256844742496919e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 2.7573101514925394e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 88306,
+                "final_route_completion": 0.01614474752921278,
+                "geometry_id": "geom_easy_SCSS_seed2",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.01478815976870124,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 3.4565627329688486e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 2.875986384067301e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 406573,
+                "final_route_completion": 0.01225325853168213,
+                "geometry_id": "geom_easy_SCSS_seed18",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.014797811500269816,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 1.776672346800491e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 2.5285028374503285e-06,
+                "throttle_mean": null,
+                "timeout": false
+              }
+            ],
+            "evaluation_cap": 300,
+            "evaluation_mode": "deterministic",
+            "outcome_counts": {
+              "PROBE_CENSORED": 6
+            },
+            "result_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/evaluation/arm_A/step_00000_probe.json",
+            "result_sha256": "cca7c77990f0ea4dc0d7273794e320b4694cd9c5845328b8becd828fbfd1a712"
+          },
+          "replay_buffer_sha256": null,
+          "replay_buffer_size_bytes": null,
+          "step": 0
+        },
+        {
+          "alpha": 0.7407660484313965,
+          "checkpoint_identity": null,
+          "full_episode": null,
+          "metadata_sha256": "5944629f38ed88477341a442037393f0e2edb85836fce44b7dce861626ecff83",
+          "model_sha256": "a199fb3098fcd2d8b5d21fbb42dc6463afe40ec06f5e84f4561dba5cf774e62c",
+          "model_size_bytes": 7610473,
+          "optimizer_updates": 1000,
+          "probe": {
+            "actor_responsiveness": {
+              "deterministic_action_mean": [
+                -0.0023726641666144133,
+                0.020634744316339493
+              ],
+              "deterministic_action_std_across_real_states": [
+                0.00011643899779301137,
+                0.00037263950798660517
+              ],
+              "first_layer_activation_std_mean": 0.0008861007518135011,
+              "first_layer_nonpositive_fraction": 0.9568576216697693,
+              "first_layer_preactivation_std_mean": 0.01734437420964241,
+              "observation_count": 360,
+              "observation_group_std_mean": {
+                "ego_core_9d": 0.04366656020283699,
+                "lidar_240d": 0.0,
+                "navigation_10d": 0.023375628516077995,
+                "task_masks_scalars_24d": 0.02828899770975113,
+                "task_waypoints_60d": 0.02176995761692524,
+                "traffic_actor_56d": 0.0,
+                "traffic_masks_metrics_10d": 0.0
+              }
+            },
+            "aggregate": {
+              "censored": 6,
+              "clean_successes": 0,
+              "mean_speed_kmh": {
+                "max": 3.4477682431425833,
+                "mean": 3.2939042939667367,
+                "median": 3.3152920570306508,
+                "min": 3.029515023110682
+              },
+              "route_progress_delta": {
+                "max": 0.08980135845495975,
+                "mean": 0.06701166982227508,
+                "median": 0.06794606867670573,
+                "min": 0.04180915600216476
+              },
+              "safety_failures": 0,
+              "stationary_fraction": {
+                "max": 0.16333333333333333,
+                "mean": 0.15,
+                "median": 0.14833333333333332,
+                "min": 0.14333333333333334
+              },
+              "timeouts": 0
+            },
+            "cases": [
+              {
+                "clean_success": false,
+                "environment_seed": 925389,
+                "final_route_completion": 0.05013463437527761,
+                "geometry_id": "geom_easy_SCCS_seed4",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.029515023110682,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.04180915600216476,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.16333333333333333,
+                "steering_std": 6.846626308238607e-05,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 666005,
+                "final_route_completion": 0.06613762717129301,
+                "geometry_id": "geom_easy_SCCS_seed19",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.4477682431425833,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.05628891844822641,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.14333333333333334,
+                "steering_std": 8.916099793069506e-05,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 882172,
+                "final_route_completion": 0.09206725304779256,
+                "geometry_id": "geom_easy_SCS_seed12",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.4246096002294606,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.07827844867488809,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.14333333333333334,
+                "steering_std": 5.596936929778871e-05,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 647459,
+                "final_route_completion": 0.08335087014439288,
+                "geometry_id": "geom_easy_SCS_seed16",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.2679837824182543,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.07036254285181105,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.15,
+                "steering_std": 8.861402368738718e-05,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 88306,
+                "final_route_completion": 0.10591154035684285,
+                "geometry_id": "geom_easy_SCSS_seed2",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.3626003316430473,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.08980135845495975,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.14666666666666667,
+                "steering_std": 8.771885285766974e-05,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 406573,
+                "final_route_completion": 0.07776508630981453,
+                "geometry_id": "geom_easy_SCSS_seed18",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.2309487832563932,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.06552959450160041,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.15333333333333332,
+                "steering_std": 6.745170752098774e-05,
+                "throttle_mean": null,
+                "timeout": false
+              }
+            ],
+            "evaluation_cap": 300,
+            "evaluation_mode": "deterministic",
+            "outcome_counts": {
+              "PROBE_CENSORED": 6
+            },
+            "result_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/evaluation/arm_A/step_02000_probe.json",
+            "result_sha256": "3d14a458e4f5af0cb32c4c83d8dc253a29153385beddfcfd69984e1bf238eace"
+          },
+          "replay_buffer_sha256": null,
+          "replay_buffer_size_bytes": null,
+          "step": 2000
+        },
+        {
+          "alpha": 0.30114907026290894,
+          "checkpoint_identity": null,
+          "full_episode": null,
+          "metadata_sha256": "9692c357dcc36271aad3871e4cbc3dd826a0be23ecdc44795d3d0a5421f81347",
+          "model_sha256": "14eabd501376782f203ddf96ec71f24e513350956580608625aad8d960ccd008",
+          "model_size_bytes": 7610557,
+          "optimizer_updates": 4000,
+          "probe": {
+            "actor_responsiveness": {
+              "deterministic_action_mean": [
+                -0.0033439563121646643,
+                0.002394733252003789
+              ],
+              "deterministic_action_std_across_real_states": [
+                7.286590061994502e-06,
+                4.609702591551468e-05
+              ],
+              "first_layer_activation_std_mean": 0.0001855937734944746,
+              "first_layer_nonpositive_fraction": 1.0,
+              "first_layer_preactivation_std_mean": 0.018559377640485764,
+              "observation_count": 360,
+              "observation_group_std_mean": {
+                "ego_core_9d": 0.039244528859853745,
+                "lidar_240d": 0.0,
+                "navigation_10d": 0.008148757740855217,
+                "task_masks_scalars_24d": 0.03059426136314869,
+                "task_waypoints_60d": 0.02107340283691883,
+                "traffic_actor_56d": 0.0,
+                "traffic_masks_metrics_10d": 0.0
+              }
+            },
+            "aggregate": {
+              "censored": 6,
+              "clean_successes": 0,
+              "mean_speed_kmh": {
+                "max": 0.39808288941046877,
+                "mean": 0.38325109025148296,
+                "median": 0.38495935913528295,
+                "min": 0.3689152136363133
+              },
+              "route_progress_delta": {
+                "max": 0.010152375522579169,
+                "mean": 0.007772946915003682,
+                "median": 0.007964778263863364,
+                "min": 0.005091774587364699
+              },
+              "safety_failures": 0,
+              "stationary_fraction": {
+                "max": 1.0,
+                "mean": 1.0,
+                "median": 1.0,
+                "min": 1.0
+              },
+              "timeouts": 0
+            },
+            "cases": [
+              {
+                "clean_success": false,
+                "environment_seed": 925389,
+                "final_route_completion": 0.013417252960477551,
+                "geometry_id": "geom_easy_SCCS_seed4",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.3689152136363133,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.005091774587364699,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 2.0108271878070444e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 666005,
+                "final_route_completion": 0.016212869055032216,
+                "geometry_id": "geom_easy_SCCS_seed19",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.389788566966162,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.00636416033196561,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 6.147481433173008e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 882172,
+                "final_route_completion": 0.022888618893290365,
+                "geometry_id": "geom_easy_SCS_seed12",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.39808288941046877,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.009099814520385885,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 3.097084465557412e-08,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 647459,
+                "final_route_completion": 0.02094363316740526,
+                "geometry_id": "geom_easy_SCS_seed16",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.36946116318177546,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.007955305874823427,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 5.671520177040169e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 88306,
+                "final_route_completion": 0.02626255742446226,
+                "geometry_id": "geom_easy_SCSS_seed2",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.3801301513044039,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.010152375522579169,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 5.9206496243915504e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 406573,
+                "final_route_completion": 0.020209742461117425,
+                "geometry_id": "geom_easy_SCSS_seed18",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.39312855700977406,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.0079742506529033,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 2.312661719349027e-06,
+                "throttle_mean": null,
+                "timeout": false
+              }
+            ],
+            "evaluation_cap": 300,
+            "evaluation_mode": "deterministic",
+            "outcome_counts": {
+              "PROBE_CENSORED": 6
+            },
+            "result_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/evaluation/arm_A/step_05000_probe.json",
+            "result_sha256": "f57299878680faebe259c5c71d21d4d12ff3b48403cf72c1e0324d77b883f2c8"
+          },
+          "replay_buffer_sha256": null,
+          "replay_buffer_size_bytes": null,
+          "step": 5000
+        },
+        {
+          "alpha": 0.0671977698802948,
+          "checkpoint_identity": null,
+          "full_episode": {
+            "actor_responsiveness": {
+              "deterministic_action_mean": [
+                0.004754011519253254,
+                0.00500898715108633
+              ],
+              "deterministic_action_std_across_real_states": [
+                3.18651509587653e-05,
+                3.954222847823985e-05
+              ],
+              "first_layer_activation_std_mean": 0.00025884146452881396,
+              "first_layer_nonpositive_fraction": 0.9991496801376343,
+              "first_layer_preactivation_std_mean": 0.02296653762459755,
+              "observation_count": 1075,
+              "observation_group_std_mean": {
+                "ego_core_9d": 0.054439496248960495,
+                "lidar_240d": 0.0,
+                "navigation_10d": 0.10881848633289337,
+                "task_masks_scalars_24d": 0.02475357986986637,
+                "task_waypoints_60d": 0.03054153546690941,
+                "traffic_actor_56d": 0.0,
+                "traffic_masks_metrics_10d": 0.0
+              }
+            },
+            "aggregate": {
+              "censored": 0,
+              "clean_successes": 0,
+              "mean_speed_kmh": {
+                "max": 3.1613811428913037,
+                "mean": 2.3629870964532333,
+                "median": 2.2548328320328155,
+                "min": 1.7106097060774967
+              },
+              "route_progress_delta": {
+                "max": 0.2549424233686374,
+                "mean": 0.14677813233734194,
+                "median": 0.1366016601215874,
+                "min": 0.060908521277479644
+              },
+              "safety_failures": 6,
+              "stationary_fraction": {
+                "max": 0.29204892966360857,
+                "mean": 0.2282310300197116,
+                "median": 0.23293304768347992,
+                "min": 0.15855704697986578
+              },
+              "timeouts": 0
+            },
+            "cases": [
+              {
+                "clean_success": false,
+                "environment_seed": 925389,
+                "final_route_completion": 0.18190479165503814,
+                "geometry_id": "geom_easy_SCCS_seed4",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.0629819929828472,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.17357931328192527,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.16409423233143786,
+                "steering_std": 3.663247469535097e-05,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 666005,
+                "final_route_completion": 0.07075723000054625,
+                "geometry_id": "geom_easy_SCCS_seed19",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 1.7552831724246034,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.060908521277479644,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.28459119496855345,
+                "steering_std": 2.7155079336834344e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 882172,
+                "final_route_completion": 0.22490148831130777,
+                "geometry_id": "geom_easy_SCS_seed12",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 2.754382491641028,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.21111268393840327,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.18127490039840638,
+                "steering_std": 3.2502269589490544e-05,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 647459,
+                "final_route_completion": 0.09349017248893836,
+                "geometry_id": "geom_easy_SCS_seed16",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 1.7106097060774967,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.08050184519635653,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.29204892966360857,
+                "steering_std": 2.6516071136273503e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 88306,
+                "final_route_completion": 0.1157341888631326,
+                "geometry_id": "geom_easy_SCSS_seed2",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 1.7332840727021186,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.0996240069612495,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.2888198757763975,
+                "steering_std": 2.6311286958467607e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 406573,
+                "final_route_completion": 0.2671779151768515,
+                "geometry_id": "geom_easy_SCSS_seed18",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.1613811428913037,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.2549424233686374,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.15855704697986578,
+                "steering_std": 4.2784463444476814e-05,
+                "throttle_mean": null,
+                "timeout": false
+              }
+            ],
+            "evaluation_cap": null,
+            "evaluation_mode": "deterministic",
+            "outcome_counts": {
+              "OUT_OF_ROAD": 6
+            },
+            "result_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/evaluation/arm_A/step_10000_full.json",
+            "result_sha256": "21c5cf7a1b3195039c8d577f5f49a1ee127e1066477fa7f9ec730aa9ae4ebe2c"
+          },
+          "metadata_sha256": "b0423898e155ad93e6caa511f7e681e9397d9681e8db4f32e60ad729d2172443",
+          "model_sha256": "0a8d5109ecfa9094d6b30ac29d2af87de5dfe9d4348a25d40cb6d4d6541dc338",
+          "model_size_bytes": 7610726,
+          "optimizer_updates": 9000,
+          "probe": {
+            "actor_responsiveness": {
+              "deterministic_action_mean": [
+                0.004747594706714153,
+                0.004982751328498125
+              ],
+              "deterministic_action_std_across_real_states": [
+                6.32972887615324e-06,
+                2.7115744160255417e-05
+              ],
+              "first_layer_activation_std_mean": 0.0002202171308454126,
+              "first_layer_nonpositive_fraction": 1.0,
+              "first_layer_preactivation_std_mean": 0.022021710872650146,
+              "observation_count": 360,
+              "observation_group_std_mean": {
+                "ego_core_9d": 0.03992101550102234,
+                "lidar_240d": 0.0,
+                "navigation_10d": 0.020322639495134354,
+                "task_masks_scalars_24d": 0.0367126427590847,
+                "task_waypoints_60d": 0.021326053887605667,
+                "traffic_actor_56d": 0.0,
+                "traffic_masks_metrics_10d": 0.0
+              }
+            },
+            "aggregate": {
+              "censored": 6,
+              "clean_successes": 0,
+              "mean_speed_kmh": {
+                "max": 0.8290161177033261,
+                "mean": 0.7972431076495529,
+                "median": 0.8007845588480715,
+                "min": 0.7442392975246307
+              },
+              "route_progress_delta": {
+                "max": 0.02159165310318062,
+                "mean": 0.016202387109478137,
+                "median": 0.016502716482429566,
+                "min": 0.010271820638467764
+              },
+              "safety_failures": 0,
+              "stationary_fraction": {
+                "max": 0.6733333333333333,
+                "mean": 0.6283333333333334,
+                "median": 0.625,
+                "min": 0.6033333333333334
+              },
+              "timeouts": 0
+            },
+            "cases": [
+              {
+                "clean_success": false,
+                "environment_seed": 925389,
+                "final_route_completion": 0.018597299011580616,
+                "geometry_id": "geom_easy_SCCS_seed4",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.7442392975246307,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.010271820638467764,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.6733333333333333,
+                "steering_std": 2.254128831225572e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 666005,
+                "final_route_completion": 0.023383958215522978,
+                "geometry_id": "geom_easy_SCCS_seed19",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.8290161177033261,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.013535249492456372,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.6033333333333334,
+                "steering_std": 2.913407616148245e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 882172,
+                "final_route_completion": 0.03259897083080942,
+                "geometry_id": "geom_easy_SCS_seed12",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.8228917899081533,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.01881016645790494,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.6066666666666667,
+                "steering_std": 2.604997904322657e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 647459,
+                "final_route_completion": 0.02990669577822187,
+                "geometry_id": "geom_easy_SCS_seed16",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.7857423230650643,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.016918368485640038,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.6366666666666667,
+                "steering_std": 2.937773784935801e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 88306,
+                "final_route_completion": 0.03770183500506371,
+                "geometry_id": "geom_easy_SCSS_seed2",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.8084644720852527,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.02159165310318062,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.62,
+                "steering_std": 2.911752046127161e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 406573,
+                "final_route_completion": 0.02832255628743322,
+                "geometry_id": "geom_easy_SCSS_seed18",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.7931046456108904,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.016087064479219093,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.63,
+                "steering_std": 2.3205420120678384e-06,
+                "throttle_mean": null,
+                "timeout": false
+              }
+            ],
+            "evaluation_cap": 300,
+            "evaluation_mode": "deterministic",
+            "outcome_counts": {
+              "PROBE_CENSORED": 6
+            },
+            "result_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/evaluation/arm_A/step_10000_probe.json",
+            "result_sha256": "5c9ccd3e5d2192fbffe0ddcb26bc7941113da9d7835f30974dbd7ea2f83199be"
+          },
+          "replay_buffer_sha256": "8452571f0e8087bd3f3ce91eec45feba30f33da775b75df667960e8b5ec4c6ed",
+          "replay_buffer_size_bytes": 329205618,
+          "step": 10000
+        }
+      ],
+      "training": {
+        "action_mismatch_count": 0,
+        "actor_activation_id": "actor_leaky_relu_001_v1",
+        "actual_environment_steps": 10000,
+        "arm": "A",
+        "benchmark_eligible": false,
+        "checkpoints": [
+          {
+            "alpha": 1.0,
+            "checkpoint_bundle_identity": null,
+            "checkpoint_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/arm_A/checkpoints/step_000000",
+            "completed_episodes": 0,
+            "fixed_recent_replay_td_diagnostic": {
+              "samples": 0
+            },
+            "metadata_sha256": "b6aea8e4abb6188a2f8561eb05a14dd18895691f92032cb06806912126dcb35f",
+            "model_sha256": "94ed119fdca176b600851c7804a4178e996b62f3ed868d66779a20f9c38425e8",
+            "optimizer_updates": 0,
+            "replay_buffer_sha256": null,
+            "replay_size": 0,
+            "step": 0
+          },
+          {
+            "alpha": 0.7407660484313965,
+            "checkpoint_bundle_identity": null,
+            "checkpoint_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/arm_A/checkpoints/step_002000",
+            "completed_episodes": 1,
+            "fixed_recent_replay_td_diagnostic": {
+              "alpha": 0.7407660484313965,
+              "definition": "fixed most-recent replay window, SB3 SAC soft target; diagnostic sample, not optimizer batch history",
+              "max_abs_td_error": 0.6368346214294434,
+              "mean_abs_td_error_both_critics": 0.07470177114009857,
+              "mean_abs_twin_q_gap": 0.01940898783504963,
+              "mean_online_q1": 6.056644439697266,
+              "mean_online_q2": 6.037234306335449,
+              "mean_target_soft_q": 6.014142036437988,
+              "p90_abs_td_error": 0.15319065749645233,
+              "samples": 256,
+              "timeout_transitions": 1
+            },
+            "metadata_sha256": "5944629f38ed88477341a442037393f0e2edb85836fce44b7dce861626ecff83",
+            "model_sha256": "a199fb3098fcd2d8b5d21fbb42dc6463afe40ec06f5e84f4561dba5cf774e62c",
+            "optimizer_updates": 1000,
+            "replay_buffer_sha256": null,
+            "replay_size": 2000,
+            "step": 2000
+          },
+          {
+            "alpha": 0.30114907026290894,
+            "checkpoint_bundle_identity": null,
+            "checkpoint_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/arm_A/checkpoints/step_005000",
+            "completed_episodes": 3,
+            "fixed_recent_replay_td_diagnostic": {
+              "alpha": 0.30114907026290894,
+              "definition": "fixed most-recent replay window, SB3 SAC soft target; diagnostic sample, not optimizer batch history",
+              "max_abs_td_error": 0.3254985809326172,
+              "mean_abs_td_error_both_critics": 0.039996884763240814,
+              "mean_abs_twin_q_gap": 0.022295594215393066,
+              "mean_online_q1": 13.586075782775879,
+              "mean_online_q2": 13.563779830932617,
+              "mean_target_soft_q": 13.598807334899902,
+              "p90_abs_td_error": 0.07808694988489151,
+              "samples": 256,
+              "timeout_transitions": 0
+            },
+            "metadata_sha256": "9692c357dcc36271aad3871e4cbc3dd826a0be23ecdc44795d3d0a5421f81347",
+            "model_sha256": "14eabd501376782f203ddf96ec71f24e513350956580608625aad8d960ccd008",
+            "optimizer_updates": 4000,
+            "replay_buffer_sha256": null,
+            "replay_size": 5000,
+            "step": 5000
+          },
+          {
+            "alpha": 0.0671977698802948,
+            "checkpoint_bundle_identity": null,
+            "checkpoint_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/arm_A/checkpoints/step_010000",
+            "completed_episodes": 7,
+            "fixed_recent_replay_td_diagnostic": {
+              "alpha": 0.0671977698802948,
+              "definition": "fixed most-recent replay window, SB3 SAC soft target; diagnostic sample, not optimizer batch history",
+              "max_abs_td_error": 0.11036300659179688,
+              "mean_abs_td_error_both_critics": 0.012445854023098946,
+              "mean_abs_twin_q_gap": 0.014632198959589005,
+              "mean_online_q1": 14.867615699768066,
+              "mean_online_q2": 14.852983474731445,
+              "mean_target_soft_q": 14.869645118713379,
+              "p90_abs_td_error": 0.025707433000206947,
+              "samples": 256,
+              "timeout_transitions": 0
+            },
+            "metadata_sha256": "b0423898e155ad93e6caa511f7e681e9397d9681e8db4f32e60ad729d2172443",
+            "model_sha256": "0a8d5109ecfa9094d6b30ac29d2af87de5dfe9d4348a25d40cb6d4d6541dc338",
+            "optimizer_updates": 9000,
+            "replay_buffer_sha256": "8452571f0e8087bd3f3ce91eec45feba30f33da775b75df667960e8b5ec4c6ed",
+            "replay_size": 10000,
+            "step": 10000
+          }
+        ],
+        "completed_episodes": 7,
+        "critic_activation": "ReLU",
+        "critic_sampling": "uniform",
+        "episode_outcomes": {
+          "TIMEOUT": 7
+        },
+        "final_terminal_counts": null,
+        "geometry_step_counts": {
+          "geom_easy_SCCS_seed0": 1758,
+          "geom_easy_SCCS_seed2": 1049,
+          "geom_easy_SCCS_seed3": 1325,
+          "geom_easy_SCSS_seed0": 1345,
+          "geom_easy_SCSS_seed3": 1204,
+          "geom_easy_SCSS_seed4": 1095,
+          "geom_easy_SCS_seed0": 1224,
+          "geom_easy_SCS_seed1": 1000
+        },
+        "initial_policy_fingerprint": "f91771d432a8c99e8ba4f9e36bbf2f47716ac1331adbdbc5027fa6e35050ea68",
+        "optimizer_updates": 9000,
+        "optimizer_updates_telemetry_rows": 90,
+        "ou_action_steps": 0,
+        "ou_clipped_components": 0,
+        "ou_episode_resets": 0,
+        "partial_episode_at_end": {
+          "case": {
+            "case_id": "train/Easy/SCSS/geom-4/env-320749",
+            "environment_seed": 320749,
+            "geometry_generation_seed": 4,
+            "geometry_id": "geom_easy_SCSS_seed4",
+            "geometry_sha256": "a6494d940761821e33150c767b561220d94586dba307df944131baa1e8457456",
+            "sequence": "SCSS",
+            "tier": "Easy"
+          },
+          "episode_index": 7,
+          "return_so_far": -0.18352241637398947,
+          "route_progress_delta_so_far": 0.017764348280689343,
+          "steps_so_far": 1095
+        },
+        "protocol_sha256": "4ed9ae34692e5da2a01953b85c692722cd1a32c3e52dc723e1dbc1472e6026bd",
+        "ram_samples": [
+          {
+            "rss_mb": 364.55078125,
+            "step": 1000
+          },
+          {
+            "rss_mb": 392.6875,
+            "step": 2000
+          },
+          {
+            "rss_mb": 398.82421875,
+            "step": 3000
+          },
+          {
+            "rss_mb": 404.40625,
+            "step": 4000
+          },
+          {
+            "rss_mb": 409.41015625,
+            "step": 5000
+          },
+          {
+            "rss_mb": 414.28125,
+            "step": 6000
+          },
+          {
+            "rss_mb": 420.44140625,
+            "step": 7000
+          },
+          {
+            "rss_mb": 425.73046875,
+            "step": 8000
+          },
+          {
+            "rss_mb": 431.1796875,
+            "step": 9000
+          },
+          {
+            "rss_mb": 436.390625,
+            "step": 10000
+          }
+        ],
+        "replay_action_distribution": {
+          "episode_sequences_with_estimable_lag1": 0,
+          "executed_throttle_lag1_autocorrelation_global": 0.006449683592125494,
+          "executed_throttle_lag1_autocorrelation_mean_within_episode": 0.006575172068253947,
+          "ou_noise_throttle_lag1_autocorrelation_global": null,
+          "ou_noise_throttle_lag1_autocorrelation_mean_within_episode": null,
+          "steering_mean_std": [
+            -5.792427659034729e-05,
+            0.5846028762946802
+          ],
+          "throttle_brake_sign_switches": 5016,
+          "throttle_mean_std": [
+            -0.010610938280820846,
+            0.5850910649338644
+          ],
+          "throttle_near_zero_fraction_abs_lt_005": 0.0511,
+          "throttle_positive_fraction": 0.4895,
+          "throttle_positive_run_length_mean": 1.9494225408203902,
+          "throttle_positive_run_length_median": 1.0,
+          "transition_count": 10000,
+          "warning": "Global lag-1 includes episode boundaries; run-length and switch statistics reset per episode."
+        },
+        "run_manifest_sha256": "44b8236b0fdb47393e410fac6973c90f8fa0df71dcb3b618cf1a5f9d546a30f1",
+        "runtime_versions": {
+          "device": "cpu",
+          "gymnasium": "1.3.0",
+          "metadrive": "0.4.3",
+          "numpy": "2.2.6",
+          "python": "3.10.21",
+          "stable_baselines3": "2.9.2",
+          "torch": "2.14.1+cpu"
+        },
+        "status": "COMPLETE",
+        "throughput_steps_per_second": 49.639786876122834,
+        "training_source_commit": "875453e18d7f7c82002c1b0ee799fc7f6f4abab8",
+        "unique_geometries_visited": 8,
+        "wall_time_seconds": 201.45130809999682
+      },
+      "training_episodes": [
+        {
+          "arm": "A",
+          "case_id": "train/Easy/SCCS/geom-0/env-386509",
+          "clean_success": false,
+          "environment_seed": 386509,
+          "episode_index": 0,
+          "episode_return": -0.23090894580400345,
+          "geometry_generation_seed": 0,
+          "geometry_id": "geom_easy_SCCS_seed0",
+          "geometry_sha256": "df9c8bb722fc6517de55dc18838470b91ec43b89767ede19d93b72dc94674f9b",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.019091054065446544,
+          "sequence": "SCCS",
+          "steps": 1758,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "A",
+          "case_id": "train/Easy/SCCS/geom-2/env-821175",
+          "clean_success": false,
+          "environment_seed": 821175,
+          "episode_index": 1,
+          "episode_return": -0.22541014472119514,
+          "geometry_generation_seed": 2,
+          "geometry_id": "geom_easy_SCCS_seed2",
+          "geometry_sha256": "314a2830c26cf72879d740f97d450f1d657beeb050f602c1cbece838fd40d8f5",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.02458985524294604,
+          "sequence": "SCCS",
+          "steps": 1049,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "A",
+          "case_id": "train/Easy/SCCS/geom-3/env-90740",
+          "clean_success": false,
+          "environment_seed": 90740,
+          "episode_index": 2,
+          "episode_return": -0.2279310541441646,
+          "geometry_generation_seed": 3,
+          "geometry_id": "geom_easy_SCCS_seed3",
+          "geometry_sha256": "63cc884fe4ab7df2035db6e9ab3e08289f93caafd22304c7dbf71ab28ae6627e",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.022068945836330442,
+          "sequence": "SCCS",
+          "steps": 1325,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "A",
+          "case_id": "train/Easy/SCS/geom-0/env-516597",
+          "clean_success": false,
+          "environment_seed": 516597,
+          "episode_index": 3,
+          "episode_return": -0.22251999052923566,
+          "geometry_generation_seed": 0,
+          "geometry_id": "geom_easy_SCS_seed0",
+          "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.027480009460071064,
+          "sequence": "SCS",
+          "steps": 1224,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "A",
+          "case_id": "train/Easy/SCS/geom-1/env-88413",
+          "clean_success": false,
+          "environment_seed": 88413,
+          "episode_index": 4,
+          "episode_return": -0.22529683949390744,
+          "geometry_generation_seed": 1,
+          "geometry_id": "geom_easy_SCS_seed1",
+          "geometry_sha256": "7b721ddea0699aeff3168ff3a9f5de5f11209a374d591a86a0eaaf08bcbb6bbb",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.024703160205765688,
+          "sequence": "SCS",
+          "steps": 1000,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "A",
+          "case_id": "train/Easy/SCSS/geom-0/env-96513",
+          "clean_success": false,
+          "environment_seed": 96513,
+          "episode_index": 5,
+          "episode_return": -0.22686083461985618,
+          "geometry_generation_seed": 0,
+          "geometry_id": "geom_easy_SCSS_seed0",
+          "geometry_sha256": "f315580c575a221a020c9996f8c7c1ba64f936d0362f9eed316d08289feccf90",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.023139165290836934,
+          "sequence": "SCSS",
+          "steps": 1345,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "A",
+          "case_id": "train/Easy/SCSS/geom-3/env-976051",
+          "clean_success": false,
+          "environment_seed": 976051,
+          "episode_index": 6,
+          "episode_return": -0.22409333368426587,
+          "geometry_generation_seed": 3,
+          "geometry_id": "geom_easy_SCSS_seed3",
+          "geometry_sha256": "68fbae08cc6d34648bcc19bbb1ba0438430f4b2cd748927704d921969ae6b91c",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.025906666252370016,
+          "sequence": "SCSS",
+          "steps": 1204,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        }
+      ]
+    },
+    "B": {
+      "checkpoint_evaluations": [
+        {
+          "alpha": 1.0,
+          "checkpoint_identity": null,
+          "full_episode": null,
+          "metadata_sha256": "bfd6166caad2ab3dac0002ced9b69cd3f6402a87ebba07e1b0ad4e38329a3c69",
+          "model_sha256": "174dc47a45cc4a2f0571b64bcef1ca9f5293b269e9b8769e6610fa9aad8d2af4",
+          "model_size_bytes": 3471493,
+          "optimizer_updates": 0,
+          "probe": {
+            "actor_responsiveness": {
+              "deterministic_action_mean": [
+                -0.02694135531783104,
+                -0.1291254758834839
+              ],
+              "deterministic_action_std_across_real_states": [
+                0.0020404397509992123,
+                0.002391971182078123
+              ],
+              "first_layer_activation_std_mean": 0.008663978427648544,
+              "first_layer_nonpositive_fraction": 0.4661458432674408,
+              "first_layer_preactivation_std_mean": 0.015388892963528633,
+              "observation_count": 360,
+              "observation_group_std_mean": {
+                "ego_core_9d": 0.039947766810655594,
+                "lidar_240d": 0.0,
+                "navigation_10d": 0.00629024812951684,
+                "task_masks_scalars_24d": 0.024279197677969933,
+                "task_waypoints_60d": 0.02095024473965168,
+                "traffic_actor_56d": 0.0,
+                "traffic_masks_metrics_10d": 0.0
+              }
+            },
+            "aggregate": {
+              "censored": 6,
+              "clean_successes": 0,
+              "mean_speed_kmh": {
+                "max": 0.0150736401531211,
+                "mean": 0.014864202796118617,
+                "median": 0.014800538418287918,
+                "min": 0.014768959425310578
+              },
+              "route_progress_delta": {
+                "max": 4.6816731766142344e-05,
+                "mean": 2.8868969669465564e-05,
+                "median": 2.656118307232773e-05,
+                "min": 1.776672346800491e-05
+              },
+              "safety_failures": 0,
+              "stationary_fraction": {
+                "max": 1.0,
+                "mean": 1.0,
+                "median": 1.0,
+                "min": 1.0
+              },
+              "timeouts": 0
+            },
+            "cases": [
+              {
+                "clean_success": false,
+                "environment_seed": 925389,
+                "final_route_completion": 0.008356032291832538,
+                "geometry_id": "geom_easy_SCCS_seed4",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.014768959425310578,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 3.055391871968627e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 3.0466085837521395e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 666005,
+                "final_route_completion": 0.009869651092374908,
+                "geometry_id": "geom_easy_SCCS_seed19",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.0150736401531211,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 2.0942369308302178e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 3.0440757271146446e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 882172,
+                "final_route_completion": 0.013835621104670622,
+                "geometry_id": "geom_easy_SCS_seed12",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.014953380593002948,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 4.6816731766142344e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 3.3348341489749167e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 647459,
+                "final_route_completion": 0.013010895740006802,
+                "geometry_id": "geom_easy_SCS_seed16",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.01480326533630602,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 2.256844742496919e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 2.7573101514925394e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 88306,
+                "final_route_completion": 0.01614474752921278,
+                "geometry_id": "geom_easy_SCSS_seed2",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.01478815976870124,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 3.4565627329688486e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 2.875986384067301e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 406573,
+                "final_route_completion": 0.01225325853168213,
+                "geometry_id": "geom_easy_SCSS_seed18",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 0.014797811500269816,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 1.776672346800491e-05,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 1.0,
+                "steering_std": 2.5285028374503285e-06,
+                "throttle_mean": null,
+                "timeout": false
+              }
+            ],
+            "evaluation_cap": 300,
+            "evaluation_mode": "deterministic",
+            "outcome_counts": {
+              "PROBE_CENSORED": 6
+            },
+            "result_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/evaluation/arm_B/step_00000_probe.json",
+            "result_sha256": "53327ee3adc58b993e00ac59c53ae6945bb4d08a91d4c7e201fa2241e5d16e6c"
+          },
+          "replay_buffer_sha256": null,
+          "replay_buffer_size_bytes": null,
+          "step": 0
+        },
+        {
+          "alpha": 0.7407681345939636,
+          "checkpoint_identity": null,
+          "full_episode": null,
+          "metadata_sha256": "bbadcf38b162b9c94f73a8f5be0abcbf76c22987a48c1218b3180f2e07b46e7a",
+          "model_sha256": "85dac6b27b8d126509a7d32437d85ab4e48839123fb84b8b934fa4dff8ca0a6d",
+          "model_size_bytes": 7610507,
+          "optimizer_updates": 1000,
+          "probe": {
+            "actor_responsiveness": {
+              "deterministic_action_mean": [
+                0.00315541191957891,
+                0.0206857118755579
+              ],
+              "deterministic_action_std_across_real_states": [
+                0.00022496035671792924,
+                0.00032541342079639435
+              ],
+              "first_layer_activation_std_mean": 0.0007110972655937076,
+              "first_layer_nonpositive_fraction": 0.9672309160232544,
+              "first_layer_preactivation_std_mean": 0.01755676604807377,
+              "observation_count": 360,
+              "observation_group_std_mean": {
+                "ego_core_9d": 0.044415589421987534,
+                "lidar_240d": 0.0,
+                "navigation_10d": 0.02336183562874794,
+                "task_masks_scalars_24d": 0.027911901473999023,
+                "task_waypoints_60d": 0.022081347182393074,
+                "traffic_actor_56d": 0.0,
+                "traffic_masks_metrics_10d": 0.0
+              }
+            },
+            "aggregate": {
+              "censored": 6,
+              "clean_successes": 0,
+              "mean_speed_kmh": {
+                "max": 3.452025126708959,
+                "mean": 3.301055162598496,
+                "median": 3.3192878856872103,
+                "min": 3.0513184851315054
+              },
+              "route_progress_delta": {
+                "max": 0.08990130962624433,
+                "mean": 0.06712609191014908,
+                "median": 0.06821487038393972,
+                "min": 0.042108124215105486
+              },
+              "safety_failures": 0,
+              "stationary_fraction": {
+                "max": 0.16333333333333333,
+                "mean": 0.15055555555555555,
+                "median": 0.14833333333333332,
+                "min": 0.14333333333333334
+              },
+              "timeouts": 0
+            },
+            "cases": [
+              {
+                "clean_success": false,
+                "environment_seed": 925389,
+                "final_route_completion": 0.05043360258821834,
+                "geometry_id": "geom_easy_SCCS_seed4",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.0513184851315054,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.042108124215105486,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.16333333333333333,
+                "steering_std": 0.00013137923458871726,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 666005,
+                "final_route_completion": 0.06620447894856743,
+                "geometry_id": "geom_easy_SCCS_seed19",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.452025126708959,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.056355770225500826,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.14333333333333334,
+                "steering_std": 0.0002868590525447176,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 882172,
+                "final_route_completion": 0.09175041099906886,
+                "geometry_id": "geom_easy_SCS_seed12",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.4109969547992622,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.07796160662616439,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.14666666666666667,
+                "steering_std": 0.00015241263888970182,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 647459,
+                "final_route_completion": 0.08343613973389534,
+                "geometry_id": "geom_easy_SCS_seed16",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.2720798208031296,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.0704478124413135,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.15,
+                "steering_std": 0.00028605057765399364,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 88306,
+                "final_route_completion": 0.10601149152812742,
+                "geometry_id": "geom_easy_SCSS_seed2",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.366495950571291,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.08990130962624433,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.14666666666666667,
+                "steering_std": 0.000284777163208349,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 406573,
+                "final_route_completion": 0.07821742013478007,
+                "geometry_id": "geom_easy_SCSS_seed18",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.253414637576828,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.06598192832656595,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.15333333333333332,
+                "steering_std": 0.00013191318068349876,
+                "throttle_mean": null,
+                "timeout": false
+              }
+            ],
+            "evaluation_cap": 300,
+            "evaluation_mode": "deterministic",
+            "outcome_counts": {
+              "PROBE_CENSORED": 6
+            },
+            "result_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/evaluation/arm_B/step_02000_probe.json",
+            "result_sha256": "0cc4dbd66bbbc475400eb27dd402fb1350276ba8eb1d2ac8d04e4b1080f5c3cd"
+          },
+          "replay_buffer_sha256": null,
+          "replay_buffer_size_bytes": null,
+          "step": 2000
+        },
+        {
+          "alpha": 0.30114826560020447,
+          "checkpoint_identity": null,
+          "full_episode": null,
+          "metadata_sha256": "a8e14f008724048fdc7b4da6cf57f7f92350c5ef8c84b940139646d926e651e3",
+          "model_sha256": "52c5689f2577532b7c1cac1a072c4a61e3ea224f3a68b80ef15133e237322e5f",
+          "model_size_bytes": 7610592,
+          "optimizer_updates": 4000,
+          "probe": {
+            "actor_responsiveness": {
+              "deterministic_action_mean": [
+                -0.013633476570248604,
+                0.026700902730226517
+              ],
+              "deterministic_action_std_across_real_states": [
+                0.00033262340002693236,
+                0.00034568647970445454
+              ],
+              "first_layer_activation_std_mean": 0.0002921932318713516,
+              "first_layer_nonpositive_fraction": 0.99609375,
+              "first_layer_preactivation_std_mean": 0.01891198754310608,
+              "observation_count": 324,
+              "observation_group_std_mean": {
+                "ego_core_9d": 0.05616188794374466,
+                "lidar_240d": 0.0,
+                "navigation_10d": 0.023477664217352867,
+                "task_masks_scalars_24d": 0.02804015576839447,
+                "task_waypoints_60d": 0.02568480744957924,
+                "traffic_actor_56d": 0.0,
+                "traffic_masks_metrics_10d": 0.0
+              }
+            },
+            "aggregate": {
+              "censored": 4,
+              "clean_successes": 0,
+              "mean_speed_kmh": {
+                "max": 4.412007885880299,
+                "mean": 3.8401114576668185,
+                "median": 4.20046791129092,
+                "min": 2.885126669019744
+              },
+              "route_progress_delta": {
+                "max": 0.11340728823070394,
+                "mean": 0.07377397337423655,
+                "median": 0.07997958259271938,
+                "min": 0.027919472541689486
+              },
+              "safety_failures": 2,
+              "stationary_fraction": {
+                "max": 0.17061611374407584,
+                "mean": 0.13343601895734597,
+                "median": 0.11833333333333333,
+                "min": 0.11333333333333333
+              },
+              "timeouts": 0
+            },
+            "cases": [
+              {
+                "clean_success": false,
+                "environment_seed": 925389,
+                "final_route_completion": 0.036244950914802336,
+                "geometry_id": "geom_easy_SCCS_seed4",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 2.885126669019744,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.027919472541689486,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.17061611374407584,
+                "steering_std": 0.00034483335884892427,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 666005,
+                "final_route_completion": 0.08093747003943862,
+                "geometry_id": "geom_easy_SCCS_seed19",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 4.369301510064297,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.071088761316372,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.11333333333333333,
+                "steering_std": 0.00012378550650851613,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 882172,
+                "final_route_completion": 0.1142743164795769,
+                "geometry_id": "geom_easy_SCS_seed12",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 4.412007885880299,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.10048551210667242,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.11333333333333333,
+                "steering_std": 0.0001024907951564006,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 647459,
+                "final_route_completion": 0.10185873116164859,
+                "geometry_id": "geom_easy_SCS_seed16",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 4.140439842425355,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.08887040386906676,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.12,
+                "steering_std": 0.00012120225752864818,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 88306,
+                "final_route_completion": 0.12951747013258702,
+                "geometry_id": "geom_easy_SCSS_seed2",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 4.2604959801564855,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.11340728823070394,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.11666666666666667,
+                "steering_std": 0.00012197819148652418,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 406573,
+                "final_route_completion": 0.05310789398912881,
+                "geometry_id": "geom_easy_SCSS_seed18",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 2.973296858454729,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.04087240218091469,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.16666666666666666,
+                "steering_std": 0.0003460177619578192,
+                "throttle_mean": null,
+                "timeout": false
+              }
+            ],
+            "evaluation_cap": 300,
+            "evaluation_mode": "deterministic",
+            "outcome_counts": {
+              "OUT_OF_ROAD": 2,
+              "PROBE_CENSORED": 4
+            },
+            "result_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/evaluation/arm_B/step_05000_probe.json",
+            "result_sha256": "19c7acf3ea37c7858116e26301104c4c0872bbe2367be3a1ef81d172216b3aeb"
+          },
+          "replay_buffer_sha256": null,
+          "replay_buffer_size_bytes": null,
+          "step": 5000
+        },
+        {
+          "alpha": 0.0671972781419754,
+          "checkpoint_identity": null,
+          "full_episode": {
+            "actor_responsiveness": {
+              "deterministic_action_mean": [
+                0.004913643002510071,
+                0.007077930495142937
+              ],
+              "deterministic_action_std_across_real_states": [
+                3.8498779758811e-05,
+                5.6283039157278836e-05
+              ],
+              "first_layer_activation_std_mean": 0.00027311177109368145,
+              "first_layer_nonpositive_fraction": 0.9990637302398682,
+              "first_layer_preactivation_std_mean": 0.023152410984039307,
+              "observation_count": 897,
+              "observation_group_std_mean": {
+                "ego_core_9d": 0.05489236116409302,
+                "lidar_240d": 0.0,
+                "navigation_10d": 0.10812129825353622,
+                "task_masks_scalars_24d": 0.024905987083911896,
+                "task_waypoints_60d": 0.029945531859993935,
+                "traffic_actor_56d": 0.0,
+                "traffic_masks_metrics_10d": 0.0
+              }
+            },
+            "aggregate": {
+              "censored": 0,
+              "clean_successes": 0,
+              "mean_speed_kmh": {
+                "max": 3.7382044631679334,
+                "mean": 2.7846453156309203,
+                "median": 2.6535478104526056,
+                "min": 2.0051929769973604
+              },
+              "route_progress_delta": {
+                "max": 0.2505260075152003,
+                "mean": 0.14412694360940861,
+                "median": 0.1341892169635655,
+                "min": 0.05980541811165685
+              },
+              "safety_failures": 6,
+              "stationary_fraction": {
+                "max": 0.2490842490842491,
+                "mean": 0.1937705096559538,
+                "median": 0.19830153340340098,
+                "min": 0.13420787083753785
+              },
+              "timeouts": 0
+            },
+            "cases": [
+              {
+                "clean_success": false,
+                "environment_seed": 925389,
+                "final_route_completion": 0.1787732984369482,
+                "geometry_id": "geom_easy_SCCS_seed4",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.6206293744275917,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.17044782006383535,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.1378299120234604,
+                "steering_std": 4.2953788571335774e-05,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 666005,
+                "final_route_completion": 0.06965412683472345,
+                "geometry_id": "geom_easy_SCCS_seed19",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 2.0614533013366536,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.05980541811165685,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.2424812030075188,
+                "steering_std": 8.391781284197012e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 882172,
+                "final_route_completion": 0.22109774260305595,
+                "geometry_id": "geom_easy_SCS_seed12",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.2456423195685575,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.20730893823015145,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.15412186379928317,
+                "steering_std": 4.8943744826909e-05,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 647459,
+                "final_route_completion": 0.09173119116489385,
+                "geometry_id": "geom_easy_SCS_seed16",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 2.0051929769973604,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.07874286387231201,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.2490842490842491,
+                "steering_std": 8.342064927049936e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 88306,
+                "final_route_completion": 0.11404079576517877,
+                "geometry_id": "geom_easy_SCSS_seed2",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 2.0367494582874266,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.09793061386329568,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.24489795918367346,
+                "steering_std": 8.333796992723075e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 406573,
+                "final_route_completion": 0.26276149932341447,
+                "geometry_id": "geom_easy_SCSS_seed18",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 3.7382044631679334,
+                "outcome": "OUT_OF_ROAD",
+                "probe_censored": false,
+                "route_progress_delta": 0.2505260075152003,
+                "safety_failure": true,
+                "stationary_fraction_below_1kmh": 0.13420787083753785,
+                "steering_std": 4.833096469124983e-05,
+                "throttle_mean": null,
+                "timeout": false
+              }
+            ],
+            "evaluation_cap": null,
+            "evaluation_mode": "deterministic",
+            "outcome_counts": {
+              "OUT_OF_ROAD": 6
+            },
+            "result_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/evaluation/arm_B/step_10000_full.json",
+            "result_sha256": "dbd566c99575eb3e7d69a8062972d9da059cd99dc15def679aa194c2002e1ede"
+          },
+          "metadata_sha256": "65023301db529622cf011d19c35779d691deca46903030d26b2991f963199b3f",
+          "model_sha256": "6fedd476ca37470de580b253f405d29b871cf5736818165f97f8a545a3ce8583",
+          "model_size_bytes": 7610761,
+          "optimizer_updates": 9000,
+          "probe": {
+            "actor_responsiveness": {
+              "deterministic_action_mean": [
+                0.004899772349745035,
+                0.007040711119771004
+              ],
+              "deterministic_action_std_across_real_states": [
+                1.175877514469903e-05,
+                2.6439980501891114e-05
+              ],
+              "first_layer_activation_std_mean": 0.00021390916663222015,
+              "first_layer_nonpositive_fraction": 1.0,
+              "first_layer_preactivation_std_mean": 0.021390916779637337,
+              "observation_count": 360,
+              "observation_group_std_mean": {
+                "ego_core_9d": 0.04050859808921814,
+                "lidar_240d": 0.0,
+                "navigation_10d": 0.024275625124573708,
+                "task_masks_scalars_24d": 0.03475108742713928,
+                "task_waypoints_60d": 0.021507037803530693,
+                "traffic_actor_56d": 0.0,
+                "traffic_masks_metrics_10d": 0.0
+              }
+            },
+            "aggregate": {
+              "censored": 6,
+              "clean_successes": 0,
+              "mean_speed_kmh": {
+                "max": 1.1639071669920424,
+                "mean": 1.1256968233829525,
+                "median": 1.1323528761102986,
+                "min": 1.061398953755702
+              },
+              "route_progress_delta": {
+                "max": 0.0302741552062855,
+                "mean": 0.02286173768746547,
+                "median": 0.023331923819689133,
+                "min": 0.014648910467837803
+              },
+              "safety_failures": 0,
+              "stationary_fraction": {
+                "max": 0.47,
+                "mean": 0.4444444444444444,
+                "median": 0.44166666666666665,
+                "min": 0.43
+              },
+              "timeouts": 0
+            },
+            "cases": [
+              {
+                "clean_success": false,
+                "environment_seed": 925389,
+                "final_route_completion": 0.022974388840950655,
+                "geometry_id": "geom_easy_SCCS_seed4",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 1.061398953755702,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.014648910467837803,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.47,
+                "steering_std": 7.440099326821783e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 666005,
+                "final_route_completion": 0.028827507133342072,
+                "geometry_id": "geom_easy_SCCS_seed19",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 1.1624520976967558,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.018978798410275468,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.43,
+                "steering_std": 6.998756295097308e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 882172,
+                "final_route_completion": 0.04039351877392027,
+                "geometry_id": "geom_easy_SCS_seed12",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 1.1639071669920424,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.02660471440101579,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.43,
+                "steering_std": 2.67742330500808e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 647459,
+                "final_route_completion": 0.036709596280751725,
+                "geometry_id": "geom_easy_SCS_seed16",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 1.1017169696326174,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.02372126898816989,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.4533333333333333,
+                "steering_std": 6.78305448052118e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 88306,
+                "final_route_completion": 0.04638433710816859,
+                "geometry_id": "geom_easy_SCSS_seed2",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 1.133594385311451,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.0302741552062855,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.44,
+                "steering_std": 6.869653242405069e-06,
+                "throttle_mean": null,
+                "timeout": false
+              },
+              {
+                "clean_success": false,
+                "environment_seed": 406573,
+                "final_route_completion": 0.035178070459422506,
+                "geometry_id": "geom_easy_SCSS_seed18",
+                "longest_moving_period_steps": null,
+                "mean_speed_kmh": 1.131111366909146,
+                "outcome": "PROBE_CENSORED",
+                "probe_censored": true,
+                "route_progress_delta": 0.02294257865120838,
+                "safety_failure": false,
+                "stationary_fraction_below_1kmh": 0.44333333333333336,
+                "steering_std": 7.494082250761286e-06,
+                "throttle_mean": null,
+                "timeout": false
+              }
+            ],
+            "evaluation_cap": 300,
+            "evaluation_mode": "deterministic",
+            "outcome_counts": {
+              "PROBE_CENSORED": 6
+            },
+            "result_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/evaluation/arm_B/step_10000_probe.json",
+            "result_sha256": "608e0bef31d890ae0b73350ddced7e6977f413f4c8a7c9fe5a56511d5f7fccf9"
+          },
+          "replay_buffer_sha256": "8dfbb776a9f3b06e429f3f61bf045f10480df222440331da28813cd8b3dfa49b",
+          "replay_buffer_size_bytes": 329205618,
+          "step": 10000
+        }
+      ],
+      "training": {
+        "action_mismatch_count": 0,
+        "actor_activation_id": "actor_leaky_relu_001_v1",
+        "actual_environment_steps": 10000,
+        "arm": "B",
+        "benchmark_eligible": false,
+        "checkpoints": [
+          {
+            "alpha": 1.0,
+            "checkpoint_bundle_identity": null,
+            "checkpoint_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/arm_B/checkpoints/step_000000",
+            "completed_episodes": 0,
+            "fixed_recent_replay_td_diagnostic": {
+              "samples": 0
+            },
+            "metadata_sha256": "bfd6166caad2ab3dac0002ced9b69cd3f6402a87ebba07e1b0ad4e38329a3c69",
+            "model_sha256": "174dc47a45cc4a2f0571b64bcef1ca9f5293b269e9b8769e6610fa9aad8d2af4",
+            "optimizer_updates": 0,
+            "replay_buffer_sha256": null,
+            "replay_size": 0,
+            "step": 0
+          },
+          {
+            "alpha": 0.7407681345939636,
+            "checkpoint_bundle_identity": null,
+            "checkpoint_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/arm_B/checkpoints/step_002000",
+            "completed_episodes": 1,
+            "fixed_recent_replay_td_diagnostic": {
+              "alpha": 0.7407681345939636,
+              "definition": "fixed most-recent replay window, SB3 SAC soft target; diagnostic sample, not optimizer batch history",
+              "max_abs_td_error": 0.6327528953552246,
+              "mean_abs_td_error_both_critics": 0.0752931535243988,
+              "mean_abs_twin_q_gap": 0.016718940809369087,
+              "mean_online_q1": 6.058309555053711,
+              "mean_online_q2": 6.041590213775635,
+              "mean_target_soft_q": 6.014697551727295,
+              "p90_abs_td_error": 0.1538439244031906,
+              "samples": 256,
+              "timeout_transitions": 1
+            },
+            "metadata_sha256": "bbadcf38b162b9c94f73a8f5be0abcbf76c22987a48c1218b3180f2e07b46e7a",
+            "model_sha256": "85dac6b27b8d126509a7d32437d85ab4e48839123fb84b8b934fa4dff8ca0a6d",
+            "optimizer_updates": 1000,
+            "replay_buffer_sha256": null,
+            "replay_size": 2000,
+            "step": 2000
+          },
+          {
+            "alpha": 0.30114826560020447,
+            "checkpoint_bundle_identity": null,
+            "checkpoint_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/arm_B/checkpoints/step_005000",
+            "completed_episodes": 3,
+            "fixed_recent_replay_td_diagnostic": {
+              "alpha": 0.30114826560020447,
+              "definition": "fixed most-recent replay window, SB3 SAC soft target; diagnostic sample, not optimizer batch history",
+              "max_abs_td_error": 0.34215259552001953,
+              "mean_abs_td_error_both_critics": 0.03365086019039154,
+              "mean_abs_twin_q_gap": 0.02059885859489441,
+              "mean_online_q1": 13.5979642868042,
+              "mean_online_q2": 13.577363967895508,
+              "mean_target_soft_q": 13.601040840148926,
+              "p90_abs_td_error": 0.06591223925352097,
+              "samples": 256,
+              "timeout_transitions": 0
+            },
+            "metadata_sha256": "a8e14f008724048fdc7b4da6cf57f7f92350c5ef8c84b940139646d926e651e3",
+            "model_sha256": "52c5689f2577532b7c1cac1a072c4a61e3ea224f3a68b80ef15133e237322e5f",
+            "optimizer_updates": 4000,
+            "replay_buffer_sha256": null,
+            "replay_size": 5000,
+            "step": 5000
+          },
+          {
+            "alpha": 0.0671972781419754,
+            "checkpoint_bundle_identity": null,
+            "checkpoint_path": "runs/stage5_p2h/s5_p2h_terminal_replay_seed101_20261121/arm_B/checkpoints/step_010000",
+            "completed_episodes": 7,
+            "fixed_recent_replay_td_diagnostic": {
+              "alpha": 0.0671972781419754,
+              "definition": "fixed most-recent replay window, SB3 SAC soft target; diagnostic sample, not optimizer batch history",
+              "max_abs_td_error": 0.10470008850097656,
+              "mean_abs_td_error_both_critics": 0.009497145190834999,
+              "mean_abs_twin_q_gap": 0.006940830498933792,
+              "mean_online_q1": 14.871064186096191,
+              "mean_online_q2": 14.864124298095703,
+              "mean_target_soft_q": 14.87326717376709,
+              "p90_abs_td_error": 0.017636680975556374,
+              "samples": 256,
+              "timeout_transitions": 0
+            },
+            "metadata_sha256": "65023301db529622cf011d19c35779d691deca46903030d26b2991f963199b3f",
+            "model_sha256": "6fedd476ca37470de580b253f405d29b871cf5736818165f97f8a545a3ce8583",
+            "optimizer_updates": 9000,
+            "replay_buffer_sha256": "8dfbb776a9f3b06e429f3f61bf045f10480df222440331da28813cd8b3dfa49b",
+            "replay_size": 10000,
+            "step": 10000,
+            "terminal_inventory": {
+              "counts": {
+                "clean_terminal": 0,
+                "none_or_nonterminal": 9993,
+                "safety_terminal": 0,
+                "timeout_truncation": 7,
+                "true_terminal_mask_count": 0
+              },
+              "priority_max": 4.1504902839660645,
+              "priority_min": 0.00020122528076171875,
+              "replay_size": 10000,
+              "sampled": {
+                "clean_terminal_draws": 0,
+                "critic_draws": 256,
+                "cumulative_sampler": {
+                  "clean_draws": 0,
+                  "draws": 2304000,
+                  "rng_state": {
+                    "bit_generator": "PCG64",
+                    "has_uint32": 0,
+                    "state": {
+                      "inc": 287896369054363243330570147588121237329,
+                      "state": 20998215056753762522134048084470932005
+                    },
+                    "uinteger": 0
+                  },
+                  "safety_draws": 0,
+                  "terminal_draws": 0,
+                  "timeout_draws": 1361
+                },
+                "ess_sum": 256.0,
+                "mean_ess_per_update": 256.0,
+                "priority_updates": 256,
+                "safety_terminal_draws": 0,
+                "terminal_candidates_seen": 0,
+                "terminal_draws": 0,
+                "timeout_draws": 1
+              },
+              "step": 10000
+            }
+          }
+        ],
+        "completed_episodes": 7,
+        "critic_activation": "ReLU",
+        "critic_sampling": "terminal_aware_prioritized_v1",
+        "episode_outcomes": {
+          "TIMEOUT": 7
+        },
+        "final_terminal_counts": {
+          "counts": {
+            "clean_terminal": 0,
+            "none_or_nonterminal": 9993,
+            "safety_terminal": 0,
+            "timeout_truncation": 7,
+            "true_terminal_mask_count": 0
+          },
+          "priority_max": 4.1504902839660645,
+          "priority_min": 0.00020122528076171875,
+          "replay_size": 10000,
+          "sampled": {
+            "clean_terminal_draws": 0,
+            "critic_draws": 256,
+            "cumulative_sampler": {
+              "clean_draws": 0,
+              "draws": 2304000,
+              "rng_state": {
+                "bit_generator": "PCG64",
+                "has_uint32": 0,
+                "state": {
+                  "inc": 287896369054363243330570147588121237329,
+                  "state": 20998215056753762522134048084470932005
+                },
+                "uinteger": 0
+              },
+              "safety_draws": 0,
+              "terminal_draws": 0,
+              "timeout_draws": 1361
+            },
+            "ess_sum": 256.0,
+            "mean_ess_per_update": 256.0,
+            "priority_updates": 256,
+            "safety_terminal_draws": 0,
+            "terminal_candidates_seen": 0,
+            "terminal_draws": 0,
+            "timeout_draws": 1
+          },
+          "step": 10000
+        },
+        "geometry_step_counts": {
+          "geom_easy_SCCS_seed0": 1758,
+          "geom_easy_SCCS_seed2": 1049,
+          "geom_easy_SCCS_seed3": 1325,
+          "geom_easy_SCSS_seed0": 1345,
+          "geom_easy_SCSS_seed3": 1204,
+          "geom_easy_SCSS_seed4": 1095,
+          "geom_easy_SCS_seed0": 1224,
+          "geom_easy_SCS_seed1": 1000
+        },
+        "initial_policy_fingerprint": "f91771d432a8c99e8ba4f9e36bbf2f47716ac1331adbdbc5027fa6e35050ea68",
+        "optimizer_updates": 9000,
+        "optimizer_updates_telemetry_rows": 90,
+        "ou_action_steps": 0,
+        "ou_clipped_components": 0,
+        "ou_episode_resets": 0,
+        "partial_episode_at_end": {
+          "case": {
+            "case_id": "train/Easy/SCSS/geom-4/env-320749",
+            "environment_seed": 320749,
+            "geometry_generation_seed": 4,
+            "geometry_id": "geom_easy_SCSS_seed4",
+            "geometry_sha256": "a6494d940761821e33150c767b561220d94586dba307df944131baa1e8457456",
+            "sequence": "SCSS",
+            "tier": "Easy"
+          },
+          "episode_index": 7,
+          "return_so_far": -0.18292957784410646,
+          "route_progress_delta_so_far": 0.018357187005755973,
+          "steps_so_far": 1095
+        },
+        "protocol_sha256": "4ed9ae34692e5da2a01953b85c692722cd1a32c3e52dc723e1dbc1472e6026bd",
+        "ram_samples": [
+          {
+            "rss_mb": 726.87890625,
+            "step": 1000
+          },
+          {
+            "rss_mb": 744.5078125,
+            "step": 2000
+          },
+          {
+            "rss_mb": 750.09765625,
+            "step": 3000
+          },
+          {
+            "rss_mb": 755.3515625,
+            "step": 4000
+          },
+          {
+            "rss_mb": 760.63671875,
+            "step": 5000
+          },
+          {
+            "rss_mb": 766.08203125,
+            "step": 6000
+          },
+          {
+            "rss_mb": 771.9296875,
+            "step": 7000
+          },
+          {
+            "rss_mb": 777.1484375,
+            "step": 8000
+          },
+          {
+            "rss_mb": 783.04296875,
+            "step": 9000
+          },
+          {
+            "rss_mb": 788.76171875,
+            "step": 10000
+          }
+        ],
+        "replay_action_distribution": {
+          "episode_sequences_with_estimable_lag1": 0,
+          "executed_throttle_lag1_autocorrelation_global": 0.006533102156284474,
+          "executed_throttle_lag1_autocorrelation_mean_within_episode": 0.006677251067402755,
+          "ou_noise_throttle_lag1_autocorrelation_global": null,
+          "ou_noise_throttle_lag1_autocorrelation_mean_within_episode": null,
+          "steering_mean_std": [
+            -0.0002287616789340973,
+            0.5846322875418757
+          ],
+          "throttle_brake_sign_switches": 5018,
+          "throttle_mean_std": [
+            -0.010472007620334626,
+            0.5851078581631771
+          ],
+          "throttle_near_zero_fraction_abs_lt_005": 0.0513,
+          "throttle_positive_fraction": 0.4892,
+          "throttle_positive_run_length_mean": 1.947452229299363,
+          "throttle_positive_run_length_median": 1.0,
+          "transition_count": 10000,
+          "warning": "Global lag-1 includes episode boundaries; run-length and switch statistics reset per episode."
+        },
+        "run_manifest_sha256": "44b8236b0fdb47393e410fac6973c90f8fa0df71dcb3b618cf1a5f9d546a30f1",
+        "runtime_versions": {
+          "device": "cpu",
+          "gymnasium": "1.3.0",
+          "metadrive": "0.4.3",
+          "numpy": "2.2.6",
+          "python": "3.10.21",
+          "stable_baselines3": "2.9.2",
+          "torch": "2.14.1+cpu"
+        },
+        "status": "COMPLETE",
+        "throughput_steps_per_second": 46.80382571475995,
+        "training_source_commit": "875453e18d7f7c82002c1b0ee799fc7f6f4abab8",
+        "unique_geometries_visited": 8,
+        "wall_time_seconds": 213.6577479999978
+      },
+      "training_episodes": [
+        {
+          "arm": "B",
+          "case_id": "train/Easy/SCCS/geom-0/env-386509",
+          "clean_success": false,
+          "environment_seed": 386509,
+          "episode_index": 0,
+          "episode_return": -0.2308252664788597,
+          "geometry_generation_seed": 0,
+          "geometry_id": "geom_easy_SCCS_seed0",
+          "geometry_sha256": "df9c8bb722fc6517de55dc18838470b91ec43b89767ede19d93b72dc94674f9b",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.019174733499838618,
+          "sequence": "SCCS",
+          "steps": 1758,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "B",
+          "case_id": "train/Easy/SCCS/geom-2/env-821175",
+          "clean_success": false,
+          "environment_seed": 821175,
+          "episode_index": 1,
+          "episode_return": -0.22554061229016042,
+          "geometry_generation_seed": 2,
+          "geometry_id": "geom_easy_SCCS_seed2",
+          "geometry_sha256": "314a2830c26cf72879d740f97d450f1d657beeb050f602c1cbece838fd40d8f5",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.02445938788337979,
+          "sequence": "SCCS",
+          "steps": 1049,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "B",
+          "case_id": "train/Easy/SCCS/geom-3/env-90740",
+          "clean_success": false,
+          "environment_seed": 90740,
+          "episode_index": 2,
+          "episode_return": -0.22802325361317344,
+          "geometry_generation_seed": 3,
+          "geometry_id": "geom_easy_SCCS_seed3",
+          "geometry_sha256": "63cc884fe4ab7df2035db6e9ab3e08289f93caafd22304c7dbf71ab28ae6627e",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.0219767461046541,
+          "sequence": "SCCS",
+          "steps": 1325,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "B",
+          "case_id": "train/Easy/SCS/geom-0/env-516597",
+          "clean_success": false,
+          "environment_seed": 516597,
+          "episode_index": 3,
+          "episode_return": -0.22264928426466213,
+          "geometry_generation_seed": 0,
+          "geometry_id": "geom_easy_SCS_seed0",
+          "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.027350715732050442,
+          "sequence": "SCS",
+          "steps": 1224,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "B",
+          "case_id": "train/Easy/SCS/geom-1/env-88413",
+          "clean_success": false,
+          "environment_seed": 88413,
+          "episode_index": 4,
+          "episode_return": -0.2255221659617348,
+          "geometry_generation_seed": 1,
+          "geometry_id": "geom_easy_SCS_seed1",
+          "geometry_sha256": "7b721ddea0699aeff3168ff3a9f5de5f11209a374d591a86a0eaaf08bcbb6bbb",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.024477834289612036,
+          "sequence": "SCS",
+          "steps": 1000,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "B",
+          "case_id": "train/Easy/SCSS/geom-0/env-96513",
+          "clean_success": false,
+          "environment_seed": 96513,
+          "episode_index": 5,
+          "episode_return": -0.22668391004117439,
+          "geometry_generation_seed": 0,
+          "geometry_id": "geom_easy_SCSS_seed0",
+          "geometry_sha256": "f315580c575a221a020c9996f8c7c1ba64f936d0362f9eed316d08289feccf90",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.02331609010203467,
+          "sequence": "SCSS",
+          "steps": 1345,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        },
+        {
+          "arm": "B",
+          "case_id": "train/Easy/SCSS/geom-3/env-976051",
+          "clean_success": false,
+          "environment_seed": 976051,
+          "episode_index": 6,
+          "episode_return": -0.22427882361523643,
+          "geometry_generation_seed": 3,
+          "geometry_id": "geom_easy_SCSS_seed3",
+          "geometry_sha256": "68fbae08cc6d34648bcc19bbb1ba0438430f4b2cd748927704d921969ae6b91c",
+          "outcome": "TIMEOUT",
+          "route_progress_delta": 0.02572117618937114,
+          "sequence": "SCSS",
+          "steps": 1204,
+          "terminated": false,
+          "tier": "Easy",
+          "truncated": true
+        }
+      ]
+    }
+  },
+  "experiment": "Stage5 P2-H terminal-aware prioritized critic replay A/B",
+  "initial_parameter_fingerprint": "f91771d432a8c99e8ba4f9e36bbf2f47716ac1331adbdbc5027fa6e35050ea68",
+  "initial_state_file_sha256": "8df6251d4f882cd2267b1f24a207ec828a832d7a152e8f62b007022018aed3d1",
+  "paired_full_episode_10k": [
+    {
+      "control_outcome": "OUT_OF_ROAD",
+      "environment_seed": 925389,
+      "geometry_id": "geom_easy_SCCS_seed4",
+      "mean_speed_kmh_B_minus_A": 0.5576473814447445,
+      "route_progress_delta_B_minus_A": -0.00313149321808992,
+      "stationary_fraction_B_minus_A": -0.026264320307977457,
+      "treatment_outcome": "OUT_OF_ROAD"
+    },
+    {
+      "control_outcome": "OUT_OF_ROAD",
+      "environment_seed": 666005,
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "mean_speed_kmh_B_minus_A": 0.3061701289120502,
+      "route_progress_delta_B_minus_A": -0.001103103165822794,
+      "stationary_fraction_B_minus_A": -0.042109991961034654,
+      "treatment_outcome": "OUT_OF_ROAD"
+    },
+    {
+      "control_outcome": "OUT_OF_ROAD",
+      "environment_seed": 882172,
+      "geometry_id": "geom_easy_SCS_seed12",
+      "mean_speed_kmh_B_minus_A": 0.49125982792752954,
+      "route_progress_delta_B_minus_A": -0.0038037457082518156,
+      "stationary_fraction_B_minus_A": -0.027153036599123215,
+      "treatment_outcome": "OUT_OF_ROAD"
+    },
+    {
+      "control_outcome": "OUT_OF_ROAD",
+      "environment_seed": 647459,
+      "geometry_id": "geom_easy_SCS_seed16",
+      "mean_speed_kmh_B_minus_A": 0.2945832709198637,
+      "route_progress_delta_B_minus_A": -0.0017589813240445201,
+      "stationary_fraction_B_minus_A": -0.04296468057935948,
+      "treatment_outcome": "OUT_OF_ROAD"
+    },
+    {
+      "control_outcome": "OUT_OF_ROAD",
+      "environment_seed": 88306,
+      "geometry_id": "geom_easy_SCSS_seed2",
+      "mean_speed_kmh_B_minus_A": 0.303465385585308,
+      "route_progress_delta_B_minus_A": -0.001693393097953813,
+      "stationary_fraction_B_minus_A": -0.04392191659272404,
+      "treatment_outcome": "OUT_OF_ROAD"
+    },
+    {
+      "control_outcome": "OUT_OF_ROAD",
+      "environment_seed": 406573,
+      "geometry_id": "geom_easy_SCSS_seed18",
+      "mean_speed_kmh_B_minus_A": 0.5768233202766297,
+      "route_progress_delta_B_minus_A": -0.004416415853437106,
+      "stationary_fraction_B_minus_A": -0.024349176142327927,
+      "treatment_outcome": "OUT_OF_ROAD"
+    }
+  ],
+  "paired_mean_B_minus_A": {
+    "mean_speed_kmh_B_minus_A": 0.4216582191776876,
+    "route_progress_delta_B_minus_A": -0.0026511887279333283,
+    "stationary_fraction_B_minus_A": -0.034460520363757796
+  },
+  "protocol_path": "results/stage5/p2h_terminal_replay_seed101_20261121/protocol.json",
+  "protocol_sha256": "4ed9ae34692e5da2a01953b85c692722cd1a32c3e52dc723e1dbc1472e6026bd",
+  "runtime": {
+    "device": "cpu",
+    "gymnasium": "1.3.0",
+    "metadrive": "0.4.3",
+    "numpy": "2.2.6",
+    "python": "3.10.21",
+    "stable_baselines3": "2.9.2",
+    "torch": "2.14.1+cpu"
+  },
+  "scientific_conclusion": {
+    "actor_observation_sensitivity_collapsed_by_10k": true,
+    "benchmark_eligible": false,
+    "clean_successes_A": 0,
+    "clean_successes_B": 0,
+    "driving_skill_demonstrated": false,
+    "full_episode_safety_failures_A": 6,
+    "full_episode_safety_failures_B": 6,
+    "inference": "The 10k agents did not demonstrate clean driving. The terminal replay mechanism was not activated because online replay contained only timeouts and nonterminal transitions. P2-H cannot determine whether terminal-aware replay would help when useful terminal records exist.",
+    "terminal_prioritization_hypothesis_tested": false,
+    "validation_test_accessed": false
+  },
+  "source_commit": "875453e18d7f7c82002c1b0ee799fc7f6f4abab8",
+  "status": "P2H_INCONCLUSIVE",
+  "status_reason": [
+    "Arm B observed zero eligible clean or safety terminal transitions at every checkpoint and therefore used uniform fallback for the entire run.",
+    "The implementation used an independent uniform actor/alpha batch in B while control A retained SB3's shared uniform batch; this changes critic/actor minibatch coupling, so post hoc A/B differences cannot be attributed to terminal prioritization."
+  ],
+  "terminal_exposure": {
+    "A": {
+      "clean_terminal": 0,
+      "none_or_nonterminal": 9993,
+      "safety_terminal": 0,
+      "timeout_truncation": 7,
+      "true_terminal_mask_count": 0
+    },
+    "B": {
+      "clean_terminal": 0,
+      "none_or_nonterminal": 9993,
+      "safety_terminal": 0,
+      "timeout_truncation": 7,
+      "true_terminal_mask_count": 0
+    },
+    "B_critic_draws_last_update_call": 256,
+    "B_critic_draws_total": 2304000,
+    "B_priority_candidates_by_checkpoint": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "B_terminal_priority_draws": 0,
+    "B_timeout_uniform_draws": 1361
+  }
+}
