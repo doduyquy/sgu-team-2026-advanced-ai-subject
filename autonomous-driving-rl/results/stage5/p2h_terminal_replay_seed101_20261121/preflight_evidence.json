@@ -1,0 +1,86 @@
+{
+  "status": "PREFLIGHT_PASS",
+  "protocol": "stage5_p2h_terminal_aware_critic_replay_v1",
+  "protocol_sha256": "0f1c42c80f869bbbee801230eef722fa72afd44cb9c50c6325d185a34657f461",
+  "source_parent_sha": "48ce34a5b1e10917d99753494d5fca99fbee8f81",
+  "runtime": {
+    "python_environment": "metadrive_sb3",
+    "stable_baselines3": "2.9.2",
+    "metadrive": "0.4.3",
+    "device": "cpu"
+  },
+  "sampler_distribution_check": {
+    "kind": "bounded synthetic sampler fixture; not training data",
+    "replay_size": 32,
+    "safety_terminal_records": 2,
+    "clean_terminal_records": 1,
+    "timeout_truncations": 2,
+    "true_terminal_priority_candidates": 3,
+    "draws": 50000,
+    "uniform_baseline_true_terminal_probability": 0.09375,
+    "registered_mixture_expected_true_terminal_probability": 0.275,
+    "observed_true_terminal_fraction": 0.27426,
+    "expected_timeout_fraction": 0.05,
+    "observed_timeout_fraction": 0.04874,
+    "importance_sampling_effective_sample_size": 45319.03125,
+    "normalized_importance_weight_range": [0.35025927424430847, 1.0],
+    "priority_cap": 10.0,
+    "timeout_in_priority_candidates": false
+  },
+  "online_sampler_integration_test": {
+    "environment": "deterministic Gymnasium fixture; technical test only, not MetaDrive competence evidence",
+    "steps": 40,
+    "optimizer_updates": 39,
+    "replay_rows": 40,
+    "safety_terminals_recorded": 8,
+    "clean_terminals_recorded": 0,
+    "timeout_truncations_recorded": 0,
+    "critic_draws": 264,
+    "safety_terminal_draws": 81,
+    "terminal_draw_fraction": 0.3068181818,
+    "action_replay_mismatches": 0,
+    "actor_and_critic_gradients_nonzero": true,
+    "checkpoint_policy_roundtrip": "PASS; actor LeakyReLU, critics ReLU"
+  },
+  "timeout_bootstrap_integration_test": {
+    "timeout_rows_classified_separately": true,
+    "timeout_rows_in_terminal_priority_candidates": false,
+    "sb3_replay_sample_timeout_done_mask": 0.0,
+    "result": "PASS"
+  },
+  "metadrive_technical_smoke": {
+    "run_id": "smoke_meta_20261121_retry1",
+    "steps": 64,
+    "optimizer_updates": 56,
+    "geometry_id": "geom_easy_SCCS_seed0",
+    "producer_id": "reference_route_station_proposal_v1",
+    "action_replay_mismatches": 0,
+    "finite_reward_rows": 64,
+    "timeout_bootstrap_enabled": true,
+    "checkpoint_roundtrip": "PASS; restored action finite",
+    "terminal_candidates": 0,
+    "terminal_sampler_behavior": "uniform fallback, as registered",
+    "scientific_training": false,
+    "first_smoke_attempt": "non-scientific instrumentation assertion queried producer on wrong wrapper layer after 64 transitions; corrected and preserved under smoke_meta_20261121; retry passed without overwriting the first attempt"
+  },
+  "tests": {
+    "runner": "Python unittest; pytest is not installed in this environment",
+    "passed": 87,
+    "failed": 0,
+    "groups": {
+      "P2-H sampler and online integration": 6,
+      "actor activation/checkpoint": 2,
+      "F09 producer and station proposal": 9,
+      "meter reward": 10,
+      "P2 exploration/action fidelity": 4,
+      "Stage5 pilot": 9,
+      "Stage5 SAC/checkpoint": 15,
+      "Stage5 training foundation/contracts": 16,
+      "reward metrics/semantics": 16
+    },
+    "py_compile": "PASS"
+  },
+  "decision": "Proceed to fresh A/B scientific training. Preflight verifies the sampler changes critic sampling when genuine terminal rows exist; actual MetaDrive smoke had no terminal, so fallback was correctly exercised.",
+  "holdout_accessed": false,
+  "benchmark_eligible": false
+}

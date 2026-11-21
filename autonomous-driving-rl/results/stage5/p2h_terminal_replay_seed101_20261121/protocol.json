@@ -1,0 +1,478 @@
+{
+  "action": {
+    "contract": "continuous_box2_v1",
+    "decision_frequency_hz": 10,
+    "order": [
+      "steering",
+      "throttle_brake"
+    ],
+    "range": [
+      -1,
+      1
+    ],
+    "shape": [
+      2
+    ]
+  },
+  "anchors": {
+    "path": "results/stage5/p2c_representation_critic_audit_20261121/fixed_train_anchors.npy",
+    "sha256": "6ded06b27deec488dac1952b8a4a7d22755b8bbbca0d774854d53fe58ac6f13a",
+    "shape": [
+      201,
+      409
+    ],
+    "source": "P2-C real TRAIN anchors"
+  },
+  "arms": {
+    "A": {
+      "actor_and_alpha_replay": "uniform",
+      "critic_replay": "uniform",
+      "id": "uniform_replay_control_v1"
+    },
+    "B": {
+      "actor_and_alpha_replay": "uniform",
+      "critic_replay": "uniform_mixture_plus_capped_terminal_td_priority",
+      "id": "terminal_aware_prioritized_critic_replay_v1"
+    },
+    "only_registered_difference": "critic replay minibatch distribution; treatment uses importance-weighted critic loss"
+  },
+  "constraints": {
+    "benchmark_eligible": false,
+    "platform_contracts_changed": false,
+    "stage3_used": false,
+    "teacher_data_used": false,
+    "training_started": false,
+    "validation_test_accessed": false
+  },
+  "evaluation": {
+    "benchmark_eligible": false,
+    "censored_is_not_timeout_or_safe": true,
+    "dataset": "TRAIN/PILOT_DIAGNOSTIC only",
+    "diagnostic_cases": "same six locked Easy PILOT_DIAGNOSTIC cases and seeds as P2-D",
+    "fast_probe_checkpoints": [
+      0,
+      2000,
+      5000,
+      10000
+    ],
+    "fast_probe_steps": 300,
+    "fixed_cases": [
+      {
+        "environment_seed": 925389,
+        "geometry_generation_seed": 4,
+        "geometry_id": "geom_easy_SCCS_seed4",
+        "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 666005,
+        "geometry_generation_seed": 19,
+        "geometry_id": "geom_easy_SCCS_seed19",
+        "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 882172,
+        "geometry_generation_seed": 12,
+        "geometry_id": "geom_easy_SCS_seed12",
+        "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 647459,
+        "geometry_generation_seed": 16,
+        "geometry_id": "geom_easy_SCS_seed16",
+        "geometry_sha256": "e47823d49334b770a839479b69babaae498f3b97c8d2dc2ed8e2587a346841d1",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 88306,
+        "geometry_generation_seed": 2,
+        "geometry_id": "geom_easy_SCSS_seed2",
+        "geometry_sha256": "31004866d9c8401f88cb76ed9b289d9a7d60d056bb91c4c696aed307d87351f6",
+        "sequence": "SCSS"
+      },
+      {
+        "environment_seed": 406573,
+        "geometry_generation_seed": 18,
+        "geometry_id": "geom_easy_SCSS_seed18",
+        "geometry_sha256": "38e304e7d4c97e9fc0ea21faade3f8982dcde2c38ca4afcde480cbe0aab281c2",
+        "sequence": "SCSS"
+      }
+    ],
+    "frozen_deterministic_policy": true,
+    "full_episode_cases": [
+      {
+        "environment_seed": 925389,
+        "geometry_generation_seed": 4,
+        "geometry_id": "geom_easy_SCCS_seed4",
+        "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 666005,
+        "geometry_generation_seed": 19,
+        "geometry_id": "geom_easy_SCCS_seed19",
+        "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 882172,
+        "geometry_generation_seed": 12,
+        "geometry_id": "geom_easy_SCS_seed12",
+        "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 647459,
+        "geometry_generation_seed": 16,
+        "geometry_id": "geom_easy_SCS_seed16",
+        "geometry_sha256": "e47823d49334b770a839479b69babaae498f3b97c8d2dc2ed8e2587a346841d1",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 88306,
+        "geometry_generation_seed": 2,
+        "geometry_id": "geom_easy_SCSS_seed2",
+        "geometry_sha256": "31004866d9c8401f88cb76ed9b289d9a7d60d056bb91c4c696aed307d87351f6",
+        "sequence": "SCSS"
+      },
+      {
+        "environment_seed": 406573,
+        "geometry_generation_seed": 18,
+        "geometry_id": "geom_easy_SCSS_seed18",
+        "geometry_sha256": "38e304e7d4c97e9fc0ea21faade3f8982dcde2c38ca4afcde480cbe0aab281c2",
+        "sequence": "SCSS"
+      }
+    ],
+    "full_episode_checkpoints": [
+      10000
+    ],
+    "outcome_labels": [
+      "CLEAN_SUCCESS",
+      "SAFETY_FAILURE",
+      "TIMEOUT",
+      "PROBE_CENSORED"
+    ],
+    "separate_environment_no_training_replay_or_optimizer": true
+  },
+  "exploration": {
+    "action_dimensions": [
+      "steering",
+      "throttle_brake"
+    ],
+    "applied_after_learning_starts_only": true,
+    "clip": "componentwise to [-1,1]",
+    "innovation_std": 0.07905694150420949,
+    "mode": "ou_ar1_v1",
+    "not_action_hold": true,
+    "process": "stationary zero-mean AR(1): n[t]=rho*n[t-1]+epsilon[t]",
+    "random_warmup_steps": 1000,
+    "reset": "zero OU state after every terminated or truncated episode",
+    "rho": 0.85,
+    "seed": 101,
+    "stationary_std": 0.15
+  },
+  "geometry": {
+    "diagnostic_pool": [
+      {
+        "environment_seed": 925389,
+        "geometry_generation_seed": 4,
+        "geometry_id": "geom_easy_SCCS_seed4",
+        "geometry_sha256": "20e119a6fbb08d4d289565f01bf1f548af3b9eac4a0678b289f4d890571d34a6",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 666005,
+        "geometry_generation_seed": 19,
+        "geometry_id": "geom_easy_SCCS_seed19",
+        "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+        "sequence": "SCCS"
+      },
+      {
+        "environment_seed": 882172,
+        "geometry_generation_seed": 12,
+        "geometry_id": "geom_easy_SCS_seed12",
+        "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 647459,
+        "geometry_generation_seed": 16,
+        "geometry_id": "geom_easy_SCS_seed16",
+        "geometry_sha256": "e47823d49334b770a839479b69babaae498f3b97c8d2dc2ed8e2587a346841d1",
+        "sequence": "SCS"
+      },
+      {
+        "environment_seed": 88306,
+        "geometry_generation_seed": 2,
+        "geometry_id": "geom_easy_SCSS_seed2",
+        "geometry_sha256": "31004866d9c8401f88cb76ed9b289d9a7d60d056bb91c4c696aed307d87351f6",
+        "sequence": "SCSS"
+      },
+      {
+        "environment_seed": 406573,
+        "geometry_generation_seed": 18,
+        "geometry_id": "geom_easy_SCSS_seed18",
+        "geometry_sha256": "38e304e7d4c97e9fc0ea21faade3f8982dcde2c38ca4afcde480cbe0aab281c2",
+        "sequence": "SCSS"
+      }
+    ],
+    "diagnostic_pool_sha256": "e326928bdb02f36367786c8acd0bc96a3a9f843e5676a1ff56eede0d7e69281c",
+    "diagnostic_pool_source_protocol": "results/stage5/s5_5_meter_reward_seed101_20261120/protocol.json",
+    "manifest": "results/audits/evaluation_protocol/geometry_split_manifest.csv",
+    "manifest_sha256": "ec1099eb93252f445d7afa95fd19270e72d5a8f37282701d6935e283a0997134",
+    "training_pool": [
+      {
+        "geometry_generation_seed": 0,
+        "geometry_id": "geom_easy_SCCS_seed0",
+        "geometry_sha256": "df9c8bb722fc6517de55dc18838470b91ec43b89767ede19d93b72dc94674f9b",
+        "manifest_route_length_m": 585.8845678629121,
+        "sequence": "SCCS"
+      },
+      {
+        "geometry_generation_seed": 2,
+        "geometry_id": "geom_easy_SCCS_seed2",
+        "geometry_sha256": "314a2830c26cf72879d740f97d450f1d657beeb050f602c1cbece838fd40d8f5",
+        "manifest_route_length_m": 349.4610596116287,
+        "sequence": "SCCS"
+      },
+      {
+        "geometry_generation_seed": 3,
+        "geometry_id": "geom_easy_SCCS_seed3",
+        "geometry_sha256": "63cc884fe4ab7df2035db6e9ab3e08289f93caafd22304c7dbf71ab28ae6627e",
+        "manifest_route_length_m": 441.40147740540124,
+        "sequence": "SCCS"
+      },
+      {
+        "geometry_generation_seed": 0,
+        "geometry_id": "geom_easy_SCSS_seed0",
+        "geometry_sha256": "f315580c575a221a020c9996f8c7c1ba64f936d0362f9eed316d08289feccf90",
+        "manifest_route_length_m": 448.0778267515151,
+        "sequence": "SCSS"
+      },
+      {
+        "geometry_generation_seed": 3,
+        "geometry_id": "geom_easy_SCSS_seed3",
+        "geometry_sha256": "68fbae08cc6d34648bcc19bbb1ba0438430f4b2cd748927704d921969ae6b91c",
+        "manifest_route_length_m": 401.0839496971649,
+        "sequence": "SCSS"
+      },
+      {
+        "geometry_generation_seed": 4,
+        "geometry_id": "geom_easy_SCSS_seed4",
+        "geometry_sha256": "a6494d940761821e33150c767b561220d94586dba307df944131baa1e8457456",
+        "manifest_route_length_m": 453.06866406160725,
+        "sequence": "SCSS"
+      },
+      {
+        "geometry_generation_seed": 0,
+        "geometry_id": "geom_easy_SCS_seed0",
+        "geometry_sha256": "3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8",
+        "manifest_route_length_m": 407.89441610698384,
+        "sequence": "SCS"
+      },
+      {
+        "geometry_generation_seed": 1,
+        "geometry_id": "geom_easy_SCS_seed1",
+        "geometry_sha256": "7b721ddea0699aeff3168ff3a9f5de5f11209a374d591a86a0eaaf08bcbb6bbb",
+        "manifest_route_length_m": 246.9110221328001,
+        "sequence": "SCS"
+      }
+    ],
+    "training_pool_sha256": "3f388a82be58b3cd773ab7c6f7c52e9f5622a9f5b29f2f9d36979beb6b93b73f",
+    "training_pool_source_protocol": "results/stage5/s5_5_meter_reward_seed101_20261120/protocol.json"
+  },
+  "historical_mechanism_audit": {
+    "path": "results/stage5/p2_mechanism_audit/historical_mechanism_audit.json",
+    "sha256": "9e5452ed83b11887c06d1dde75f17e10319898c9fcd0d9cc01441280981a1bd2"
+  },
+  "implementation_amendment_after_interrupted_attempt": {
+    "amended_at": "2026-11-21T00:18:35+07:00",
+    "interrupted_attempt": "runs/stage5_p2/s5_p2_correlated_exploration_seed101_20261120; control arm only, 6,150 recorded transitions, checkpoints 0/2k/5k, excluded from scientific comparison; artifacts preserved.",
+    "reason": "Flush live action telemetry every 100 recorded transitions and add geometry sequence/hash to episode ledger. This is instrumentation/provenance only; no scientific variable, arm, seed, budget, or evaluation schedule changed."
+  },
+  "interpretation": {
+    "censored": "not timeout, clean success, or safety success",
+    "clean_success": "terminal success classified by Platform V1 outcome classifier",
+    "driving_improvement_requires": "state-dependent actor behavior and safer useful driving, not Q/TD metrics or speed alone",
+    "single_seed_limit": true
+  },
+  "observation": {
+    "canonical_encoder": "stage5_flat409_v1",
+    "dimension": 409,
+    "post_encoder_transform": "pilot_groupwise_physical_v1",
+    "same_both_arms": true,
+    "task_context_producer_id": "reference_route_station_proposal_v1",
+    "transform_fingerprint": "265103242e3ba3ad6f8c493d8f0bad39644c375a2696dbcdad4857052796797e"
+  },
+  "parent_commit": "48ce34a5b1e10917d99753494d5fca99fbee8f81",
+  "parent_protocol": "stage5_p2_ou_ar1_exploration_v1; P2 standard-SAC arm is the control reference",
+  "preflight": {
+    "fail_policy": "stop before scientific A/B if sampler tests, action integrity, checkpoint load, timeout semantics, or measurable treatment distribution fail",
+    "required_cases": [
+      "0 terminal",
+      "1 terminal",
+      "2 terminals",
+      "4 terminals",
+      "safety vs clean",
+      "timeout excluded",
+      "priority cap",
+      "IS weights",
+      "effective sample size",
+      "checkpoint save/load",
+      "action/reward parity",
+      "timeout bootstrap"
+    ],
+    "synthetic_sampler_unit_test_only": true,
+    "technical_smoke_not_scientific": true
+  },
+  "producer": {
+    "configuration": {
+      "checkpoint_window": 1,
+      "implementation_sha256": "948d6f7ae2e33b4052544220e85ea4ff90fc9d054f0567df96da6345946c972f",
+      "lookahead_count": 20,
+      "reference_lane": "first_on_each_route_edge",
+      "seam_tolerance_m": 0.001,
+      "spacing_m": 2.5,
+      "unlocalized_policy": "abort_on_first_sample"
+    },
+    "fingerprint": "a7df3942bb874b40ea16474be43c7b7a48796646c9d59cf61da5d71ba5291725",
+    "id": "reference_route_station_proposal_v1"
+  },
+  "protocol": "stage5_p2h_terminal_aware_critic_replay_v1",
+  "protocol_sha256": "0f1c42c80f869bbbee801230eef722fa72afd44cb9c50c6325d185a34657f461",
+  "question": "Does terminal-aware prioritized critic replay improve state-dependent SAC driving under otherwise fixed P2-D conditions?",
+  "registered_at_utc": "2026-11-21T03:17:33.638736+00:00",
+  "registration_note": "Protocol and implementation hashes are committed before scientific training. Exact training source commit is recorded in each run manifest.",
+  "reward": {
+    "changed": false,
+    "only_stage5_reward": true,
+    "version": "RewardSpecV1"
+  },
+  "s5_3c_comparison": {
+    "differences": [
+      "S5.3C used waypoint_xy_div50m_v1, not pilot_groupwise_physical_v1",
+      "S5.3C passed LeakyReLU as SB3 policy-wide activation_fn, changing actor and critic",
+      "S5.3C had 10k steps and 24 diagnostic maps; P2-D has matched actor-only treatment and six locked cases"
+    ],
+    "interpretation": "historical negative evidence, not a direct actor-only comparison",
+    "result": "24/24 full diagnostic cases TIMEOUT, stationary_fraction=1.0, mean throttle=0; no clean success"
+  },
+  "sac": {
+    "activation": "actor-only ablation; critic ReLU both arms",
+    "actor_activation_id": "actor_leaky_relu_001_v1",
+    "actor_activation_negative_slope": {
+      "A": 0.01,
+      "B": 0.01
+    },
+    "algorithm": "SAC",
+    "batch_size": 256,
+    "buffer_size": 100000,
+    "critic_activation": "ReLU",
+    "device": "cpu",
+    "ent_coef": "auto",
+    "gamma": 0.99,
+    "gradient_steps": 1,
+    "learning_rate": 0.0003,
+    "learning_starts": 1000,
+    "net_arch": [
+      256,
+      256
+    ],
+    "optimizer_and_replay": "independent per arm",
+    "policy": "MlpPolicy",
+    "policy_classes": {
+      "A": "ActorOnlyLeakyReLUPolicy",
+      "B": "ActorOnlyLeakyReLUPolicy"
+    },
+    "shared_fresh_initial_policy_and_entropy_state": true,
+    "tau": 0.005,
+    "train_freq": 1
+  },
+  "source_files_sha256": {
+    "scripts/evaluate_stage5_p2h_terminal_replay.py": "16626e558c9a9c6b8280ecc7a3bbcf5504447145d1d9cfec34f778d0ce0b7b62",
+    "scripts/register_stage5_p2h_protocol.py": "8a06d7e93c7300dcc60cfbc6f9dffef687a38395243fe5ee7bf16482e082cf80",
+    "scripts/run_stage5_p2_experiment.py": "7ca3686e46bcf33222aa14492cead015854b7fa32faec14a18ea2764642033e3",
+    "scripts/run_stage5_p2h_terminal_replay.py": "683b70fea9fb72f40cca68e7b17ebe85d4da76259a67bbad532709a9778c6c42",
+    "scripts/smoke_stage5_p2h_terminal_replay.py": "f5e278495805891bdd4fca0d442ea0595e09d651d13fb3ce4e62fcb38120d0b4",
+    "src/platform/action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+    "src/platform/episode.py": "29daf0479cd054257d6fda75db04a2ed1d5f68ae29f3e09db1eaeb385446d53e",
+    "src/platform/reference_station.py": "948d6f7ae2e33b4052544220e85ea4ff90fc9d054f0567df96da6345946c972f",
+    "src/platform/reward.py": "ecb206c796f682271ced0b943c2d505734c916318d1a12c44b916d5d2bf76bbf",
+    "src/platform/task_context_producer.py": "1eb196c5b041b102cda320769c113384d60deb71b2b9d8462873f62166b39763",
+    "src/training/stage5/actor_activation_ablation.py": "d344ea3917b60f37ed734d8ec94910f903a6cb1f9ab21b541ad31c3d2db1d103",
+    "src/training/stage5/checkpoint.py": "0ff85f608f724cba374d741d5b8662913017a37a7c5f77000adffbb9fb83ffab",
+    "src/training/stage5/env_adapter.py": "cdbf43b6a5f49d1f4dc7ffab5d797c34fff716d1d028f6e8ea40ec86fd6b01fb",
+    "src/training/stage5/observation_encoder.py": "7725c671f6066174d2f0fef13687f59cd872dda899c59beffc845dc69c869450",
+    "src/training/stage5/pilot_observation_transform.py": "f9af458485d30675131916de46c8a7003daf4dd852c4193d34c5b688cf4827fb",
+    "src/training/stage5/temporal_exploration.py": "ac6508f35195b86265e43838d6283342627ebf8958201afa6bb9762eae7ff6f5",
+    "src/training/stage5/terminal_aware_replay.py": "03d138a518e22416002d567e2dfa53eeebef5cc185452427fdc03df73ec3c7d7",
+    "src/training/stage5/train_sampler.py": "6da13fb3f2160beda97b26287649b5f024c1ae2afac9a4ea86bfe2b218566863",
+    "tests/test_stage5_p2h_replay_training.py": "c6155572330b4a9a73aff66f4fa6c0e805fe5ee01fc70d7622abf1132cc7c691",
+    "tests/test_stage5_terminal_aware_replay.py": "692869302ab5d6a54aac87ba4acbe3ab24b24a111331b859d06e57205a3e73bf"
+  },
+  "status": "PRE_REGISTERED",
+  "telemetry": {
+    "activation_and_actor_sensitivity": true,
+    "activation_derivative_aware_leaky_metrics": true,
+    "alpha": true,
+    "checkpoint_activation_identity_and_roundtrip": true,
+    "checkpoint_integrity_and_hashes": true,
+    "fixed_p2c_201_train_anchors": true,
+    "geometry_and_seed_exposure": true,
+    "optimizer_actor_critic_entropy_gradients_losses": true,
+    "per_episode_outcomes": true,
+    "per_step_requested_executed_replay_actions": true,
+    "real_replay_state_activation_and_gradient_diagnostics": true,
+    "replay_buffer_saved_at_10000": true,
+    "replay_q_td_snapshot_at_checkpoints": true,
+    "runtime_and_memory": true
+  },
+  "terminal_replay": {
+    "eligible_terminal_kinds": {
+      "clean_success": 2,
+      "safety": 1
+    },
+    "empty_terminal_pool": "uniform fallback until first true safety or clean terminal; log fallback and terminal exposure",
+    "excluded_kind": {
+      "timeout_truncation": 3
+    },
+    "importance_beta": {
+      "end": 1.0,
+      "optimizer_updates": 9000,
+      "schedule": "linear",
+      "start": 0.4
+    },
+    "importance_sampling": "w_i=(N*P(i))^-beta; normalize by maximum possible weight over the full current buffer; apply only to per-sample critic MSE",
+    "priority": "(min(max(abs(td1),abs(td2)),10.0)+0.001)^0.60",
+    "priority_alpha": 0.6,
+    "priority_epsilon": 0.001,
+    "priority_update": "after each critic minibatch using max absolute twin TD error; newly inserted slots initialize to min(max(current priorities),10), floored at 1",
+    "rng_seed": 101,
+    "sampler_id": "terminal_aware_prioritized_critic_replay_v1",
+    "sampling": "with replacement; independent uniform actor/entropy batch in B; control uses standard SB3 uniform batch for all losses",
+    "td_error_cap": 10.0,
+    "terminal_mask": "replay.dones AND NOT replay.timeouts; terminal info must classify as safety or clean success",
+    "terminal_priority_mixture_probability": 0.2,
+    "timeout_bootstrap": "preserve SB3 2.9.2 handle_timeout_termination and original SAC soft target; timeout dones are masked by ReplayBuffer",
+    "uniform_mixture_probability": 0.8
+  },
+  "training": {
+    "checkpoint_steps": [
+      0,
+      2000,
+      5000,
+      10000
+    ],
+    "environment_seed_derivation": "SHA256(train_env_seed:{root_seed}:{episode_index}) first 32-bit word modulo 1,000,000",
+    "initialization_note": "Fresh shared state initialized under ReLU control then loaded into both arms; tensor shapes and values match. Because nonlinearities differ, initial policy outputs are not asserted equal.",
+    "max_environment_steps_per_arm": 10000,
+    "replay_buffer_saved_at_10000": true,
+    "root_seed": 101,
+    "same_initial_policy_tensors": true,
+    "same_pool_and_sampler_rule": true,
+    "sampler_strategy": "ROUND_ROBIN",
+    "seed_schedule_note": "Same seed derivation and ordered pool in both arms; episode counts may diverge as policies diverge, so actual per-episode exposure is recorded rather than forced to match."
+  }
+}
