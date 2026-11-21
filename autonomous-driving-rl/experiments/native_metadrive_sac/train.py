@@ -221,6 +221,7 @@ class CheckpointAndEvalCallback(BaseCallback):
         self.next_index = 0
         self.episode_file = run_dir / "training_episodes.jsonl"
         self.episode_rows = 0
+        self.passing_checkpoint: str | None = None
         self.episode_index = 0
         self.episode_speed: list[float] = []
         self.episode_route: list[float] = []
@@ -309,7 +310,7 @@ class CheckpointAndEvalCallback(BaseCallback):
                 raise RuntimeError(f"checkpoint callback overshot: expected={requested_step} actual={self.num_timesteps}")
             self._save_and_evaluate(requested_step)
             self.next_index += 1
-        return True
+        return self.passing_checkpoint is None
 
     def _save_and_evaluate(self, step: int) -> None:
         checkpoint = self.run_dir / "checkpoints" / f"sac_{step:07d}"
@@ -345,6 +346,8 @@ class CheckpointAndEvalCallback(BaseCallback):
         result = json.loads(eval_json.read_text(encoding="utf-8"))
         clean = int(result["summary"]["clean_success"])
         print(f"EVALUATION step={step} clean={clean}/5 outcomes={result['summary']['outcomes']}", flush=True)
+        if clean >= 4:
+            self.passing_checkpoint = str(result["checkpoint"])
 
 
 def build_protocol(run_dir: Path, smoke_steps: int | None, geometry_sequence: list[dict[str, Any]]) -> dict[str, Any]:
@@ -563,7 +566,9 @@ def main() -> None:
 
     elapsed = time.time() - started
     summary = {
-        "status": "SMOKE_ONLY" if args.smoke_steps else ("INCOMPLETE" if failure else "TRAINING_COMPLETE"),
+        "status": "SMOKE_ONLY" if args.smoke_steps else (
+            "INCOMPLETE" if failure else ("PASS_EARLY_STOP" if callback.passing_checkpoint else "TRAINING_COMPLETE")
+        ),
         "failure": failure,
         "actual_environment_steps": int(model.num_timesteps),
         "optimizer_updates": int(model._n_updates),
@@ -579,15 +584,16 @@ def main() -> None:
         "last_checkpoint_sha256": sha256_file(run_dir / "checkpoints" / f"sac_final_{model.num_timesteps:07d}.zip"),
     }
     (run_dir / "training_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
-    if not args.smoke_steps and not failure and model.num_timesteps == MAX_STEPS:
+    if not args.smoke_steps and not failure:
         evals = []
         for step in CHECKPOINT_STEPS:
             path = run_dir / "evaluations" / f"eval_{step:07d}.json"
             if path.exists():
                 evals.append(json.loads(path.read_text(encoding="utf-8")))
         passing = [e for e in evals if e["summary"]["clean_success"] >= 4]
-        summary["decision"] = "PASS" if passing else "FAIL"
+        summary["decision"] = "PASS" if passing else ("FAIL" if model.num_timesteps == MAX_STEPS else "INCOMPLETE")
         summary["selected_checkpoint"] = None if not passing else passing[0]["checkpoint"]
+        summary["early_stop_on_pass"] = callback.passing_checkpoint is not None
         (run_dir / "training_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
         report = [
             "# Native MetaDrive SAC baseline result",
@@ -595,7 +601,7 @@ def main() -> None:
             f"Decision: **{summary['decision']}**",
             "",
             f"Actual training steps: {summary['actual_environment_steps']:,}; optimizer updates: {summary['optimizer_updates']:,}.",
-            "PASS requires at least 4/5 clean full episodes at a scheduled evaluation checkpoint. The selected checkpoint is the earliest passing checkpoint; all scheduled training continues through 1M steps.",
+            "PASS requires at least 4/5 clean full episodes at a scheduled evaluation checkpoint. The selected checkpoint is the earliest passing checkpoint. Training stops at the first passing checkpoint; otherwise it continues through the 1M-step budget.",
             "",
             "| Step | Clean | OUT_OF_ROAD | Crash | Timeout | Mean route progress delta | Mean speed km/h | Stationary fraction |",
             "|---:|---:|---:|---:|---:|---:|---:|---:|",

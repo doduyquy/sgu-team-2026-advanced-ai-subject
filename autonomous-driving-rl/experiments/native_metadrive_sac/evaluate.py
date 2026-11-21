@@ -10,6 +10,7 @@ from typing import Any
 
 import numpy as np
 from stable_baselines3 import SAC
+from stable_baselines3.common.buffers import ReplayBuffer
 
 from train import FIXED_ENV_CONFIG, NativeTelemetry, geometry_fingerprint, sha256_file
 from metadrive.envs.metadrive_env import MetaDriveEnv
@@ -43,7 +44,20 @@ def main() -> None:
     out = Path(args.out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     seeds = [int(value) for value in args.seeds.split(",") if value]
-    model = SAC.load(str(checkpoint), device="cpu")
+    # Evaluation does not need the training replay. The checkpoint serializes
+    # the disk-backed training buffer factory and its path; loading that class
+    # here would try to recreate the training memmaps over the files still in
+    # use by the trainer. Override only replay construction, not policy/critic
+    # weights or inference configuration.
+    model = SAC.load(
+        str(checkpoint),
+        device="cpu",
+        custom_objects={
+            "replay_buffer_class": ReplayBuffer,
+            "replay_buffer_kwargs": {},
+            "buffer_size": 1,
+        },
+    )
     results = []
     geometry_hashes = []
     geometry = json.loads(Path(args.geometry).read_text(encoding="utf-8"))["block_sequence"]
@@ -147,6 +161,7 @@ def main() -> None:
     payload = {
         "checkpoint": str(checkpoint),
         "checkpoint_sha256": sha256_file(checkpoint),
+        "evaluation_script_sha256": sha256_file(Path(__file__).resolve()),
         "step": args.step,
         "mode": "deterministic",
         "native_metadrive_version": __import__("metadrive.version", fromlist=["VERSION"]).VERSION,
