@@ -25,6 +25,7 @@ from typing import Any, Dict, Optional, Tuple
 import gymnasium as gym
 import stable_baselines3 as sb3
 from stable_baselines3 import SAC
+from stable_baselines3.common.buffers import ReplayBuffer
 import torch
 
 from src.training.stage5.observation_encoder import Stage5ObservationEncoder
@@ -379,7 +380,17 @@ def load_sac_checkpoint(
         raise CheckpointIntegrityError("Attached environment TaskContext producer mismatch")
 
     model_path = checkpoint_dir / "model.zip"
-    model = SAC.load(str(model_path), env=env, device=device)
+    custom_objects = None
+    if not load_replay_buffer:
+        # Frozen inference does not use replay. A checkpoint may have been
+        # trained with a disk-backed replay implementation whose constructor
+        # would otherwise reopen or truncate its training files during load.
+        custom_objects = {
+            "replay_buffer_class": ReplayBuffer,
+            "replay_buffer_kwargs": {},
+            "buffer_size": 1,
+        }
+    model = SAC.load(str(model_path), env=env, device=device, custom_objects=custom_objects)
 
     # Replay buffer loading for resume workflows
     if load_replay_buffer:

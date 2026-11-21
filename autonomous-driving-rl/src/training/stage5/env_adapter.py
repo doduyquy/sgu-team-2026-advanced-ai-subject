@@ -135,12 +135,14 @@ class Stage5TrainingEnv(gym.Env):
         # Episode state variables
         self._step_idx = 0
         self._last_route_completion = 0.0
+        self._episode_initial_route_completion = 0.0
         self._max_route_completion = 0.0
         self._cumulative_reward = 0.0
         self._terminated = False
         self._truncated = False
         self._env_flags: Dict[str, Any] = {}
         self._last_outcome: Optional[EpisodeOutcome] = None
+        self._current_agent_input: Optional[AgentInputV1] = None
 
     # ==========================================================================
     # Gymnasium API: reset()
@@ -217,6 +219,7 @@ class Stage5TrainingEnv(gym.Env):
             self._step_idx = 0
             initial_route_completion = float(info.get("route_completion", 0.0))
             self._last_route_completion = initial_route_completion
+            self._episode_initial_route_completion = initial_route_completion
             self._max_route_completion = initial_route_completion
             self._cumulative_reward = 0.0
             self._terminated = False
@@ -226,6 +229,7 @@ class Stage5TrainingEnv(gym.Env):
 
             # 5. Build public AgentInputV1 and encode observation
             agent_input = self._build_agent_input(raw_obs, step_idx=0)
+            self._current_agent_input = agent_input
             obs = self.encoder.encode(agent_input)
 
             # 6. Diagnostic info (strictly for training instrumentation, not passed to policy)
@@ -316,6 +320,7 @@ class Stage5TrainingEnv(gym.Env):
 
             # 6. Build authoritative AgentInputV1 and encode observation
             agent_input = self._build_agent_input(raw_obs, step_idx=self._step_idx)
+            self._current_agent_input = agent_input
             obs = self.encoder.encode(agent_input)
 
             # 7. Construct info dictionary
@@ -333,8 +338,11 @@ class Stage5TrainingEnv(gym.Env):
                 "action_steering": float(canonical_act.steering),
                 "action_throttle_brake": float(canonical_act.throttle_brake),
                 "route_completion": curr_route,
+                "initial_route_completion": self._episode_initial_route_completion,
                 "delta_route": delta_route,
                 "reward_breakdown": breakdown.to_dict(),
+                "native_metadrive_reward": float(r_env),
+                "reward_spec_v1_total": step_reward,
             }
 
             if self._terminated or self._truncated:
@@ -362,6 +370,11 @@ class Stage5TrainingEnv(gym.Env):
     @property
     def task_context_producer_id(self) -> str:
         return self._task_context_producer_id
+
+    @property
+    def current_agent_input(self) -> Optional[AgentInputV1]:
+        """Latest public AgentInputV1 for frozen inference and parity checks."""
+        return self._current_agent_input
 
     def _build_agent_input(self, raw_obs: np.ndarray, step_idx: int) -> AgentInputV1:
         """Constructs an authoritative AgentInputV1 from current simulator state."""
