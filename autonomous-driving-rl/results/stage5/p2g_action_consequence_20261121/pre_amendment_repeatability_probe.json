@@ -1,0 +1,167 @@
+{
+  "protocol_sha256": "1c821c39aa4195b0af7f959e3c7905da86deba987a19a9f33b0816e551228476",
+  "validations": [
+    {
+      "label": "reset_stationary",
+      "prefix_decisions": 0,
+      "repetitions": 3,
+      "max_pairwise_errors": {
+        "position_m": 0.0,
+        "heading_rad": 0.0,
+        "speed_kmh": 0.0,
+        "route_completion": 0.0,
+        "observation": 0.0
+      },
+      "tolerances": {
+        "position_m": 0.02,
+        "heading_rad": 0.001,
+        "speed_kmh": 0.05,
+        "route_completion": 1e-06,
+        "observation": 1e-05
+      },
+      "passed": true,
+      "reference_signature": {
+        "position_xy": [
+          5.0,
+          7.0
+        ],
+        "heading_rad": 0.0,
+        "lane_heading_rad": 0.0,
+        "heading_error_rad": 0.0,
+        "speed_kmh": 0.0,
+        "route_completion": 0.012466218116619248,
+        "reference_station_m": 5.0,
+        "lateral_error_m": 0.0,
+        "lane_width_m": 3.5,
+        "vehicle_width_m": 1.852,
+        "estimated_body_edge_clearance_m": 0.824,
+        "on_lane": true,
+        "task_valid_waypoints": 20,
+        "max_abs_valid_waypoint_heading_rad": 0.0
+      }
+    },
+    {
+      "label": "already_progressed",
+      "prefix_decisions": 587,
+      "repetitions": 3,
+      "max_pairwise_errors": {
+        "position_m": 0.00023434254193685494,
+        "heading_rad": 2.3568975646703905e-05,
+        "speed_kmh": 2.103429213917707e-06,
+        "route_completion": 5.777914051721678e-07,
+        "observation": 3.1830742955207825e-05
+      },
+      "tolerances": {
+        "position_m": 0.02,
+        "heading_rad": 0.001,
+        "speed_kmh": 0.05,
+        "route_completion": 1e-06,
+        "observation": 1e-05
+      },
+      "passed": false,
+      "reference_signature": {
+        "position_xy": [
+          9.031502723693848,
+          7.088825702667236
+        ],
+        "heading_rad": 0.028542295824870223,
+        "lane_heading_rad": 0.0,
+        "heading_error_rad": 0.028542295824870223,
+        "speed_kmh": 1.4511969902468334,
+        "route_completion": 0.022517736574881667,
+        "reference_station_m": 9.031502723693848,
+        "lateral_error_m": -0.08882570266723633,
+        "lane_width_m": 3.5,
+        "vehicle_width_m": 1.852,
+        "estimated_body_edge_clearance_m": 0.7351742973327636,
+        "on_lane": true,
+        "task_valid_waypoints": 20,
+        "max_abs_valid_waypoint_heading_rad": 0.028499999482231888
+      }
+    },
+    {
+      "label": "near_curve",
+      "prefix_decisions": 747,
+      "repetitions": 3,
+      "max_pairwise_errors": {
+        "position_m": 7.62939453125e-05,
+        "heading_rad": 7.323692997829312e-06,
+        "speed_kmh": 3.4718562788860208e-06,
+        "route_completion": 1.521755141169201e-07,
+        "observation": 1.0192394256591797e-05
+      },
+      "tolerances": {
+        "position_m": 0.02,
+        "heading_rad": 0.001,
+        "speed_kmh": 0.05,
+        "route_completion": 1e-06,
+        "observation": 1e-05
+      },
+      "passed": false,
+      "reference_signature": {
+        "position_xy": [
+          10.955008506774902,
+          7.378970146179199
+        ],
+        "heading_rad": 0.12059672259038479,
+        "lane_heading_rad": 0.0,
+        "heading_error_rad": 0.12059672259038479,
+        "speed_kmh": 0.22978592850968657,
+        "route_completion": 0.027313505102975054,
+        "reference_station_m": 0.9550085067749023,
+        "lateral_error_m": -0.3789701461791992,
+        "lane_width_m": 3.5,
+        "vehicle_width_m": 1.852,
+        "estimated_body_edge_clearance_m": 0.44502985382080074,
+        "on_lane": true,
+        "task_valid_waypoints": 20,
+        "max_abs_valid_waypoint_heading_rad": 0.12059999380524757
+      }
+    },
+    {
+      "label": "lateral_heading_error+reduced_safety_margin",
+      "prefix_decisions": 854,
+      "repetitions": 3,
+      "max_pairwise_errors": {
+        "position_m": 0.00025554601532869816,
+        "heading_rad": 6.471481448855343e-05,
+        "speed_kmh": 0.0008916341710292208,
+        "route_completion": 4.2799363345752406e-07,
+        "observation": 6.800144910812378e-05
+      },
+      "tolerances": {
+        "position_m": 0.02,
+        "heading_rad": 0.001,
+        "speed_kmh": 0.05,
+        "route_completion": 1e-06,
+        "observation": 1e-05
+      },
+      "passed": false,
+      "reference_signature": {
+        "position_xy": [
+          12.376091957092285,
+          7.5040178298950195
+        ],
+        "heading_rad": 0.11182493574993657,
+        "lane_heading_rad": 0.0,
+        "heading_error_rad": 0.11182493574993657,
+        "speed_kmh": 1.414851482262859,
+        "route_completion": 0.030856612353689923,
+        "reference_station_m": 2.376091957092285,
+        "lateral_error_m": -0.5040178298950195,
+        "lane_width_m": 3.5,
+        "vehicle_width_m": 1.852,
+        "estimated_body_edge_clearance_m": 0.3199821701049804,
+        "on_lane": true,
+        "task_valid_waypoints": 20,
+        "max_abs_valid_waypoint_heading_rad": 0.1117999915012578
+      }
+    }
+  ],
+  "state_labels": [
+    "reset_stationary",
+    "already_progressed",
+    "near_curve",
+    "lateral_heading_error+reduced_safety_margin"
+  ]
+}

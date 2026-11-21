@@ -1,0 +1,43 @@
+{
+  "protocol": "stage5_p2g_action_consequence_v1",
+  "status": "preregistered_before_counterfactuals_amended_after_replay_validation",
+  "source_experiment": "P2-D arm A, episode 6, geom_easy_SCSS_seed3, environment_seed 976051",
+  "source_split": "TRAIN/PILOT_TRAIN",
+  "source_action_trace": "runs/stage5_p2d/s5_p2d_actor_activation_seed101_20261121/arm_A/replay_action_trace.jsonl",
+  "source_checkpoint_steps": [10000],
+  "checkpoint_arms": ["P2-D-A-ReLU", "P2-D-B-LeakyReLU", "P2-F-A-ReLU", "P2-F-B-LeakyReLU"],
+  "state_selector": {
+    "reset": "prefix_decisions=0",
+    "moving": "first state with speed >= 1 km/h and positive step route delta; 1 km/h is the project stationary threshold",
+    "progressed": "first state whose episode route_completion delta >= 0.01",
+    "near_curve": "eligible nonterminal state maximizing absolute valid Task waypoint relative heading; minimum 0.05 rad",
+    "lateral_error": "eligible nonterminal state maximizing absolute current reference lane lateral coordinate",
+    "reduced_safety_margin": "eligible nonterminal state minimizing positive estimated body clearance to reference-lane edge"
+  },
+  "physical_state_replay_validation": {
+    "repetitions_per_selected_state": 3,
+    "position_max_range_m": 0.02,
+    "heading_max_range_rad": 0.001,
+    "speed_max_range_kmh": 0.05,
+    "route_completion_max_range": 0.000001,
+    "historical_speed_abs_error_kmh": 0.05,
+    "historical_route_completion_abs_error": 0.000001,
+    "historical_reward_abs_error": 0.000001,
+    "observation_max_abs_range": 0.0001
+  },
+  "action_grid": {
+    "steering": [-0.35, 0.0, 0.35],
+    "throttle_brake": [-0.5, 0.0, 0.5],
+    "cartesian_combinations": 9,
+    "hold_decisions_max": 20,
+    "decision_frequency_hz": 10,
+    "stop_on_terminal": true
+  },
+  "state_limit": 6,
+  "support": "20 nearest same-geometry replay observations in transformed 409D Euclidean space; action envelope is descriptive only",
+  "reward": "RewardSpecV1 as returned by Stage5TrainingEnv; no changes",
+  "access": {"training": true, "validation": false, "test": false, "teacher_data": false},
+  "protocol_amendment": "Before counterfactual execution: replay reached only 1.45 km/h on the selected source episode, so the movement-state threshold was aligned to the project's 1 km/h stationary definition. Three replays showed physical signature ranges below the registered physical tolerances but float32 observation range up to 6.81e-5; observation tolerance was set to 1e-4. No action intervention had run before this amendment.",
+  "scientific_training": false,
+  "benchmark_eligible": false
+}

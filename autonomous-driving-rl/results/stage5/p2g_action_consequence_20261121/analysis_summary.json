@@ -1,0 +1,1215 @@
+{
+  "action_combinations_per_state": 9,
+  "benchmark_eligible": false,
+  "counterfactual_count": 45,
+  "evidence_sha256": "b497bba6c4415be8ed2ec59ddefb1a90eab03893e3bd8e18fdebfbc3c047fc66",
+  "limitations": [
+    "one source geometry/environment seed",
+    "one source training trajectory",
+    "20-decision fixed-action horizon",
+    "short return is not SAC soft-Q",
+    "estimated lateral body clearance is descriptive, not MetaDrive safety oracle",
+    "action support is a local empirical envelope, not trajectory density"
+  ],
+  "max_post_branch_decisions": 20,
+  "physical_replay_validation_passed": true,
+  "protocol_sha256": "52aeb7cf732a366fa240ea2038c2ed3cc7721b11fb3f541e4f22219d7adb8f8e",
+  "schema": "stage5_p2g_summary_v1",
+  "scientific_training": false,
+  "state_count": 5,
+  "state_replay_validation": [
+    {
+      "label": "reset_stationary",
+      "max_pairwise_errors": {
+        "heading_rad": 0.0,
+        "observation": 0.0,
+        "position_m": 0.0,
+        "route_completion": 0.0,
+        "speed_kmh": 0.0
+      },
+      "passed": true,
+      "prefix_decisions": 0,
+      "reference_signature": {
+        "estimated_body_edge_clearance_m": 0.824,
+        "heading_error_rad": 0.0,
+        "heading_rad": 0.0,
+        "lane_heading_rad": 0.0,
+        "lane_width_m": 3.5,
+        "lateral_error_m": 0.0,
+        "max_abs_valid_waypoint_heading_rad": 0.0,
+        "navigation_total_length_m": 401.0839496971649,
+        "on_lane": true,
+        "position_xy": [
+          5.0,
+          7.0
+        ],
+        "reference_station_m": 5.0,
+        "route_completion": 0.012466218116619248,
+        "speed_kmh": 0.0,
+        "task_valid_waypoints": 20,
+        "vehicle_width_m": 1.852
+      },
+      "repetitions": 3,
+      "tolerances": {
+        "heading_rad": 0.001,
+        "observation": 0.0001,
+        "position_m": 0.02,
+        "route_completion": 1e-06,
+        "speed_kmh": 0.05
+      }
+    },
+    {
+      "label": "moving_positive_progress",
+      "max_pairwise_errors": {
+        "heading_rad": 0.0,
+        "observation": 0.0,
+        "position_m": 4.76837158203125e-07,
+        "route_completion": 1.1888712046076444e-09,
+        "speed_kmh": 1.0095063207593569e-07
+      },
+      "passed": true,
+      "prefix_decisions": 10,
+      "reference_signature": {
+        "estimated_body_edge_clearance_m": 0.8203245391845703,
+        "heading_error_rad": -0.0009365005973265284,
+        "heading_rad": -0.0009365005973265284,
+        "lane_heading_rad": 0.0,
+        "lane_width_m": 3.5,
+        "lateral_error_m": 0.0036754608154296875,
+        "max_abs_valid_waypoint_heading_rad": 0.0009000000028983502,
+        "navigation_total_length_m": 401.0839496971649,
+        "on_lane": true,
+        "position_xy": [
+          5.037207126617432,
+          6.99632453918457
+        ],
+        "reference_station_m": 5.037207126617432,
+        "route_completion": 0.012558984547800363,
+        "speed_kmh": 1.221704694597095,
+        "task_valid_waypoints": 20,
+        "vehicle_width_m": 1.852
+      },
+      "repetitions": 3,
+      "tolerances": {
+        "heading_rad": 0.001,
+        "observation": 0.0001,
+        "position_m": 0.02,
+        "route_completion": 1e-06,
+        "speed_kmh": 0.05
+      }
+    },
+    {
+      "label": "already_progressed",
+      "max_pairwise_errors": {
+        "heading_rad": 6.924218833859186e-06,
+        "observation": 3.1830742955207825e-05,
+        "position_m": 3.2721592835040594e-05,
+        "route_completion": 2.615516648749039e-08,
+        "speed_kmh": 4.946454967846847e-06
+      },
+      "passed": true,
+      "prefix_decisions": 587,
+      "reference_signature": {
+        "estimated_body_edge_clearance_m": 0.7351285209655761,
+        "heading_error_rad": 0.02855587794642922,
+        "heading_rad": 0.02855587794642922,
+        "lane_heading_rad": 0.0,
+        "lane_width_m": 3.5,
+        "lateral_error_m": -0.08887147903442383,
+        "max_abs_valid_waypoint_heading_rad": 0.028599998710458277,
+        "navigation_total_length_m": 401.0839496971649,
+        "on_lane": true,
+        "position_xy": [
+          9.031304359436035,
+          7.088871479034424
+        ],
+        "reference_station_m": 9.031304359436035,
+        "route_completion": 0.02251724200446078,
+        "speed_kmh": 1.4511916096236677,
+        "task_valid_waypoints": 20,
+        "vehicle_width_m": 1.852
+      },
+      "repetitions": 3,
+      "tolerances": {
+        "heading_rad": 0.001,
+        "observation": 0.0001,
+        "position_m": 0.02,
+        "route_completion": 1e-06,
+        "speed_kmh": 0.05
+      }
+    },
+    {
+      "label": "near_curve",
+      "max_pairwise_errors": {
+        "heading_rad": 2.4900556192086754e-05,
+        "observation": 3.218650817871094e-05,
+        "position_m": 0.00014566263040897154,
+        "route_completion": 1.4266454448699784e-07,
+        "speed_kmh": 7.468647814645735e-07
+      },
+      "passed": true,
+      "prefix_decisions": 747,
+      "reference_signature": {
+        "estimated_body_edge_clearance_m": 0.44512569808959956,
+        "heading_error_rad": 0.12057914572719053,
+        "heading_rad": 0.12057914572719053,
+        "lane_heading_rad": 0.0,
+        "lane_width_m": 3.5,
+        "lateral_error_m": -0.3788743019104004,
+        "max_abs_valid_waypoint_heading_rad": 0.12059999380524757,
+        "navigation_total_length_m": 401.0839496971649,
+        "on_lane": true,
+        "position_xy": [
+          10.955025672912598,
+          7.3788743019104
+        ],
+        "reference_station_m": 0.9550256729125977,
+        "route_completion": 0.0273135479023384,
+        "speed_kmh": 0.22978464100227997,
+        "task_valid_waypoints": 20,
+        "vehicle_width_m": 1.852
+      },
+      "repetitions": 3,
+      "tolerances": {
+        "heading_rad": 0.001,
+        "observation": 0.0001,
+        "position_m": 0.02,
+        "route_completion": 1e-06,
+        "speed_kmh": 0.05
+      }
+    },
+    {
+      "label": "lateral_heading_error+reduced_safety_margin",
+      "max_pairwise_errors": {
+        "heading_rad": 3.781688747928058e-05,
+        "observation": 4.127994179725647e-05,
+        "position_m": 0.000256625235227126,
+        "route_completion": 6.396127077805402e-07,
+        "speed_kmh": 0.0008721865558005693
+      },
+      "passed": true,
+      "prefix_decisions": 854,
+      "reference_signature": {
+        "estimated_body_edge_clearance_m": 0.3200699081420898,
+        "heading_error_rad": 0.11177087357980753,
+        "heading_rad": 0.11177087357980753,
+        "lane_heading_rad": 0.0,
+        "lane_width_m": 3.5,
+        "lateral_error_m": -0.5039300918579102,
+        "max_abs_valid_waypoint_heading_rad": 0.1117999915012578,
+        "navigation_total_length_m": 401.0839496971649,
+        "on_lane": true,
+        "position_xy": [
+          12.376333236694336,
+          7.50393009185791
+        ],
+        "reference_station_m": 2.376333236694336,
+        "route_completion": 0.030857213922519174,
+        "speed_kmh": 1.4156953817348246,
+        "task_valid_waypoints": 20,
+        "vehicle_width_m": 1.852
+      },
+      "repetitions": 3,
+      "tolerances": {
+        "heading_rad": 0.001,
+        "observation": 0.0001,
+        "position_m": 0.02,
+        "route_completion": 1e-06,
+        "speed_kmh": 0.05
+      }
+    }
+  ],
+  "states": [
+    {
+      "action_results": [
+        {
+          "action": [
+            -0.35,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.049186318079818096,
+          "min_estimated_clearance_m": 0.8237162818908691,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.0041449547817661485,
+          "route_delta_m": 0.0031561851501466375
+        },
+        {
+          "action": [
+            -0.35,
+            0.0
+          ],
+          "mean_speed_kmh": 0.031037800683399824,
+          "min_estimated_clearance_m": 0.8236366500854492,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004136423442005858,
+          "route_delta_m": 0.006577968597412294
+        },
+        {
+          "action": [
+            -0.35,
+            0.5
+          ],
+          "mean_speed_kmh": 5.113538805461605,
+          "min_estimated_clearance_m": 0.1521011581420898,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": 0.0021580706031826763,
+          "route_delta_m": 2.531198501586914
+        },
+        {
+          "action": [
+            0.0,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.06395555550322637,
+          "min_estimated_clearance_m": 0.824,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004151599382925606,
+          "route_delta_m": 0.0004911422729491105
+        },
+        {
+          "action": [
+            0.0,
+            0.0
+          ],
+          "mean_speed_kmh": 0.031003117666623954,
+          "min_estimated_clearance_m": 0.824,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004135783829298078,
+          "route_delta_m": 0.0068345069885254114
+        },
+        {
+          "action": [
+            0.0,
+            0.5
+          ],
+          "mean_speed_kmh": 5.199616568684606,
+          "min_estimated_clearance_m": 0.824,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": 0.002501980131864136,
+          "route_delta_m": 2.669135093688965
+        },
+        {
+          "action": [
+            0.35,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.04917638355711389,
+          "min_estimated_clearance_m": 0.8237162818908691,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004145052269204881,
+          "route_delta_m": 0.003117084503173855
+        },
+        {
+          "action": [
+            0.35,
+            0.0
+          ],
+          "mean_speed_kmh": 0.031055832756203983,
+          "min_estimated_clearance_m": 0.823636173248291,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004136402042324186,
+          "route_delta_m": 0.006586551666259776
+        },
+        {
+          "action": [
+            0.35,
+            0.5
+          ],
+          "mean_speed_kmh": 4.3859501415662345,
+          "min_estimated_clearance_m": 0.40336096191406245,
+          "outcome": "OUT_OF_ROAD",
+          "reward_v1_sum": -0.998947434320079,
+          "route_delta_m": 1.8379535675048824
+        }
+      ],
+      "critic_actor": {
+        "P2D_A_10000": {
+          "action_q_gradient_norm_mean": 0.002391013721071059,
+          "actor_action": [
+            0.001529226778075099,
+            -0.025290295481681824
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": -0.2239299714565277,
+            "entropy_norm": 0.13390831649303436,
+            "negative_q_norm": 0.0025354267563670874
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": -0.9166666666666666,
+          "q_min_action_grid_spearman_vs_short_v1_return": -0.5666666666666667,
+          "q_min_range": [
+            14.731959342956543,
+            14.734543800354004
+          ],
+          "q_preferred_action": [
+            0.3499999940395355,
+            -0.5
+          ]
+        },
+        "P2D_B_10000": {
+          "action_q_gradient_norm_mean": 0.0022598759174854905,
+          "actor_action": [
+            0.004745030775666237,
+            0.0050063105300068855
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": -0.5282358527183533,
+            "entropy_norm": 0.1611883044242859,
+            "negative_q_norm": 0.0018736975034698844
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": 0.8333333333333333,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.6,
+          "q_min_range": [
+            14.785231590270996,
+            14.787938117980957
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            0.5
+          ]
+        },
+        "P2F_A_10000": {
+          "action_q_gradient_norm_mean": 0.0022598759174854905,
+          "actor_action": [
+            0.004745030775666237,
+            0.0050063105300068855
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": 0.29609400033950806,
+            "entropy_norm": 0.16014453768730164,
+            "negative_q_norm": 0.0019467861857265234
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": 0.8333333333333333,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.6,
+          "q_min_range": [
+            14.785231590270996,
+            14.787938117980957
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            0.5
+          ]
+        },
+        "P2F_B_10000": {
+          "action_q_gradient_norm_mean": 0.004718600771242364,
+          "actor_action": [
+            -0.03386504948139191,
+            -0.026413694024086
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": 0.7420053482055664,
+            "entropy_norm": 0.13519355654716492,
+            "negative_q_norm": 0.0033446692395955324
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": -0.25,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.19999999999999998,
+          "q_min_range": [
+            14.69621753692627,
+            14.700272560119629
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            -0.5
+          ]
+        }
+      },
+      "prefix_decisions": 0,
+      "probe_censored": 8,
+      "safety_failures": 1,
+      "state_label": "reset_stationary",
+      "trials": 9
+    },
+    {
+      "action_results": [
+        {
+          "action": [
+            -0.35,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.046876331433163894,
+          "min_estimated_clearance_m": 0.8176246871948242,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004119735256914554,
+          "route_delta_m": 0.013271331787109925
+        },
+        {
+          "action": [
+            -0.35,
+            0.0
+          ],
+          "mean_speed_kmh": 0.20439673920392964,
+          "min_estimated_clearance_m": 0.8128319969177246,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.003823664716613016,
+          "route_delta_m": 0.13202047348022464
+        },
+        {
+          "action": [
+            -0.35,
+            0.5
+          ],
+          "mean_speed_kmh": 6.17943934693095,
+          "min_estimated_clearance_m": -0.05729091262817387,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": 0.0035310718015779284,
+          "route_delta_m": 3.0818872451782227
+        },
+        {
+          "action": [
+            0.0,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.04578925362484472,
+          "min_estimated_clearance_m": 0.8195654144287109,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004122845343984361,
+          "route_delta_m": 0.012023925781249724
+        },
+        {
+          "action": [
+            0.0,
+            0.0
+          ],
+          "mean_speed_kmh": 0.24562607596269115,
+          "min_estimated_clearance_m": 0.8193069686889648,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.00376243666073304,
+          "route_delta_m": 0.1565780639648442
+        },
+        {
+          "action": [
+            0.0,
+            0.5
+          ],
+          "mean_speed_kmh": 6.383638468431582,
+          "min_estimated_clearance_m": 0.8056904067993164,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": 0.004139498039934139,
+          "route_delta_m": 3.3259172439575204
+        },
+        {
+          "action": [
+            0.35,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.04810335152581921,
+          "min_estimated_clearance_m": 0.8209501495361328,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.00411048702781822,
+          "route_delta_m": 0.01698064804077173
+        },
+        {
+          "action": [
+            0.35,
+            0.0
+          ],
+          "mean_speed_kmh": 0.26853313102465937,
+          "min_estimated_clearance_m": 0.7979422798156738,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.0037356632812177485,
+          "route_delta_m": 0.1673164367675784
+        },
+        {
+          "action": [
+            0.35,
+            0.5
+          ],
+          "mean_speed_kmh": 5.123484005393577,
+          "min_estimated_clearance_m": 0.3729110946655273,
+          "outcome": "OUT_OF_ROAD",
+          "reward_v1_sum": -0.9983363935844641,
+          "route_delta_m": 1.9164690971374516
+        }
+      ],
+      "critic_actor": {
+        "P2D_A_10000": {
+          "action_q_gradient_norm_mean": 0.002391013721071059,
+          "actor_action": [
+            0.001529226778075099,
+            -0.025290295481681824
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": -0.1412709802389145,
+            "entropy_norm": 0.11780337244272232,
+            "negative_q_norm": 0.002519985195249319
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": -0.8666666666666667,
+          "q_min_action_grid_spearman_vs_short_v1_return": -0.5166666666666667,
+          "q_min_range": [
+            14.72659683227539,
+            14.729180335998535
+          ],
+          "q_preferred_action": [
+            0.3499999940395355,
+            -0.5
+          ]
+        },
+        "P2D_B_10000": {
+          "action_q_gradient_norm_mean": 0.0022598267102951638,
+          "actor_action": [
+            0.004742177203297615,
+            0.0050235469825565815
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": 0.28538480401039124,
+            "entropy_norm": 0.10726731270551682,
+            "negative_q_norm": 0.002366772387176752
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": 0.75,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.5166666666666667,
+          "q_min_range": [
+            14.78589153289795,
+            14.78859806060791
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            0.5
+          ]
+        },
+        "P2F_A_10000": {
+          "action_q_gradient_norm_mean": 0.0022598267102951638,
+          "actor_action": [
+            0.004742177203297615,
+            0.0050235469825565815
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": -0.728360116481781,
+            "entropy_norm": 0.16171710193157196,
+            "negative_q_norm": 0.0016734956298023462
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": 0.75,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.5166666666666667,
+          "q_min_range": [
+            14.78589153289795,
+            14.78859806060791
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            0.5
+          ]
+        },
+        "P2F_B_10000": {
+          "action_q_gradient_norm_mean": 0.004718600771242364,
+          "actor_action": [
+            -0.033880606293678284,
+            -0.02641531080007553
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": 0.013236181810498238,
+            "entropy_norm": 0.23940829932689667,
+            "negative_q_norm": 0.005045528057962656
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": -0.39999999999999997,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.049999999999999996,
+          "q_min_range": [
+            14.70143985748291,
+            14.70549488067627
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            -0.5
+          ]
+        }
+      },
+      "prefix_decisions": 10,
+      "probe_censored": 8,
+      "safety_failures": 1,
+      "state_label": "moving_positive_progress",
+      "trials": 9
+    },
+    {
+      "action_results": [
+        {
+          "action": [
+            -0.35,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.028368762526762396,
+          "min_estimated_clearance_m": 0.7230497589111328,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004111729398226458,
+          "route_delta_m": 0.016482353210449024
+        },
+        {
+          "action": [
+            -0.35,
+            0.0
+          ],
+          "mean_speed_kmh": 0.28695416281947195,
+          "min_estimated_clearance_m": 0.7283583869934082,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.003696428153741564,
+          "route_delta_m": 0.18305301666259824
+        },
+        {
+          "action": [
+            -0.35,
+            0.5
+          ],
+          "mean_speed_kmh": 6.373630834470632,
+          "min_estimated_clearance_m": 0.09099542999267574,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": 0.0038439375253791373,
+          "route_delta_m": 3.207372665405274
+        },
+        {
+          "action": [
+            0.0,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.022473570563610122,
+          "min_estimated_clearance_m": 0.7247868766784668,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.0041031195929667,
+          "route_delta_m": 0.019935607910156156
+        },
+        {
+          "action": [
+            0.0,
+            0.0
+          ],
+          "mean_speed_kmh": 0.34798757474616954,
+          "min_estimated_clearance_m": 0.7182489624023437,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.003607469677027035,
+          "route_delta_m": 0.21873283386230483
+        },
+        {
+          "action": [
+            0.0,
+            0.5
+          ],
+          "mean_speed_kmh": 6.6029099027857425,
+          "min_estimated_clearance_m": 0.6052380790710449,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": 0.004437433919154836,
+          "route_delta_m": 3.445414543151855
+        },
+        {
+          "action": [
+            0.35,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.02138438843773009,
+          "min_estimated_clearance_m": 0.7263308753967285,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004103055393921679,
+          "route_delta_m": 0.01996135711669999
+        },
+        {
+          "action": [
+            0.35,
+            0.0
+          ],
+          "mean_speed_kmh": 0.3802913467189324,
+          "min_estimated_clearance_m": 0.6863008728027343,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.0035713945692112266,
+          "route_delta_m": 0.2332019805908203
+        },
+        {
+          "action": [
+            0.35,
+            0.5
+          ],
+          "mean_speed_kmh": 4.624953086709344,
+          "min_estimated_clearance_m": 0.4019294967651367,
+          "outcome": "OUT_OF_ROAD",
+          "reward_v1_sum": -0.999074471917757,
+          "route_delta_m": 1.3705930709838852
+        }
+      ],
+      "critic_actor": {
+        "P2D_A_10000": {
+          "action_q_gradient_norm_mean": 0.002391013721071059,
+          "actor_action": [
+            0.001529226778075099,
+            -0.025290295481681824
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": -0.3908947706222534,
+            "entropy_norm": 0.18242518603801727,
+            "negative_q_norm": 0.0018704987596720457
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": -0.8499999999999999,
+          "q_min_action_grid_spearman_vs_short_v1_return": -0.5,
+          "q_min_range": [
+            14.707962989807129,
+            14.71054744720459
+          ],
+          "q_preferred_action": [
+            0.3499999940395355,
+            -0.5
+          ]
+        },
+        "P2D_B_10000": {
+          "action_q_gradient_norm_mean": 0.0022597971098712645,
+          "actor_action": [
+            0.0047288741916418076,
+            0.005017430521547794
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": -0.05629260465502739,
+            "entropy_norm": 0.2610964775085449,
+            "negative_q_norm": 0.0016972841694951057
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": 0.7166666666666667,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.48333333333333334,
+          "q_min_range": [
+            14.760749816894531,
+            14.763455390930176
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            0.5
+          ]
+        },
+        "P2F_A_10000": {
+          "action_q_gradient_norm_mean": 0.0022597971098712645,
+          "actor_action": [
+            0.0047288741916418076,
+            0.005017430521547794
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": -0.7464359402656555,
+            "entropy_norm": 0.1432778686285019,
+            "negative_q_norm": 0.0018026382895186543
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": 0.7166666666666667,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.48333333333333334,
+          "q_min_range": [
+            14.760749816894531,
+            14.763455390930176
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            0.5
+          ]
+        },
+        "P2F_B_10000": {
+          "action_q_gradient_norm_mean": 0.004718600771242364,
+          "actor_action": [
+            -0.033907756209373474,
+            -0.02641969360411167
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": 0.24135269224643707,
+            "entropy_norm": 0.24653340876102448,
+            "negative_q_norm": 0.00401159655302763
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": -0.45,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.0,
+          "q_min_range": [
+            14.636775016784668,
+            14.64083194732666
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            -0.5
+          ]
+        }
+      },
+      "prefix_decisions": 587,
+      "probe_censored": 8,
+      "safety_failures": 1,
+      "state_label": "already_progressed",
+      "trials": 9
+    },
+    {
+      "action_results": [
+        {
+          "action": [
+            -0.35,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.018406044695242475,
+          "min_estimated_clearance_m": 0.4434677352905273,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004160853556377961,
+          "route_delta_m": -0.003220558166504128
+        },
+        {
+          "action": [
+            -0.35,
+            0.0
+          ],
+          "mean_speed_kmh": 0.018405531673936645,
+          "min_estimated_clearance_m": 0.44329512023925777,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004160860689605185,
+          "route_delta_m": -0.0032234191894532876
+        },
+        {
+          "action": [
+            -0.35,
+            0.5
+          ],
+          "mean_speed_kmh": 4.904961451047177,
+          "min_estimated_clearance_m": 0.44342958831787105,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": 0.002043135290659566,
+          "route_delta_m": 2.485099792480468
+        },
+        {
+          "action": [
+            0.0,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.018413847000333078,
+          "min_estimated_clearance_m": 0.4434796562194824,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004160368496926707,
+          "route_delta_m": -0.003026008605957073
+        },
+        {
+          "action": [
+            0.0,
+            0.0
+          ],
+          "mean_speed_kmh": 0.018414598056104927,
+          "min_estimated_clearance_m": 0.44353926086425777,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004160368496926707,
+          "route_delta_m": -0.0030260086059570724
+        },
+        {
+          "action": [
+            0.0,
+            0.5
+          ],
+          "mean_speed_kmh": 3.518859940754589,
+          "min_estimated_clearance_m": 0.29667055511474605,
+          "outcome": "OUT_OF_ROAD",
+          "reward_v1_sum": -0.9998908865872586,
+          "route_delta_m": 1.2097053527832033
+        },
+        {
+          "action": [
+            0.35,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.01792939651519299,
+          "min_estimated_clearance_m": 0.44352352523803706,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004159626641295378,
+          "route_delta_m": -0.0027284622192388632
+        },
+        {
+          "action": [
+            0.35,
+            0.0
+          ],
+          "mean_speed_kmh": 0.017928148354754533,
+          "min_estimated_clearance_m": 0.4436026802062988,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004159629019037788,
+          "route_delta_m": -0.0027294158935557145
+        },
+        {
+          "action": [
+            0.35,
+            0.5
+          ],
+          "mean_speed_kmh": 2.0271632605790844,
+          "min_estimated_clearance_m": 0.3424736251831054,
+          "outcome": "OUT_OF_ROAD",
+          "reward_v1_sum": -1.0007802211830081,
+          "route_delta_m": 0.3533182144165036
+        }
+      ],
+      "critic_actor": {
+        "P2D_A_10000": {
+          "action_q_gradient_norm_mean": 0.002391013721071059,
+          "actor_action": [
+            0.001529226778075099,
+            -0.025290295481681824
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": 0.8051397204399109,
+            "entropy_norm": 0.16028976440429688,
+            "negative_q_norm": 0.0013849444221705198
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": -0.5499999999999999,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.2761530448893886,
+          "q_min_range": [
+            14.702277183532715,
+            14.70486068725586
+          ],
+          "q_preferred_action": [
+            0.3499999940395355,
+            -0.5
+          ]
+        },
+        "P2D_B_10000": {
+          "action_q_gradient_norm_mean": 0.0022598859111429624,
+          "actor_action": [
+            0.004720671568065882,
+            0.005027559120208025
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": 0.16224592924118042,
+            "entropy_norm": 0.11113910377025604,
+            "negative_q_norm": 0.002226083306595683
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": 0.39999999999999997,
+          "q_min_action_grid_spearman_vs_short_v1_return": -0.2928895930645031,
+          "q_min_range": [
+            14.78250789642334,
+            14.7852144241333
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            0.5
+          ]
+        },
+        "P2F_A_10000": {
+          "action_q_gradient_norm_mean": 0.0022598859111429624,
+          "actor_action": [
+            0.004720671568065882,
+            0.005027559120208025
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": 0.27843818068504333,
+            "entropy_norm": 0.12033558636903763,
+            "negative_q_norm": 0.00215411395765841
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": 0.39999999999999997,
+          "q_min_action_grid_spearman_vs_short_v1_return": -0.2928895930645031,
+          "q_min_range": [
+            14.78250789642334,
+            14.7852144241333
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            0.5
+          ]
+        },
+        "P2F_B_10000": {
+          "action_q_gradient_norm_mean": 0.004718600771242364,
+          "actor_action": [
+            -0.03398197889328003,
+            -0.02644483745098114
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": -0.6296935081481934,
+            "entropy_norm": 0.1494404524564743,
+            "negative_q_norm": 0.003581998171284795
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": -0.5166666666666667,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.09205101496312953,
+          "q_min_range": [
+            14.569902420043945,
+            14.573957443237305
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            -0.5
+          ]
+        }
+      },
+      "prefix_decisions": 747,
+      "probe_censored": 7,
+      "safety_failures": 2,
+      "state_label": "near_curve",
+      "trials": 9
+    },
+    {
+      "action_results": [
+        {
+          "action": [
+            -0.35,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.045622788758755195,
+          "min_estimated_clearance_m": 0.3051029434204101,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004108716798595387,
+          "route_delta_m": 0.017690658569335077
+        },
+        {
+          "action": [
+            -0.35,
+            0.0
+          ],
+          "mean_speed_kmh": 0.25446102643527946,
+          "min_estimated_clearance_m": 0.30611908340454097,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.003745266982804097,
+          "route_delta_m": 0.16346454620361292
+        },
+        {
+          "action": [
+            -0.35,
+            0.5
+          ],
+          "mean_speed_kmh": 6.301558143635317,
+          "min_estimated_clearance_m": 0.30640280151367183,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": 0.003893908159827926,
+          "route_delta_m": 3.227415084838867
+        },
+        {
+          "action": [
+            0.0,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.034516433029124466,
+          "min_estimated_clearance_m": 0.30704414749145503,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004122127265777113,
+          "route_delta_m": 0.012311935424804294
+        },
+        {
+          "action": [
+            0.0,
+            0.0
+          ],
+          "mean_speed_kmh": 1.1514362775175218,
+          "min_estimated_clearance_m": 0.3008300056457519,
+          "outcome": "OUT_OF_ROAD",
+          "reward_v1_sum": -1.0002483125646444,
+          "route_delta_m": 0.06696891784667894
+        },
+        {
+          "action": [
+            0.0,
+            0.5
+          ],
+          "mean_speed_kmh": 2.0900131514127365,
+          "min_estimated_clearance_m": 0.29784691238403316,
+          "outcome": "OUT_OF_ROAD",
+          "reward_v1_sum": -1.0001862725097321,
+          "route_delta_m": 0.0918521881103512
+        },
+        {
+          "action": [
+            0.35,
+            -0.5
+          ],
+          "mean_speed_kmh": 0.02069131118763064,
+          "min_estimated_clearance_m": 0.3076039543151855,
+          "outcome": "PROBE_CENSORED",
+          "reward_v1_sum": -0.004106215413582058,
+          "route_delta_m": 0.01869392395019426
+        },
+        {
+          "action": [
+            0.35,
+            0.0
+          ],
+          "mean_speed_kmh": 1.2220882416289411,
+          "min_estimated_clearance_m": 0.2950950851440429,
+          "outcome": "OUT_OF_ROAD",
+          "reward_v1_sum": -1.0002455638944208,
+          "route_delta_m": 0.06807136535644466
+        },
+        {
+          "action": [
+            0.35,
+            0.5
+          ],
+          "mean_speed_kmh": 2.149464038892717,
+          "min_estimated_clearance_m": 0.28884136581420894,
+          "outcome": "OUT_OF_ROAD",
+          "reward_v1_sum": -1.0001857517841448,
+          "route_delta_m": 0.09206104278564405
+        }
+      ],
+      "critic_actor": {
+        "P2D_A_10000": {
+          "action_q_gradient_norm_mean": 0.002391013721071059,
+          "actor_action": [
+            0.001529226778075099,
+            -0.025290295481681824
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": -0.22290879487991333,
+            "entropy_norm": 0.10963727533817291,
+            "negative_q_norm": 0.0025346998590976
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": -0.8666666666666667,
+          "q_min_action_grid_spearman_vs_short_v1_return": -0.06666666666666667,
+          "q_min_range": [
+            14.692294120788574,
+            14.694878578186035
+          ],
+          "q_preferred_action": [
+            0.3499999940395355,
+            -0.5
+          ]
+        },
+        "P2D_B_10000": {
+          "action_q_gradient_norm_mean": 0.002259856310719063,
+          "actor_action": [
+            0.004716104362159967,
+            0.00505361333489418
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": -0.05885736644268036,
+            "entropy_norm": 0.11020886152982712,
+            "negative_q_norm": 0.0023255234118551016
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": 0.8333333333333333,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.19999999999999998,
+          "q_min_range": [
+            14.781413078308105,
+            14.784117698669434
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            0.5
+          ]
+        },
+        "P2F_A_10000": {
+          "action_q_gradient_norm_mean": 0.002259856310719063,
+          "actor_action": [
+            0.004716104362159967,
+            0.00505361333489418
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": 0.8202452659606934,
+            "entropy_norm": 0.17117860913276672,
+            "negative_q_norm": 0.0015352395130321383
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": 0.8333333333333333,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.19999999999999998,
+          "q_min_range": [
+            14.781413078308105,
+            14.784117698669434
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            0.5
+          ]
+        },
+        "P2F_B_10000": {
+          "action_q_gradient_norm_mean": 0.004718600771242364,
+          "actor_action": [
+            -0.034004926681518555,
+            -0.02644624002277851
+          ],
+          "actor_entropy_q_gradient": {
+            "cosine": 0.35267937183380127,
+            "entropy_norm": 0.12205628305673599,
+            "negative_q_norm": 0.004316221922636032
+          },
+          "q_min_action_grid_spearman_vs_route_delta_m": -0.06666666666666667,
+          "q_min_action_grid_spearman_vs_short_v1_return": 0.5333333333333333,
+          "q_min_range": [
+            14.574088096618652,
+            14.578143119812012
+          ],
+          "q_preferred_action": [
+            -0.3499999940395355,
+            -0.5
+          ]
+        }
+      },
+      "prefix_decisions": 854,
+      "probe_censored": 5,
+      "safety_failures": 4,
+      "state_label": "lateral_heading_error+reduced_safety_margin",
+      "trials": 9
+    }
+  ],
+  "validation_test_accessed": false
+}
