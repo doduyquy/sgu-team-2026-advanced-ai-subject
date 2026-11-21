@@ -306,7 +306,7 @@
     "task_context_producer_id": "reference_route_station_proposal_v1",
     "transform_fingerprint": "265103242e3ba3ad6f8c493d8f0bad39644c375a2696dbcdad4857052796797e"
   },
-  "parent_commit": "48ce34a5b1e10917d99753494d5fca99fbee8f81",
+  "parent_commit": "d0f8f8bf0d638a150b18dbabe7f1bae64d9a1545",
   "parent_protocol": "stage5_p2_ou_ar1_exploration_v1; P2 standard-SAC arm is the control reference",
   "preflight": {
     "fail_policy": "stop before scientific A/B if sampler tests, action integrity, checkpoint load, timeout semantics, or measurable treatment distribution fail",
@@ -341,9 +341,9 @@
     "id": "reference_route_station_proposal_v1"
   },
   "protocol": "stage5_p2h_terminal_aware_critic_replay_v1",
-  "protocol_sha256": "0f1c42c80f869bbbee801230eef722fa72afd44cb9c50c6325d185a34657f461",
+  "protocol_sha256": "4ed9ae34692e5da2a01953b85c692722cd1a32c3e52dc723e1dbc1472e6026bd",
   "question": "Does terminal-aware prioritized critic replay improve state-dependent SAC driving under otherwise fixed P2-D conditions?",
-  "registered_at_utc": "2026-11-21T03:17:33.638736+00:00",
+  "registered_at_utc": "2026-11-21T03:20:37.684199+00:00",
   "registration_note": "Protocol and implementation hashes are committed before scientific training. Exact training source commit is recorded in each run manifest.",
   "reward": {
     "changed": false,
@@ -407,7 +407,7 @@
     "src/training/stage5/observation_encoder.py": "7725c671f6066174d2f0fef13687f59cd872dda899c59beffc845dc69c869450",
     "src/training/stage5/pilot_observation_transform.py": "f9af458485d30675131916de46c8a7003daf4dd852c4193d34c5b688cf4827fb",
     "src/training/stage5/temporal_exploration.py": "ac6508f35195b86265e43838d6283342627ebf8958201afa6bb9762eae7ff6f5",
-    "src/training/stage5/terminal_aware_replay.py": "03d138a518e22416002d567e2dfa53eeebef5cc185452427fdc03df73ec3c7d7",
+    "src/training/stage5/terminal_aware_replay.py": "5e2aa7106982789ab1d4379c92ec21ae72860f268352f9ae429aebb12c7772b1",
     "src/training/stage5/train_sampler.py": "6da13fb3f2160beda97b26287649b5f024c1ae2afac9a4ea86bfe2b218566863",
     "tests/test_stage5_p2h_replay_training.py": "c6155572330b4a9a73aff66f4fa6c0e805fe5ee01fc70d7622abf1132cc7c691",
     "tests/test_stage5_terminal_aware_replay.py": "692869302ab5d6a54aac87ba4acbe3ab24b24a111331b859d06e57205a3e73bf"

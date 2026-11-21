@@ -1,7 +1,7 @@
 {
   "status": "PREFLIGHT_PASS",
   "protocol": "stage5_p2h_terminal_aware_critic_replay_v1",
-  "protocol_sha256": "0f1c42c80f869bbbee801230eef722fa72afd44cb9c50c6325d185a34657f461",
+  "protocol_sha256": "4ed9ae34692e5da2a01953b85c692722cd1a32c3e52dc723e1dbc1472e6026bd",
   "source_parent_sha": "48ce34a5b1e10917d99753494d5fca99fbee8f81",
   "runtime": {
     "python_environment": "metadrive_sb3",

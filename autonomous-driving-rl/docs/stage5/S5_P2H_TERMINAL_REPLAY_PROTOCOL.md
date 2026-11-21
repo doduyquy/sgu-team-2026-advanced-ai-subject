@@ -1,8 +1,11 @@
 # Stage 5 P2-H — Terminal-Aware Critic Replay A/B
 
-**Status:** preregistered before scientific training; TRAIN only.  
-**Machine protocol:** [`protocol.json`](../../results/stage5/p2h_terminal_replay_seed101_20261121/protocol.json)  
-**Protocol SHA-256:** `0f1c42c80f869bbbee801230eef722fa72afd44cb9c50c6325d185a34657f461`  
+**Status:** preregistered before scientific training; TRAIN only.
+
+**Machine protocol:** [`protocol.json`](../../results/stage5/p2h_terminal_replay_seed101_20261121/protocol.json)
+
+**Protocol SHA-256:** `4ed9ae34692e5da2a01953b85c692722cd1a32c3e52dc723e1dbc1472e6026bd`
+
 **Parent:** Draft PR #48, `48ce34a5b1e10917d99753494d5fca99fbee8f81`.
 
 ## Question and registered contrast

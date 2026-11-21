@@ -94,4 +94,3 @@ class TerminalAwareSampler:
         return {"rng_state": self.rng.bit_generator.state, "draws": self.draws,
                 "terminal_draws": self.terminal_draws, "safety_draws": self.safety_draws,
                 "clean_draws": self.clean_draws, "timeout_draws": self.timeout_draws}
-
