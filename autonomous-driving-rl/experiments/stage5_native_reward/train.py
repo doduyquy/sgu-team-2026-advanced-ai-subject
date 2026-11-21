@@ -191,6 +191,8 @@ class IntegrationCallback(BaseCallback):
         self.step_count = 0
 
     def _on_training_start(self) -> None:
+        (self.run_dir / "evaluations").mkdir(parents=True, exist_ok=True)
+        (self.run_dir / "checkpoints").mkdir(parents=True, exist_ok=True)
         self.steps_file = (self.run_dir / "training_steps.csv").open("w", newline="", encoding="utf-8")
         self.csv_writer = csv.DictWriter(self.steps_file, fieldnames=[
             "global_step", "case_id", "geometry_id", "environment_seed", "episode_step",
