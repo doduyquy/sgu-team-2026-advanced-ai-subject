@@ -6,7 +6,7 @@ This directory is the autonomous-driving research subproject for the SGU Advance
 
 **Platform foundation: complete.** The environment, benchmark protocol, agent interface, logging/provenance, launcher/preflight layer, and Research Workbench are implemented and hardened.
 
-**Active research agents: Stage 0 random/naive and Stage 1 rule-based (P4).**
+**Active research agents: Stage 0 random/naive, Stage 1 rule-based (P4), and Stage 4 PDD hybrid (sandbox/audit candidate).**
 Stage 1 is maintained as v0.6.1 after source cleanup. Its frozen P4 driving
 evidence is v0.6.0; P5 and contract/benchmark audits remain pending.
 
@@ -14,23 +14,12 @@ evidence is v0.6.0; P5 and contract/benchmark audits remain pending.
 |---|---|---|
 | `stage0_random_naive` | `src/agents/random_naive_agent.py` | [Stage 0](docs/STAGE0_RANDOM_NAIVE_AGENT.md) |
 | `stage1_rule_based` | `src/agents/rule_based_agent.py` | [Stage 1](docs/RULE_BASED_AGENT_GUIDE.md) |
+| `stage4_pdd_hybrid` | `src/agents/agent4_pdd_agent.py` | [Agent 4 PDD hybrid](docs/AGENT4_PDD_AGENT.md) |
 
 `rule_based_traffic`, `rule_based_memory`, `rule_based_junction` and
 `rule_based_lane_change` are helpers used by the single Stage 1 entrypoint.
 `experiments/rule_based/versions/` contains immutable experiment snapshots;
 the normal CLI runs the implementations in `src/agents/`.
-
-**Chuẩn bị Stage 4:** [Báo cáo kiểm định và thiết kế BC](docs/STAGE4_G0_TECHNICAL_AUDIT_VI.md)
-cung cấp kiểm tra bằng chứng ngoại tuyến S4-G0 và kế hoạch theo cổng nghiệm thu.
-G0 đã nghiệm thu ngày 13/11/2026 theo [biên bản và giới hạn](docs/STAGE4_G0_REVIEW_VI.md).
-G1 đã hoàn tất trong phạm vi dữ liệu thử: [bước 1 kiểm chứng vận tốc và dấu lái](docs/STAGE4_G1_TELEMETRY_VI.md);
-[bước 2 đã thu và kiểm tra 5,744 cặp dữ liệu thô trên TRAIN](docs/STAGE4_G1_PILOT_VI.md).
-[Bước 3 đã đo tài nguyên và kiểm tra môi trường](docs/STAGE4_G1_RESOURCES_VI.md);
-môi trường huấn luyện còn thiếu PyTorch và có vấn đề phụ thuộc.
-Đã [chốt 144 FIT / 36 DEV và đích huấn luyện Kaggle](docs/STAGE4_G1_SPLIT_KAGGLE_VI.md);
-đã [đóng băng quy tắc chất lượng pilot và kiểm định từng lượt/đoạn](docs/STAGE4_G1_QUALITY_VI.md).
-Đã [xây và kiểm định bộ thử BC-A/BC-B](docs/STAGE4_G1_DATASETS_VI.md).
-Tiếp theo là module huấn luyện; chưa có mô hình Stage 4 đã huấn luyện.
 
 **Known MapSuite V1 metadata erratum:** `declared_base_lane_num = 2`, but `effective_base_lane_num = 3` for the frozen geometry. See the [dedicated erratum](docs/environment/MAPSUITE_V1_LANE_METADATA_ERRATUM.md); do not apply a two-lane override based on the historical description.
 

@@ -75,7 +75,7 @@ def create_optional_finish_visual(env: Any) -> Optional[Any]:
         )
         return None
     if visual is not None:
-        print("[FinishVisual] Đã dựng bảng FINISH hologram và laser tại cuối tuyến.")
+        print("[FinishVisual] Created FINISH hologram and lasers at the end of the route.")
     return visual
 
 

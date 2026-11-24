@@ -1,0 +1,53 @@
+{
+    "schema":  "STAGE4_PDD_HYBRID_RELEASE_V1",
+    "version":  "1.0.0",
+    "created_local_date":  "2026-11-23",
+    "agent_id":  "stage4_pdd_hybrid",
+    "selected_policy":  "SupportedMovingRouteDiagnostic",
+    "training_report_sha256":  "ec58963c837dad6c4e5972da5038aa37b79398150b9f9144f1a038b1fb14e368",
+    "checkpoint_sha256":  "3893f571441d9613031b8388b46e5b9db3cf6e364a2742f28eae9327be5e6b66",
+    "recorded_dependencies":  {
+                                  "numpy":  "2.2.6",
+                                  "scikit-learn":  "1.7.2",
+                                  "joblib":  "1.5.2",
+                                  "metadrive-simulator":  "0.4.3"
+                              },
+    "files_sha256":  {
+                         "src/agents/_pdd_frozen/agent4_integration_audit/audit_compatibility.py":  "16164e62ff8c5dc3456379b85d8b35fa5f45857c0e851e996e5cecf5092546d0",
+                         "src/agents/_pdd_frozen/agent4_integration_audit/run_20261121T015940_628993Z/Medium_SCXCS_14_1/launcher/agent4_pdd_curve06_flow40/sources/policy.py":  "d08921156b3ca6d4e7857677198c41074748b5c6c70d16156be77681ad75b5cc",
+                         "src/agents/_pdd_frozen/agent4_integration_audit/run_20261121T015940_628993Z/report.json":  "2d66d0e9bbdef215f14e01f7202db6472919b7f921ca9029f533cf941ef8b022",
+                         "src/agents/_pdd_frozen/agent4_pdd_common_v2.py":  "cda499ff1c47fd23fef5a6b90eb26d4ebf29aab7badd80007137f4523b5eacc9",
+                         "src/agents/_pdd_frozen/build_agent4_pdd_pilot.py":  "22b3de8370681320ecb721fd6f699930eec74797665a0a7a72cfe2bb75ee9936",
+                         "src/agents/_pdd_frozen/train_pdd_baseline.py":  "22c6a97d22b0b4ad239a16bbe22d5a1525f7f29b18d991d92ad6cf0c21454ea8",
+                         "artifacts/agent4_pdd/1.0.0/evidence/decision_replay_32.jsonl.gz":  "7e8618a19547b726c67848b2ab32b14f443d5ea429b5c45986343928c08f20ae",
+                         "artifacts/agent4_pdd/1.0.0/evidence/extreme_report.json":  "5d7fb3c5d1cb07617b188d3faf71718ccf614cbef5222604db9625b93389e8c0",
+                         "artifacts/agent4_pdd/1.0.0/evidence/medium_hard_report.json":  "d3501ebe701b67f0fb802e251d097d3ce2740ee4ca6cfde0d739c1bfe8d19250",
+                         "artifacts/agent4_pdd/1.0.0/model_bundle.joblib":  "3893f571441d9613031b8388b46e5b9db3cf6e364a2742f28eae9327be5e6b66",
+                         "artifacts/agent4_pdd/1.0.0/training_report.json":  "ec58963c837dad6c4e5972da5038aa37b79398150b9f9144f1a038b1fb14e368",
+                         "src/agents/agent4_pdd_loader.py":  "575b560fad3b77f82fbba1197f28c8f820ef437f9f40737e2db8ffe557efeb7b",
+                         "src/platform/agent_input.py":  "1bf5f0415a3394f6ed0c48f927f35aaa6f7462da48f0705e46d43f589a3e2183",
+                         "src/platform/agent.py":  "a111916966a6cfb0480d45e5642f55bcad375bc02e4f90e8e4796b8ea39375e1",
+                         "src/platform/action_adapter.py":  "d946ca9c858e138ea18d3647a98e8a7dc47c66d72dc67faf53a6275b7d5aceca",
+                         "src/control_stabilizer/controller.py":  "cd6b914457511cf2e16e0ea92dc49a3043e1f43987ad757def62a272316dd0af",
+                         "src/agents/rule_based_agent.py":  "d7b287c8b9aa771de8d0c4691a62c36945c32aec392ff01154c9eb1e1098ce73",
+                         "src/agents/rule_based_memory.py":  "4ceac7c3b08cafb72db710623dcecef84e8b2e021e2638a12c3468dc18a46de4",
+                         "src/agents/rule_based_traffic.py":  "a912c753950a345045dbd06463f3e81c5f4ad5ff266d163cbb55f25f0992d517",
+                         "src/agents/rule_based_junction.py":  "b345ba6277eed9eccd53f965c4d72d43f327e319fb6f2dc0d5ce16d7adf7bb16",
+                         "src/agents/rule_based_lane_change.py":  "191518078edc6438c1f6c0f2c4f25484902fabca04b51f4acce7647cd1d32df8"
+                     },
+    "historical_evidence":  {
+                                "successful_medium_hard_report_sha256":  "d3501ebe701b67f0fb802e251d097d3ce2740ee4ca6cfde0d739c1bfe8d19250",
+                                "failed_extreme_report_sha256":  "5d7fb3c5d1cb07617b188d3faf71718ccf614cbef5222604db9625b93389e8c0",
+                                "selected_runtime_source_sha256":  "16164e62ff8c5dc3456379b85d8b35fa5f45857c0e851e996e5cecf5092546d0",
+                                "replay_fixture_frames":  32,
+                                "fixture_scope":  "Consecutive initial frames from Medium/SCXCS/14/1; inference replay only",
+                                "source_trace_sha256":  "151b976d578ecdeb0a8be54fe1e0d70fcfaae197fb3351c725790af4264918fd"
+                            },
+    "training_performed":  false,
+    "learned_weights_changed":  false,
+    "controller_changed":  false,
+    "requires_dataset_workspace":  false,
+    "benchmark_eligible":  false,
+    "deployment_eligible":  false,
+    "integration_test_status":  "PENDING_USER_RUN"
+}

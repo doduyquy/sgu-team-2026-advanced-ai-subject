@@ -1,0 +1,523 @@
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1000[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 11, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1000[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1000[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1758[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1000[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1758[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1000[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1758[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1000[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1758[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1000[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 7, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1000[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[38;20m[INFO] Environment: MetaDriveEnv[0m
+[38;20m[INFO] MetaDrive version: 0.4.3[0m
+[38;20m[INFO] Sensors: [lidar: Lidar(), side_detector: SideDetector(), lane_line_detector: LaneLineDetector()][0m
+[38;20m[INFO] Render Mode: none[0m
+[38;20m[INFO] Horizon (Max steps per agent): 1000[0m
+[38;20m[INFO] Assets version: 0.4.3[0m
+[38;20m[INFO] Known Pipes: wglGraphicsPipe[0m
+[38;20m[INFO] Start Scenario Index: 0, Num Scenarios : 1[0m
+[WANDB] Run initialized (OFFLINE): mock_offline_run_id -> None
+[WANDB] Run finalized: mock_offline_run_id (OFFLINE)
+============================================================
+EXPORTING METADRIVE MAPSUITE V1 DATASET PACKAGE
+============================================================
+Project root: D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+Output directory: C:\Users\DANGKH~1\AppData\Local\Temp\tmp45c8uz15\mapsuite_v1
+  [OK] Source artifacts loaded and verified.
+  [OK] 240 geometries joined and sorted.
+  [OK] 12 scenario families constructed.
+  [OK] Split partitions verified: 180 TRAIN / 48 VALIDATION / 12 TEST.
+  [OK] Copied 12 representative preview images.
+  [SAVED] CHECKSUMS.sha256 (24 entries).
+============================================================
+MAPSUITE V1 DATASET EXPORT COMPLETE!
+============================================================
+============================================================
+VERIFYING METADRIVE MAPSUITE V1 DATASET PACKAGE
+============================================================
+Dataset directory: C:\Users\DANGKH~1\AppData\Local\Temp\tmp45c8uz15\mapsuite_v1
+Project root:      D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+
+--- 1. Structure & Required Files ---
+  [OK] Exactly 12 expected preview images verified.
+  [OK] All required files and directories exist.
+
+--- 2. Geometries Master Table & Source Parity (geometries.csv) ---
+  [OK] Exactly 240 unique geometry_id values verified.
+  [OK] Zero duplicate (tier, sequence, seed) keys.
+  [OK] Exact source parity verified for geometries.csv across all 240 rows and all columns.
+  [OK] Exactly 12 expected scenario families verified.
+  [OK] Exactly 20 geometries per scenario family verified across all 12 families.
+
+--- 3. Splits Partitioning (splits/) ---
+  [OK] Strict split partitioning verified: 180 TRAIN / 48 VALIDATION / 12 TEST disjoint, union = 240.
+
+--- 4. Evaluation Cases & Source Parity (evaluation_cases/) ---
+  [OK] Exactly 96 validation cases verified.
+  [OK] Exactly 60 test cases verified.
+  [OK] Evaluation cases reference strictly their designated split geometries.
+  [OK] Exact source parity verified for validation_cases.csv (96/96 rows identical).
+  [OK] Exact source parity verified for test_cases.csv (60/60 rows identical).
+
+--- 5. Source Artifact & Preview Provenance ---
+  [OK] Source artifact verified: results/audits/mapsuite/candidate_metrics.csv
+  [OK] Source artifact verified: results/audits/mapsuite/canonical_candidates.json
+  [OK] Source artifact verified: results/audits/evaluation_protocol/geometry_split_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/validation_case_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/test_case_manifest.csv
+  [OK] All 12 source previews verified and byte-identical to packaged previews.
+
+--- 6. Simulator Metadata & Generation Config ---
+  [OK] MetaDrive 0.4.3 / commit 85e5dadc and generation parameters strictly verified.
+
+--- 7. Package Checksums (CHECKSUMS.sha256) ---
+  [OK] All 24 package checksums strictly verified.
+
+============================================================
+MAPSUITE V1 DATASET VERIFICATION SUCCESSFUL (100% PASSED)!
+============================================================
+============================================================
+VERIFYING METADRIVE MAPSUITE V1 DATASET PACKAGE
+============================================================
+Dataset directory: C:\Users\DANGKH~1\AppData\Local\Temp\tmphllzbrer\mapsuite_v1
+Project root:      D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+
+--- 1. Structure & Required Files ---
+  [OK] Exactly 12 expected preview images verified.
+  [OK] All required files and directories exist.
+
+--- 2. Geometries Master Table & Source Parity (geometries.csv) ---
+  [OK] Exactly 240 unique geometry_id values verified.
+  [OK] Zero duplicate (tier, sequence, seed) keys.
+  [OK] Exact source parity verified for geometries.csv across all 240 rows and all columns.
+  [OK] Exactly 12 expected scenario families verified.
+  [OK] Exactly 20 geometries per scenario family verified across all 12 families.
+
+--- 3. Splits Partitioning (splits/) ---
+  [OK] Strict split partitioning verified: 180 TRAIN / 48 VALIDATION / 12 TEST disjoint, union = 240.
+
+--- 4. Evaluation Cases & Source Parity (evaluation_cases/) ---
+  [OK] Exactly 96 validation cases verified.
+  [OK] Exactly 60 test cases verified.
+  [OK] Evaluation cases reference strictly their designated split geometries.
+  [OK] Exact source parity verified for validation_cases.csv (96/96 rows identical).
+
+--- 5. Source Artifact & Preview Provenance ---
+  [OK] Source artifact verified: results/audits/mapsuite/candidate_metrics.csv
+  [OK] Source artifact verified: results/audits/mapsuite/canonical_candidates.json
+  [OK] Source artifact verified: results/audits/evaluation_protocol/geometry_split_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/validation_case_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/test_case_manifest.csv
+  [OK] All 12 source previews verified and byte-identical to packaged previews.
+
+--- 6. Simulator Metadata & Generation Config ---
+  [OK] MetaDrive 0.4.3 / commit 85e5dadc and generation parameters strictly verified.
+
+--- 7. Package Checksums (CHECKSUMS.sha256) ---
+
+============================================================
+VERIFICATION FAILED WITH 2 ERROR(S):
+  [ERROR] Test case row 0 mismatch: pkg={'case_index': '53', 'case_id': 'test/Medium/SCXCCS/geom-13/env-9103', 'tier': 'Medium', 'sequence': 'SCXCCS', 'candidate_role': 'alternate_canonical', 'geometry_generation_seed': '13', 'geometry_sha256': '7dbd7d1bad3bb6a96622d758ec0c4cce5f5d11bde721e7c6f39cddfb9c7ac579', 'environment_seed': '9999', 'traffic_density': '0.08', 'horizon_steps': '2066', 'protocol_order_index': '1'} vs src={'case_index': '53', 'case_id': 'test/Medium/SCXCCS/geom-13/env-9103', 'tier': 'Medium', 'sequence': 'SCXCCS', 'candidate_role': 'alternate_canonical', 'geometry_generation_seed': '13', 'geometry_sha256': '7dbd7d1bad3bb6a96622d758ec0c4cce5f5d11bde721e7c6f39cddfb9c7ac579', 'environment_seed': '9103', 'traffic_density': '0.08', 'horizon_steps': '2066', 'protocol_order_index': '1'}
+  [ERROR] Checksum mismatch for evaluation_cases/test_cases.csv: recorded=dae2f9e4ff55ea398f9abb73d873dcb02c62e37f9447b9b1d53b8797128cb539 vs computed=6a2ee00c3ed0bdd8888c91aa249c8f2513af7ceac1b0a6a1804e6f38d020fb64
+============================================================
+============================================================
+VERIFYING METADRIVE MAPSUITE V1 DATASET PACKAGE
+============================================================
+Dataset directory: C:\Users\DANGKH~1\AppData\Local\Temp\tmphc8jxhee\mapsuite_v1
+Project root:      D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+
+--- 1. Structure & Required Files ---
+  [OK] Exactly 12 expected preview images verified.
+  [OK] All required files and directories exist.
+
+--- 2. Geometries Master Table & Source Parity (geometries.csv) ---
+  [OK] Exactly 240 unique geometry_id values verified.
+  [OK] Zero duplicate (tier, sequence, seed) keys.
+  [OK] Exact source parity verified for geometries.csv across all 240 rows and all columns.
+  [OK] Exactly 12 expected scenario families verified.
+  [OK] Exactly 20 geometries per scenario family verified across all 12 families.
+
+--- 3. Splits Partitioning (splits/) ---
+  [OK] Strict split partitioning verified: 180 TRAIN / 48 VALIDATION / 12 TEST disjoint, union = 240.
+
+--- 4. Evaluation Cases & Source Parity (evaluation_cases/) ---
+  [OK] Exactly 96 validation cases verified.
+  [OK] Exactly 60 test cases verified.
+  [OK] Evaluation cases reference strictly their designated split geometries.
+  [OK] Exact source parity verified for validation_cases.csv (96/96 rows identical).
+
+--- 5. Source Artifact & Preview Provenance ---
+  [OK] Source artifact verified: results/audits/mapsuite/candidate_metrics.csv
+  [OK] Source artifact verified: results/audits/mapsuite/canonical_candidates.json
+  [OK] Source artifact verified: results/audits/evaluation_protocol/geometry_split_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/validation_case_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/test_case_manifest.csv
+  [OK] All 12 source previews verified and byte-identical to packaged previews.
+
+--- 6. Simulator Metadata & Generation Config ---
+  [OK] MetaDrive 0.4.3 / commit 85e5dadc and generation parameters strictly verified.
+
+--- 7. Package Checksums (CHECKSUMS.sha256) ---
+
+============================================================
+VERIFICATION FAILED WITH 2 ERROR(S):
+  [ERROR] Test case row 0 mismatch: pkg={'case_index': '53', 'case_id': 'test/Medium/SCXCCS/geom-13/env-9103', 'tier': 'Medium', 'sequence': 'SCXCCS', 'candidate_role': 'alternate_canonical', 'geometry_generation_seed': '13', 'geometry_sha256': '7dbd7d1bad3bb6a96622d758ec0c4cce5f5d11bde721e7c6f39cddfb9c7ac579', 'environment_seed': '9103', 'traffic_density': '0.08', 'horizon_steps': '9999', 'protocol_order_index': '1'} vs src={'case_index': '53', 'case_id': 'test/Medium/SCXCCS/geom-13/env-9103', 'tier': 'Medium', 'sequence': 'SCXCCS', 'candidate_role': 'alternate_canonical', 'geometry_generation_seed': '13', 'geometry_sha256': '7dbd7d1bad3bb6a96622d758ec0c4cce5f5d11bde721e7c6f39cddfb9c7ac579', 'environment_seed': '9103', 'traffic_density': '0.08', 'horizon_steps': '2066', 'protocol_order_index': '1'}
+  [ERROR] Checksum mismatch for evaluation_cases/test_cases.csv: recorded=dae2f9e4ff55ea398f9abb73d873dcb02c62e37f9447b9b1d53b8797128cb539 vs computed=b0b0205a4c1f45e7f15d8f81b269a901a4afe0f8fd1df49e907b4180ff4253c6
+============================================================
+============================================================
+VERIFYING METADRIVE MAPSUITE V1 DATASET PACKAGE
+============================================================
+Dataset directory: C:\Users\DANGKH~1\AppData\Local\Temp\tmpktul9mbo\mapsuite_v1
+Project root:      D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+
+--- 1. Structure & Required Files ---
+  [OK] Exactly 12 expected preview images verified.
+  [OK] All required files and directories exist.
+
+--- 2. Geometries Master Table & Source Parity (geometries.csv) ---
+  [OK] Exactly 240 unique geometry_id values verified.
+  [OK] Zero duplicate (tier, sequence, seed) keys.
+  [OK] Exact source parity verified for geometries.csv across all 240 rows and all columns.
+  [OK] Exactly 12 expected scenario families verified.
+  [OK] Exactly 20 geometries per scenario family verified across all 12 families.
+
+--- 3. Splits Partitioning (splits/) ---
+  [OK] Strict split partitioning verified: 180 TRAIN / 48 VALIDATION / 12 TEST disjoint, union = 240.
+
+--- 4. Evaluation Cases & Source Parity (evaluation_cases/) ---
+  [OK] Exactly 96 validation cases verified.
+  [OK] Exactly 60 test cases verified.
+  [OK] Evaluation cases reference strictly their designated split geometries.
+  [OK] Exact source parity verified for validation_cases.csv (96/96 rows identical).
+
+--- 5. Source Artifact & Preview Provenance ---
+  [OK] Source artifact verified: results/audits/mapsuite/candidate_metrics.csv
+  [OK] Source artifact verified: results/audits/mapsuite/canonical_candidates.json
+  [OK] Source artifact verified: results/audits/evaluation_protocol/geometry_split_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/validation_case_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/test_case_manifest.csv
+  [OK] All 12 source previews verified and byte-identical to packaged previews.
+
+--- 6. Simulator Metadata & Generation Config ---
+  [OK] MetaDrive 0.4.3 / commit 85e5dadc and generation parameters strictly verified.
+
+--- 7. Package Checksums (CHECKSUMS.sha256) ---
+
+============================================================
+VERIFICATION FAILED WITH 2 ERROR(S):
+  [ERROR] Test case row 0 mismatch: pkg={'case_index': '53', 'case_id': 'test/Medium/SCXCCS/geom-13/env-9103', 'tier': 'Medium', 'sequence': 'SCXCCS', 'candidate_role': 'alternate_canonical', 'geometry_generation_seed': '13', 'geometry_sha256': '7dbd7d1bad3bb6a96622d758ec0c4cce5f5d11bde721e7c6f39cddfb9c7ac579', 'environment_seed': '9103', 'traffic_density': '0.08', 'horizon_steps': '2066', 'protocol_order_index': '60'} vs src={'case_index': '53', 'case_id': 'test/Medium/SCXCCS/geom-13/env-9103', 'tier': 'Medium', 'sequence': 'SCXCCS', 'candidate_role': 'alternate_canonical', 'geometry_generation_seed': '13', 'geometry_sha256': '7dbd7d1bad3bb6a96622d758ec0c4cce5f5d11bde721e7c6f39cddfb9c7ac579', 'environment_seed': '9103', 'traffic_density': '0.08', 'horizon_steps': '2066', 'protocol_order_index': '1'}
+  [ERROR] Checksum mismatch for evaluation_cases/test_cases.csv: recorded=dae2f9e4ff55ea398f9abb73d873dcb02c62e37f9447b9b1d53b8797128cb539 vs computed=08bd3420e5f37c5a6a57cfd368e51cd662d3a7321b12e942f1ea1c8874eac8da
+============================================================
+============================================================
+VERIFYING METADRIVE MAPSUITE V1 DATASET PACKAGE
+============================================================
+Dataset directory: C:\Users\DANGKH~1\AppData\Local\Temp\tmpmqmfbe78\mapsuite_v1
+Project root:      D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+
+--- 1. Structure & Required Files ---
+  [OK] Exactly 12 expected preview images verified.
+  [OK] All required files and directories exist.
+
+--- 2. Geometries Master Table & Source Parity (geometries.csv) ---
+  [OK] Exactly 240 unique geometry_id values verified.
+  [OK] Zero duplicate (tier, sequence, seed) keys.
+  [OK] Exact source parity verified for geometries.csv across all 240 rows and all columns.
+  [OK] Exactly 12 expected scenario families verified.
+  [OK] Exactly 20 geometries per scenario family verified across all 12 families.
+
+--- 3. Splits Partitioning (splits/) ---
+  [OK] Strict split partitioning verified: 180 TRAIN / 48 VALIDATION / 12 TEST disjoint, union = 240.
+
+--- 4. Evaluation Cases & Source Parity (evaluation_cases/) ---
+  [OK] Exactly 96 validation cases verified.
+  [OK] Exactly 60 test cases verified.
+  [OK] Evaluation cases reference strictly their designated split geometries.
+  [OK] Exact source parity verified for validation_cases.csv (96/96 rows identical).
+
+--- 5. Source Artifact & Preview Provenance ---
+  [OK] Source artifact verified: results/audits/mapsuite/candidate_metrics.csv
+  [OK] Source artifact verified: results/audits/mapsuite/canonical_candidates.json
+  [OK] Source artifact verified: results/audits/evaluation_protocol/geometry_split_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/validation_case_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/test_case_manifest.csv
+  [OK] All 12 source previews verified and byte-identical to packaged previews.
+
+--- 6. Simulator Metadata & Generation Config ---
+  [OK] MetaDrive 0.4.3 / commit 85e5dadc and generation parameters strictly verified.
+
+--- 7. Package Checksums (CHECKSUMS.sha256) ---
+
+============================================================
+VERIFICATION FAILED WITH 2 ERROR(S):
+  [ERROR] Test case row 0 mismatch: pkg={'case_index': '53', 'case_id': 'test/Fake/FakeSeq/geom-0/env-9101', 'tier': 'Medium', 'sequence': 'SCXCCS', 'candidate_role': 'alternate_canonical', 'geometry_generation_seed': '13', 'geometry_sha256': '7dbd7d1bad3bb6a96622d758ec0c4cce5f5d11bde721e7c6f39cddfb9c7ac579', 'environment_seed': '9103', 'traffic_density': '0.08', 'horizon_steps': '2066', 'protocol_order_index': '1'} vs src={'case_index': '53', 'case_id': 'test/Medium/SCXCCS/geom-13/env-9103', 'tier': 'Medium', 'sequence': 'SCXCCS', 'candidate_role': 'alternate_canonical', 'geometry_generation_seed': '13', 'geometry_sha256': '7dbd7d1bad3bb6a96622d758ec0c4cce5f5d11bde721e7c6f39cddfb9c7ac579', 'environment_seed': '9103', 'traffic_density': '0.08', 'horizon_steps': '2066', 'protocol_order_index': '1'}
+  [ERROR] Checksum mismatch for evaluation_cases/test_cases.csv: recorded=dae2f9e4ff55ea398f9abb73d873dcb02c62e37f9447b9b1d53b8797128cb539 vs computed=f7fd0947ea97af4a96772524ac9db9023b869446b834e9c149bf6a1df30d94c7
+============================================================
+============================================================
+VERIFYING METADRIVE MAPSUITE V1 DATASET PACKAGE
+============================================================
+Dataset directory: C:\Users\DANGKH~1\AppData\Local\Temp\tmpm7mrx0xw\mapsuite_v1
+Project root:      D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+
+--- 1. Structure & Required Files ---
+  [OK] Exactly 12 expected preview images verified.
+  [OK] All required files and directories exist.
+
+--- 2. Geometries Master Table & Source Parity (geometries.csv) ---
+  [OK] Exactly 240 unique geometry_id values verified.
+  [OK] Zero duplicate (tier, sequence, seed) keys.
+  [OK] Exactly 12 expected scenario families verified.
+  [OK] Exactly 20 geometries per scenario family verified across all 12 families.
+
+--- 3. Splits Partitioning (splits/) ---
+  [OK] Strict split partitioning verified: 180 TRAIN / 48 VALIDATION / 12 TEST disjoint, union = 240.
+
+--- 4. Evaluation Cases & Source Parity (evaluation_cases/) ---
+  [OK] Exactly 96 validation cases verified.
+  [OK] Exactly 60 test cases verified.
+  [OK] Evaluation cases reference strictly their designated split geometries.
+  [OK] Exact source parity verified for validation_cases.csv (96/96 rows identical).
+  [OK] Exact source parity verified for test_cases.csv (60/60 rows identical).
+
+--- 5. Source Artifact & Preview Provenance ---
+  [OK] Source artifact verified: results/audits/mapsuite/candidate_metrics.csv
+  [OK] Source artifact verified: results/audits/mapsuite/canonical_candidates.json
+  [OK] Source artifact verified: results/audits/evaluation_protocol/geometry_split_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/validation_case_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/test_case_manifest.csv
+  [OK] All 12 source previews verified and byte-identical to packaged previews.
+
+--- 6. Simulator Metadata & Generation Config ---
+  [OK] MetaDrive 0.4.3 / commit 85e5dadc and generation parameters strictly verified.
+
+--- 7. Package Checksums (CHECKSUMS.sha256) ---
+
+============================================================
+VERIFICATION FAILED WITH 3 ERROR(S):
+  [ERROR] Source parity mismatch for geom_easy_SCS_seed0 column 'geometry_sha256': pkg=0000000000000000000000000000000000000000000000000000000000000000 vs src=3bbbf995e00279527132ce1594ffe36e8b0236c47afdbec7fdb6bb287e9687d8
+  [ERROR] TRAIN split file content does not match exact filtered projection of geometries.csv
+  [ERROR] Checksum mismatch for geometries.csv: recorded=1fec5020f3f04b7c02f7278a4a5bcb862ea4f719ffba25b59027cd9b28aef5dd vs computed=0e107cd8c6181b2104a18110b376218f9cd361598c5e6ebc430456337b40382c
+============================================================
+============================================================
+VERIFYING METADRIVE MAPSUITE V1 DATASET PACKAGE
+============================================================
+Dataset directory: C:\Users\DANGKH~1\AppData\Local\Temp\tmppk2vpa__\mapsuite_v1
+Project root:      D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+
+--- 1. Structure & Required Files ---
+  [OK] Exactly 12 expected preview images verified.
+  [OK] All required files and directories exist.
+
+--- 2. Geometries Master Table & Source Parity (geometries.csv) ---
+  [OK] Exactly 240 unique geometry_id values verified.
+  [OK] Zero duplicate (tier, sequence, seed) keys.
+  [OK] Exactly 12 expected scenario families verified.
+  [OK] Exactly 20 geometries per scenario family verified across all 12 families.
+
+--- 3. Splits Partitioning (splits/) ---
+  [OK] Strict split partitioning verified: 180 TRAIN / 48 VALIDATION / 12 TEST disjoint, union = 240.
+
+--- 4. Evaluation Cases & Source Parity (evaluation_cases/) ---
+  [OK] Exactly 96 validation cases verified.
+  [OK] Exactly 60 test cases verified.
+  [OK] Evaluation cases reference strictly their designated split geometries.
+  [OK] Exact source parity verified for validation_cases.csv (96/96 rows identical).
+  [OK] Exact source parity verified for test_cases.csv (60/60 rows identical).
+
+--- 5. Source Artifact & Preview Provenance ---
+  [OK] Source artifact verified: results/audits/mapsuite/candidate_metrics.csv
+  [OK] Source artifact verified: results/audits/mapsuite/canonical_candidates.json
+  [OK] Source artifact verified: results/audits/evaluation_protocol/geometry_split_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/validation_case_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/test_case_manifest.csv
+  [OK] All 12 source previews verified and byte-identical to packaged previews.
+
+--- 6. Simulator Metadata & Generation Config ---
+  [OK] MetaDrive 0.4.3 / commit 85e5dadc and generation parameters strictly verified.
+
+--- 7. Package Checksums (CHECKSUMS.sha256) ---
+
+============================================================
+VERIFICATION FAILED WITH 3 ERROR(S):
+  [ERROR] Source parity mismatch for geom_easy_SCS_seed0 column 'route_length_m': pkg=9999.99 vs src=407.89441610698384
+  [ERROR] TRAIN split file content does not match exact filtered projection of geometries.csv
+  [ERROR] Checksum mismatch for geometries.csv: recorded=1fec5020f3f04b7c02f7278a4a5bcb862ea4f719ffba25b59027cd9b28aef5dd vs computed=7f9d22e2b3c5190db9da87d861c940da01f9e086686416051728d48e86562adf
+============================================================
+============================================================
+VERIFYING METADRIVE MAPSUITE V1 DATASET PACKAGE
+============================================================
+Dataset directory: C:\Users\DANGKH~1\AppData\Local\Temp\tmp1ckn3s2g\mapsuite_v1
+Project root:      D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+
+--- 1. Structure & Required Files ---
+  [OK] Exactly 12 expected preview images verified.
+  [OK] All required files and directories exist.
+
+--- 2. Geometries Master Table & Source Parity (geometries.csv) ---
+  [OK] Exactly 240 unique geometry_id values verified.
+  [OK] Zero duplicate (tier, sequence, seed) keys.
+  [OK] Exact source parity verified for geometries.csv across all 240 rows and all columns.
+  [OK] Exactly 12 expected scenario families verified.
+  [OK] Exactly 20 geometries per scenario family verified across all 12 families.
+
+--- 3. Splits Partitioning (splits/) ---
+  [OK] Strict split partitioning verified: 180 TRAIN / 48 VALIDATION / 12 TEST disjoint, union = 240.
+
+--- 4. Evaluation Cases & Source Parity (evaluation_cases/) ---
+  [OK] Exactly 96 validation cases verified.
+  [OK] Exactly 60 test cases verified.
+  [OK] Evaluation cases reference strictly their designated split geometries.
+  [OK] Exact source parity verified for validation_cases.csv (96/96 rows identical).
+  [OK] Exact source parity verified for test_cases.csv (60/60 rows identical).
+
+--- 5. Source Artifact & Preview Provenance ---
+  [OK] Source artifact verified: results/audits/mapsuite/candidate_metrics.csv
+  [OK] Source artifact verified: results/audits/mapsuite/canonical_candidates.json
+  [OK] Source artifact verified: results/audits/evaluation_protocol/geometry_split_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/validation_case_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/test_case_manifest.csv
+
+--- 6. Simulator Metadata & Generation Config ---
+  [OK] MetaDrive 0.4.3 / commit 85e5dadc and generation parameters strictly verified.
+
+--- 7. Package Checksums (CHECKSUMS.sha256) ---
+
+============================================================
+VERIFICATION FAILED WITH 2 ERROR(S):
+  [ERROR] Packaged preview easy_rank1_SCS_seed11.png does not match source preview bytes
+  [ERROR] Checksum mismatch for previews/easy_rank1_SCS_seed11.png: recorded=eb80eeee662d53fcd183e9739222da9c719df467777388633795ed4fb5da300c vs computed=ed00c5487ee305693a5c5bc411d89045369ad90e94f90fb5a962d33aecff5610
+============================================================
+============================================================
+VERIFYING METADRIVE MAPSUITE V1 DATASET PACKAGE
+============================================================
+Dataset directory: C:\Users\DANGKH~1\AppData\Local\Temp\tmp_d7qu2rt\mapsuite_v1
+Project root:      D:\Học\Tri tue nhan to nang cao\lab\sgu-team-2026-advanced-ai-subject\autonomous-driving-rl
+
+--- 1. Structure & Required Files ---
+  [OK] Exactly 12 expected preview images verified.
+  [OK] All required files and directories exist.
+
+--- 2. Geometries Master Table & Source Parity (geometries.csv) ---
+  [OK] Exactly 240 unique geometry_id values verified.
+  [OK] Zero duplicate (tier, sequence, seed) keys.
+  [OK] Exact source parity verified for geometries.csv across all 240 rows and all columns.
+  [OK] Exactly 12 expected scenario families verified.
+  [OK] Exactly 20 geometries per scenario family verified across all 12 families.
+
+--- 3. Splits Partitioning (splits/) ---
+  [OK] Strict split partitioning verified: 180 TRAIN / 48 VALIDATION / 12 TEST disjoint, union = 240.
+
+--- 4. Evaluation Cases & Source Parity (evaluation_cases/) ---
+  [OK] Exactly 96 validation cases verified.
+  [OK] Exactly 60 test cases verified.
+  [OK] Evaluation cases reference strictly their designated split geometries.
+  [OK] Exact source parity verified for validation_cases.csv (96/96 rows identical).
+  [OK] Exact source parity verified for test_cases.csv (60/60 rows identical).
+
+--- 5. Source Artifact & Preview Provenance ---
+  [OK] Source artifact verified: results/audits/mapsuite/candidate_metrics.csv
+  [OK] Source artifact verified: results/audits/mapsuite/canonical_candidates.json
+  [OK] Source artifact verified: results/audits/evaluation_protocol/geometry_split_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/validation_case_manifest.csv
+  [OK] Source artifact verified: results/audits/evaluation_protocol/test_case_manifest.csv
+
+--- 6. Simulator Metadata & Generation Config ---
+  [OK] MetaDrive 0.4.3 / commit 85e5dadc and generation parameters strictly verified.
+
+--- 7. Package Checksums (CHECKSUMS.sha256) ---
+
+============================================================
+VERIFICATION FAILED WITH 2 ERROR(S):
+  [ERROR] Source preview hash mismatch for results/audits/mapsuite/previews/easy_rank1_SCS_seed11.png: declared=bad0000000000000000000000000000000000000000000000000000000000000 vs disk=eb80eeee662d53fcd183e9739222da9c719df467777388633795ed4fb5da300c
+  [ERROR] Checksum mismatch for dataset_manifest.json: recorded=00a84dd5f348508db6d5c504295f32f0903220a1ed00a19038f5676b9a18855b vs computed=3e5860c141da003f7d4c12b1d368d800285d6e990881ccac497bf38198d43407
+============================================================
+{"episode": 1, "expected": 1, "run": "fixture_fit", "raw_steps": 12, "selected": {}}
+----------------------------------------------------------------------
+Ran 635 tests in 101.378s
+
+OK (skipped=17)

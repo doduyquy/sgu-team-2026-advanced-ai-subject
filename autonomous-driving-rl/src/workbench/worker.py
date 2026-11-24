@@ -56,6 +56,13 @@ def emit(msg_type: WorkbenchMessageType, payload: Dict[str, Any]) -> None:
 
 
 def run_worker_main() -> int:
+    # The JSONL protocol is UTF-8 even when this script is invoked directly
+    # from a Windows shell with a legacy code page (without the GUI runner).
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8")
+
     parser = argparse.ArgumentParser(description="Research Workbench Worker Subprocess")
     parser.add_argument("--operation", choices=["PLAN", "RUN"], required=True, help="Workbench operation mode")
     parser.add_argument("--request-json", type=str, default=None, help="Inline serialized LaunchRequestV1 JSON")

@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, List
 from src.launcher.models import AgentRegistrationV1
 from src.agents import Stage0RandomNaiveAgent
 from src.agents import Stage1RuleBasedAgent
+from src.agents import Stage4PDDHybridAgent
 from src.platform import (
     AgentPolicy,
     DeterministicConstantFixtureAgent,
@@ -109,6 +110,10 @@ def _factory_stage0_random_naive() -> Stage0RandomNaiveAgent:
 
 def _factory_stage1_rule_based() -> Stage1RuleBasedAgent:
     return Stage1RuleBasedAgent()
+
+def _factory_stage4_pdd_hybrid() -> Stage4PDDHybridAgent:
+    return Stage4PDDHybridAgent()
+
 
 def build_canonical_agent_registry() -> AgentRegistryV1:
     """
@@ -262,6 +267,20 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             description="Rule-based lane following, tracked traffic/LiDAR braking, junction lifecycle and guarded adjacent lane changes.",
         ),
         factory=_factory_stage1_rule_based
+    )
+    # Stage 4 PDD candidate: frozen learned model plus explicit Stage 1 assistance.
+    registry.register(
+        registration=AgentRegistrationV1(
+            agent_id="stage4_pdd_hybrid", agent_version="1.0.0", stage_label="STAGE_4",
+            method_family="HYBRID", purpose="CANDIDATE",
+            implementation_ref=f"{Stage4PDDHybridAgent.__module__}:{Stage4PDDHybridAgent.__qualname__}",
+            input_profile_id="STATE_DECISION_V1", action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic", stateful_within_episode=True,
+            benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True,
+            requires_checkpoint=True,
+            description="PDD ExtraTrees trajectory/speed hybrid; historical Medium/Hard 5/5, Extreme 0/3; unqualified offline WAIT gate.",
+        ),
+        factory=_factory_stage4_pdd_hybrid,
     )
     return registry
 

@@ -4,12 +4,15 @@ This package is the intended home for real Stage 0+ agent implementations.
 
 ## Current state
 
-Only two CLI agent IDs are active research implementations:
+The launcher registers these research agents:
 
 | ID | Entry file |
 |---|---|
 | `stage0_random_naive` | `random_naive_agent.py` |
 | `stage1_rule_based` | `rule_based_agent.py` |
+| `stage4_pdd_hybrid` | `agent4_pdd_agent.py` |
+
+See the [Agent 4 PDD release guide](../../docs/AGENT4_PDD_AGENT.md) for the frozen model and launcher command.
 
 Stage 1's traffic/memory/junction/lane-change files are imported helpers, not
 additional agents to select. Archived `policy.py` files under `experiments/`
