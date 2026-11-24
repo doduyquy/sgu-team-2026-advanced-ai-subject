@@ -8,12 +8,18 @@ This module implements AgentRegistryV1:
 - Provides algorithm-neutral registration interface for future Stage 0 through Stage 7 agents.
 """
 
-from typing import Any, Callable, Dict, List
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from src.launcher.models import AgentRegistrationV1
 from src.agents import Stage0RandomNaiveAgent
 from src.agents import Stage1RuleBasedAgent
 from src.agents import Stage4PDDHybridAgent
+from src.agents.astar_agent import AStarAgent, LearnedAStarAgent
+from src.agents.graph_search_agents import BFSAgent, DijkstraAgent
+from src.agents.hybrid_astar_agent import HybridAStarAgent
+from src.agents.MCTS_agent import MCTSAgent
+from src.agents.MPPI import MPPIAgent
 from src.platform import (
     AgentPolicy,
     DeterministicConstantFixtureAgent,
@@ -105,8 +111,10 @@ def _factory_fixture_stateful_counter() -> StatefulCounterFixtureAgent:
 def _factory_fixture_discrete() -> DiscreteFixtureAgent:
     return DiscreteFixtureAgent()
 
+
 def _factory_stage0_random_naive() -> Stage0RandomNaiveAgent:
     return Stage0RandomNaiveAgent()
+
 
 def _factory_stage1_rule_based() -> Stage1RuleBasedAgent:
     return Stage1RuleBasedAgent()
@@ -115,12 +123,84 @@ def _factory_stage4_pdd_hybrid() -> Stage4PDDHybridAgent:
     return Stage4PDDHybridAgent()
 
 
-def build_canonical_agent_registry() -> AgentRegistryV1:
+def _factory_stage2_astar() -> AStarAgent:
+    return AStarAgent()
+
+
+def _factory_stage3_mcts() -> MCTSAgent:
+    return MCTSAgent()
+
+
+def _factory_stage3_mppi() -> MPPIAgent:
+    return MPPIAgent()
+
+
+def _factory_stage6_astar_learned() -> LearnedAStarAgent:
+    return LearnedAStarAgent()
+
+
+def _factory_stage2_bfs() -> BFSAgent:
+    return BFSAgent()
+
+
+def _factory_stage2_dijkstra() -> DijkstraAgent:
+    return DijkstraAgent()
+
+
+def _factory_stage2_hybrid_astar() -> HybridAStarAgent:
+    return HybridAStarAgent()
+
+
+def _factory_stage5_sac():
+    from src.agents.stage5_sac_agent import Stage5SacAgent
+    return Stage5SacAgent()
+
+
+def make_sac_agent_factory(checkpoint_path: Union[Path, str]):
     """
-    Initializes and populates canonical AgentRegistryV1 with committed Gate-6 fixture agents.
-    This function represents the single authoritative source of truth for Platform V1 agents.
-    NOTE: All fixture agents are explicitly flagged with benchmark_eligible = False.
-    Stage 0 Random benchmark agent will be registered in a subsequent task.
+    Creates a configured runtime factory for Stage5SacAgent with verified checkpoint provenance.
+
+    Scientific Provenance & Checkpoint Binding Notice:
+    - Binds the cryptographically verified model_sha256 as expected_sha256 into the factory,
+      guaranteeing that actual inference cannot execute an altered or substituted model.zip.
+    - Captures verified checkpoint metadata to embed into run_manifest.json algorithm_hyperparameters.
+    - For candidate Stage 5, resolved_plan_sha256 does not bind SAC checkpoint identity;
+      run_manifest.algorithm_hyperparameters.sac_checkpoint serves as the authoritative provenance source.
+    - Prior to official benchmark eligibility, a dedicated SAC checkpoint binding contract must
+      be formally designed and reviewed.
+    """
+    from src.agents.stage5_sac_agent import Stage5SacAgent
+    from src.training.stage5.checkpoint import verify_checkpoint_integrity
+    from src.training.stage5.observation_encoder import Stage5ObservationEncoder
+
+    ckpt_path = Path(checkpoint_path).resolve()
+    encoder = Stage5ObservationEncoder(core_only=False)
+    meta = verify_checkpoint_integrity(ckpt_path, expected_encoder_fingerprint=encoder.get_schema_fingerprint())
+    bound_model_sha = str(meta["model_sha256"])
+
+    def _factory() -> Stage5SacAgent:
+        return Stage5SacAgent(checkpoint_path=ckpt_path, expected_sha256=bound_model_sha)
+
+    _factory.experiment_parameters = lambda: {
+        "model_name": meta.get("model_name", "stage5_sac"),
+        "algorithm": meta.get("algorithm", "SAC"),
+        "checkpoint_path": str(ckpt_path),
+        "model_sha256": bound_model_sha,
+        "encoder_fingerprint": meta.get("encoder_fingerprint"),
+        "encoder_id": meta.get("encoder_id"),
+        "total_timesteps": meta.get("total_timesteps"),
+        "training_root_seed": meta.get("training_root_seed"),
+    }
+    return _factory
+
+
+HISTORICAL_FIXTURE_REGISTRY_SHA256 = "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f"
+
+
+def build_historical_fixture_registry() -> AgentRegistryV1:
+    """
+    Initializes and populates AgentRegistryV1 with the four historical Gate-7.5A audit/development fixture agents.
+    Preserved as the locked historical fixture baseline for Gate 7.5A integrity verification.
     """
     registry = AgentRegistryV1()
 
@@ -211,7 +291,14 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
         ),
         factory=_factory_fixture_discrete
     )
-    # 5. Stage 0 Random / Naive Baseline Agent
+
+    return registry
+
+
+def build_canonical_agent_registry() -> AgentRegistryV1:
+    """Build the launcher registry from the historical fixtures and active research agents."""
+    registry = build_historical_fixture_registry()
+
     registry.register(
         registration=AgentRegistrationV1(
             agent_id="stage0_random_naive",
@@ -243,7 +330,6 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
         factory=_factory_stage0_random_naive
     )
 
-    # 6. Stage 1 Rule-Based Agent
     registry.register(
         registration=AgentRegistrationV1(
             agent_id="stage1_rule_based",
@@ -259,16 +345,69 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             action_adapter_id="continuous_box2_v1",
             inference_stochasticity="deterministic",
             stateful_within_episode=True,
-            # Chỉ phát triển trong SANDBOX/AUDIT trước.
             benchmark_eligible=False,
             sandbox_eligible=True,
             audit_eligible=True,
             requires_checkpoint=False,
             description="Rule-based lane following, tracked traffic/LiDAR braking, junction lifecycle and guarded adjacent lane changes.",
         ),
-        factory=_factory_stage1_rule_based
+        factory=_factory_stage1_rule_based,
     )
-    # Stage 4 PDD candidate: frozen learned model plus explicit Stage 1 assistance.
+
+    _factory_stage3_mcts.experiment_parameters = MCTSAgent.experiment_parameters
+    registry.register(
+        AgentRegistrationV1(
+            agent_id=MCTSAgent.agent_id, agent_version=MCTSAgent.agent_version,
+            stage_label="STAGE_3", method_family=MCTSAgent.method_family, purpose="CANDIDATE",
+            implementation_ref=f"{MCTSAgent.__module__}:{MCTSAgent.__qualname__}",
+            input_profile_id="STATE_DECISION_V1", action_adapter_id="discrete9_lowbranch_v1",
+            inference_stochasticity="stochastic", stateful_within_episode=True,
+            benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True,
+            requires_checkpoint=False,
+            description="UCT MCTS with local bicycle dynamics, constant-velocity actors and guided rollouts.",
+        ),
+        _factory_stage3_mcts,
+    )
+
+    _factory_stage3_mppi.experiment_parameters = MPPIAgent.experiment_parameters
+    registry.register(
+        AgentRegistrationV1(
+            agent_id=MPPIAgent.agent_id, agent_version=MPPIAgent.agent_version,
+            stage_label="STAGE_3", method_family=MPPIAgent.method_family, purpose="CANDIDATE",
+            implementation_ref=f"{MPPIAgent.__module__}:{MPPIAgent.__qualname__}",
+            input_profile_id="STATE_DECISION_V1", action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="stochastic", stateful_within_episode=True,
+            benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True,
+            requires_checkpoint=False,
+            description="Continuous MPPI with kinematic bicycle rollouts, moving actors and public LiDAR.",
+        ),
+        _factory_stage3_mppi,
+    )
+
+    for policy_class, factory, stage, learned, description in (
+        (BFSAgent, _factory_stage2_bfs, "STAGE_2", False,
+         "BFS on the public local route graph; minimizes edge count, ignoring edge weights."),
+        (DijkstraAgent, _factory_stage2_dijkstra, "STAGE_2", False,
+         "Dijkstra on the public local route graph; minimizes accumulated edge cost without a heuristic."),
+        (AStarAgent, _factory_stage2_astar, "STAGE_2", False,
+         "A* on the public local route lattice with Euclidean heuristic."),
+        (HybridAStarAgent, _factory_stage2_hybrid_astar, "STAGE_2", False,
+         "Forward Hybrid A* over continuous bicycle poses with heading bins and vehicle-footprint checks."),
+        (LearnedAStarAgent, _factory_stage6_astar_learned, "STAGE_6", True,
+         "A* on the public local route lattice with a trained cost-to-go heuristic."),
+    ):
+        # Optional pure metadata hook; the executor remains independent of planner types.
+        factory.experiment_parameters = policy_class.experiment_parameters
+        registry.register(AgentRegistrationV1(
+            agent_id=policy_class.agent_id, agent_version="0.1.0", stage_label=stage,
+            method_family=policy_class.method_family, purpose="CANDIDATE",
+            implementation_ref=f"{policy_class.__module__}:{policy_class.__qualname__}",
+            input_profile_id="STATE_DECISION_V1", action_adapter_id="discrete9_lowbranch_v1",
+            inference_stochasticity="deterministic", stateful_within_episode=False,
+            benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True, requires_checkpoint=learned,
+            description=description,
+        ), factory)
+
     registry.register(
         registration=AgentRegistrationV1(
             agent_id="stage4_pdd_hybrid", agent_version="1.0.0", stage_label="STAGE_4",
@@ -277,11 +416,35 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             input_profile_id="STATE_DECISION_V1", action_adapter_id="continuous_box2_v1",
             inference_stochasticity="deterministic", stateful_within_episode=True,
             benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True,
-            requires_checkpoint=True,
+            # The factory verifies and loads the bundled release without a checkpoint binding.
+            requires_checkpoint=False,
             description="PDD ExtraTrees trajectory/speed hybrid; historical Medium/Hard 5/5, Extreme 0/3; unqualified offline WAIT gate.",
         ),
         factory=_factory_stage4_pdd_hybrid,
     )
+
+    from src.agents.stage5_sac_agent import Stage5SacAgent
+    registry.register(
+        AgentRegistrationV1(
+            agent_id="stage5_sac",
+            agent_version="0.1.0",
+            stage_label="STAGE_5",
+            method_family="MODEL_FREE_RL",
+            purpose="CANDIDATE",
+            implementation_ref=f"{Stage5SacAgent.__module__}:{Stage5SacAgent.__qualname__}",
+            input_profile_id="STATE_DECISION_V1",
+            action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic",
+            stateful_within_episode=False,
+            benchmark_eligible=False,
+            sandbox_eligible=True,
+            audit_eligible=True,
+            requires_checkpoint=False,
+            description="Stage 5 Soft Actor-Critic (SAC) baseline continuous driving policy.",
+        ),
+        factory=_factory_stage5_sac,
+    )
+
     return registry
 
 

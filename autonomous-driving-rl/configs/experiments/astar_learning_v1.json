@@ -1,0 +1,20 @@
+{
+  "version": "astar_heuristic_v1",
+  "planner": {
+    "lookahead_points": 10,
+    "lateral_samples": [-0.8, 0.0, 0.8],
+    "obstacle_margin_m": 0.5,
+    "lateral_change_cost": 0.5,
+    "clearance_cost": 0.2,
+    "max_expansions": 256,
+    "control_lookahead_m": 6.0,
+    "steering_deadband": 0.12,
+    "target_normalized_speed": 0.15,
+    "feature_scale_m": 50.0
+  },
+  "model": {"hidden_units": 32, "learning_rate": 0.003, "batch_size": 128},
+  "presets": {
+    "smoke": {"geometry_limit": 8, "steps_per_geometry": 80, "sample_every": 10, "epochs": 40, "training_seeds": [101]},
+    "standard": {"geometry_limit": null, "steps_per_geometry": 300, "sample_every": 10, "epochs": 80, "training_seeds": [101, 202, 303]}
+  }
+}

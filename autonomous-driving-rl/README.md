@@ -6,20 +6,21 @@ This directory is the autonomous-driving research subproject for the SGU Advance
 
 **Platform foundation: complete.** The environment, benchmark protocol, agent interface, logging/provenance, launcher/preflight layer, and Research Workbench are implemented and hardened.
 
-**Active research agents: Stage 0 random/naive, Stage 1 rule-based (P4), and Stage 4 PDD hybrid (sandbox/audit candidate).**
-Stage 1 is maintained as v0.6.1 after source cleanup. Its frozen P4 driving
-evidence is v0.6.0; P5 and contract/benchmark audits remain pending.
+**Stage 0:** `stage0_random_naive` is implemented for SANDBOX/AUDIT. Benchmark certification and Stage 1 remain the next research milestones. See the [agent policy and local readiness workflow](src/agents/README.md).
 
-| CLI agent ID | Active entrypoint | Guide |
-|---|---|---|
-| `stage0_random_naive` | `src/agents/random_naive_agent.py` | [Stage 0](docs/STAGE0_RANDOM_NAIVE_AGENT.md) |
-| `stage1_rule_based` | `src/agents/rule_based_agent.py` | [Stage 1](docs/RULE_BASED_AGENT_GUIDE.md) |
-| `stage4_pdd_hybrid` | `src/agents/agent4_pdd_agent.py` | [Agent 4 PDD hybrid](docs/AGENT4_PDD_AGENT.md) |
+**Stage 2 / Stage 6 prototype:** `stage2_astar` and `stage6_astar_learned` share a public
+local planning graph and controller. Stage 6 has a real supervised heuristic trainer,
+fixed presets, checkpoint provenance and paired TRAIN evaluation in the Workbench.
+Both remain benchmark-ineligible candidates. See [train and compare A*](docs/ASTAR_LEARNED_HEURISTIC.md).
 
-`rule_based_traffic`, `rule_based_memory`, `rule_based_junction` and
-`rule_based_lane_change` are helpers used by the single Stage 1 entrypoint.
-`experiments/rule_based/versions/` contains immutable experiment snapshots;
-the normal CLI runs the implementations in `src/agents/`.
+**Stage 2 search methods:** BFS, Dijkstra, A* and forward Hybrid A* are implemented
+with a shared public input/action interface and path follower. The Workbench can
+select and run all four on the same fixed TRAIN case. See
+[search planners and comparison commands](docs/SEARCH_PLANNERS.md).
+
+The [624-episode evaluation report](results/search_planners_20261101/README.md)
+records the frozen run results and their evidence hashes, including the current
+zero clean-success rate on TEST.
 
 **Known MapSuite V1 metadata erratum:** `declared_base_lane_num = 2`, but `effective_base_lane_num = 3` for the frozen geometry. See the [dedicated erratum](docs/environment/MAPSUITE_V1_LANE_METADATA_ERRATUM.md); do not apply a two-lane override based on the historical description.
 
@@ -90,7 +91,7 @@ autonomous-driving-rl/
 ├── configs/platform/       # Versioned scientific contracts and benchmark configuration
 ├── datasets/               # Packaged research datasets (e.g. MapSuite V1 procedural benchmark)
 ├── docs/                   # Human-facing guides + detailed audit/reference documents
-├── experiments/            # Reproducible definitions, frozen versions and retired source references
+├── experiments/            # Stage-specific training entry points and experiment notes
 ├── results/audits/         # Committed machine-derived platform audit evidence
 ├── runs/                   # Local experiment outputs and generated caches (git-ignored)
 ├── scripts/                # Platform audit and diagnostic scripts

@@ -13,6 +13,7 @@ This module defines the declarative layer of the launcher:
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
+import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.platform import (
@@ -162,6 +163,32 @@ def validate_custom_run_id(run_id: Optional[str], runs_root: Optional[Path] = No
 
 
 @dataclass(frozen=True)
+class CheckpointBindingV1:
+    """Content identity of a trained model; local paths are transport details."""
+    model_path: str
+    model_sha256: str
+    training_run_seed: int
+    training_config_sha256: str
+    data_sha256: str
+    planner_fingerprint: str
+    configuration_path: str = "configs/experiments/astar_learning_v1.json"
+
+    def __post_init__(self):
+        if type(self.training_run_seed) is not int or self.training_run_seed not in (101, 202, 303):
+            raise ValueError("Checkpoint training seed must be 101, 202 or 303")
+        for key in ("model_sha256", "training_config_sha256", "data_sha256", "planner_fingerprint"):
+            value = getattr(self, key)
+            if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
+                raise ValueError(f"Invalid checkpoint digest: {key}")
+
+    def to_dict(self):
+        return asdict(self)
+
+    def semantic_identity(self):
+        return {key: value for key, value in self.to_dict().items() if key not in ("model_path", "configuration_path")}
+
+
+@dataclass(frozen=True)
 class LaunchRequestV1:
     """
     Declarative specification of user execution intent ("WHAT THE USER ASKED FOR").
@@ -193,7 +220,15 @@ class LaunchRequestV1:
         d["wandb_mode"] = self.wandb_mode.value if self.wandb_mode is not None else None
         if self.runs_root is not None:
             d["runs_root"] = str(self.runs_root)
+        if getattr(self, "checkpoint_binding", None) is None:
+            d.pop("checkpoint_binding", None)
         return d
+
+
+@dataclass(frozen=True)
+class CheckpointLaunchRequestV1(LaunchRequestV1):
+    """Opt-in extension: leaves the frozen LaunchRequestV1 field schema intact."""
+    checkpoint_binding: Optional[CheckpointBindingV1] = None
 
 
 @dataclass(frozen=True)
@@ -261,7 +296,15 @@ class ResolvedExperimentPlanV1:
         d["agent_registration"] = self.agent_registration.to_dict()
         d["agent_descriptor"] = asdict(self.agent_descriptor)
         d["resolved_cases"] = [c.to_dict() for c in self.resolved_cases]
+        if getattr(self, "checkpoint_binding", None) is None:
+            d.pop("checkpoint_binding", None)
         return d
+
+
+@dataclass(frozen=True)
+class CheckpointResolvedExperimentPlanV1(ResolvedExperimentPlanV1):
+    """Resolved checkpoint extension, separately covered by the plan fingerprint."""
+    checkpoint_binding: Optional[CheckpointBindingV1] = None
 
 
 def compute_resolved_plan_sha256(plan_dict: Dict[str, Any]) -> str:
@@ -339,6 +382,12 @@ def compute_resolved_plan_sha256(plan_dict: Dict[str, Any]) -> str:
         "factory_ref": plan_dict.get("factory_ref")
     }
 
+    binding = plan_dict.get("checkpoint_binding")
+    if binding is not None:
+        hashable_core["checkpoint_extension_version"] = "1.0.0"
+        hashable_core["checkpoint_binding"] = {
+            key: value for key, value in binding.items() if key not in ("model_path", "configuration_path")
+        }
     return canonical_json_sha256(hashable_core)
 
 

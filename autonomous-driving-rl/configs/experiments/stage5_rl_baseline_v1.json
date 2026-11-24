@@ -1,0 +1,69 @@
+{
+  "version": "stage5_rl_baseline_v1",
+  "contract_compliance": "Platform V1 (Gate S5.1 Foundation)",
+  "target_algorithm": "SAC",
+  "control_actuator": "continuous_box2_v1",
+  "environment": {
+    "env_class": "Stage5TrainingEnv",
+    "observation_encoder_id": "stage5_flat409_v1",
+    "observation_dim": 409,
+    "action_dim": 2,
+    "control_frequency_hz": 10.0,
+    "render_mode": "OFF",
+    "traffic_mode": "Trigger"
+  },
+  "dataset_sampler": {
+    "allowed_split": "TRAIN",
+    "total_train_geometries": 180,
+    "default_strategy": "ROUND_ROBIN",
+    "default_root_seed": 101,
+    "holdout_protection": "STRICT_ISOLATION_ASSERTED"
+  },
+  "reward_contract": {
+    "spec_version": "1.0.0",
+    "progress_weight": 1.0,
+    "time_penalty_budget": 0.25,
+    "success_bonus": 1.0,
+    "safety_penalty": 1.0,
+    "unknown_termination_penalty": 1.0,
+    "timeout_penalty": 0.0
+  },
+  "dependency_compatibility_notes": {
+    "python_version": "3.10.21",
+    "gymnasium_version": "1.3.0",
+    "metadrive_version": "0.4.3 (commit 85e5dadc)",
+    "proposed_framework": "Stable-Baselines3",
+    "proposed_sb3_version": "2.9.0",
+    "proposed_torch_version": ">=2.8.0",
+    "status": "NOT_INSTALLED / PROPOSED_FOR_S5.2",
+    "compatibility_rationale": "Gymnasium 1.3.0 officially requires Stable-Baselines3 2.9.x, which in turn requires PyTorch >=2.8.0. Pinned MetaDrive and Panda3D must remain untouched."
+  },
+  "sac_hyperparameters": {
+    "learning_rate": 0.0003,
+    "buffer_size": 100000,
+    "batch_size": 256,
+    "gamma": 0.99,
+    "tau": 0.005,
+    "ent_coef": "auto",
+    "learning_starts": 1000,
+    "train_freq": 1,
+    "gradient_steps": 1
+  },
+  "presets": {
+    "smoke": {
+      "total_env_steps": 1000,
+      "training_seeds": [101],
+      "evaluation_interval_steps": 500
+    },
+    "pilot": {
+      "total_env_steps": 25000,
+      "training_seeds": [101],
+      "evaluation_interval_steps": 5000
+    },
+    "full": {
+      "total_env_steps": 100000,
+      "training_seeds": [101, 202, 303],
+      "evaluation_interval_steps": 10000
+    }
+  }
+}

@@ -52,3 +52,6 @@ autonomous-driving-rl/artifacts/agent4_pdd/*
 
 nii_notes/
 AGENTS.md
+
+# Generated EDA figures; rebuild them from the notebook
+autonomous-driving-rl/notebooks/eda_figures/

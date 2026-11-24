@@ -1,0 +1,12 @@
+Agent,Phương pháp,Route Completion ↑,Crash Rate ↓,Success Rate ↑,Speed (km/h),Return,# Episodes,Out-of-Road ↓
+Random,Khác,—,—,—,—,—,0,
+Rule-based,Khác,—,—,—,—,—,0,
+SAC (RL),Khác,—,—,—,—,—,0,
+MPPI (H20 Easy),Simulation/H=20/K=512/λ=0.5,0.988,0.000,1.000,27.293,1.881,1,0.000
+MPPI (H20 Hard),Simulation/H=20/K=512/λ=0.5,0.748,1.000,0.000,18.772,-0.373,1,0.000
+MPPI (H10 Medium),Simulation/H=10/K=512/λ=0.5,0.991,0.000,1.000,27.430,1.884,1,0.000
+MPPI (H30 Medium),Simulation/H=30/K=512/λ=0.5,0.991,0.000,1.000,27.430,1.884,1,0.000
+MPPI (λ=0.1 Medium),Simulation/H=20/K=512/λ=0.1,0.991,0.000,1.000,27.430,1.884,1,0.000
+MPPI (λ=1.0 Medium),Simulation/H=20/K=512/λ=1.0,0.991,0.000,1.000,27.430,1.884,1,0.000
+MPPI (K=128 Medium),Simulation/H=20/K=128/λ=0.5,0.991,0.000,1.000,27.430,1.884,1,0.000
+MPPI (K=1024 Medium),Simulation/H=20/K=1024/λ=0.5,0.991,0.000,1.000,27.430,1.884,1,0.000

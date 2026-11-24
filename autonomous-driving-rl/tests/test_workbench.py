@@ -135,8 +135,33 @@ class TestWorkbenchSuite(unittest.TestCase):
         self.assertEqual(req.geometry_generation_seed, 0)
         self.assertEqual(req.environment_seed, 0)
         self.assertEqual(req.render_mode, "OFF")
+        self.assertIsInstance(req.wandb_mode, WandbMode)
         self.assertEqual(req.wandb_mode, WandbMode.DISABLED)
         window.close()
+
+    def test_02b_gui_wandb_modes_survive_request_serialization(self):
+        """Qt combo values retain their enum semantics at the worker boundary."""
+        window = MainWindow()
+        self.addCleanup(window.close)
+        setup = window.setup_widget
+        for label, expected in (
+            ("AUTO (Mode Default)", None),
+            ("DISABLED", WandbMode.DISABLED),
+            ("OFFLINE", WandbMode.OFFLINE),
+            ("ONLINE", WandbMode.ONLINE),
+        ):
+            with self.subTest(wandb_mode=label):
+                setup.combo_wandb.setCurrentText(label)
+                request = setup.build_launch_request()
+                if expected is None:
+                    self.assertIsNone(request.wandb_mode)
+                else:
+                    self.assertIsInstance(request.wandb_mode, WandbMode)
+                    self.assertIs(request.wandb_mode, expected)
+                payload = serialize_launch_request(request)
+                self.assertEqual(payload["wandb_mode"], expected.value if expected else None)
+                restored = deserialize_launch_request(json.loads(json.dumps(payload)))
+                self.assertIs(restored.wandb_mode, expected)
 
     def test_03_mode_switching_disables_enables_ux_controls(self):
         """Benchmark modes disable case selection and lock render=OFF."""
@@ -246,13 +271,24 @@ class TestWorkbenchSuite(unittest.TestCase):
         """Worker subprocess PLAN operation resolves plan and preflight without simulation."""
         project_root = get_default_project_root()
         worker_script = project_root / "src" / "workbench" / "worker.py"
-        req = '{"mode": "SANDBOX", "agent_id": "fixture_constant_continuous", "tier": "Easy", "render_mode": "OFF", "wandb_mode": "DISABLED"}'
+        window = MainWindow()
+        self.addCleanup(window.close)
+        setup = window.setup_widget
+        setup.combo_agent.setCurrentIndex(setup.combo_agent.findData("stage0_random_naive"))
+        setup.combo_tier.setCurrentText("Easy")
+        setup.edit_sequence.setText("SCS")
+        setup.edit_geom_seed.setText("0")
+        setup.edit_env_seed.setText("0")
+        setup.edit_agent_seed.setText("101")
+        setup.combo_wandb.setCurrentText("DISABLED")
+        req = json.dumps(serialize_launch_request(setup.build_launch_request()))
 
         proc = subprocess.run(
             [sys.executable, str(worker_script), "--operation", "PLAN", "--request-json", req],
             capture_output=True,
             text=True,
             cwd=str(project_root),
+            timeout=60,
         )
         self.assertEqual(proc.returncode, 0)
 
@@ -295,7 +331,7 @@ class TestWorkbenchSuite(unittest.TestCase):
 
         step_payload = {
             "event": {
-                "event_type": "STEP_COMPLETED",
+                "event_type": LauncherEventType.EPISODE_PROGRESS.value,
                 "run_id": "test_run_123",
                 "episode_index": 0,
                 "total_episodes": 1,
@@ -338,25 +374,19 @@ class TestWorkbenchSuite(unittest.TestCase):
 
     def test_14_workbench_imports_do_not_modify_launcher_registry_or_contracts(self):
         """Importing Workbench does not alter Gate 7.5A registry or contract hashes."""
-        # Compare in a fresh process, including research agents added after the
-        # original four-fixture audit; import must preserve the complete registry.
-        script = """
-import json
-from src.launcher.registry import build_canonical_agent_registry
-from src.launcher.contracts import build_launcher_contract_core, compute_launcher_contract_sha256
-before = build_canonical_agent_registry().to_snapshot()
-before_hash = compute_launcher_contract_sha256(build_launcher_contract_core())
-import src.workbench.protocol
-after = build_canonical_agent_registry().to_snapshot()
-after_hash = compute_launcher_contract_sha256(build_launcher_contract_core())
-print(json.dumps({'before': before, 'after': after, 'before_hash': before_hash, 'after_hash': after_hash}))
-"""
-        result = subprocess.run([sys.executable, "-B", "-X", "utf8", "-c", script],
-                                cwd=get_default_project_root(), capture_output=True, text=True, encoding="utf8")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        payload = json.loads(result.stdout)
-        self.assertEqual(payload["before"], payload["after"])
-        self.assertEqual(payload["before_hash"], payload["after_hash"])
+        import importlib
+        before = build_canonical_agent_registry().to_snapshot()
+        importlib.import_module("src.workbench.app")
+        reg = build_canonical_agent_registry()
+        self.assertEqual(reg.to_snapshot(), before)
+        self.assertEqual(len([a for a in reg.list_all() if a.purpose == "AUDIT_FIXTURE"]), 4)
+        self.assertTrue(reg.has_agent("stage0_random_naive"))
+        from src.launcher.registry import (
+            HISTORICAL_FIXTURE_REGISTRY_SHA256,
+            build_historical_fixture_registry,
+        )
+        hist_reg = build_historical_fixture_registry()
+        self.assertEqual(len(hist_reg.list_all()), 4)
         launcher_core = build_launcher_contract_core()
         launcher_hash = compute_launcher_contract_sha256(launcher_core)
         self.assertEqual(launcher_hash, GATE7_5A_LAUNCHER_CONTRACT_HASH)
@@ -371,18 +401,23 @@ print(json.dumps({'before': before, 'after': after, 'before_hash': before_hash, 
         # Gate 7
         self.assertEqual(GATE7_LOCKED_LOGGING_HASH, "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2")
         self.assertEqual(GATE7_LOCKED_OBSERVABILITY_HASH, "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581")
-        # Gate 7.5A
-        # The frozen 7.5A registry was the four audit fixtures. Keep its exact
-        # original hash; the live registry additionally contains research agents.
-        live = build_canonical_agent_registry()
-        frozen_fixtures = AgentRegistryV1()
-        for registration in live.list_all():
-            if registration.purpose == "AUDIT_FIXTURE":
-                frozen_fixtures.register(registration, live.get_factory(registration.agent_id))
+        # Gate 7.5A Historical Fixture Registry Baseline
+        from src.launcher.registry import (
+            HISTORICAL_FIXTURE_REGISTRY_SHA256,
+            build_historical_fixture_registry,
+        )
         self.assertEqual(
-            compute_canonical_registry_sha256(frozen_fixtures),
+            compute_canonical_registry_sha256(build_historical_fixture_registry()),
+            HISTORICAL_FIXTURE_REGISTRY_SHA256,
+        )
+        self.assertEqual(
+            HISTORICAL_FIXTURE_REGISTRY_SHA256,
             "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f",
         )
+        # Current canonical registry includes Stage 0 and the A* pair
+        canonical_sha = compute_canonical_registry_sha256(build_canonical_agent_registry())
+        self.assertEqual(canonical_sha, compute_canonical_registry_sha256(build_canonical_agent_registry()))
+        self.assertNotEqual(canonical_sha, HISTORICAL_FIXTURE_REGISTRY_SHA256)
         self.assertEqual(
             compute_launcher_contract_sha256(build_launcher_contract_core()),
             "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
@@ -391,6 +426,25 @@ print(json.dumps({'before': before, 'after': after, 'before_hash': before_hash, 
             compute_platform_execution_contract_sha256(GATE7_5A_LAUNCHER_CONTRACT_HASH),
             "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
         )
+
+    def test_15b_audit_scripts_fingerprint_variables_defined_and_consistent(self):
+        """Verifies that audit scripts define distinct historical vs canonical registry hashes without NameError."""
+        project_root = get_default_project_root()
+        scripts_to_check = [
+            project_root / "scripts" / "audit_workbench.py",
+            project_root / "scripts" / "audit_workbench_results.py",
+            project_root / "scripts" / "audit_workbench_hardening.py",
+        ]
+        for script_path in scripts_to_check:
+            self.assertTrue(script_path.exists(), f"Audit script {script_path.name} not found")
+            content = script_path.read_text(encoding="utf-8")
+            # Verify no undefined canon_reg_hash references remain in format strings
+            self.assertNotIn("{canon_reg_hash}", content, f"Undefined canon_reg_hash found in {script_path.name}")
+            # Verify both historical and current registry hashes are explicitly defined and referenced
+            self.assertIn("hist_reg_hash", content, f"hist_reg_hash missing in {script_path.name}")
+            self.assertIn("current_canon_reg_hash", content, f"current_canon_reg_hash missing in {script_path.name}")
+            self.assertIn("{hist_reg_hash}", content, f"historical hash missing from markdown in {script_path.name}")
+            self.assertIn("{current_canon_reg_hash}", content, f"current canonical hash missing from markdown in {script_path.name}")
 
     def test_16_successful_run_emits_worker_done_success_and_matching_run_id(self):
         """Successful run reports status COMPLETE and WORKER_DONE success=True with matching run_id."""

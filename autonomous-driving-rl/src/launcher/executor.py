@@ -17,11 +17,11 @@ import logging
 import os
 from pathlib import Path
 import time
+import warnings
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from metadrive.component.map.pg_map import MapGenerateMethod
 from metadrive.envs.metadrive_env import MetaDriveEnv
-from src.visualization.minimap_overlay import MiniMapOverlay
 from src.visualization import create_finish_visual
 from src.logging.agent_experiment import DecisionTrace, save_agent_provenance
 import numpy as np
@@ -79,6 +79,26 @@ def create_optional_finish_visual(env: Any) -> Optional[Any]:
     return visual
 
 
+def create_native_minimap(env: Any) -> Optional[Any]:
+    """Load the optional native overlay without making it a headless dependency.
+
+    The built-in MetaDrive window still renders when this extra overlay is absent.
+    Errors in an installed overlay or its dependencies remain visible.
+    """
+    try:
+        from src.visualization.minimap_overlay import MiniMapOverlay
+    except ModuleNotFoundError as error:
+        if error.name not in ("src.visualization", "src.visualization.minimap_overlay"):
+            raise
+        warnings.warn(
+            "Optional minimap overlay is unavailable; using the MetaDrive native window.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return None
+    return MiniMapOverlay(env)
+
+
 def compute_step_route_progress_and_reward(
     reward_spec: RewardSpecV1,
     current_route_completion: float,
@@ -133,7 +153,7 @@ def build_metadrive_case_config(
 
     from metadrive.manager.traffic_manager import TrafficMode
 
-    return {
+    cfg = {
         "use_render": (render_mode.upper() == "NATIVE"),
         "num_scenarios": 1,
         "start_seed": int(case.environment_seed),
@@ -145,6 +165,13 @@ def build_metadrive_case_config(
         "decision_repeat": decision_repeat,
         "truncate_as_terminate": False
     }
+
+    if render_mode.upper() == "NATIVE":
+        cfg["show_interface"] = False
+        cfg["show_logo"] = False
+        cfg["show_fps"] = False
+
+    return cfg
 
 
 @dataclass(frozen=True)
@@ -234,6 +261,15 @@ class ExperimentExecutor:
             "protocol_scope": self.plan.protocol_scope
         }
 
+        checkpoint = getattr(self.plan, "checkpoint_binding", None)
+        algorithm_parameters = {"launcher": launcher_prov}
+        parameter_provider = getattr(self.agent_factory, "experiment_parameters", None)
+        if parameter_provider is not None:
+            param_key = "sac_checkpoint" if self.plan.agent_registration.method_family == "MODEL_FREE_RL" else "planner"
+            algorithm_parameters[param_key] = parameter_provider()
+        if checkpoint is not None:
+            algorithm_parameters["checkpoint"] = checkpoint.semantic_identity()
+
         # 2. Build Gate-7 ExperimentRunConfig
         run_config = ExperimentRunConfig(
             run_kind=self.plan.run_kind,
@@ -249,11 +285,12 @@ class ExperimentExecutor:
             inference_stochasticity=self.plan.agent_registration.inference_stochasticity,
             stateful_within_episode=self.plan.agent_registration.stateful_within_episode,
             agent_seed=self.plan.agent_seed,
+            training_run_seed=checkpoint.training_run_seed if checkpoint is not None else None,
             expected_episode_count=len(self.plan.resolved_cases),
             manifest_name=resolve_manifest_name_for_mode(self.plan.launcher_mode),
             allow_dirty_worktree_override=(not self.plan.canonical_run),
             wandb_mode=self.plan.wandb_mode,
-            algorithm_hyperparameters={"launcher": launcher_prov}
+            algorithm_hyperparameters=algorithm_parameters
         )
 
         # 3. Instantiate authoritative Gate-7 logger and downstream W&B mirror
@@ -296,6 +333,13 @@ class ExperimentExecutor:
 
             # 4. Instantiate agent policy ONCE per ExperimentRun (Section 9)
             agent = self.agent_factory()
+            if checkpoint is not None:
+                from src.launcher.checkpoints import validate_checkpoint_binding
+                checkpoint_path = validate_checkpoint_binding(checkpoint, self.project_root)
+                loader = getattr(agent, "load_checkpoint", None)
+                if loader is None:
+                    raise TypeError("Registered checkpoint-based agent has no checkpoint loader")
+                loader(checkpoint_path, checkpoint.model_sha256)
             if not hasattr(agent, "descriptor"):
                 raise TypeError(f"Agent instance of type '{type(agent).__name__}' lacks required 'descriptor' property.")
 
@@ -358,8 +402,8 @@ class ExperimentExecutor:
                 ))
 
                 env = None
-                minimap = None
                 finish_visual = None
+                hud_manager = None
 
                 try:
                     # A. Reconstruct exact locked road blocks
@@ -370,8 +414,17 @@ class ExperimentExecutor:
                     env = MetaDriveEnv(env_config)
                     raw_obs, info = env.reset(seed=case.environment_seed)
 
-                    if self.plan.render_mode.upper() == "NATIVE":
-                        minimap = MiniMapOverlay(env)
+                    # Initialize HUD facade strictly for SANDBOX + NATIVE mode (Gate HUD-3)
+                    launcher_mode_str = (
+                        self.plan.launcher_mode.value
+                        if hasattr(self.plan.launcher_mode, "value")
+                        else str(self.plan.launcher_mode)
+                    ).upper()
+                    render_mode_str = str(self.plan.render_mode).upper()
+                    if launcher_mode_str == "SANDBOX" and render_mode_str == "NATIVE":
+                        from src.visualization.hud_manager import RacingHudManager
+                        hud_manager = RacingHudManager(env)
+                    if render_mode_str == "NATIVE":
                         finish_visual = create_optional_finish_visual(env)
 
                     # C. Reset agent with public context (Information Parity)
@@ -425,8 +478,6 @@ class ExperimentExecutor:
 
                         # 4. Environment physics step
                         raw_obs, r_env, term_step, trunc_step, step_info = env.step(canonical_act.to_numpy())
-                        if minimap is not None:
-                            minimap.update()
                         if finish_visual is not None:
                             finish_visual.update()
                         step_idx += 1
@@ -462,6 +513,17 @@ class ExperimentExecutor:
                         )
                         cumulative_reward += breakdown.total_reward
 
+                        # Update HUD visualizer strictly after physics step and outcome classification
+                        if hud_manager is not None:
+                            hud_manager.update(
+                                step_idx=step_idx,
+                                control_dt_s=float(self.plan.control_dt_s),
+                                canonical_steering=canonical_act.steering,
+                                canonical_throttle_brake=canonical_act.throttle_brake,
+                                step_info=step_info,
+                                outcome=outcome if (terminated or truncated) else None,
+                            )
+
                         # Emit progress event periodically (every 10 steps, preserving 10 Hz control)
                         if step_idx % 10 == 0:
                             self._emit(LauncherEventV1.create(
@@ -484,10 +546,14 @@ class ExperimentExecutor:
                         )
 
                 finally:
-                    if finish_visual is not None:
-                        finish_visual.destroy()
-                    if minimap is not None:
-                        minimap.destroy()
+                    for visual in (finish_visual, hud_manager):
+                        if visual is not None:
+                            try:
+                                visual.destroy()
+                            except Exception:
+                                logging.getLogger(__name__).exception(
+                                    "Failed to clean up %s.", type(visual).__name__
+                                )
                     if env is not None:
                         env.close()
 
@@ -550,6 +616,7 @@ class ExperimentExecutor:
                     run_id=logger.run_id,
                     episode_index=case_idx,
                     total_episodes=total_cases,
+                    step_index=step_idx,
                     route_completion=float(last_route_completion),
                     speed_kmh=mean_spd,
                     status="SUCCESS" if clean_succ else "FAILURE",
