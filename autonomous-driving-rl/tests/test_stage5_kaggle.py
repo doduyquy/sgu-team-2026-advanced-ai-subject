@@ -73,6 +73,24 @@ def test_guided_notebook_command_passes_training_flags_once(monkeypatch):
     assert calls == [args, args]
 
 
+def test_guided_resume_grows_replay_without_reordering_or_overwriting():
+    replay = ReplayBuffer(8, TinyEnv.observation_space, TinyEnv.action_space, n_envs=2, device="cpu")
+    replay.pos = 3
+    replay.actions[:3] = np.arange(12).reshape(3, 2, 2) / 12
+    replay.observations[:3] = 0.5
+    replay.next_observations[:3] = 0.75
+    replay.rewards[:3] = [[0, 1], [2, 3], [4, 5]]
+    replay.dones[1, 0] = replay.dones[2, 1] = replay.timeouts[2, 1] = 1
+    model = SimpleNamespace(replay_buffer=replay, buffer_size=8, device=torch.device("cpu"))
+    with pytest.raises(ValueError, match="intact replay"):
+        guided.grow_replay(model, 12, 4)
+    guided.grow_replay(model, 12, 6)
+    assert model.buffer_size == 12 and model.replay_buffer.n_envs == 2
+    assert model.replay_buffer.pos == 3 and not model.replay_buffer.full
+    for field in ("observations", "next_observations", "actions", "rewards", "dones", "timeouts"):
+        np.testing.assert_array_equal(getattr(model.replay_buffer, field)[:3], getattr(replay, field)[:3])
+
+
 def test_operator_cannot_open_another_slot(monkeypatch):
     monkeypatch.setenv("STAGE5_KAGGLE_OPERATOR_SLOT", "account_02")
     monkeypatch.setattr(credentials, "slot", lambda *_: pytest.fail("Another operator's slot was opened"))
@@ -360,6 +378,21 @@ def test_pilot_plan_uses_verified_cpu_when_gpu_only_wins_after_warmup(tmp_path, 
     rows[parent]["periodic"]["12500"]["version"] = 2
     with pytest.raises(ValueError, match="recorded version"):
         control.parent_checkpoint({"jobs": rows}, parent, 12500)
+
+    guided_parent = "guided-parent"
+    marker = tmp_path / "harvest" / guided_parent / "COMPLETE.json"
+    marker.parent.mkdir()
+    write(marker, {"transitions": 5000, "external_admitted": 5300, "ledger": {"episode": "hash"},
+                   "learning_mode": guided.BEHAVIOR, "identity": {"capacity": 16384, "online_behavior": guided.BEHAVIOR}})
+    rows[guided_parent] = {"status": "HARVESTED_VERIFIED", "state_sha": sha(marker),
+                           "planned": dict(job, role="easy_guided", device="cpu", guided_path="prefill", guided_sha="hash")}
+    control.plan_learning_resume(SimpleNamespace(
+        campaign="stage5", round="guided-resume", account="account_01", parent=guided_parent, transitions=10000,
+    ), {"jobs": rows})
+    continuation = control.read(tmp_path / "plan-stage5-guided-resume.json")["jobs"]["j10"]
+    assert continuation["guided_resume"] and continuation["capacity"] == 20480
+    assert continuation["start_transition"] == 5000 and continuation["checkpoint_every"] == 10000
+    assert not {"guided_path", "guided_sha", "warm_step"} & continuation.keys()
 
 
 def test_large_parent_audit_accepts_expected_members_over_preflight_limit(tmp_path):
