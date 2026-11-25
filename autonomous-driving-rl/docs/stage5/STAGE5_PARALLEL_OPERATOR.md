@@ -11,7 +11,7 @@ Each member runs one assigned slot on their own Windows session and Kaggle accou
 | 05 | `retention` | CPU, two environments, Easy-only UTD 1.0 reference, 10k new decisions |
 | 06 | `collect` | Local frozen champion collector, one complete Easy TRAIN episode per family and optional private dataset publish |
 | 07 | `evaluate` | Local Easy and Medium diagnostic evaluation and paired champion comparison |
-| 08 | Reserve | Available for an independent replicate after the first group reports |
+| 08 | `easy-stable` | CPU, two environments, Guided SAC with UTD 0.5 and quarter actor learning rate, 10k new decisions |
 
 Retention branches record the executed anchored axis in replay. The evaluation runs the learned policy without the collection anchor. Medium starts from the verified full state and carries the old replay forward. The curriculum weights apply to episode selection, so the realized fraction of transitions is measured separately. Run Medium, Hard and Extreme in order after reviewing candidate retention on earlier tiers.
 

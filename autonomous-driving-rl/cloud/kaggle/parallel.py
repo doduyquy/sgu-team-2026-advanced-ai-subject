@@ -23,6 +23,7 @@ WORKLOADS = {
     "steering": ("account_03", 5000, {"guided_rollout_axis": "steering"}),
     "throttle": ("account_04", 5000, {"guided_rollout_axis": "throttle_brake"}),
     "retention": ("account_05", 10000, {}),
+    "easy-stable": ("account_08", 10000, {"guided_actor_lr_scale": 0.25}),
 }
 INPUTS = {"runtime.zip", "model.zip", "parent.zip"}
 
