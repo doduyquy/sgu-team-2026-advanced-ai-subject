@@ -1,5 +1,11 @@
 # Stage 5 Kaggle handoff · 2026-11-25
 
+## Cập nhật cloud activation04
+
+**G2 PASS.** Output version 1 của J01 `s5-910b612f2a22-j01-a1` đã được tải bằng API theo đúng version. Artifact khớp checksum nội bộ, parity trên cả hai hình học TRAIN và counter của checkpoint SAC. Job ghi 1.280 transitions, 256 SAC updates, PyTorch 2.14.1+cpu và CPython 3.13.18. SHA-256 của `COMPLETE.json` là `18fa92be8690cb5683ed24d524d12aabf8e81fc5f87d6a46056dff8740623fcc`. Kế hoạch capacity và resume dùng bundle đã vượt G2. Registry lưu tiến độ mới nhất của G3 và G4.
+
+B1 local đã nạp 256 transitions thật vào learner hai môi trường, chạy 8 SAC updates và đo thay đổi ở actor, critic, target. Chunks phải chia hết cho số môi trường. Kiểm chứng transfer qua Kaggle vẫn thuộc G5.
+
 ## Cập nhật cloud activation02
 
 Kaggle tiếp nhận J01 `s5-94d391e6b785-j01-a1` version 1 lúc 18:56:53 ICT sau một lần thử cấp phiên CPU. Job chuyển sang `RUNNING`, sau đó dừng ở kiểm tra Python ABI trước khi cài dependency hoặc chạy parity. Cả 8 account đã xác minh danh tính. G2–G4 vẫn `BLOCKED`. Phiên bản kế tiếp hỗ trợ CPython 3.13 trên Linux x86-64 và cần bundle cùng fingerprint mới. Một lần probe khi capacity chưa xác định đã được sử dụng trong campaign `stage5`.

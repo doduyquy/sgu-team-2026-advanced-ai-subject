@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -11,10 +12,13 @@ import re
 import shutil
 import subprocess
 import sys
+from tempfile import mkdtemp
 import zipfile
 
 from cloud.kaggle.common import METADRIVE_PIN, ROOT, SOURCE, SOURCE_SHA, WORK, fingerprint, read, sha, verify, write
-from cloud.kaggle.credentials import SLOTS, accelerator_quota, cli, current_private_kernel_version, private_input, slot, verify_owner
+from cloud.kaggle.credentials import (
+    SLOTS, accelerator_quota, cli, current_private_kernel_version, download_kernel_output, private_input, slot, verify_owner,
+)
 
 RECIPE = read(Path(__file__).with_name("recipe.json"))
 BUNDLE_PATHS = (
@@ -95,7 +99,6 @@ def package():
     files["parity.json"] = anchor.read_bytes()
     if any(SECRET.search(data) for data in files.values()):
         raise RuntimeError("Secret-pattern audit failed for allowlisted runtime")
-    import hashlib
     identifiers = {name: hashlib.sha256(data).hexdigest() for name, data in files.items()}
     base = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     inventory = {"git_head_at_packaging": base, "runtime_id": fingerprint(identifiers), "files": identifiers,
@@ -156,37 +159,53 @@ def identity_part(text):
 def plan(args, state):
     identity_part(args.campaign)
     identity_part(args.round)
-    bundle = read(WORK / "bundle.json")
+    capacity_after = getattr(args, "capacity_after", None)
+    anchor_id = args.parent or capacity_after
+    anchor = state["jobs"].get(anchor_id)
+    budget = RECIPE["preflight"]
+    if anchor_id:
+        if not anchor or anchor["status"] != "HARVESTED_VERIFIED":
+            raise ValueError("Follow-up requires a verified harvested job")
+        if anchor["execution"]["campaign"] != args.campaign:
+            raise ValueError("Follow-up requires a job from the same campaign")
+        if capacity_after and anchor.get("gates", {}).get("G2") != "PASS":
+            raise ValueError("Capacity plan requires a verified G2 artifact")
+        pinned = anchor["planned"]
+        bundle = {key: pinned[key] for key in ("runtime_sha", "source_sha", "template_sha")}
+        bundle["path"] = pinned["runtime_path"]
+        budget = {key: pinned[key] for key in budget}
+    else:
+        bundle = read(WORK / "bundle.json")
     plan_id = f"{args.campaign}-{args.round}"
     assignments = dict(item.split("=") for item in getattr(args, "assign", []))
-    if set(assignments) - ({"j07"} if args.parent else {"j01", "j02", "j03", "j04"}) or set(assignments.values()) - set(SLOTS):
+    allowed_jobs = {"j07"} if args.parent else {"j02", "j03", "j04"}
+    if not anchor_id:
+        allowed_jobs.add("j01")
+    if set(assignments) - allowed_jobs or set(assignments.values()) - set(SLOTS):
         raise ValueError("Job assignment format is j01=account_01")
     jobs = {}
     for label, role, workers, device in (
         ("j01", "parity", 1, "cpu"), ("j02", "cpu1", 1, "cpu"),
         ("j03", "cpu2", 2, "cpu"), ("j04", "gpu2", 2, "cuda"),
     ):
+        if label not in allowed_jobs:
+            continue
         short_slug = "s5-" + fingerprint([args.campaign, args.round])[:12] + "-" + label + "-a1"
         jobs[label] = {"job": short_slug, "campaign": args.campaign, "round": args.round, "attempt": 1,
                        "role": role, "account": assignments.get(label, args.account), "workers": workers, "device": device,
                        "runtime_sha": bundle["runtime_sha"], "source_sha": bundle["source_sha"],
-                       "runtime_path": bundle["path"], "template_sha": bundle["template_sha"], **RECIPE["preflight"]}
+                       "runtime_path": bundle["path"], "template_sha": bundle["template_sha"], **budget}
     deferred = {"j05": "Local B1 collector proof only; cloud snapshot sharing unverified",
                 "j06": "Depends on a verified private collector artifact",
                 "j07": "Depends on a harvested COMPLETE online state"}
     if args.parent:
-        record = state["jobs"].get(args.parent)
-        if not record or record["status"] != "HARVESTED_VERIFIED":
-            raise ValueError("Resume needs a verified harvested parent")
-        parent = record["execution"]
-        if parent["campaign"] != args.campaign or parent["runtime_sha"] != bundle["runtime_sha"]:
-            raise ValueError("Resume requires the original runtime bundle")
+        parent = anchor["execution"]
         job = {"job": "s5-" + fingerprint([args.campaign, args.round])[:12] + "-j07-a1",
                "campaign": args.campaign, "round": args.round, "attempt": 1, "role": "resume",
                "account": assignments.get("j07", args.account), "workers": parent["workers"], "device": parent["device"],
                "runtime_sha": bundle["runtime_sha"], "source_sha": bundle["source_sha"],
                "runtime_path": bundle["path"], "template_sha": bundle["template_sha"], "parent_job": args.parent,
-               "parent_sha": record["state_sha"], **RECIPE["preflight"]}
+               "parent_sha": anchor["state_sha"], **budget}
         jobs = {"j07": job}
         deferred.pop("j07")
     body = {"jobs": jobs, "deferred": deferred}
@@ -370,13 +389,13 @@ def probe_inventory(alias, owner, target):
     owned = [row for row in rows if re.fullmatch(re.escape(owner) + r"/[a-z0-9_-]+", row["ref"], re.I)]
     refs = [row["ref"].lower() for row in owned]
     if target in refs:
-        raise RuntimeError("J01 notebook already exists on Kaggle and requires reconciliation")
+        raise RuntimeError("Target notebook already exists on Kaggle and requires reconciliation")
     # Direct GetKernel can return 403 for an unused slug. Search the authenticated
     # owner's inventory by the exact slug to cover the server's listing limit.
     query = ["kernels", "list", "--mine", "--search", target.split("/")[1], "--format", "json"]
     code, output = cli(alias, query, timeout=25)
     if code or output.splitlines()[-1:] != ["Not found"]:
-        raise RuntimeError("Kaggle J01 slug search requires reconciliation")
+        raise RuntimeError("Kaggle target slug search requires reconciliation")
     cutoff = (datetime.now(timezone.utc) - timedelta(days=1)).replace(tzinfo=None).isoformat()
     recent = dict.fromkeys(
         row["ref"] for index, row in enumerate(owned)
@@ -468,6 +487,7 @@ def launch(args, state):
     sessions = creds["concurrency_observed"] if 0 <= age.total_seconds() <= 86400 else None
     active = [x for x in state["jobs"].values() if x.get("owner") == owner and x["status"] in ACTIVE]
     admission_probe = getattr(args, "admission_probe", False)
+    server_admission = getattr(args, "server_admission", False)
     retry_of = getattr(args, "retry_of", None)
     if retry_of and not admission_probe:
         raise ValueError("--retry-of requires --admission-probe")
@@ -479,6 +499,19 @@ def launch(args, state):
         if active:
             raise RuntimeError("An active receipt blocks this submission")
         repair = probe_retry(state, job, retry_of, owner)
+    elif server_admission:
+        roles = {"j02": "cpu1", "j03": "cpu2", "j04": "gpu2", "j07": "resume"}
+        if (sessions is not None or roles.get(args.job) != job["role"]
+                or job["max_seconds"] != RECIPE["preflight"]["max_seconds"]):
+            raise RuntimeError("Server admission requires unknown capacity and a gated Stage 5 follow-up preflight")
+        if active or any(
+            row["planned"]["campaign"] == job["campaign"]
+            and ((row.get("submitted") and row["planned"]["role"] == job["role"]
+                  and row["planned"]["runtime_sha"] == job["runtime_sha"])
+                 or (row.get("owner") == owner and row["status"] == "CAPACITY_REJECTED"))
+            for row in state["jobs"].values()
+        ):
+            raise RuntimeError("An active receipt or prior follow-up admission blocks this submission")
     elif sessions is None:
         raise RuntimeError("Fresh owner observation of available concurrency is required")
     elif len(active) >= sessions:
@@ -494,8 +527,14 @@ def launch(args, state):
             available = min(available, owner_limit)
         if available is None or gpu_minutes + job["max_seconds"] / 60 > available:
             raise RuntimeError("Verified GPU budget is insufficient or unavailable")
-    template = Path(__file__).with_name("kernel_template.py.txt")
-    verify(template, job["template_sha"])
+    runtime = (ROOT / job["runtime_path"] / "runtime.zip").resolve()
+    if not runtime.is_relative_to(WORK.resolve()):
+        raise ValueError("Plan runtime path is outside campaign workspace")
+    verify(runtime, job["runtime_sha"])
+    with zipfile.ZipFile(runtime) as bundle:
+        template = bundle.read("cloud/kaggle/kernel_template.py.txt")
+    if hashlib.sha256(template).hexdigest() != job["template_sha"]:
+        raise ValueError("Kernel template differs from the pinned runtime")
     actual_job = {k: v for k, v in job.items() if k not in ("runtime_path", "account")}
     actual_job.update(inputs_for(job, state, alias, owner))
     if job.get("parent_job"):
@@ -518,7 +557,7 @@ def launch(args, state):
                                          parent_archive, actual_job["parent_zip_sha"])
     staging = WORK / "kernels" / job["job"]
     staging.mkdir(parents=True, exist_ok=True)
-    template_text = template.read_text(encoding="utf-8")
+    template_text = template.decode("utf-8")
     refs = [actual_job["runtime_ref"], actual_job["source_ref"]]
     if actual_job.get("parent_ref"):
         refs.append(actual_job["parent_ref"])
@@ -536,6 +575,8 @@ def launch(args, state):
     push = ["kernels", "push", "-p", str(staging), "-t", str(job["max_seconds"])]
     if admission_probe:
         entry["admission_probe"] = {"capacity": "UNKNOWN", **repair, **probe_inventory(alias, owner, ref)}
+    if server_admission:
+        entry["server_admission"] = {"capacity": "UNKNOWN", **probe_inventory(alias, owner, ref)}
     entry.update(status="SUBMITTING", owner=owner, ref=ref, execution=actual_job, submitted=now())
     persist(state)
     try:
@@ -569,6 +610,8 @@ def diagnose(state, job):
     alias = entry["planned"]["account"]
     if not verify_owner(alias):
         raise RuntimeError("Account identity unverified")
+    if current_private_kernel_version(alias, entry["ref"]) != entry["version"]:
+        raise RuntimeError("Kaggle log CLI reports the latest run and its version differs from the receipt")
     code, output = cli(alias, ["kernels", "logs", f"{entry['ref']}/{entry['version']}"], timeout=30)
     patterns = {
         "DEPENDENCY_RESOLUTION": r"No matching distribution|ResolutionImpossible|Could not find a version",
@@ -616,6 +659,12 @@ def inspect_artifact(source, out, expected):
             raise ValueError("Complete artifact does not show the planned collection and updates")
         if manifest["files"]["model.zip"] == SOURCE_SHA:
             raise ValueError("The historical warm-start model cannot be a resume checkpoint")
+        with zipfile.ZipFile(out / "model.zip") as model:
+            if model.getinfo("data").file_size > 4_000_000:
+                raise ValueError("SAC checkpoint metadata exceeds the limit")
+            metadata = json.loads(model.read("data"))
+        if (metadata.get("num_timesteps"), metadata.get("_n_updates")) != (manifest["transitions"], manifest["updates"]):
+            raise ValueError("Saved SAC counters differ from the checkpoint manifest")
     return manifest
 
 def harvest(state, job):
@@ -626,16 +675,16 @@ def harvest(state, job):
     status(state, job)
     if entry["status"] != "CLOUD_SUCCEEDED":
         return
-    staging = WORK / "downloads" / job
-    staging.mkdir(parents=True, exist_ok=True)
+    downloads = WORK / "downloads" / job
+    downloads.mkdir(parents=True, exist_ok=True)
+    staging = Path(mkdtemp(prefix=f"v{entry['version']}-", dir=downloads))
     alias = entry["planned"]["account"]
     filename = job + ".zip"
-    code, _ = cli(alias, ["kernels", "output", f"{entry['ref']}/{entry['version']}", "-p", str(staging),
-                          "--file-pattern", f"^{re.escape(filename)}$", "-q"], timeout=180)
-    if code != 0 or not (staging / filename).is_file():
+    if not download_kernel_output(alias, entry["ref"], entry["version"], staging / filename):
         raise RuntimeError("Expected version-specific Kaggle output unavailable")
     final = WORK / "harvest" / job
-    temp = final.with_name(job + ".staging")
+    final.parent.mkdir(parents=True, exist_ok=True)
+    temp = staging / "verified-state"
     try:
         expected = entry["execution"]
         manifest = inspect_artifact(staging / filename, temp, expected)
@@ -646,7 +695,8 @@ def harvest(state, job):
         persist(state)
         raise
     entry.update(status="HARVESTED_VERIFIED" if manifest["result"] == "COMPLETE" else "PARTIAL",
-                 state_sha=sha(final / "COMPLETE.json"), gates=gates, at=now())
+                 state_sha=sha(final / "COMPLETE.json"), output_sha=sha(staging / filename),
+                 output_version=entry["version"], gates=gates, at=now())
     persist(state)
     print(job, entry["status"], entry["state_sha"])
 
@@ -726,12 +776,16 @@ def main():
         item.add_argument("--round", required=True)
         if name == "plan":
             item.add_argument("--account", choices=SLOTS, default=SLOTS[0])
-            item.add_argument("--parent")
+            anchor = item.add_mutually_exclusive_group()
+            anchor.add_argument("--parent")
+            anchor.add_argument("--capacity-after", metavar="VERIFIED_J01_ID")
             item.add_argument("--assign", action="append", default=[], metavar="JOB=SLOT")
         else:
             item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07"), required=True)
             item.add_argument("--fingerprint", required=True)
-            item.add_argument("--admission-probe", action="store_true")
+            admission = item.add_mutually_exclusive_group()
+            admission.add_argument("--admission-probe", action="store_true")
+            admission.add_argument("--server-admission", action="store_true")
             item.add_argument("--retry-of", metavar="FAILED_JOB_ID")
     for name in ("status", "harvest", "analyze", "logs"):
         commands.add_parser(name).add_argument("--job", required=True)

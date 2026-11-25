@@ -95,6 +95,11 @@ def current_private_kernel_version(alias, ref):
     match = re.fullmatch(r"PRIVATE_KERNEL_VERSION ([1-9]\d*)", lines[-1]) if code == 0 and lines else None
     return int(match[1]) if match else None
 
+def download_kernel_output(alias, ref, version, path):
+    command = [sys.executable, "-B", "-m", "cloud.kaggle.kernel_version", "download", ref, str(version), str(path)]
+    code, result = token_command(slot_token(alias), command, 180)
+    return code == 0 and result.splitlines()[-1:] == ["VERSIONED_OUTPUT_READY"]
+
 def authenticated_owner(code, output):
     users = re.findall(r"^\s*-?\s*username\s*:\s*([a-z0-9_-]+)\s*$", output, re.I | re.M)
     token_auth = re.search(r"^\s*-?\s*auth_method\s*:\s*ACCESS_TOKEN\s*$", output, re.M)

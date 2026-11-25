@@ -1,4 +1,4 @@
-"""B1 batch replay proof using SB3's single-environment buffer."""
+"""B1 batch replay admission for SB3 learners with one or more environments."""
 from __future__ import annotations
 
 import argparse
@@ -163,20 +163,27 @@ def validate(chunk, expected, identity, ledger, policy_version):
     return data, key
 
 def admit(buffer, data):
-    if buffer.n_envs != 1 or buffer.optimize_memory_usage or not buffer.handle_timeout_termination:
-        raise ValueError("B1 requires the standard single-env, non-aliased timeout-aware buffer")
-    for i in range(len(data["reward"])):
-        term, trunc = data["terminated"][i], data["truncated"][i]
-        buffer.add(data["obs"][i:i+1], data["next_obs"][i:i+1], data["action"][i:i+1],
-                   data["reward"][i:i+1], np.asarray([term or trunc]),
-                   [{"TimeLimit.truncated": bool(trunc and not term)}])
+    workers = buffer.n_envs
+    count = len(data["reward"])
+    if buffer.optimize_memory_usage or not buffer.handle_timeout_termination:
+        raise ValueError("B1 requires a non-aliased timeout-aware replay buffer")
+    if count == 0 or count % workers:
+        raise ValueError("B1 chunk must contain complete vector replay rows")
+    for i in range(0, count, workers):
+        rows = slice(i, i + workers)
+        term, trunc = data["terminated"][rows], data["truncated"][rows]
+        buffer.add(data["obs"][rows], data["next_obs"][rows], data["action"][rows],
+                   data["reward"][rows], term | trunc,
+                   [{"TimeLimit.truncated": bool(value)} for value in trunc & ~term])
 
 def import_and_update(args):
     torch.set_num_threads(1)
-    parent = check_state(args.parent, args.parent_sha) if args.parent else None
     if bool(args.parent) != bool(args.parent_sha):
         raise ValueError("Parent path and digest are paired")
-    identity = recipe_identity("smoke", 1, args.capacity, args.learning_starts, True)
+    parent = check_state(args.parent, args.parent_sha) if args.parent else None
+    if args.capacity <= 0 or args.capacity % args.workers:
+        raise ValueError("Replay capacity must align with learner workers")
+    identity = recipe_identity("smoke", args.workers, args.capacity, args.learning_starts, True)
     if parent and parent["identity"] != identity:
         raise ValueError("Replay parent has an incompatible recipe")
     ledger = dict(parent.get("ledger", {})) if parent else {}
@@ -184,18 +191,25 @@ def import_and_update(args):
     if data is None:
         print("Duplicate chunk; existing committed replay state retained")
         return
-    cursors = parent["workers"] if parent else [{"next_cursor": 0, "interrupted": None}]
-    env = make_vec(1, "smoke", [cursors[0]["next_cursor"]])
+    n = len(data["reward"])
+    if n > args.capacity or n % args.workers:
+        raise ValueError("Replay chunk must fit capacity and align with learner workers")
+    cursors = parent["workers"] if parent else [{"next_cursor": 0, "interrupted": None} for _ in range(args.workers)]
+    env = make_vec(args.workers, "smoke", [cursor["next_cursor"] for cursor in cursors])
     try:
         if parent:
             model = SAC.load(args.parent / "model.zip", env=env, device="cpu")
             model.load_replay_buffer(args.parent / "replay.pkl")
+            if (model.num_timesteps, model._n_updates) != (parent["transitions"], parent["updates"]):
+                raise ValueError("Learner checkpoint counters differ from the parent manifest")
             restore_rng(torch.load(args.parent / "rng.pt", map_location="cpu", weights_only=False), "cpu")
         else:
             model = model_for(env, "cpu", args.capacity, args.learning_starts, args.source)
-        n = len(data["reward"])
-        if n > args.capacity or (model.replay_buffer.size() + n) < model.batch_size:
-            raise ValueError("Chunk exceeds capacity or replay has fewer than one minibatch")
+        buffer = model.replay_buffer
+        if buffer.n_envs != args.workers or buffer.buffer_size * args.workers != args.capacity:
+            raise ValueError("Learner replay shape differs from the configured workers or capacity")
+        if buffer.size() * args.workers + n < model.batch_size:
+            raise ValueError("Replay has fewer than one minibatch")
         admit(model.replay_buffer, data)
         ledger[key] = args.chunk_sha
         model.set_logger(configure(format_strings=[]))
@@ -232,6 +246,7 @@ def main():
     initial = sub.add_parser("source-snapshot")
     initial.add_argument("--out", type=Path, required=True)
     initial.add_argument("--source", type=Path, required=True)
+    initial.add_argument("--workers", type=int, choices=(1, 2, 4), default=1)
     collection = sub.add_parser("collect")
     collection.add_argument("--out", type=Path, required=True)
     collection.add_argument("--snapshot", type=Path, required=True)
@@ -247,6 +262,7 @@ def main():
     learner.add_argument("--parent", type=Path)
     learner.add_argument("--parent-sha")
     learner.add_argument("--capacity", type=int, default=8192)
+    learner.add_argument("--workers", type=int, choices=(1, 2, 4), default=1)
     learner.add_argument("--learning-starts", type=int, default=1024)
     learner.add_argument("--policy-version", type=int, default=0)
     learner.add_argument("--max-updates", type=int, default=8)
@@ -256,7 +272,7 @@ def main():
         print(publish(args.state / "model.zip", state["files"]["model.zip"], state["identity"], state["updates"], args.out))
     elif args.command == "source-snapshot":
         caps = RECIPE["preflight"]
-        identity = recipe_identity("smoke", 1, caps["capacity"], caps["learning_starts"], True)
+        identity = recipe_identity("smoke", args.workers, caps["capacity"], caps["learning_starts"], True)
         print(publish(args.source, SOURCE_SHA, identity, 0, args.out))
     elif args.command == "collect":
         if not 0 < args.rows <= MAX_ROWS or not 100 <= args.stream <= 999 or not 0 <= args.sequence <= 1000:

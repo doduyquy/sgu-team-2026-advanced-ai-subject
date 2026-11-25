@@ -1,7 +1,9 @@
 """Local correctness regressions for the Stage 5 Kaggle campaign."""
 import ast
+from contextlib import nullcontext
 import json
 from pathlib import Path
+import sys
 from types import SimpleNamespace
 import zipfile
 
@@ -15,6 +17,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 from cloud.kaggle import control
 from cloud.kaggle import credentials
+from cloud.kaggle import kernel_version
 from cloud.kaggle.common import sha
 from cloud.kaggle.credentials import dpapi
 from cloud.kaggle.replay import admit
@@ -37,6 +40,24 @@ class NonPortableReplay:
     def __init__(self, *args, storage_dir, **kwargs):
         Path(storage_dir).write_bytes(b"would overwrite")
         raise RuntimeError("Historical replay factory must never initialize")
+
+
+@pytest.mark.parametrize("workers", [2, 4])
+def test_external_replay_vector_rows_preserve_termination_and_reject_partial_batch(workers):
+    env = TinyEnv()
+    replay = ReplayBuffer(2 * workers, env.observation_space, env.action_space, device="cpu", n_envs=workers)
+    data = {"obs": np.zeros((workers, 409), dtype=np.float32), "next_obs": np.ones((workers, 409), dtype=np.float32),
+            "action": np.zeros((workers, 2), dtype=np.float32), "reward": np.arange(workers, dtype=np.float32),
+            "terminated": np.arange(workers) == 0, "truncated": np.arange(workers) < 2}
+    with pytest.raises(ValueError, match="complete vector replay rows"):
+        admit(replay, {key: values[:-1] for key, values in data.items()})
+    assert replay.size() == 0
+    admit(replay, data)
+    assert replay.size() == 1
+    np.testing.assert_array_equal(replay.rewards[0], data["reward"])
+    np.testing.assert_array_equal(replay.dones[0], data["terminated"] | data["truncated"])
+    np.testing.assert_array_equal(replay.timeouts[0], data["truncated"] & ~data["terminated"])
+
 
 def test_policy_loader_never_initializes_historical_replay(tmp_path):
     source = tmp_path / "historical.zip"
@@ -156,7 +177,10 @@ def test_admission_and_timeout_receipts_prevent_duplicate_submit(
         return -1, ""
     monkeypatch.setattr(control, "cli", fake_cli)
     template = Path(control.__file__).with_name("kernel_template.py.txt")
-    control.write(tmp_path / "bundle.json", {"runtime_sha": "runtime", "source_sha": "source", "path": ".",
+    archive = tmp_path / "runtime.zip"
+    with zipfile.ZipFile(archive, "x") as bundle:
+        bundle.write(template, "cloud/kaggle/kernel_template.py.txt")
+    control.write(tmp_path / "bundle.json", {"runtime_sha": sha(archive), "source_sha": "source", "path": ".",
                                             "template_sha": sha(template)})
     state = control.registry()
     control.plan(wrapper, state)
@@ -375,4 +399,80 @@ def test_job_assignments_are_immutable(tmp_path, monkeypatch):
     args.assign = ["j03=account_03"]
     with pytest.raises(ValueError, match="Immutable plan"):
         control.plan(args, state)
+
+
+def test_followups_pin_harvested_runtime_even_after_repackaging(tmp_path, monkeypatch):
+    monkeypatch.setattr(control, "WORK", tmp_path)
+    monkeypatch.setattr(control, "ROOT", tmp_path)
+    planned = {"campaign": "stage5", "runtime_sha": "old-runtime", "runtime_path": "old-package",
+               "source_sha": "source", "template_sha": "old-template", **control.RECIPE["preflight"]}
+    execution = {"campaign": "stage5", "workers": 1, "device": "cpu"}
+    anchor = {"status": "HARVESTED_VERIFIED", "planned": planned, "execution": execution,
+              "state_sha": "parent-digest", "gates": {"G2": "PASS"}}
+    state = {"jobs": {"anchor": anchor}, "uploads": {}}
+    args = SimpleNamespace(campaign="stage5", round="capacity", account="account_01", parent=None,
+                           capacity_after="anchor", assign=["j03=account_02", "j04=account_03"])
+    control.write(tmp_path / "bundle.json", {"runtime_sha": "new-runtime"})
+    control.plan(args, state)
+    jobs = control.read(tmp_path / "plan-stage5-capacity.json")["jobs"]
+    assert set(jobs) == {"j02", "j03", "j04"}
+    assert {job["runtime_sha"] for job in jobs.values()} == {"old-runtime"}
+    assert jobs["j03"]["account"] != jobs["j04"]["account"]
+    args.round, args.parent, args.capacity_after, args.assign = "resume", "anchor", None, []
+    control.plan(args, state)
+    job = control.read(tmp_path / "plan-stage5-resume.json")["jobs"]["j07"]
+    assert job["runtime_sha"] == "old-runtime"
+    assert job["parent_sha"] == "parent-digest"
+
+
+def test_download_output_sends_explicit_version_and_filename(tmp_path, monkeypatch):
+    def fetch(request):
+        assert (request.owner_slug, request.kernel_slug) == ("example", "preflight")
+        assert (request.version_number, request.file_path) == (3, "preflight.zip")
+        return nullcontext(SimpleNamespace(url="https://example.org/preflight.zip",
+                                           iter_content=lambda chunk_size: [b"archived output"]))
+    api = SimpleNamespace(build_kaggle_client=lambda: nullcontext(
+        SimpleNamespace(kernels=SimpleNamespace(kernels_api_client=SimpleNamespace(download_kernel_output=fetch)))))
+    monkeypatch.setitem(sys.modules, "kaggle", SimpleNamespace(api=api))
+    monkeypatch.setitem(sys.modules, "kagglesdk.kernels.types.kernels_api_service",
+                        SimpleNamespace(ApiDownloadKernelOutputRequest=SimpleNamespace))
+    target = tmp_path / "preflight.zip"
+    assert kernel_version.download("example/preflight", "3", target) == 0
+    assert target.read_bytes() == b"archived output"
+
+
+@pytest.mark.parametrize("previous, permitted", [("RUNNING", False), ("CAPACITY_REJECTED", False), ("HARVESTED_VERIFIED", True)])
+def test_followup_server_admission_respects_account_and_receipt(tmp_path, monkeypatch, previous, permitted):
+    monkeypatch.setattr(control, "WORK", tmp_path)
+    monkeypatch.setattr(control, "ROOT", tmp_path)
+    template = Path(control.__file__).with_name("kernel_template.py.txt")
+    runtime = tmp_path / "runtime.zip"
+    with zipfile.ZipFile(runtime, "x") as bundle:
+        bundle.write(template, "cloud/kaggle/kernel_template.py.txt")
+    job = {"job": "test-cpu2", "campaign": "stage5", "role": "cpu2", "account": "account_01",
+           "runtime_path": ".", "runtime_sha": sha(runtime), "template_sha": sha(template),
+           "max_seconds": control.RECIPE["preflight"]["max_seconds"], "device": "cpu"}
+    entry = {"status": "PLANNED", "planned": job}
+    state = {"jobs": {"test-cpu2": entry,
+                      "previous": {"planned": {**job, "role": "cpu1"}, "status": previous,
+                                   "server_admission": {"capacity": "UNKNOWN"}, "owner": "example"}}, "uploads": {}}
+    monkeypatch.setattr(control, "planned_job", lambda *_: (job, entry))
+    monkeypatch.setattr(control, "require_gate", lambda *_: None)
+    monkeypatch.setattr(control, "account_for", lambda _: ("account_01", {
+        "owner": "example", "observed_at": control.now()["utc"], "concurrency_observed": None,
+    }))
+    monkeypatch.setattr(control, "inputs_for", lambda *_: {"runtime_ref": "example/runtime", "source_ref": "example/source"})
+    monkeypatch.setattr(control, "probe_inventory", lambda *_: {})
+    submissions = []
+    monkeypatch.setattr(control, "cli", lambda *args, **kw: (submissions.append(args) or -1, ""))
+    args = SimpleNamespace(job="j03", server_admission=True)
+    if not permitted:
+        with pytest.raises(RuntimeError, match="prior follow-up admission"):
+            control.launch(args, state)
+        assert not submissions
+    else:
+        control.launch(args, state)
+        control.launch(args, state)
+        assert len(submissions) == 1
+        assert entry["status"] == "SUBMIT_UNKNOWN"
 

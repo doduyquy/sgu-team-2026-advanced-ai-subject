@@ -50,7 +50,9 @@ Nếu chưa rõ còn bao nhiêu phiên CPU, thêm `--admission-probe` vào lện
 
 Nếu job lỗi, `control logs --job <job>` lấy log của version đã xác nhận và lưu nhóm lỗi kỹ thuật. J02–J04 và J07 yêu cầu artifact J01 xác minh G2 cùng campaign và runtime. Kế hoạch mới hỗ trợ `--assign j03=account_02 --assign j04=account_03` cho các slot có phiên còn trống đã xác minh. Dataset được chuẩn bị private theo account được giao; không dùng public sharing để chuyển artifact.
 
-Trong lần đầu, Kaggle có thể trả trạng thái dataset đang được tạo. Chạy lại lệnh launch khi dataset version 1 đã sẵn sàng. Khi registry ghi `SUBMIT_UNKNOWN`, đối chiếu notebook slug/version trên Kaggle trước khi làm gì thêm. Khi Kaggle chấp nhận kernel, máy local có thể tắt. Registry ghi `ref`, version, thời điểm UTC/ICT và trạng thái. Output chỉ được đánh dấu `HARVESTED_VERIFIED` khi đúng attempt, đúng checksum và job có cập nhật SAC. [Kaggle kernel commands](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels.md)
+Sau G2, tạo plan chỉ gồm J02–J04 bằng `plan --capacity-after <verified-j01-id>`. Launcher dùng runtime và budget đã ghi trong receipt. Khi API chưa cho biết số phiên còn lại, `launch --server-admission` cho phép một preflight phụ thuộc được Kaggle xét tiếp nhận trên tài khoản sau khi kiểm tra các lượt chạy gần đây. Launcher chặn gửi khi còn job active, receipt chưa rõ hoặc có lỗi capacity. Dùng tài khoản của chính người vận hành theo [điều khoản Kaggle](https://www.kaggle.com/terms).
+
+Trong lần đầu, Kaggle có thể trả trạng thái dataset đang được tạo. Chạy lại lệnh launch khi dataset version 1 đã sẵn sàng. Khi registry ghi `SUBMIT_UNKNOWN`, đối chiếu notebook slug/version trên Kaggle trước khi làm gì thêm. Khi Kaggle chấp nhận kernel, máy local có thể tắt. Registry ghi `ref`, version, thời điểm UTC/ICT và trạng thái. Output chỉ được đánh dấu `HARVESTED_VERIFIED` khi đúng attempt, đúng checksum và checkpoint xác nhận số SAC updates. [Kaggle kernel commands](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels.md)
 
 ## Resume trong Kaggle session mới
 
