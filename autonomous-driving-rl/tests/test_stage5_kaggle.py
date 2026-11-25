@@ -25,6 +25,7 @@ from cloud.kaggle.credentials import dpapi
 from cloud.kaggle.pilot import compare, easy_coverage, screen_candidates
 from cloud.kaggle import learning_hooks
 from cloud.kaggle.guided import GuidedSAC, NOISE_STD, progress_band
+from cloud.kaggle import guided
 from cloud.kaggle.replay import admit, check_snapshot, validate
 from cloud.kaggle.runtime import check_state, load_policy, model_for, pool, restore_rng, save_state, schedule
 
@@ -61,6 +62,15 @@ def test_guided_behavior_uses_deterministic_actor_and_valid_box2(monkeypatch):
     np.testing.assert_array_equal(executed, [[1, -1]])
     np.testing.assert_array_equal(stored, executed)
     assert [progress_band(x) for x in (0.0, 0.25, 0.75, 1.0)] == ["early", "middle", "late", "late"]
+
+
+def test_guided_notebook_command_passes_training_flags_once(monkeypatch):
+    calls = []
+    monkeypatch.setattr(guided, "train", calls.append)
+    args = ["--guided-prefill", "dataset", "--transitions", "5000", "--measure-optimizer"]
+    guided.main(["train", *args])
+    guided.main(args)
+    assert calls == [args, args]
 
 
 def test_operator_cannot_open_another_slot(monkeypatch):

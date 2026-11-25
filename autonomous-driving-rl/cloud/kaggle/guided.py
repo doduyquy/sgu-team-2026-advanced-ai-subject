@@ -112,6 +112,12 @@ def train(args):
         runtime.TimedSAC, runtime.model_for, runtime.Telemetry, runtime.save_state = base_sac, model_for, telemetry, save
 
 
-if __name__ == "__main__":
+def main(argv=None):
     import sys
-    train(sys.argv[1:])
+
+    args = sys.argv[1:] if argv is None else argv
+    train(args[1:] if args[:1] == ["train"] else args)
+
+
+if __name__ == "__main__":
+    main()
