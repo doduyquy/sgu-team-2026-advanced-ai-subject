@@ -91,6 +91,41 @@ def test_replay_requires_matching_authorized_snapshot_and_rejects_staleness(tmp_
     assert validate(tmp_path, chunk_sha, identity, {"100:0": chunk_sha}, 9, (snapshot_sha, 2)) == (None, "100:0")
 
 
+def test_publish_b1_snapshot_requires_matching_runtime_inventory(tmp_path, monkeypatch):
+    monkeypatch.setattr(control, "WORK", tmp_path)
+    monkeypatch.setattr(control, "ROOT", tmp_path)
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    with zipfile.ZipFile(snapshot / "policy.zip", "x") as inner:
+        inner.writestr("data", "{}")
+    policy_sha = sha(snapshot / "policy.zip")
+    monkeypatch.setattr(control, "SOURCE_SHA", policy_sha)
+    files = {"cloud/kaggle/runtime.py": "runtime-digest"}
+    identity = {"phase": "smoke", "warm_source": policy_sha, "workers": 2, "recipe": control.RECIPE, "files": files}
+    meta = {"schema": 1, "lineage": control.RECIPE["lineage"], "policy_version": 0,
+            "policy_sha": policy_sha, "identity": identity}
+    write(snapshot / "SNAPSHOT.json", meta)
+    runtime = tmp_path / "runtime.zip"
+    with zipfile.ZipFile(runtime, "x") as carrier:
+        carrier.writestr("source_inventory.json", json.dumps({"files": files}))
+    write(tmp_path / "bundle.json", {"path": ".", "runtime_sha": sha(runtime)})
+    monkeypatch.setattr(control, "account_for", lambda _: ("account_01", {"owner": "example"}))
+    def upload(state, alias, owner, label, name, path, digest):
+        control.audit_zip(path, label)
+        assert label == "snapshot" and name == "snapshot.zip" and digest == sha(path)
+        return "example/snapshot"
+    monkeypatch.setattr(control, "upload", upload)
+    args = SimpleNamespace(snapshot=snapshot, snapshot_sha=sha(snapshot / "SNAPSHOT.json"))
+    control.publish_initial_snapshot(args, {})
+    receipt = control.read(tmp_path / "b1" / args.snapshot_sha / "receipt.json")
+    assert receipt["learner_workers"] == 2 and receipt["policy_version"] == 0
+    identity["files"] = {"cloud/kaggle/runtime.py": "different"}
+    write(snapshot / "SNAPSHOT.json", meta)
+    args.snapshot_sha = sha(snapshot / "SNAPSHOT.json")
+    with pytest.raises(ValueError, match="recipe differs"):
+        control.publish_initial_snapshot(args, {})
+
+
 def test_easy_pilot_compares_two_distinct_checkpoints_on_exact_panel():
     def evaluation(model, successes):
         rows = [{"geometry": str(i // 2), "family": "SCS", "seed": i % 2, "censored": False,

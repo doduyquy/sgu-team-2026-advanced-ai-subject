@@ -60,6 +60,10 @@ Trong lần đầu, Kaggle có thể trả trạng thái dataset đang được 
 
 `runtime train` hỗ trợ phase, ngân sách thời gian và checkpoint qua `--checkpoint-every` cùng `--checkpoint-dir`. `cloud.kaggle.checkpoint export` chia state thành các phần tối đa 64 MiB, với checksum riêng cho từng phần. `runtime train --resume-package <thư-mục> --resume-index-sha <sha>` kiểm tra rồi dựng lại toàn bộ state trước khi nạp. Pilot ngắn dùng ZIP cho checkpoint cuối. Phiên dài cần xác minh đường vận chuyển và resume cloud với artifact lớn.
 
+## Snapshot B1
+
+`control publish-b1-snapshot --snapshot <thư-mục> --snapshot-sha <sha>` đối chiếu policy nguồn, lineage, version và recipe với bundle đã đóng gói. Lệnh tạo private dataset version 1 và tải lại `snapshot.bin` để kiểm SHA-256. Learner kiểm snapshot được cấp qua `replay import --snapshot <thư-mục> --snapshot-sha <sha>` và tính tuổi policy từ checkpoint learner đã xác minh.
+
 ## Resume trong Kaggle session mới
 
 Sau khi harvest được online state, giữ nguyên bundle và tạo round tiếp theo cho J07:

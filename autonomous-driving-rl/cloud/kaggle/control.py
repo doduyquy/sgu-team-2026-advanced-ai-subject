@@ -145,11 +145,13 @@ def audit_zip(path, label):
                 raise ValueError("Runtime upload member allowlist mismatch")
         if label == "parent" and set(names) != STATE_FILES:
             raise ValueError("Parent upload member allowlist mismatch")
+        if label == "snapshot" and set(names) != {"policy.zip", "SNAPSHOT.json"}:
+            raise ValueError("B1 snapshot upload member allowlist mismatch")
         for name in names:
             data = bundle.read(name)
             if SECRET.search(data):
                 raise ValueError("Secret-pattern audit failed inside upload archive")
-            if label == "parent" and name == "model.zip":
+            if (label, name) in {("parent", "model.zip"), ("snapshot", "policy.zip")}:
                 from io import BytesIO
                 with zipfile.ZipFile(BytesIO(data)) as model:
                     if sum(x.file_size for x in model.infolist()) > 32_000_000:
@@ -361,6 +363,45 @@ def dataset_status_response(code, output):
         if isinstance(result, dict) and set(result) == {"status", "current_version_number"}:
             return result
     return {}
+
+
+def publish_initial_snapshot(args, state):
+    snapshot = args.snapshot.resolve(strict=True)
+    if not snapshot.is_relative_to(WORK.resolve()):
+        raise ValueError("B1 snapshot must be stored in the campaign workspace")
+    marker = snapshot / "SNAPSHOT.json"
+    verify(marker, args.snapshot_sha)
+    meta = read(marker)
+    identity = meta["identity"]
+    if (meta["schema"], meta["lineage"], meta["policy_version"], meta["policy_sha"], identity["phase"],
+            identity["warm_source"]) != (1, RECIPE["lineage"], 0, SOURCE_SHA, "smoke", SOURCE_SHA):
+        raise ValueError("Expected the registered initial B1 policy, lineage and smoke recipe")
+    verify(snapshot / "policy.zip", SOURCE_SHA)
+    runtime = read(WORK / "bundle.json")
+    bundle = ROOT / runtime["path"] / "runtime.zip"
+    verify(bundle, runtime["runtime_sha"])
+    with zipfile.ZipFile(bundle) as payload:
+        runtime_files = json.loads(payload.read("source_inventory.json"))["files"]
+    if identity["recipe"] != RECIPE or not identity["files"] or any(
+        runtime_files.get(name) != digest for name, digest in identity["files"].items()
+    ):
+        raise ValueError("Snapshot learner recipe differs from the packaged runtime")
+    target = WORK / "b1" / args.snapshot_sha
+    target.mkdir(parents=True, exist_ok=True)
+    parcel = target / "snapshot.zip"
+    contents = {name: (snapshot / name).read_bytes() for name in ("policy.zip", "SNAPSHOT.json")}
+    if not parcel.exists():
+        archive(parcel, contents)
+    with zipfile.ZipFile(parcel) as stored:
+        if set(stored.namelist()) != set(contents) or any(stored.read(name) != data for name, data in contents.items()):
+            raise ValueError("Existing B1 snapshot archive differs from verified source")
+    alias, creds = account_for({"account": operator_slot()})
+    digest = sha(parcel)
+    ref = upload(state, alias, creds["owner"], "snapshot", "snapshot.zip", parcel, digest)
+    receipt = {"dataset": ref, "version": 1, "snapshot_sha256": args.snapshot_sha, "archive_sha256": digest,
+               "policy_version": 0, "learner_workers": identity["workers"], "runtime_sha": runtime["runtime_sha"]}
+    write(target / "receipt.json", receipt)
+    print(receipt)
 
 def planned_job(args, state):
     path = WORK / f"plan-{args.campaign}-{args.round}.json"
@@ -914,6 +955,9 @@ def main():
     periodic = commands.add_parser("harvest-periodic")
     periodic.add_argument("--job", required=True)
     periodic.add_argument("--step", required=True, type=int)
+    snapshot = commands.add_parser("publish-b1-snapshot")
+    snapshot.add_argument("--snapshot", required=True, type=Path)
+    snapshot.add_argument("--snapshot-sha", required=True)
     prepare = commands.add_parser("prepare-inputs")
     prepare.add_argument("--campaign", required=True)
     prepare.add_argument("--round", required=True)
@@ -958,6 +1002,8 @@ def main():
                 harvest(state, args.job)
             elif args.command == "harvest-periodic":
                 harvest_periodic(state, args.job, args.step)
+            elif args.command == "publish-b1-snapshot":
+                publish_initial_snapshot(args, state)
             elif args.command == "logs":
                 diagnose(state, args.job)
             elif args.command == "analyze":
