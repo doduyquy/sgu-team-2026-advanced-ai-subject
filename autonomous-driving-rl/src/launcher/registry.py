@@ -348,7 +348,7 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             implementation_ref=f"{MPPIAgent.__module__}:{MPPIAgent.__qualname__}",
             input_profile_id="STATE_DECISION_V1", action_adapter_id="continuous_box2_v1",
             inference_stochasticity="stochastic", stateful_within_episode=True,
-            benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True,
+            benchmark_eligible=True, sandbox_eligible=True, audit_eligible=True,
             requires_checkpoint=False,
             description="Continuous MPPI with kinematic bicycle rollouts, moving actors and public LiDAR.",
         ),
