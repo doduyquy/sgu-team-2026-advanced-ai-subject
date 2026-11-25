@@ -88,6 +88,13 @@ def private_input(alias, ref):
     code, result = token_command(slot_token(alias), command, 25)
     return code == 0 and result.splitlines()[-1:] == ["PRIVATE_VERSION_1"]
 
+def current_private_kernel_version(alias, ref):
+    command = [sys.executable, "-B", "-m", "cloud.kaggle.kernel_version", ref]
+    code, result = token_command(slot_token(alias), command, 25)
+    lines = result.splitlines()
+    match = re.fullmatch(r"PRIVATE_KERNEL_VERSION ([1-9]\d*)", lines[-1]) if code == 0 and lines else None
+    return int(match[1]) if match else None
+
 def authenticated_owner(code, output):
     users = re.findall(r"^\s*-?\s*username\s*:\s*([a-z0-9_-]+)\s*$", output, re.I | re.M)
     token_auth = re.search(r"^\s*-?\s*auth_method\s*:\s*ACCESS_TOKEN\s*$", output, re.M)

@@ -1,5 +1,6 @@
 """Local correctness regressions for the Stage 5 Kaggle campaign."""
 import ast
+import json
 from pathlib import Path
 from types import SimpleNamespace
 import zipfile
@@ -166,7 +167,7 @@ def test_admission_and_timeout_receipts_prevent_duplicate_submit(
         state["jobs"]["old"] = {"status": prior, "owner": "example", "admission_probe": {"capacity": "UNKNOWN"},
                                 "planned": {**plan["jobs"]["j01"], "role": "cpu1"}}
     if expected == "PLANNED":
-        with pytest.raises(RuntimeError, match="concurrency|Admission probe|active receipt"):
+        with pytest.raises(RuntimeError, match="concurrency|[Aa]dmission probe|active receipt"):
             control.launch(wrapper, state)
         assert not pushes
         assert state["jobs"][job_id]["status"] == expected
@@ -179,6 +180,50 @@ def test_admission_and_timeout_receipts_prevent_duplicate_submit(
     assert ("admission_probe" in job) is admission_probe
     script = tmp_path / "kernels" / job_id / "run.py"
     compile(script.read_text(encoding="utf-8"), str(script), "exec")
+
+
+@pytest.mark.parametrize("variant, error", [
+    ("fixed", None), ("same_runtime", "new runtime fingerprint"),
+    ("unrelated", "change for the diagnosed failure"), ("undiagnosed", "diagnosed"),
+    ("running", "terminal FAILED"), ("different_remote_version", "confirm the failed notebook version"),
+    ("unknown", "confirmed failed version"), ("capacity_rejected", "confirmed failed version"),
+    ("later_rejection", "latest admission probe"),
+])
+def test_probe_retry_requires_new_repaired_runtime_and_terminal_receipt(tmp_path, monkeypatch, variant, error):
+    monkeypatch.setattr(control, "ROOT", tmp_path)
+    monkeypatch.setattr(control, "WORK", tmp_path)
+    template = "cloud/kaggle/kernel_template.py.txt"
+    lock = "cloud/kaggle/linux-lock.txt"
+
+    def runtime(dir_name, files):
+        path = tmp_path / dir_name
+        path.mkdir()
+        archive = path / "runtime.zip"
+        with zipfile.ZipFile(archive, "x") as bundle:
+            bundle.writestr("source_inventory.json", json.dumps({"files": files}))
+        return {"campaign": "stage5", "account": "account_01", "runtime_path": dir_name, "runtime_sha": sha(archive)}
+
+    old = runtime("old", {template: "old", lock: "unchanged"})
+    new = old if variant == "same_runtime" else runtime(
+        "new", {template: "old" if variant == "unrelated" else "fixed", lock: "new"}
+    )
+    terminal = {"unknown": "SUBMIT_UNKNOWN", "capacity_rejected": "CAPACITY_REJECTED"}.get(variant, "FAILED")
+    previous = {"planned": old, "ref": "example/old", "owner": "example", "status": terminal, "version": 1,
+                "admission_probe": {"capacity": "UNKNOWN"}, "submitted": {"utc": "2026-01-01"},
+                "log_diagnostic": {"categories": [] if variant == "undiagnosed" else ["PYTHON_ABI"]}}
+    jobs = {"old": previous}
+    if variant == "later_rejection":
+        jobs["later"] = dict(previous, status="CAPACITY_REJECTED", submitted={"utc": "2026-01-02"})
+    remote_status = "RUNNING" if variant == "running" else "ERROR"
+    monkeypatch.setattr(control, "current_private_kernel_version", lambda *_: 2 if variant == "different_remote_version" else 1)
+    monkeypatch.setattr(control, "cli", lambda *a, **kw: (0, f'example/old/1 has status "KernelWorkerStatus.{remote_status}"'))
+    if error:
+        with pytest.raises(RuntimeError, match=error):
+            control.probe_retry({"jobs": jobs}, new, "old", "example")
+    else:
+        repair = control.probe_retry({"jobs": jobs}, new, "old", "example")
+        assert repair["retry_of"] == "old"
+        assert repair["changed_runtime_files"] == [template]
 
 
 def test_submit_response_requires_exact_ref_or_explicit_capacity_error():

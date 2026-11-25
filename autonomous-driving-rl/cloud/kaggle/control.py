@@ -14,7 +14,7 @@ import sys
 import zipfile
 
 from cloud.kaggle.common import METADRIVE_PIN, ROOT, SOURCE, SOURCE_SHA, WORK, fingerprint, read, sha, verify, write
-from cloud.kaggle.credentials import SLOTS, accelerator_quota, cli, private_input, slot, verify_owner
+from cloud.kaggle.credentials import SLOTS, accelerator_quota, cli, current_private_kernel_version, private_input, slot, verify_owner
 
 RECIPE = read(Path(__file__).with_name("recipe.json"))
 BUNDLE_PATHS = (
@@ -43,6 +43,13 @@ STATE_FILES = {"model.zip", "replay.pkl", "rng.pt", "metrics.json", "COMPLETE.js
 OUTPUT_FILES = STATE_FILES | {"runtime_versions.txt", "execution.json", "parity.json"}
 SECRET = re.compile(rb"(?i)(?:KGAT_[a-zA-Z0-9_-]{12,}|gh[pousr]_[a-zA-Z0-9_]{20,}|github_pat_[a-zA-Z0-9_]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|AIza[a-zA-Z0-9_-]{30,})")
 ACTIVE = {"SUBMITTING", "SUBMIT_UNKNOWN", "SUBMITTED", "QUEUED", "RUNNING", "STATUS_UNKNOWN"}
+REPAIR_FILES = {
+    "PYTHON_ABI": {"cloud/kaggle/kernel_template.py.txt"},
+    "DEPENDENCY_RESOLUTION": {"cloud/kaggle/linux-lock.txt", "cloud/kaggle/kernel_template.py.txt"},
+    "RUNTIME_IMPORT": {"cloud/kaggle/linux-lock.txt", "cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/runtime.py"},
+    "METADRIVE_ASSETS": {"cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/linux-lock.txt"},
+    "PRIVATE_INPUT": {"cloud/kaggle/kernel_template.py.txt"},
+}
 KERNEL_STATES = {"complete": "CLOUD_SUCCEEDED", "error": "FAILED", "cancelled": "CANCELLED",
                  "cancel_acknowledged": "CANCELLED", "cancel_requested": "RUNNING",
                  "new_script": "QUEUED", "running": "RUNNING", "queued": "QUEUED"}
@@ -397,6 +404,47 @@ def push_result(code, output, ref):
         return "CAPACITY_REJECTED", None
     return "SUBMIT_UNKNOWN", None
 
+def probe_retry(state, job, retry_of, owner):
+    prior = {key: row for key, row in state["jobs"].items()
+             if row.get("admission_probe") and row["planned"]["campaign"] == job["campaign"]}
+    if not prior and retry_of is None:
+        return {}
+    if retry_of not in prior:
+        raise RuntimeError("A prior admission probe requires an explicit retry of its failed attempt")
+    latest = max(prior, key=lambda key: prior[key].get("submitted", {}).get("utc", ""))
+    previous = prior[retry_of]
+    if retry_of != latest or previous["status"] != "FAILED" or not previous.get("version"):
+        raise RuntimeError("Retry requires the latest admission probe to have a confirmed failed version")
+    if previous.get("owner") != owner or previous["planned"]["account"] != job["account"]:
+        raise RuntimeError("Admission retry must use the account of the failed attempt")
+    if job["runtime_sha"] in {row["planned"]["runtime_sha"] for row in prior.values()}:
+        raise RuntimeError("Admission retry requires a new runtime fingerprint")
+    categories = previous.get("log_diagnostic", {}).get("categories", [])
+    repair_files = set().union(*(REPAIR_FILES.get(category, set()) for category in categories))
+    if not repair_files or any(category not in REPAIR_FILES for category in categories):
+        raise RuntimeError("Admission retry requires a diagnosed and repaired runtime failure")
+    inventories = []
+    for attempt in (previous["planned"], job):
+        path = (ROOT / attempt["runtime_path"] / "runtime.zip").resolve()
+        if not path.is_relative_to(WORK.resolve()):
+            raise ValueError("Plan runtime path is outside campaign workspace")
+        verify(path, attempt["runtime_sha"])
+        with zipfile.ZipFile(path) as bundle:
+            inventories.append(json.loads(bundle.read("source_inventory.json"))["files"])
+    old, new = inventories
+    changed = sorted(name for name in repair_files if name in old and name in new and old[name] != new[name])
+    if not changed or any(not REPAIR_FILES[category].intersection(changed) for category in categories):
+        raise RuntimeError("Runtime fingerprint does not contain a change for the diagnosed failure")
+    alias = job["account"]
+    ref = previous["ref"]
+    if current_private_kernel_version(alias, ref) != previous["version"]:
+        raise RuntimeError("Kaggle could not confirm the failed notebook version")
+    code, output = cli(alias, ["kernels", "status", f"{ref}/{previous['version']}"], timeout=25, include_stderr=True)
+    if kernel_state(code, output) != "FAILED":
+        raise RuntimeError("Kaggle no longer confirms the previous attempt as terminal FAILED")
+    return {"retry_of": retry_of, "previous_version": previous["version"], "previous_terminal_at": now(),
+            "failure_categories": categories, "changed_runtime_files": changed}
+
 def launch(args, state):
     job, entry = planned_job(args, state)
     if entry["status"] != "PLANNED":
@@ -419,13 +467,17 @@ def launch(args, state):
     sessions = creds["concurrency_observed"] if 0 <= age.total_seconds() <= 86400 else None
     active = [x for x in state["jobs"].values() if x.get("owner") == owner and x["status"] in ACTIVE]
     admission_probe = getattr(args, "admission_probe", False)
+    retry_of = getattr(args, "retry_of", None)
+    if retry_of and not admission_probe:
+        raise ValueError("--retry-of requires --admission-probe")
+    repair = {}
     if admission_probe:
         if (sessions is not None or args.job != "j01" or job["role"] != "parity" or job["device"] != "cpu"
                 or job["workers"] != 1 or job.get("parent_job") or job["max_seconds"] != RECIPE["preflight"]["max_seconds"]):
             raise RuntimeError("Admission probe requires unknown capacity and the planned J01 CPU preflight")
-        if active or any(x.get("admission_probe") and x["planned"]["campaign"] == job["campaign"]
-                         for x in state["jobs"].values()):
-            raise RuntimeError("An active receipt or prior admission probe blocks this submission")
+        if active:
+            raise RuntimeError("An active receipt blocks this submission")
+        repair = probe_retry(state, job, retry_of, owner)
     elif sessions is None:
         raise RuntimeError("Fresh owner observation of available concurrency is required")
     elif len(active) >= sessions:
@@ -482,7 +534,7 @@ def launch(args, state):
         raise ValueError("Kernel upload staging failed the allowlist or secret audit")
     push = ["kernels", "push", "-p", str(staging), "-t", str(job["max_seconds"])]
     if admission_probe:
-        entry["admission_probe"] = {"capacity": "UNKNOWN", **probe_inventory(alias, owner, ref)}
+        entry["admission_probe"] = {"capacity": "UNKNOWN", **repair, **probe_inventory(alias, owner, ref)}
     entry.update(status="SUBMITTING", owner=owner, ref=ref, execution=actual_job, submitted=now())
     persist(state)
     try:
@@ -678,6 +730,7 @@ def main():
             item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07"), required=True)
             item.add_argument("--fingerprint", required=True)
             item.add_argument("--admission-probe", action="store_true")
+            item.add_argument("--retry-of", metavar="FAILED_JOB_ID")
     for name in ("status", "harvest", "analyze", "logs"):
         commands.add_parser(name).add_argument("--job", required=True)
     prepare = commands.add_parser("prepare-inputs")

@@ -44,7 +44,9 @@ python -B -m cloud.kaggle.control harvest --job $job
 python -B -m cloud.kaggle.control analyze --job $job
 ```
 
-Nếu chưa rõ còn bao nhiêu phiên CPU, thêm `--admission-probe` vào lệnh `launch` của J01. Launcher tra danh sách notebook và kiểm tra các lượt chạy gần đây qua API. Kaggle quyết định tiếp nhận vì API chỉ công bố quota GPU/TPU. Probe áp dụng một lần trong campaign cho J01 CPU và yêu cầu registry của tài khoản đã được đối chiếu. Quan sát còn 0 phiên vẫn chặn submit. `CAPACITY_REJECTED` ghi nhận phản hồi từ Kaggle, còn `SUBMIT_UNKNOWN` cần đối chiếu notebook và version trước khi tiếp tục. [Kaggle Kernels CLI](https://github.com/Kaggle/kaggle-cli/blob/main/skills/references/kernels.md)
+Nếu chưa rõ còn bao nhiêu phiên CPU, thêm `--admission-probe` vào lệnh `launch` của J01. Launcher tra danh sách notebook và kiểm tra các lượt chạy gần đây qua API. Kaggle quyết định tiếp nhận vì API chỉ công bố quota GPU/TPU. Launcher gửi tối đa một lần cho mỗi attempt. Quan sát còn 0 phiên vẫn chặn submit. [Kaggle Kernels CLI](https://github.com/Kaggle/kaggle-cli/blob/main/skills/references/kernels.md)
+
+Để thử lại sau lỗi runtime, tạo round mới với bundle đã sửa và chạy `launch --admission-probe --retry-of <failed-job-id>`. Launcher kiểm tra attempt trước là probe gần nhất, cùng tài khoản, đã được API xác nhận đúng version private ở trạng thái `FAILED`, và registry đã ghi chẩn đoán qua lệnh `logs`. Bundle phải có fingerprint mới và có thay đổi tệp liên quan đến nguyên nhân đã chẩn đoán. `CAPACITY_REJECTED`, `SUBMIT_UNKNOWN` và các job active đều chặn lượt thử lại theo cơ chế này.
 
 Nếu job lỗi, `control logs --job <job>` lấy log của version đã xác nhận và lưu nhóm lỗi kỹ thuật. J02–J04 và J07 yêu cầu artifact J01 xác minh G2 cùng campaign và runtime. Kế hoạch mới hỗ trợ `--assign j03=account_02 --assign j04=account_03` cho các slot có phiên còn trống đã xác minh. Dataset được chuẩn bị private theo account được giao; không dùng public sharing để chuyển artifact.
 
