@@ -16,13 +16,15 @@ from tempfile import mkdtemp
 import zipfile
 
 from cloud.kaggle.common import METADRIVE_PIN, ROOT, SOURCE, SOURCE_SHA, WORK, fingerprint, read, sha, verify, write
+from cloud.kaggle.checkpoint import restore_checkpoint
 from cloud.kaggle.credentials import (
-    SLOTS, accelerator_quota, cli, current_private_kernel_version, download_kernel_output, private_input, slot, verify_owner,
+    SLOTS, accelerator_quota, cli, current_private_kernel_version, download_kernel_output, operator_slot,
+    private_input, slot, verify_owner,
 )
 
 RECIPE = read(Path(__file__).with_name("recipe.json"))
 BUNDLE_PATHS = (
-    "cloud/kaggle/common.py", "cloud/kaggle/runtime.py", "cloud/kaggle/replay.py",
+    "cloud/kaggle/common.py", "cloud/kaggle/runtime.py", "cloud/kaggle/replay.py", "cloud/kaggle/checkpoint.py",
     "cloud/kaggle/recipe.json", "cloud/kaggle/linux-lock.txt", "cloud/kaggle/kernel_template.py.txt",
     "configs/experiments/stage5_native_reward_integration_v1.json",
     "results/audits/evaluation_protocol/geometry_split_manifest.csv",
@@ -136,8 +138,11 @@ def audit_zip(path, label):
         names = bundle.namelist()
         if len(set(names)) != len(names) or sum(x.file_size for x in bundle.infolist()) > 120_000_000:
             raise ValueError("Unexpected upload archive size or duplicate members")
-        if label == "runtime" and set(names) != set(BUNDLE_PATHS) | {"parity.json", "source_inventory.json"}:
-            raise ValueError("Runtime upload member allowlist mismatch")
+        if label == "runtime":
+            current = set(BUNDLE_PATHS) | {"parity.json", "source_inventory.json"}
+            previous = current - {"cloud/kaggle/checkpoint.py"}
+            if set(names) not in (current, previous):
+                raise ValueError("Runtime upload member allowlist mismatch")
         if label == "parent" and set(names) != STATE_FILES:
             raise ValueError("Parent upload member allowlist mismatch")
         for name in names:
@@ -208,6 +213,10 @@ def plan(args, state):
                "parent_sha": anchor["state_sha"], **budget}
         jobs = {"j07": job}
         deferred.pop("j07")
+    save_plan(plan_id, jobs, deferred, state)
+
+
+def save_plan(plan_id, jobs, deferred, state):
     body = {"jobs": jobs, "deferred": deferred}
     digest = fingerprint(body)
     path = WORK / f"plan-{plan_id}.json"
@@ -219,6 +228,52 @@ def plan(args, state):
         state["jobs"].setdefault(job["job"], {"status": "PLANNED", "planned": job, "at": now()})
     persist(state)
     print(f"{path.relative_to(ROOT)} SHA={digest}")
+
+
+def plan_pilot(args, state):
+    for value in (args.campaign, args.round, args.capacity_round):
+        identity_part(value)
+    evidence = read(WORK / f"{args.capacity_round}-capacity-report.json")
+    if evidence["G4"] != "PASS" or set(evidence["samples"]) != {"j02", "j03", "j04"}:
+        raise RuntimeError("Easy pilot requires verified CPU1, CPU2 and GPU2 capacity samples")
+    samples = evidence["samples"]
+    for row in samples.values():
+        receipt = state["jobs"][row["job"]]
+        if receipt["status"] != "HARVESTED_VERIFIED" or receipt["output_version"] != row["version"]:
+            raise RuntimeError("Capacity sample does not match its current harvested receipt")
+    cpu = max((samples["j02"], samples["j03"]), key=lambda row: (
+        row["end_to_end_transitions_per_second"], row["post_warmup_transitions_per_second"]
+    ))
+    gpu = samples["j04"]
+    selected = gpu if (gpu["end_to_end_transitions_per_second"] > cpu["end_to_end_transitions_per_second"]
+                       and gpu["post_warmup_transitions_per_second"] > cpu["post_warmup_transitions_per_second"]) else cpu
+    validated = state["jobs"][selected["job"]]["planned"]
+    bundle = read(WORK / "bundle.json")
+    allowed_changes = {"cloud/kaggle/runtime.py", "cloud/kaggle/kernel_template.py.txt",
+                       "cloud/kaggle/checkpoint.py", "cloud/kaggle/replay.py"}
+    inventories = []
+    for path, digest in ((validated["runtime_path"], validated["runtime_sha"]), (bundle["path"], bundle["runtime_sha"])):
+        source = (ROOT / path / "runtime.zip").resolve()
+        if not source.is_relative_to(WORK.resolve()):
+            raise ValueError("Pilot bundle path escapes campaign workspace")
+        verify(source, digest)
+        with zipfile.ZipFile(source) as archive:
+            inventories.append(json.loads(archive.read("source_inventory.json"))["files"])
+    before, after = inventories
+    if ("cloud/kaggle/checkpoint.py" not in after or bundle["source_sha"] != validated["source_sha"]
+            or {k: v for k, v in before.items() if k not in allowed_changes}
+            != {k: v for k, v in after.items() if k not in allowed_changes}):
+        raise RuntimeError("Pilot bundle must match the verified physics, dependencies and parity anchors")
+    job = {"job": "s5-" + fingerprint([args.campaign, args.round])[:12] + "-j08-a1",
+           "campaign": args.campaign, "round": args.round, "attempt": 1, "role": "easy_pilot",
+           "account": args.account, "workers": validated["workers"], "device": validated["device"],
+           "runtime_sha": bundle["runtime_sha"], "source_sha": bundle["source_sha"], "runtime_path": bundle["path"],
+           "template_sha": bundle["template_sha"], "validated_runtime_sha": validated["runtime_sha"],
+           "capacity_sample_job": selected["job"], "phase": "easy", "checkpoint_every": 4096,
+           **{key: validated[key] for key in RECIPE["preflight"]}}
+    job["transitions"] = 8192
+    require_gate(state, job)
+    save_plan(f"{args.campaign}-{args.round}", {"j08": job}, {}, state)
 
 def upload(state, alias, owner, label, name, source, digest):
     verify(source, digest)
@@ -331,10 +386,17 @@ def account_for(job):
 def require_gate(state, job):
     if job["role"] == "parity":
         return
+    validated_runtime = job.get("validated_runtime_sha", job["runtime_sha"])
     if not any(entry["status"] == "HARVESTED_VERIFIED" and entry.get("gates", {}).get("G2") == "PASS"
                and entry["execution"]["campaign"] == job["campaign"]
-               and entry["execution"]["runtime_sha"] == job["runtime_sha"] for entry in state["jobs"].values()):
+               and entry["execution"]["runtime_sha"] == validated_runtime for entry in state["jobs"].values()):
         raise RuntimeError("G2 requires a verified J01 cloud artifact for this campaign and runtime")
+    if job["role"] == "easy_pilot" and not any(
+        entry["status"] == "HARVESTED_VERIFIED" and entry.get("gates", {}).get("G3") == "PASS"
+        and entry["execution"]["campaign"] == job["campaign"]
+        and entry["execution"]["runtime_sha"] == validated_runtime for entry in state["jobs"].values()
+    ):
+        raise RuntimeError("Easy pilot requires verified cloud resume")
     if job.get("parent_job"):
         parent = state["jobs"].get(job["parent_job"])
         if not parent or parent["status"] != "HARVESTED_VERIFIED" or parent.get("state_sha") != job["parent_sha"]:
@@ -500,7 +562,7 @@ def launch(args, state):
             raise RuntimeError("An active receipt blocks this submission")
         repair = probe_retry(state, job, retry_of, owner)
     elif server_admission:
-        roles = {"j02": "cpu1", "j03": "cpu2", "j04": "gpu2", "j07": "resume"}
+        roles = {"j02": "cpu1", "j03": "cpu2", "j04": "gpu2", "j07": "resume", "j08": "easy_pilot"}
         if (sessions is not None or roles.get(args.job) != job["role"]
                 or job["max_seconds"] != RECIPE["preflight"]["max_seconds"]):
             raise RuntimeError("Server admission requires unknown capacity and a gated Stage 5 follow-up preflight")
@@ -700,6 +762,57 @@ def harvest(state, job):
     persist(state)
     print(job, entry["status"], entry["state_sha"])
 
+
+def harvest_periodic(state, job, step):
+    entry = state["jobs"][job]
+    planned = entry["planned"]
+    interval = planned.get("checkpoint_every")
+    if not interval or not 0 < step < planned["transitions"] or step % interval or not entry.get("version"):
+        raise ValueError("Requested step is outside the job's periodic checkpoint schedule")
+    name = f"step-{step:012d}"
+    root = WORK / "periodic" / job
+    final = root / name
+    previous = entry.get("periodic", {}).get(str(step))
+    if previous:
+        verify(final / "COMPLETE.json", previous["state_sha"])
+        print(job, name, "HARVESTED_VERIFIED", previous["state_sha"])
+        return
+    alias, _ = account_for(planned)
+    version = entry["version"]
+    if current_private_kernel_version(alias, entry["ref"]) != version:
+        raise RuntimeError("Kaggle log version differs from the checkpoint receipt")
+    code, output = cli(alias, ["kernels", "logs", f"{entry['ref']}/{version}"], timeout=30)
+    hashes = set(re.findall(fr"Periodic checkpoint {name} index_sha256=([0-9a-f]{{64}})", output))
+    if code or len(hashes) != 1:
+        raise RuntimeError("Expected verified checkpoint index hash is unavailable in the cloud log")
+    index_sha = hashes.pop()
+    root.mkdir(parents=True, exist_ok=True)
+    staging = Path(mkdtemp(prefix=f"v{version}-", dir=root))
+    prefix = f"{job}/periodic/{name}"
+    def retrieve(filename):
+        if not download_kernel_output(alias, entry["ref"], version, staging / filename, f"{prefix}/{filename}"):
+            raise RuntimeError("Periodic checkpoint output unavailable")
+    retrieve("INDEX.json")
+    verify(staging / "INDEX.json", index_sha)
+    index = read(staging / "INDEX.json")
+    if index["schema"] != 1 or set(index["files"]) != STATE_FILES:
+        raise ValueError("Unexpected periodic checkpoint index")
+    for filename, shards in index["files"].items():
+        for ordinal in range(len(shards)):
+            retrieve(f"{filename}.{ordinal:06d}.bin")
+    restored = staging / "state"
+    state_sha = restore_checkpoint(staging, index_sha, restored)
+    manifest = read(restored / "COMPLETE.json")
+    if (manifest["job"] != job or manifest["transitions"] != step
+            or manifest["identity"]["phase"] != planned["phase"]):
+        raise ValueError("Periodic checkpoint differs from the planned milestone")
+    restored.rename(final)
+    entry.setdefault("periodic", {})[str(step)] = {
+        "state_sha": state_sha, "index_sha": index_sha, "version": version, "at": now(),
+    }
+    persist(state)
+    print(job, name, "HARVESTED_VERIFIED", state_sha)
+
 def verify_cloud_evidence(path, manifest, entry, state):
     job = entry["execution"]
     bundle = ROOT / entry["planned"]["runtime_path"] / "runtime.zip"
@@ -745,26 +858,35 @@ def verify_cloud_evidence(path, manifest, entry, state):
         return {"G3": "PASS"}
     if (manifest["transitions"], manifest["updates"]) != (metrics["transitions"], metrics["updates"]):
         raise ValueError("Cloud checkpoint counters do not match its measured work")
+    if job["role"] == "easy_pilot":
+        if manifest["identity"]["phase"] != "easy" or len(metrics["decisions_by_geometry"]) < 2:
+            raise ValueError("Easy pilot did not train on multiple geometries in the planned phase")
+        return {"pilot_training": "PASS"}
     return {"G2": "PASS"} if job["role"] == "parity" else {"capacity_sample": "PASS"}
 
 def doctor():
     exe = shutil.which("kaggle")
     print("Kaggle CLI:", "AVAILABLE" if exe else "MISSING")
-    for alias in SLOTS:
-        _, record = slot(alias)
-        if record is None:
-            print(alias, "MISSING")
-        elif not verify_owner(alias):
-            print(alias, "IDENTITY_UNVERIFIED")
-        else:
-            print(alias, "IDENTITY_VERIFIED", "accelerator_minutes", accelerator_quota(alias),
-                  "owner-observed sessions", record["concurrency_observed"])
+    alias = operator_slot()
+    _, record = slot(alias)
+    if record is None:
+        print(alias, "MISSING")
+    elif not verify_owner(alias):
+        print(alias, "IDENTITY_UNVERIFIED")
+    else:
+        print(alias, "IDENTITY_VERIFIED", "accelerator_minutes", accelerator_quota(alias),
+              "owner-observed sessions", record["concurrency_observed"])
 
 def main():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor")
     commands.add_parser("package")
+    pilot = commands.add_parser("pilot-plan")
+    pilot.add_argument("--campaign", required=True)
+    pilot.add_argument("--round", required=True)
+    pilot.add_argument("--capacity-round", required=True)
+    pilot.add_argument("--account", choices=SLOTS, default=operator_slot())
     setup = commands.add_parser("setup")
     setup.add_argument("--account", choices=SLOTS, required=True)
     setup.add_argument("--owner", required=True)
@@ -775,13 +897,13 @@ def main():
         item.add_argument("--campaign", required=True)
         item.add_argument("--round", required=True)
         if name == "plan":
-            item.add_argument("--account", choices=SLOTS, default=SLOTS[0])
+            item.add_argument("--account", choices=SLOTS, default=operator_slot())
             anchor = item.add_mutually_exclusive_group()
             anchor.add_argument("--parent")
             anchor.add_argument("--capacity-after", metavar="VERIFIED_J01_ID")
             item.add_argument("--assign", action="append", default=[], metavar="JOB=SLOT")
         else:
-            item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07"), required=True)
+            item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08"), required=True)
             item.add_argument("--fingerprint", required=True)
             admission = item.add_mutually_exclusive_group()
             admission.add_argument("--admission-probe", action="store_true")
@@ -789,13 +911,14 @@ def main():
             item.add_argument("--retry-of", metavar="FAILED_JOB_ID")
     for name in ("status", "harvest", "analyze", "logs"):
         commands.add_parser(name).add_argument("--job", required=True)
+    periodic = commands.add_parser("harvest-periodic")
+    periodic.add_argument("--job", required=True)
+    periodic.add_argument("--step", required=True, type=int)
     prepare = commands.add_parser("prepare-inputs")
     prepare.add_argument("--campaign", required=True)
     prepare.add_argument("--round", required=True)
-    prepare.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07"), required=True)
+    prepare.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08"), required=True)
     prepare.add_argument("--fingerprint", required=True)
-    import_slots = commands.add_parser("import-slots")
-    import_slots.add_argument("--file", type=Path, required=True)
     observe = commands.add_parser("observe")
     observe.add_argument("--account", choices=SLOTS, required=True)
     observe.add_argument("--available-sessions", type=int, choices=(0, 1, 2), required=True)
@@ -803,9 +926,6 @@ def main():
     if args.command == "setup":
         from cloud.kaggle.credentials import setup as enter
         enter(args.account, args.owner, args.gpu_minutes, args.concurrency)
-    elif args.command == "import-slots":
-        from cloud.kaggle.credentials import import_file
-        import_file(args.file)
     elif args.command == "observe":
         directory, record = slot(args.account)
         if not record or not verify_owner(args.account):
@@ -821,6 +941,8 @@ def main():
                 print(package())
             elif args.command == "plan":
                 plan(args, state)
+            elif args.command == "pilot-plan":
+                plan_pilot(args, state)
             elif args.command == "launch":
                 launch(args, state)
             elif args.command == "prepare-inputs":
@@ -834,6 +956,8 @@ def main():
                 status(state, args.job)
             elif args.command == "harvest":
                 harvest(state, args.job)
+            elif args.command == "harvest-periodic":
+                harvest_periodic(state, args.job, args.step)
             elif args.command == "logs":
                 diagnose(state, args.job)
             elif args.command == "analyze":

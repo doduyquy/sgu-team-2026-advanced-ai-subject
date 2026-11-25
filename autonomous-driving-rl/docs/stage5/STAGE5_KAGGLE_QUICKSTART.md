@@ -12,9 +12,9 @@ python -B -m cloud.kaggle.control setup --account account_01 --owner $owner --gp
 python -B -m cloud.kaggle.control doctor
 ```
 
-Lệnh hỏi xác nhận chủ tài khoản rồi nhận API token bằng input ẩn. Làm tương tự cho `account_02` đến `account_08` khi cần. Token bảo vệ bằng Windows DPAPI theo Windows user trong `%LOCALAPPDATA%\XeTuHanh\Kaggle\`. Số phút và concurrency được chủ tài khoản quan sát trực tiếp, có hiệu lực lập lịch trong 24 giờ. Thành viên có thể chạy launcher với tài khoản của mình. [Kaggle Terms](https://www.kaggle.com/terms) · [Kaggle API](https://www.kaggle.com/docs/api)
+Mỗi thành viên chạy launcher với tài khoản của mình trong Windows user riêng. Chọn alias thông qua `STAGE5_KAGGLE_OPERATOR_SLOT` trước khi setup và vận hành. Launcher mặc định dùng `account_01`. Windows DPAPI bảo vệ token của operator. Chia sẻ bundle hoặc artifact qua quyền private đã được cấp cho thành viên. [Kaggle Terms](https://www.kaggle.com/terms) · [Kaggle API](https://www.kaggle.com/docs/api)
 
-Với tệp local do chủ tài khoản chỉ định và có đúng 8 access token, `control import-slots --file <đường-dẫn>` xác minh từng danh tính và lưu vào DPAPI theo thứ tự xuất hiện. Slot có sẵn được giữ nguyên. `control doctor` lấy quota GPU/TPU từ API. Sau khi kiểm tra số phiên còn trống trong Kaggle Session Management, cập nhật số quan sát mà không nhập lại token:
+`control doctor` lấy quota GPU/TPU của operator từ API. Sau khi kiểm tra số phiên còn trống trong Kaggle Session Management, cập nhật số quan sát mà không nhập lại token. Quan sát có hiệu lực 24 giờ.
 
 ```powershell
 python -B -m cloud.kaggle.control observe --account account_01 --available-sessions 1
@@ -53,6 +53,12 @@ Nếu job lỗi, `control logs --job <job>` lấy log của version đã xác nh
 Sau G2, tạo plan chỉ gồm J02–J04 bằng `plan --capacity-after <verified-j01-id>`. Launcher dùng runtime và budget đã ghi trong receipt. Khi API chưa cho biết số phiên còn lại, `launch --server-admission` cho phép một preflight phụ thuộc được Kaggle xét tiếp nhận trên tài khoản sau khi kiểm tra các lượt chạy gần đây. Launcher chặn gửi khi còn job active, receipt chưa rõ hoặc có lỗi capacity. Dùng tài khoản của chính người vận hành theo [điều khoản Kaggle](https://www.kaggle.com/terms).
 
 Trong lần đầu, Kaggle có thể trả trạng thái dataset đang được tạo. Chạy lại lệnh launch khi dataset version 1 đã sẵn sàng. Khi registry ghi `SUBMIT_UNKNOWN`, đối chiếu notebook slug/version trên Kaggle trước khi làm gì thêm. Khi Kaggle chấp nhận kernel, máy local có thể tắt. Registry ghi `ref`, version, thời điểm UTC/ICT và trạng thái. Output chỉ được đánh dấu `HARVESTED_VERIFIED` khi đúng attempt, đúng checksum và checkpoint xác nhận số SAC updates. [Kaggle kernel commands](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels.md)
+
+## Easy learning pilot
+
+`cloud.kaggle.capacity --round capacity04 --cpu1-reference <J01>` tạo bảng số đo cùng ngân sách. `control pilot-plan --campaign stage5 --round easypilot01 --capacity-round capacity04` yêu cầu G2–G4 đã xác minh. Pilot lấy dữ liệu từ Easy trong `pilot_train`, dùng 8.192 transitions với ngân sách 20 phút và xuất checkpoint giữa kỳ ở bước 4.096. Job chạy parity trước khi train. Xuất và kiểm tra cả hai mốc bằng `control harvest` và `control harvest-periodic --job <J08> --step 4096`. Đánh giá hai model bằng `runtime evaluate --tier Easy` rồi dùng `cloud.kaggle.pilot` ghép từng case với baseline 8/12. Panel Easy lấy từ `pilot_diagnostic`.
+
+`runtime train` hỗ trợ phase, ngân sách thời gian và checkpoint qua `--checkpoint-every` cùng `--checkpoint-dir`. `cloud.kaggle.checkpoint export` chia state thành các phần tối đa 64 MiB, với checksum riêng cho từng phần. `runtime train --resume-package <thư-mục> --resume-index-sha <sha>` kiểm tra rồi dựng lại toàn bộ state trước khi nạp. Pilot ngắn dùng ZIP cho checkpoint cuối. Phiên dài cần xác minh đường vận chuyển và resume cloud với artifact lớn.
 
 ## Resume trong Kaggle session mới
 

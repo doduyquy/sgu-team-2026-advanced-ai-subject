@@ -18,9 +18,12 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 from cloud.kaggle import control
 from cloud.kaggle import credentials
 from cloud.kaggle import kernel_version
-from cloud.kaggle.common import sha
+from cloud.kaggle.capacity import log_times
+from cloud.kaggle.checkpoint import PARTS, export_checkpoint, restore_checkpoint
+from cloud.kaggle.common import SOURCE_SHA, sha, write
 from cloud.kaggle.credentials import dpapi
-from cloud.kaggle.replay import admit
+from cloud.kaggle.pilot import compare
+from cloud.kaggle.replay import admit, check_snapshot, validate
 from cloud.kaggle.runtime import check_state, load_policy, pool, restore_rng, save_state, schedule
 
 class TinyEnv(gym.Env):
@@ -40,6 +43,111 @@ class NonPortableReplay:
     def __init__(self, *args, storage_dir, **kwargs):
         Path(storage_dir).write_bytes(b"would overwrite")
         raise RuntimeError("Historical replay factory must never initialize")
+
+
+def test_operator_cannot_open_another_slot(monkeypatch):
+    monkeypatch.setenv("STAGE5_KAGGLE_OPERATOR_SLOT", "account_02")
+    monkeypatch.setattr(credentials, "slot", lambda *_: pytest.fail("Another operator's slot was opened"))
+    assert not credentials.verify_owner("account_01")
+    with pytest.raises(RuntimeError, match="configured Kaggle operator slot"):
+        credentials.slot_token("account_01")
+
+
+def test_sharded_checkpoint_round_trip_and_tamper_rejection(tmp_path):
+    raw = tmp_path / "state"
+    raw.mkdir()
+    for i, name in enumerate(PARTS):
+        (raw / name).write_bytes(bytes([i + 1]) * 17)
+    write(raw / "COMPLETE.json", {"schema": 1, "files": {name: sha(raw / name) for name in PARTS}})
+    state_sha = sha(raw / "COMPLETE.json")
+    bundle = tmp_path / "package"
+    index = export_checkpoint(raw, state_sha, bundle, shard_bytes=8)
+    assert len(list(bundle.glob("replay.pkl.*.bin"))) == 3
+    target = tmp_path / "restored"
+    assert restore_checkpoint(bundle, index, target) == state_sha
+    assert all(sha(target / name) == sha(raw / name) for name in (*PARTS, "COMPLETE.json"))
+    (bundle / "replay.pkl.000000.bin").write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="Checksum mismatch"):
+        restore_checkpoint(bundle, index, tmp_path / "rejected")
+    assert not (tmp_path / "rejected").exists()
+
+
+def test_replay_requires_matching_authorized_snapshot_and_rejects_staleness(tmp_path):
+    identity = {"workers": 2}
+    (tmp_path / "policy.zip").write_bytes(b"actor")
+    write(tmp_path / "SNAPSHOT.json", {"schema": 1, "lineage": control.RECIPE["lineage"],
+                                      "identity": identity, "policy_version": 2,
+                                      "policy_sha": sha(tmp_path / "policy.zip")})
+    snapshot_sha = sha(tmp_path / "SNAPSHOT.json")
+    assert check_snapshot(tmp_path, snapshot_sha, identity) == 2
+    marker = tmp_path / "CHUNK.json"
+    write(marker, {"schema": 1, "count": 2, "stream": 100, "sequence": 0, "identity": identity,
+                   "policy_version": 2, "snapshot_sha": snapshot_sha})
+    chunk_sha = sha(marker)
+    with pytest.raises(ValueError, match="authorized actor snapshot"):
+        validate(tmp_path, chunk_sha, identity, {}, 2, ("wrong-sha", 2))
+    with pytest.raises(ValueError, match="stale actor"):
+        validate(tmp_path, chunk_sha, identity, {}, 4, (snapshot_sha, 2))
+    assert validate(tmp_path, chunk_sha, identity, {"100:0": chunk_sha}, 9, (snapshot_sha, 2)) == (None, "100:0")
+
+
+def test_easy_pilot_compares_two_distinct_checkpoints_on_exact_panel():
+    def evaluation(model, successes):
+        rows = [{"geometry": str(i // 2), "family": "SCS", "seed": i % 2, "censored": False,
+                 "clean": i < successes, "outcome": "SUCCESS" if i < successes else "OUT_OF_ROAD"}
+                for i in range(12)]
+        return {"model_sha": model, "tier": "Easy", "cases": rows}
+    baseline = evaluation(SOURCE_SHA, 8)
+    candidate = evaluation("checkpoint-1", 10)
+    report = compare(baseline, [candidate, evaluation("checkpoint-2", 11)])
+    assert report["two_milestones_meet_thresholds"]
+    assert report["milestones"][0]["improved_cases"] == 2
+    candidate["cases"][0]["seed"] = 99
+    with pytest.raises(ValueError, match="exact baseline case IDs"):
+        compare(baseline, [candidate])
+
+
+def test_capacity_timing_uses_kernel_elapsed_clock():
+    log = ('[{"time":1.2,"data":"runtime ABI"}\n'
+           ',{"time":8.0,"data":"COMPLETE transitions=1280 updates=256"}\n'
+           ',{"time":9.0,"data":"artifact closed"}\n]')
+    assert log_times(log) == (8.0, 9.0)
+
+
+def test_pilot_plan_uses_verified_cpu_when_gpu_only_wins_after_warmup(tmp_path, monkeypatch):
+    monkeypatch.setattr(control, "WORK", tmp_path)
+    monkeypatch.setattr(control, "ROOT", tmp_path)
+    def bundle(label, production):
+        path = tmp_path / label
+        path.mkdir()
+        files = {"parity.json": "locked", "cloud/kaggle/linux-lock.txt": "unchanged"}
+        if production:
+            files["cloud/kaggle/checkpoint.py"] = "new"
+        with zipfile.ZipFile(path / "runtime.zip", "x") as archive:
+            archive.writestr("source_inventory.json", json.dumps({"files": files}))
+        return {"runtime_sha": sha(path / "runtime.zip"), "source_sha": SOURCE_SHA,
+                "path": label, "template_sha": "template"}
+    base = bundle("verified", False)
+    candidate = bundle("candidate", True)
+    write(tmp_path / "bundle.json", candidate)
+    rows = {}
+    samples = {}
+    for label, workers, device, rate, warm in (("j02", 1, "cpu", 8, 20), ("j03", 2, "cpu", 9, 24),
+                                              ("j04", 2, "cuda", 7, 99)):
+        planned = {k: base[k] for k in ("runtime_sha", "source_sha", "template_sha")}
+        planned.update(campaign="stage5", workers=workers, device=device, runtime_path=base["path"],
+                       **control.RECIPE["preflight"])
+        rows[label] = {"status": "HARVESTED_VERIFIED", "planned": planned, "execution": planned,
+                       "output_version": 1, "gates": {"G2": "PASS"} if label == "j02" else {"capacity_sample": "PASS"}}
+        samples[label] = {"job": label, "version": 1, "end_to_end_transitions_per_second": rate,
+                          "post_warmup_transitions_per_second": warm}
+    rows["j07"] = dict(rows["j02"], gates={"G3": "PASS"})
+    write(tmp_path / "capacity-capacity-report.json", {"G4": "PASS", "samples": samples})
+    args = SimpleNamespace(campaign="stage5", round="easy", capacity_round="capacity", account="account_01")
+    control.plan_pilot(args, {"jobs": rows})
+    job = control.read(tmp_path / "plan-stage5-easy.json")["jobs"]["j08"]
+    assert (job["workers"], job["device"], job["phase"]) == (2, "cpu", "easy")
+    assert job["checkpoint_every"] == 4096 and job["runtime_sha"] == candidate["runtime_sha"]
 
 
 @pytest.mark.parametrize("workers", [2, 4])

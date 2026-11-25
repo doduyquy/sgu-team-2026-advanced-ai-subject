@@ -21,7 +21,7 @@ def main(ref):
     return 1
 
 
-def download(ref, version, target):
+def download(ref, version, target, remote_file=None):
     from kaggle import api
     from kagglesdk.kernels.types.kernels_api_service import ApiDownloadKernelOutputRequest
 
@@ -29,7 +29,7 @@ def download(ref, version, target):
     request = ApiDownloadKernelOutputRequest()
     request.owner_slug, request.kernel_slug = ref.split("/")
     request.version_number = int(version)
-    request.file_path = target.name
+    request.file_path = remote_file or target.name
     limit = 120_000_000
     incoming = target.with_suffix(".download")
     with api.build_kaggle_client() as client:

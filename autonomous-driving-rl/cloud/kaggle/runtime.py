@@ -10,6 +10,7 @@ import platform
 import random
 import shutil
 import sys
+from tempfile import TemporaryDirectory
 import time
 
 for thread_var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
@@ -26,6 +27,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from cloud.kaggle.common import ROOT, SOURCE_SHA, fingerprint, read, sha, verify, write
+from cloud.kaggle.checkpoint import PARTS, export_checkpoint, restore_checkpoint
 from src.agents.stage5_terminal_preview_v1 import Stage5TerminalPreviewAdapterV1
 from src.platform.task_context_producer import REFERENCE_TASK_PRODUCER
 from src.training.stage5.env_adapter import Stage5TrainingEnv
@@ -36,7 +38,6 @@ from src.training.stage5.train_sampler import TrainCaseSampler
 RECIPE = read(Path(__file__).with_name("recipe.json"))
 SOURCE_RECIPE = read(ROOT / "configs/experiments/stage5_native_reward_integration_v1.json")
 SPLIT_PATH = ROOT / "results/stage5/pilot_split_v1.json"
-PARTS = ("model.zip", "replay.pkl", "rng.pt", "metrics.json")
 
 def pool(phase):
     split = read(SPLIT_PATH)
@@ -239,8 +240,14 @@ def train(args):
     torch.set_num_threads(1)
     if args.device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("Requested CUDA is unavailable")
-    if args.transitions % args.workers or args.capacity % args.workers or args.transitions <= 0:
-        raise ValueError("Positive transitions and capacity must align with workers")
+    if (args.transitions <= 0 or args.capacity <= 0 or args.max_seconds <= 0
+            or args.transitions % args.workers or args.capacity % args.workers):
+        raise ValueError("Training requires a positive time budget and worker-aligned transitions and capacity")
+    interval = getattr(args, "checkpoint_every", None)
+    checkpoint_dir = getattr(args, "checkpoint_dir", None)
+    if (interval is None) != (checkpoint_dir is None) or (interval is not None and
+            (interval <= 0 or interval % args.workers or checkpoint_dir.resolve().is_relative_to(args.out.resolve()))):
+        raise ValueError("Periodic checkpoints require a separate directory and a positive worker-aligned interval")
     parent = check_state(args.resume, args.parent_sha) if args.resume else None
     identity = recipe_identity(args.phase, args.workers, args.capacity, args.learning_starts,
                                bool(args.source or (parent and parent["identity"]["warm_source"])))
@@ -260,12 +267,32 @@ def train(args):
         else:
             model = model_for(env, args.device, args.capacity, args.learning_starts, args.source)
         before, updates = model.num_timesteps, model._n_updates
+        next_checkpoint = (before // interval + 1) * interval if interval else None
         end = min(t0 + args.max_seconds, args.stop_at) if args.stop_at else t0 + args.max_seconds
         callback = Telemetry()
         start = time.monotonic()
         while model.num_timesteps - before < args.transitions and time.monotonic() < end:
             block = min(args.transitions - (model.num_timesteps - before), 32 * args.workers)
+            if next_checkpoint is not None:
+                block = min(block, next_checkpoint - model.num_timesteps)
             model.learn(block, reset_num_timesteps=False, callback=callback, log_interval=None)
+            if model.num_timesteps == next_checkpoint:
+                if model.num_timesteps - before < args.transitions:
+                    boundaries = env.env_method("boundary")
+                    periodic = {"identity": identity, "job": args.job, "parent_sha": args.parent_sha,
+                                "transitions": model.num_timesteps, "updates": model._n_updates,
+                                "workers": boundaries, "ledger": parent.get("ledger", {}) if parent else {},
+                                "external_admitted": parent.get("external_admitted", 0) if parent else 0,
+                                "result": "PARTIAL"}
+                    with TemporaryDirectory(prefix="stage5-periodic-", dir=args.out.parent) as directory:
+                        raw = Path(directory) / "state"
+                        save_state(raw, model, periodic, {"transitions": model.num_timesteps - before,
+                                                        "updates": model._n_updates - updates,
+                                                        "seconds": time.monotonic() - start})
+                        target = checkpoint_dir / f"step-{model.num_timesteps:012d}"
+                        index_sha = export_checkpoint(raw, sha(raw / "COMPLETE.json"), target)
+                    print(f"Periodic checkpoint {target.name} index_sha256={index_sha}", flush=True)
+                next_checkpoint += interval
         boundaries = env.env_method("boundary") if model.num_timesteps > before else []
         elapsed = time.monotonic() - start
         local = model.num_timesteps - before
@@ -378,10 +405,14 @@ def main():
     for name in ("transitions", "capacity", "learning_starts", "max_seconds"):
         run.add_argument("--" + name.replace("_", "-"), type=int, default=RECIPE["preflight"][name])
     run.add_argument("--stop-at", type=float)
+    run.add_argument("--checkpoint-every", type=int)
+    run.add_argument("--checkpoint-dir", type=Path)
     group = run.add_mutually_exclusive_group()
     group.add_argument("--source", type=Path)
     group.add_argument("--resume", type=Path)
+    group.add_argument("--resume-package", type=Path)
     run.add_argument("--parent-sha")
+    run.add_argument("--resume-index-sha")
     ev = sub.add_parser("evaluate")
     ev.add_argument("--model", type=Path, required=True)
     ev.add_argument("--model-sha", required=True)
@@ -395,7 +426,12 @@ def main():
     if args.command == "train":
         if bool(args.resume) != bool(args.parent_sha):
             parser.error("--resume and --parent-sha must be supplied together")
+        if bool(args.resume_package) != bool(args.resume_index_sha):
+            parser.error("--resume-package and --resume-index-sha must be supplied together")
         args.out.parent.mkdir(parents=True, exist_ok=True)
+        if args.resume_package:
+            args.resume = args.out.with_name(args.out.name + ".parent")
+            args.parent_sha = restore_checkpoint(args.resume_package, args.resume_index_sha, args.resume)
         train(args)
     elif args.command == "evaluate":
         evaluate(args)

@@ -80,7 +80,17 @@ def collect(args):
     write(args.out / "CHUNK.json", meta)
     print(sha(args.out / "CHUNK.json"))
 
-def validate(chunk, expected, identity, ledger, policy_version):
+def check_snapshot(path, digest, identity):
+    verify(path / "SNAPSHOT.json", digest)
+    snapshot = read(path / "SNAPSHOT.json")
+    if (snapshot["schema"] != 1 or snapshot["lineage"] != RECIPE["lineage"]
+            or snapshot["identity"] != identity):
+        raise ValueError("Replay snapshot lineage or learner identity mismatch")
+    verify(path / "policy.zip", snapshot["policy_sha"])
+    return snapshot["policy_version"]
+
+
+def validate(chunk, expected, identity, ledger, policy_version, snapshot=None):
     marker = chunk / "CHUNK.json"
     if marker.stat().st_size > 4_000_000:
         raise ValueError("Chunk manifest is too large")
@@ -89,13 +99,15 @@ def validate(chunk, expected, identity, ledger, policy_version):
     n = meta["count"]
     if meta["schema"] != 1 or not 0 < n <= MAX_ROWS or meta["identity"] != identity:
         raise ValueError("Incompatible replay chunk")
-    if not 0 <= policy_version - meta["policy_version"] <= 1:
-        raise ValueError("Future or stale actor snapshot")
+    if snapshot is not None and (meta["snapshot_sha"], meta["policy_version"]) != snapshot:
+        raise ValueError("Chunk does not match the authorized actor snapshot")
     key = f"{meta['stream']}:{meta['sequence']}"
     if key in ledger:
         if ledger[key] != expected:
             raise ValueError("Chunk identity reused with different content")
         return None, key
+    if not 0 <= policy_version - meta["policy_version"] <= 1:
+        raise ValueError("Future or stale actor snapshot")
     if not 100 <= meta["stream"] <= 999 or not 0 <= meta["sequence"] <= 1000:
         raise ValueError("Collector namespace outside preflight range")
     rows = pool("smoke")
@@ -187,7 +199,15 @@ def import_and_update(args):
     if parent and parent["identity"] != identity:
         raise ValueError("Replay parent has an incompatible recipe")
     ledger = dict(parent.get("ledger", {})) if parent else {}
-    data, key = validate(args.chunk, args.chunk_sha, identity, ledger, args.policy_version)
+    policy_version = args.policy_version if args.policy_version is not None else 0
+    authorized = None
+    if args.snapshot:
+        version = check_snapshot(args.snapshot, args.snapshot_sha, identity)
+        authorized = (args.snapshot_sha, version)
+        policy_version = parent["updates"] if parent else 0
+        if args.policy_version is not None and args.policy_version != policy_version:
+            raise ValueError("Policy version differs from the verified learner")
+    data, key = validate(args.chunk, args.chunk_sha, identity, ledger, policy_version, authorized)
     if data is None:
         print("Duplicate chunk; existing committed replay state retained")
         return
@@ -226,6 +246,7 @@ def import_and_update(args):
         if not all(np.isfinite(changes)) or min(changes) <= 0:
             raise RuntimeError("Replay did not update actor, critics and targets")
         metrics = {"updates": budget, "admitted": n, "utd_external_window": budget / n,
+                   "snapshot_sha": args.snapshot_sha, "learner_policy_version": policy_version,
                    "sample_rows": budget * model.batch_size, "seconds": time.monotonic() - start,
                    "max_parameter_delta": dict(zip(("actor", "critic", "target"), changes)),
                    "losses": {k: float(v) for k, v in model.logger.name_to_value.items() if k.startswith("train/")}}
@@ -264,7 +285,9 @@ def main():
     learner.add_argument("--capacity", type=int, default=8192)
     learner.add_argument("--workers", type=int, choices=(1, 2, 4), default=1)
     learner.add_argument("--learning-starts", type=int, default=1024)
-    learner.add_argument("--policy-version", type=int, default=0)
+    learner.add_argument("--policy-version", type=int)
+    learner.add_argument("--snapshot", type=Path)
+    learner.add_argument("--snapshot-sha")
     learner.add_argument("--max-updates", type=int, default=8)
     args = parser.parse_args()
     if args.command == "snapshot":
@@ -279,6 +302,8 @@ def main():
             parser.error("Collector rows or namespace outside preflight range")
         collect(args)
     else:
+        if bool(args.snapshot) != bool(args.snapshot_sha):
+            parser.error("--snapshot and --snapshot-sha must be supplied together")
         verify(args.source, SOURCE_SHA)
         import_and_update(args)
 

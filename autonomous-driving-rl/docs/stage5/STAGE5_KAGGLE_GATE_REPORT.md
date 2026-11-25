@@ -6,6 +6,10 @@
 
 B1 local đã nạp 256 transitions thật vào learner hai môi trường, chạy 8 SAC updates và đo thay đổi ở actor, critic, target. Chunks phải chia hết cho số môi trường. Kiểm chứng transfer qua Kaggle vẫn thuộc G5.
 
+**G3 PASS.** J07 version 1 giữ nguyên 1.280 dòng đầu của replay, tiếp tục đến 2.560 transitions, tăng actor, critic và entropy optimizer từ 256 lên 1.536 bước, và tăng sampler cursor từ 2 lên 5. Resume reset ở biên episode.
+
+**G4 PASS.** Ba mẫu có cùng runtime, checkpoint nguồn và ngân sách 1.280 transitions, 256 updates. Dùng J01 làm CPU1 thay cho J02. CPU1, CPU2 và Tesla T4 với hai môi trường lần lượt đạt 8,38 / 7,98 / 5,47 transitions/s tính từ khởi động đến log cloud cuối và 19,34 / 20,43 / 57,86 transitions/s sau warm-up. CPU1 được chọn cho Easy pilot ngắn đầu tiên.
+
 ## Cập nhật cloud activation02
 
 Kaggle tiếp nhận J01 `s5-94d391e6b785-j01-a1` version 1 lúc 18:56:53 ICT sau một lần thử cấp phiên CPU. Job chuyển sang `RUNNING`, sau đó dừng ở kiểm tra Python ABI trước khi cài dependency hoặc chạy parity. Cả 8 account đã xác minh danh tính. G2–G4 vẫn `BLOCKED`. Phiên bản kế tiếp hỗ trợ CPython 3.13 trên Linux x86-64 và cần bundle cùng fingerprint mới. Một lần probe khi capacity chưa xác định đã được sử dụng trong campaign `stage5`.

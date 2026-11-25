@@ -20,6 +20,12 @@ SLOTS = tuple(f"account_{i:02}" for i in range(1, 9))
 OWNER = re.compile(r"[a-z0-9_-]{1,40}")
 TOKEN = re.compile(r"(?<![A-Za-z0-9_-])KGAT_[A-Za-z0-9_-]{15,}(?![A-Za-z0-9_-])")
 
+def operator_slot():
+    alias = os.environ.get("STAGE5_KAGGLE_OPERATOR_SLOT", SLOTS[0])
+    if alias not in SLOTS:
+        raise ValueError("Select a valid Kaggle operator slot")
+    return alias
+
 class Blob(ctypes.Structure):
     _fields_ = [("size", wintypes.DWORD), ("data", ctypes.POINTER(ctypes.c_ubyte))]
 
@@ -57,6 +63,8 @@ def cli(alias, args, timeout=90, *, include_stderr=False):
     return token_cli(slot_token(alias), args, timeout, include_stderr=include_stderr)
 
 def slot_token(alias):
+    if alias != operator_slot():
+        raise RuntimeError("This launcher can use only its configured Kaggle operator slot")
     directory, record = slot(alias)
     if not record or not record.get("authorized"):
         raise RuntimeError("Slot missing owner authorization")
@@ -95,8 +103,10 @@ def current_private_kernel_version(alias, ref):
     match = re.fullmatch(r"PRIVATE_KERNEL_VERSION ([1-9]\d*)", lines[-1]) if code == 0 and lines else None
     return int(match[1]) if match else None
 
-def download_kernel_output(alias, ref, version, path):
+def download_kernel_output(alias, ref, version, path, remote_file=None):
     command = [sys.executable, "-B", "-m", "cloud.kaggle.kernel_version", "download", ref, str(version), str(path)]
+    if remote_file:
+        command.append(remote_file)
     code, result = token_command(slot_token(alias), command, 180)
     return code == 0 and result.splitlines()[-1:] == ["VERSIONED_OUTPUT_READY"]
 
@@ -108,6 +118,8 @@ def authenticated_owner(code, output):
     return None
 
 def verify_owner(alias):
+    if alias != operator_slot():
+        return False
     _, record = slot(alias)
     return bool(record and authenticated_owner(*cli(alias, ["config", "view"])) == record["owner"])
 
@@ -139,27 +151,9 @@ def register(alias, owner, token, minutes=None, concurrency=None):
                                    "concurrency_observed": concurrency,
                                    "observed_at": datetime.now(timezone.utc).isoformat()})
 
-def import_file(source):
-    path = source.resolve(strict=True)
-    if path.is_relative_to(ROOT.parent) or path.stat().st_size > 65536:
-        raise ValueError("Source must be a small explicit local file outside the checkout")
-    tokens = list(dict.fromkeys(TOKEN.findall(path.read_text(encoding="utf-8-sig"))))
-    if len(tokens) != len(SLOTS):
-        raise ValueError("Expected eight distinct Kaggle access tokens")
-    existing = {record["owner"] for alias in SLOTS if (record := slot(alias)[1])}
-    for alias, token in zip(SLOTS, tokens, strict=True):
-        if slot(alias)[1]:
-            print(alias, "EXISTING")
-            continue
-        owner = authenticated_owner(*token_cli(token, ["config", "view"], timeout=25))
-        if not owner or owner in existing:
-            print(alias, "IDENTITY_UNVERIFIED" if not owner else "DUPLICATE_OWNER")
-            continue
-        register(alias, owner, token)
-        existing.add(owner)
-        print(alias, "IDENTITY_VERIFIED")
-
 def setup(alias, owner, minutes, concurrency):
+    if alias != operator_slot():
+        raise ValueError("Credential setup is restricted to the configured operator slot")
     if not OWNER.fullmatch(owner) or not 0 <= minutes <= 10080 or not 0 <= concurrency <= 2:
         raise ValueError("Invalid owner or observed quota/concurrency")
     if input("Chủ tài khoản xác nhận quyền sử dụng slot này? Gõ YES: ") != "YES":
