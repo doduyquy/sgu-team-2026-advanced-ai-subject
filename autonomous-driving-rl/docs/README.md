@@ -12,6 +12,7 @@ Read these when joining or developing the project:
 - [`PLATFORM_V1_OVERVIEW.md`](PLATFORM_V1_OVERVIEW.md) — what Platform V1 already provides.
 - [`EXPERIMENT_WORKFLOW.md`](EXPERIMENT_WORKFLOW.md) — experiment modes, evaluation protocol, and result interpretation.
 - [`AGENT_DEVELOPMENT_GUIDE.md`](AGENT_DEVELOPMENT_GUIDE.md) — how to implement and register agents.
+- [Agent 4 PDD hybrid](AGENT4_PDD_AGENT.md) — release 1.0.0 and launcher usage.
 - [`STAGE_ROADMAP.md`](STAGE_ROADMAP.md) — Stage 0–7 research map and expected integration boundaries.
 - [`WORKBENCH_GUIDE.md`](WORKBENCH_GUIDE.md) — practical Research Workbench usage.
 - [`comparison/`](comparison/COMPARISON_SPEC_V1.md) — Gate C1 scientific comparison specification, field catalog, and comparability rules (draft).

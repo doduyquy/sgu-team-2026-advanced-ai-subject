@@ -11,7 +11,7 @@ Consumes exclusively LauncherEventV1 messages and ExecutionReport:
 - Strictly decoupled from simulation internals; consumes only passive telemetry.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -22,7 +22,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QProgressBar,
     QSplitter,
-    QTabWidget,
     QTextEdit,
     QVBoxLayout,
     QWidget,

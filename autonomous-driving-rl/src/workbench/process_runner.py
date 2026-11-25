@@ -19,9 +19,9 @@ import json
 from pathlib import Path
 import sys
 import tempfile
-from typing import Any, Dict, Optional
+from typing import Optional
 
-from PySide6.QtCore import QObject, QProcess, Signal
+from PySide6.QtCore import QObject, QProcess, QProcessEnvironment, Signal
 
 from src.launcher.models import LaunchRequestV1
 from src.workbench.protocol import (
@@ -124,6 +124,14 @@ class WorkbenchProcessRunner(QObject):
         self._process = QProcess(self)
         self._process.setWorkingDirectory(str(project_root))
         self._process.setProgram(sys.executable)
+        # Interpreter flags used to open the GUI are not inherited by QProcess.
+        # Match the UTF-8 decoder below, including MetaDrive's ordinary output,
+        # and use UTF-8 for default text files in the worker and its children.
+        environment = QProcessEnvironment.systemEnvironment()
+        environment.insert("PYTHONUTF8", "1")
+        environment.insert("PYTHONIOENCODING", "utf-8")
+        self._process.setProcessEnvironment(environment)
+
         self._process.setArguments([str(worker_script), *arguments])
 
         self._process.started.connect(self._on_process_started)

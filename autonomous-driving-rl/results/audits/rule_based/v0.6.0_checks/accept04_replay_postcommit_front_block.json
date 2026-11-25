@@ -1,0 +1,31 @@
+{
+  "recorded_at_utc": "2026-10-30T16:49:30.577461+00:00",
+  "variant_dir": "runs\\rule_based_v060_probe10_20261030\\postcommit_front_block",
+  "case_id": "sandbox/Easy/SCS/0/0/postcommit_front_block",
+  "controlled_scenario": true,
+  "configuration_sha256": "61a28354a10054a5351de7a7d45b6a5efcb6af21ef581a5ed33d14f36bb1489f",
+  "source_sha256": {
+    "policy.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+    "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+    "agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+    "agents/rule_based_agent.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+    "agents/rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+    "agents/rule_based_lane_change.py": "07fec91d228965f5ebd571ecfd76364115a4b6bd3d304612598a96272d030b5d",
+    "agents/rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+    "agents/rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9",
+    "agents/__init__.py": "de2af9150878aec49ba843f77291a8ca410944908e6b04ce27610d6678b29f02",
+    "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+    "agent_experiment.py": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5"
+  },
+  "trace_sha256": "7aefd26218e15995c87547a1401e7da967c32478d949c78e337ad10c76d4f520",
+  "shared_platform_api_sha256": "76231d80e1ac269f3c6c3bfcb054f5f810ed866615f7598a5629984b88fd3dd0",
+  "adapter_sha256": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+  "excluded_from_comparison": [
+    "act_latency_ms"
+  ],
+  "scope": "Frozen policy/helpers/input types; live unchanged shared AgentDecision API and verified adapter",
+  "completed_replay": true,
+  "steps": 172,
+  "decision_mismatches": [],
+  "action_mismatches": []
+}

@@ -1,0 +1,11 @@
+{
+  "name": "rule_based_v040_targeted_development",
+  "purpose": "Explicit TRAIN diagnostic subset for junction entry failures; not benchmark",
+  "environment_seeds": [0],
+  "geometries": [
+    {"tier": "Medium", "sequence": "SCXCCS", "geometry_seed": 0},
+    {"tier": "Hard", "sequence": "SCTXrCS", "geometry_seed": 2},
+    {"tier": "Hard", "sequence": "SCXOCS", "geometry_seed": 0},
+    {"tier": "Hard", "sequence": "XTOCS", "geometry_seed": 0}
+  ]
+}

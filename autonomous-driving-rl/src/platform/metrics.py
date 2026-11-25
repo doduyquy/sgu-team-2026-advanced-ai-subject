@@ -5,10 +5,10 @@ Gate 4 of Research Platform V1.
 Pure, unit-testable module independent of Panda3D / simulator engine state.
 """
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 import math
 import statistics
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from src.platform.episode import TerminalReason
 

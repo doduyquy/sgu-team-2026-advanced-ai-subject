@@ -1,0 +1,5 @@
+case_id,baseline_success,candidate_success,baseline_reason,candidate_reason,baseline_completion,candidate_completion,baseline_simulation_time_s,candidate_simulation_time_s,baseline_speed_kmh,candidate_speed_kmh,candidate_latency_p95_ms,new_success,lost_success,lower_completion
+sandbox/Medium/SCXCCS/0/0,True,False,SUCCESS,TIMEOUT,0.9935578774420423,0.4372827188417426,86.5,223.10000000000002,30.464218819096647,5.1653129847934105,2.0247,False,True,True
+sandbox/Hard/SCTXrCS/2/0,True,False,SUCCESS,TIMEOUT,0.9932682214976677,0.33654549394182687,160.70000000000002,220.8,16.24208774937604,3.957033923836094,3.5713000000000017,False,True,True
+sandbox/Hard/SCXOCS/0/0,False,False,CRASH_VEHICLE,TIMEOUT,0.5689368934011063,0.524675579341852,50.800000000000004,186.0,24.588874641761944,6.193698254822036,2.67166,False,False,True
+sandbox/Hard/XTOCS/0/0,False,False,CRASH_VEHICLE,TIMEOUT,0.14292962649274293,0.27647365590485,12.3,119.4,15.150243209944747,3.1604654115436563,2.210129999999997,False,False,False

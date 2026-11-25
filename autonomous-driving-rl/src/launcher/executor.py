@@ -13,7 +13,7 @@ This module implements the execution engine that runs a ResolvedExperimentPlanV1
 
 from dataclasses import asdict, dataclass
 import json
-import math
+import logging
 import os
 from pathlib import Path
 import time
@@ -22,6 +22,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from metadrive.component.map.pg_map import MapGenerateMethod
 from metadrive.envs.metadrive_env import MetaDriveEnv
+from src.visualization import create_finish_visual
+from src.logging.agent_experiment import DecisionTrace, save_agent_provenance
 import numpy as np
 
 from src.launcher.cases import (
@@ -41,6 +43,7 @@ from src.launcher.models import (
     validate_custom_run_id,
 )
 from src.launcher.preflight import run_preflight
+from src.launcher.telemetry import read_vehicle_speed_kmh
 from src.platform import (
     AgentPolicy,
     AgentPublicEpisodeContext,
@@ -52,16 +55,28 @@ from src.platform import (
     LocalExperimentLogger,
     RewardBreakdown,
     RewardSpecV1,
-    RunKind,
     RunStatus,
-    TerminalReason,
     WandbBackend,
-    WandbMode,
     build_agent_input,
     classify_episode_outcome,
     get_action_adapter,
     sanitize_error_message,
 )
+
+
+def create_optional_finish_visual(env: Any) -> Optional[Any]:
+    """Create viewer decoration; report failures without changing episode outcomes."""
+    style = os.environ.get("METADRIVE_FINISH_VISUAL_STYLE", "hologram").lower().strip()
+    try:
+        visual = create_finish_visual(env, style=style)
+    except Exception:
+        logging.getLogger(__name__).exception(
+            "[FinishVisual] Không thể tạo hologram (style=%s).", style
+        )
+        return None
+    if visual is not None:
+        print("[FinishVisual] Created FINISH hologram and lasers at the end of the route.")
+    return visual
 
 
 def create_native_minimap(env: Any) -> Optional[Any]:
@@ -82,14 +97,6 @@ def create_native_minimap(env: Any) -> Optional[Any]:
         )
         return None
     return MiniMapOverlay(env)
-
-
-def read_vehicle_speed_kmh(vehicle: Any) -> float:
-    """Read the pinned MetaDrive API in km/h; do not fabricate missing speed."""
-    speed = float(vehicle.speed_km_h)
-    if not math.isfinite(speed):
-        raise ValueError(f"MetaDrive returned a non-finite vehicle speed: {speed}")
-    return speed
 
 
 def compute_step_route_progress_and_reward(
@@ -311,6 +318,7 @@ class ExperimentExecutor:
         action_adapter = get_action_adapter(self.plan.agent_registration.action_adapter_id)
         reward_spec = RewardSpecV1()
         agent = None
+        decision_trace = None
 
         try:
             # Verify factory reference against registry on canonical runs
@@ -354,6 +362,12 @@ class ExperimentExecutor:
             if desc.method_family != reg.method_family:
                 raise ValueError(f"Agent descriptor method_family mismatch: descriptor='{desc.method_family}' != registration='{reg.method_family}'")
 
+            # Opt-in configuration export also enables reproducible sources and
+            # complete decision traces in ordinary CLI/workbench runs.
+            if callable(getattr(agent, "export_config", None)):
+                save_agent_provenance(logger.run_dir, agent)
+                decision_trace = DecisionTrace(logger.run_dir / "agent_decisions.jsonl.gz")
+
             # Verify runtime implementation class reference (Fix B)
             actual_impl_ref = f"{type(agent).__module__}:{type(agent).__qualname__}"
             if self.plan.canonical_run and actual_impl_ref != self.plan.agent_registration.implementation_ref:
@@ -388,6 +402,7 @@ class ExperimentExecutor:
                 ))
 
                 env = None
+                finish_visual = None
                 hud_manager = None
 
                 try:
@@ -409,6 +424,8 @@ class ExperimentExecutor:
                     if launcher_mode_str == "SANDBOX" and render_mode_str == "NATIVE":
                         from src.visualization.hud_manager import RacingHudManager
                         hud_manager = RacingHudManager(env)
+                    if render_mode_str == "NATIVE":
+                        finish_visual = create_optional_finish_visual(env)
 
                     # C. Reset agent with public context (Information Parity)
                     public_context = AgentPublicEpisodeContext(
@@ -455,9 +472,14 @@ class ExperimentExecutor:
 
                         # 3. Action adaptation to physical actuator Box(2)
                         canonical_act = action_adapter.to_canonical(decision.action_payload)
+                        if decision_trace is not None:
+                            decision_trace.write(case.case_id, agent_input, decision,
+                                                 canonical_act.to_numpy(), (t1 - t0) / 1e6)
 
                         # 4. Environment physics step
                         raw_obs, r_env, term_step, trunc_step, step_info = env.step(canonical_act.to_numpy())
+                        if finish_visual is not None:
+                            finish_visual.update()
                         step_idx += 1
 
                         # Update raw safety and task flags from step_info
@@ -524,12 +546,14 @@ class ExperimentExecutor:
                         )
 
                 finally:
-                    if hud_manager is not None:
-                        try:
-                            hud_manager.destroy()
-                        except Exception:
-                            pass
-                        hud_manager = None
+                    for visual in (finish_visual, hud_manager):
+                        if visual is not None:
+                            try:
+                                visual.destroy()
+                            except Exception:
+                                logging.getLogger(__name__).exception(
+                                    "Failed to clean up %s.", type(visual).__name__
+                                )
                     if env is not None:
                         env.close()
 
@@ -600,6 +624,9 @@ class ExperimentExecutor:
                 ))
 
             # 5. Finalize run cleanly
+            if decision_trace is not None:
+                decision_trace.close()
+                decision_trace = None
             summary_payload = logger.prepare_summary()
             backend.log_summary(summary_payload)
             sync_meta = backend.finish(RunStatus.COMPLETE)
@@ -665,6 +692,8 @@ class ExperimentExecutor:
             ))
             raise RuntimeError(f"Experiment execution failed in run '{logger.run_id}': {sanitized_e}") from e
         finally:
+            if decision_trace is not None:
+                decision_trace.close()
             if agent is not None and hasattr(agent, "close"):
                 try:
                     agent.close()

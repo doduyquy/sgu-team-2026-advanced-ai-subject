@@ -1,0 +1,252 @@
+[
+  {
+    "case_id": "sandbox/Easy/SCCS/0/0",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 597
+    },
+    "veto_counts": {}
+  },
+  {
+    "case_id": "sandbox/Easy/SCS/0/0",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 418
+    },
+    "veto_counts": {}
+  },
+  {
+    "case_id": "sandbox/Easy/SCSS/0/0",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 450
+    },
+    "veto_counts": {}
+  },
+  {
+    "case_id": "sandbox/Medium/SCTCS/2/0",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 700
+    },
+    "veto_counts": {}
+  },
+  {
+    "case_id": "sandbox/Medium/SCXCCS/0/0",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 895
+    },
+    "veto_counts": {}
+  },
+  {
+    "case_id": "sandbox/Medium/SCXCS/14/0",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 566
+    },
+    "veto_counts": {}
+  },
+  {
+    "case_id": "sandbox/Hard/SCTXrCS/2/0",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 1432
+    },
+    "veto_counts": {
+      "insufficient_lane_length": 234,
+      "front_gap": 165,
+      "curved_or_diverging_lane": 79,
+      "junction_or_cooldown": 2,
+      "rear_gap": 286
+    }
+  },
+  {
+    "case_id": "sandbox/Hard/SCXOCS/0/0",
+    "starts": [
+      {
+        "step": 1311,
+        "reason": "OVERTAKE_SLOW_LEADER",
+        "source_id": "5C0_0_|5C0_1_|0",
+        "target_id": "5C0_0_|5C0_1_|1"
+      }
+    ],
+    "completions": 1,
+    "phase_counts": {
+      "KEEP_LANE": 1422,
+      "PREPARE_CHANGE": 14,
+      "CHANGE_LANE": 45,
+      "BLOCKED_CHANGE": 4
+    },
+    "veto_counts": {
+      "junction_or_cooldown": 125,
+      "sensor_overflow": 2,
+      "front_gap": 75,
+      "swept_actor": 7,
+      "insufficient_lane_length": 201,
+      "curved_or_diverging_lane": 138
+    }
+  },
+  {
+    "case_id": "sandbox/Hard/XTOCS/0/0",
+    "starts": [
+      {
+        "step": 923,
+        "reason": "OVERTAKE_SLOW_LEADER",
+        "source_id": "4C0_0_|4C0_1_|0",
+        "target_id": "4C0_0_|4C0_1_|1"
+      }
+    ],
+    "completions": 1,
+    "phase_counts": {
+      "KEEP_LANE": 1025,
+      "PREPARE_CHANGE": 10,
+      "CHANGE_LANE": 27,
+      "BLOCKED_CHANGE": 1
+    },
+    "veto_counts": {
+      "junction_or_cooldown": 35,
+      "front_gap": 2
+    }
+  },
+  {
+    "case_id": "sandbox/Extreme/CrXROSTR/0/0",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 3188
+    },
+    "veto_counts": {
+      "insufficient_lane_length": 146,
+      "curved_or_diverging_lane": 17,
+      "front_gap": 235,
+      "rear_gap": 6,
+      "junction_or_cooldown": 372,
+      "sensor_overflow": 1755
+    }
+  },
+  {
+    "case_id": "sandbox/Extreme/SCTXORyCCS/0/0",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 3429
+    },
+    "veto_counts": {
+      "insufficient_lane_length": 30,
+      "junction_or_cooldown": 106,
+      "sensor_overflow": 2030
+    }
+  },
+  {
+    "case_id": "sandbox/Extreme/SCXOCrTYCS/0/0",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 2914
+    },
+    "veto_counts": {
+      "insufficient_lane_length": 30,
+      "front_gap": 6,
+      "junction_or_cooldown": 124,
+      "sensor_overflow": 1952
+    }
+  },
+  {
+    "case_id": "sandbox/Medium/SCXCCS/0/1",
+    "starts": [
+      {
+        "step": 614,
+        "reason": "OVERTAKE_SLOW_LEADER",
+        "source_id": "4C0_0_|4C0_1_|1",
+        "target_id": "4C0_0_|4C0_1_|0"
+      }
+    ],
+    "completions": 1,
+    "phase_counts": {
+      "KEEP_LANE": 957,
+      "PREPARE_CHANGE": 10,
+      "CHANGE_LANE": 46,
+      "BLOCKED_CHANGE": 4
+    },
+    "veto_counts": {
+      "swept_actor": 4,
+      "front_gap": 10,
+      "insufficient_lane_length": 1
+    }
+  },
+  {
+    "case_id": "sandbox/Hard/SCTXrCS/2/1",
+    "starts": [
+      {
+        "step": 1432,
+        "reason": "OVERTAKE_SLOW_LEADER",
+        "source_id": "6C0_0_|6C0_1_|1",
+        "target_id": "6C0_0_|6C0_1_|0"
+      }
+    ],
+    "completions": 1,
+    "phase_counts": {
+      "KEEP_LANE": 1580,
+      "PREPARE_CHANGE": 21,
+      "BLOCKED_CHANGE": 3,
+      "CHANGE_LANE": 36
+    },
+    "veto_counts": {
+      "insufficient_lane_length": 210,
+      "front_gap": 177,
+      "curved_or_diverging_lane": 209,
+      "sensor_overflow": 175,
+      "junction_or_cooldown": 36
+    }
+  },
+  {
+    "case_id": "sandbox/Hard/SCXOCS/0/1",
+    "starts": [
+      {
+        "step": 99,
+        "reason": "OVERTAKE_SLOW_LEADER",
+        "source_id": ">>>|1S0_0_|1",
+        "target_id": ">>>|1S0_0_|0"
+      },
+      {
+        "step": 1313,
+        "reason": "OVERTAKE_SLOW_LEADER",
+        "source_id": "5C0_0_|5C0_1_|0",
+        "target_id": "5C0_0_|5C0_1_|1"
+      }
+    ],
+    "completions": 2,
+    "phase_counts": {
+      "KEEP_LANE": 1383,
+      "PREPARE_CHANGE": 24,
+      "CHANGE_LANE": 59,
+      "BLOCKED_CHANGE": 2
+    },
+    "veto_counts": {
+      "insufficient_lane_length": 198,
+      "junction_or_cooldown": 72,
+      "front_gap": 104,
+      "rear_gap": 17,
+      "sensor_overflow": 5,
+      "curved_or_diverging_lane": 62,
+      "swept_actor": 35
+    }
+  },
+  {
+    "case_id": "sandbox/Hard/XTOCS/0/1",
+    "starts": [],
+    "completions": 0,
+    "phase_counts": {
+      "KEEP_LANE": 966
+    },
+    "veto_counts": {}
+  }
+]

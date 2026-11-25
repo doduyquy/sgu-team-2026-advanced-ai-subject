@@ -1,0 +1,42 @@
+{
+  "status": "RETIRED_SOURCE_REFERENCE_ONLY",
+  "archived_at_utc": "2026-10-30T17:56:28.597856+00:00",
+  "note": "Verbatim source; original relative paths in scripts are historical, not maintained entrypoints. Use the current launcher/audits.",
+  "files": [
+    {
+      "original_path": "inspect_dynamic_observation.py",
+      "archive_path": "experiments\\legacy_source\\pre_cleanup_20261031\\inspect_dynamic_observation.py",
+      "sha256": "2b5bcd61648d7f4ea63e80a4f6d3dbe1914d7ff36d7ea99a41c877219326003c"
+    },
+    {
+      "original_path": "inspect_metadrive.py",
+      "archive_path": "experiments\\legacy_source\\pre_cleanup_20261031\\inspect_metadrive.py",
+      "sha256": "91920b6447eb777105e3fee956d9ca80c4626ed16830b5a8ac6a4d111cf5c9ae"
+    },
+    {
+      "original_path": "inspect_observation.py",
+      "archive_path": "experiments\\legacy_source\\pre_cleanup_20261031\\inspect_observation.py",
+      "sha256": "8f7668bd29e95e0a501939e82d2b32c5c3abc2b81218614de1324a229145552b"
+    },
+    {
+      "original_path": "inspect_observation_parts.py",
+      "archive_path": "experiments\\legacy_source\\pre_cleanup_20261031\\inspect_observation_parts.py",
+      "sha256": "f99133f74cc3b71f2c828975960a7de34324f6e98bd28af01e2ff802bdef268e"
+    },
+    {
+      "original_path": "inspect_reward_config.py",
+      "archive_path": "experiments\\legacy_source\\pre_cleanup_20261031\\inspect_reward_config.py",
+      "sha256": "307c8ef37a3bede74a4768056a4c5fcf1ffe85b6279b8d78890dc0fc0446cb57"
+    },
+    {
+      "original_path": "test_course_env.py",
+      "archive_path": "experiments\\legacy_source\\pre_cleanup_20261031\\test_course_env.py",
+      "sha256": "70b1ac020f9518482029859283baec628c6df5d06361581de8de9519e2316363"
+    },
+    {
+      "original_path": "scripts\\audit_rule_based_agent.py",
+      "archive_path": "experiments\\legacy_source\\pre_cleanup_20261031\\audit_rule_based_agent.py",
+      "sha256": "fd704d12cb50fa9dd8de01554913e06269db261953f64770903c7c3e250b2d5b"
+    }
+  ]
+}

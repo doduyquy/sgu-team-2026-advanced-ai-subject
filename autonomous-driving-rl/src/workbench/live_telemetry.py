@@ -14,7 +14,7 @@ Maintains in-memory live telemetry traces purely from LauncherEventV1 messages:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

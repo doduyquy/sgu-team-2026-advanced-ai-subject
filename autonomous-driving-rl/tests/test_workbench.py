@@ -55,7 +55,7 @@ from src.launcher.contracts import (
 )
 from src.launcher.events import LauncherEventType, LauncherEventV1
 from src.launcher.models import LaunchRequestV1, LauncherMode
-from src.launcher.registry import build_canonical_agent_registry, compute_canonical_registry_sha256
+from src.launcher.registry import AgentRegistryV1, build_canonical_agent_registry, compute_canonical_registry_sha256
 from src.launcher.resolver import (
     GATE5_LOCKED_BENCHMARK_HASH,
     GATE6_LOCKED_AGENT_HASH,

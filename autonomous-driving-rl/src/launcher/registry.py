@@ -13,6 +13,8 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from src.launcher.models import AgentRegistrationV1
 from src.agents import Stage0RandomNaiveAgent
+from src.agents import Stage1RuleBasedAgent
+from src.agents import Stage4PDDHybridAgent
 from src.agents.astar_agent import AStarAgent, LearnedAStarAgent
 from src.agents.graph_search_agents import BFSAgent, DijkstraAgent
 from src.agents.hybrid_astar_agent import HybridAStarAgent
@@ -109,8 +111,16 @@ def _factory_fixture_stateful_counter() -> StatefulCounterFixtureAgent:
 def _factory_fixture_discrete() -> DiscreteFixtureAgent:
     return DiscreteFixtureAgent()
 
+
 def _factory_stage0_random_naive() -> Stage0RandomNaiveAgent:
     return Stage0RandomNaiveAgent()
+
+
+def _factory_stage1_rule_based() -> Stage1RuleBasedAgent:
+    return Stage1RuleBasedAgent()
+
+def _factory_stage4_pdd_hybrid() -> Stage4PDDHybridAgent:
+    return Stage4PDDHybridAgent()
 
 
 def _factory_stage2_astar() -> AStarAgent:
@@ -286,18 +296,13 @@ def build_historical_fixture_registry() -> AgentRegistryV1:
 
 
 def build_canonical_agent_registry() -> AgentRegistryV1:
-    """
-    Initializes and populates canonical AgentRegistryV1 with the four historical Gate-6 fixture agents
-    plus Stage 0, Stage 2 search, Stage 3 MCTS, Stage 5 SAC and Stage 6 learned A*.
-    This function represents the authoritative registry for Platform V1 launcher execution.
-    NOTE: All registered methods currently have benchmark_eligible = False.
-    """
+    """Build the launcher registry from the historical fixtures and active research agents."""
     registry = build_historical_fixture_registry()
 
     registry.register(
         registration=AgentRegistrationV1(
             agent_id="stage0_random_naive",
-            agent_version="0.1.1",
+            agent_version="0.2.0",
             stage_label="STAGE_0",
             method_family="RANDOM",
             purpose="RESEARCH_BASELINE",
@@ -318,11 +323,35 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
 
             description=(
                 "Stage 0 Random / Naive research baseline. "
-                "Randomly selects direction and throttle/brake behavior"
-                "without learning."
+                "Holds random controls for 2-4 seconds and resamples immediately "
+                "at local road junctions, restarting the timer without learning."
             ),
         ),
         factory=_factory_stage0_random_naive
+    )
+
+    registry.register(
+        registration=AgentRegistrationV1(
+            agent_id="stage1_rule_based",
+            agent_version="0.6.1",
+            stage_label="STAGE_1",
+            method_family="RULE_BASED",
+            purpose="RESEARCH_BASELINE",
+            implementation_ref=(
+                f"{Stage1RuleBasedAgent.__module__}:"
+                f"{Stage1RuleBasedAgent.__qualname__}"
+            ),
+            input_profile_id="STATE_DECISION_V1",
+            action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic",
+            stateful_within_episode=True,
+            benchmark_eligible=False,
+            sandbox_eligible=True,
+            audit_eligible=True,
+            requires_checkpoint=False,
+            description="Rule-based lane following, tracked traffic/LiDAR braking, junction lifecycle and guarded adjacent lane changes.",
+        ),
+        factory=_factory_stage1_rule_based,
     )
 
     _factory_stage3_mcts.experiment_parameters = MCTSAgent.experiment_parameters
@@ -378,6 +407,21 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
             benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True, requires_checkpoint=learned,
             description=description,
         ), factory)
+
+    registry.register(
+        registration=AgentRegistrationV1(
+            agent_id="stage4_pdd_hybrid", agent_version="1.0.0", stage_label="STAGE_4",
+            method_family="HYBRID", purpose="CANDIDATE",
+            implementation_ref=f"{Stage4PDDHybridAgent.__module__}:{Stage4PDDHybridAgent.__qualname__}",
+            input_profile_id="STATE_DECISION_V1", action_adapter_id="continuous_box2_v1",
+            inference_stochasticity="deterministic", stateful_within_episode=True,
+            benchmark_eligible=False, sandbox_eligible=True, audit_eligible=True,
+            # The factory verifies and loads the bundled release without a checkpoint binding.
+            requires_checkpoint=False,
+            description="PDD ExtraTrees trajectory/speed hybrid; historical Medium/Hard 5/5, Extreme 0/3; unqualified offline WAIT gate.",
+        ),
+        factory=_factory_stage4_pdd_hybrid,
+    )
 
     from src.agents.stage5_sac_agent import Stage5SacAgent
     registry.register(

@@ -1,0 +1,29 @@
+{
+  "recorded_at_utc": "2026-10-30T14:35:54.330358+00:00",
+  "variant_dir": "runs\\rule_based_v050_trial07_family12_20261030\\current",
+  "case_id": "sandbox/Hard/XTOCS/0/0",
+  "configuration_sha256": "16da8795c61d9d567b89c46d23d26a6f906676e378fb981720883da63ebda1bc",
+  "source_sha256": {
+    "policy.py": "83f65306c4122bf0533d260ecdb517e788bfb1ebbb5276fae56a87f28b6978e7",
+    "agent_input.py": "23055a43ef2dde2dbb96ecd3794201a45e39cfb2e50e94f537df7a1499c9a7eb",
+    "agents/random_naive_agent.py": "b16f688263333f23502eff691440e5874287f6e624aedbff57c57588fe0ae80b",
+    "agents/rule_based_agent.py": "83f65306c4122bf0533d260ecdb517e788bfb1ebbb5276fae56a87f28b6978e7",
+    "agents/rule_based_junction.py": "9499c2ba26b5121edfaa6d63d8ab94ab71bb45b488bfcf8da9ed4cf2712a140b",
+    "agents/rule_based_memory.py": "92283f2ca7a001efe0baea2c249eb7a7e86f8e67d53f9086ca9eec5b5ede4c70",
+    "agents/rule_based_traffic.py": "b0d6a30b7bb58909b6794ed6041134c1a81d7b7009e15cc9e64bb3af41730eaa",
+    "agents/__init__.py": "de2af9150878aec49ba843f77291a8ca410944908e6b04ce27610d6678b29f02",
+    "action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+    "agent_experiment.py": "acd1b0490a8d9d84ad4cdcf338fbad13249c4f923bb41b2b8730f2a0b2c799d5"
+  },
+  "trace_sha256": "8eca18975bc23f75f7c68918992ccd4ce2ee04fc7d134d60d34b37df2083cbeb",
+  "shared_platform_api_sha256": "c25dd1efd099397dc826b880d89fa33529b47720faa749606d20294448c6333a",
+  "adapter_sha256": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+  "excluded_from_comparison": [
+    "act_latency_ms"
+  ],
+  "scope": "Frozen policy/helpers/input types; live unchanged shared AgentDecision API and verified adapter",
+  "completed_replay": true,
+  "steps": 1065,
+  "decision_mismatches": [],
+  "action_mismatches": []
+}

@@ -19,6 +19,25 @@ Launch it from `autonomous-driving-rl/`:
 python -m src.workbench.app
 ```
 
+The Workbench starts its worker with `PYTHONUTF8=1` and
+`PYTHONIOENCODING=utf-8`, matching the GUI's stdout/stderr decoder. The worker
+also configures its standard streams as UTF-8 when invoked directly. A GUI
+interpreter flag such as `-X utf8` is not automatically inherited by the
+worker. On older checkouts, a Windows `charmap` error immediately after
+`EPISODE_STARTED` with `NATIVE` rendering can come from the FINISH status
+message, before the agent takes its first action. Update the checkout, or
+set these variables in PowerShell before opening the Workbench:
+
+```powershell
+$env:PYTHONUTF8 = "1"
+$env:PYTHONIOENCODING = "utf-8"
+python -m src.workbench.app
+```
+
+Restart the Workbench after updating; an already open GUI keeps its loaded
+process-runner code. Retry using a new run ID and retain the failed run as
+diagnostic evidence.
+
 ## 1. What the Workbench is — and is not
 
 The Workbench is an experiment control room. It does not contain the intelligence of an agent and does not replace the scientific backend.

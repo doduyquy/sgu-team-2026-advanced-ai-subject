@@ -6,14 +6,11 @@ This module defines the machine-readable WorkbenchResultsContractV1 and computes
 - platform_workbench_results_contract_sha256: Additive hash joining B1 platform workbench hash with B2 results contract.
 """
 
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from src.platform import canonical_json_sha256
 from src.workbench.contracts import (
-    GATE7_5A_BASELINE_MERGE_SHA,
     PINNED_PYSIDE6_VERSION,
-    WORKBENCH_PROTOCOL_VERSION,
 )
 
 GATE7_5B_B1_BASELINE_MERGE_SHA = "99f0a66aa156004a5a1ec7993d2368ff83d7c325"

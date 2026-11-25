@@ -8,7 +8,7 @@ official metrics.
 """
 
 import csv
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 import hashlib
 import json
@@ -16,8 +16,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.platform import (
-    RunKind,
-    RunStatus,
     canonical_csv_file_sha256,
     canonical_json_file_sha256,
     canonical_json_sha256,

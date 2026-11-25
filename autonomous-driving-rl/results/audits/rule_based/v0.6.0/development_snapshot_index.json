@@ -1,0 +1,198 @@
+[
+  {
+    "identity": "1e549e378cea0e383271474043bdaaa46d540b5527dce4799ec926aa42826df4",
+    "provenance_path": "runs\\rule_based_v060_accept02_env1_20261030\\current\\agent_provenance.json",
+    "policy_input_helper_sha256": {
+      "policy.py": "001d1875af3709a1ff8f061bd02f3b4c447f3cf6ea206c48a19add0523a9fd06",
+      "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+      "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "rule_based_lane_change.py": "5866b804fecbcc31f4cc6d12f38be87bace460ceba90166b5dcc23f2bca45c9e",
+      "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9"
+    },
+    "configuration_sha256": "6255e872d7c94f9a80c8df9949bde0e933dea44dfd0b8fba097ee607133496ee",
+    "runs": [
+      "rule_based_v060_accept02_env1_20261030",
+      "rule_based_v060_accept02_extreme_cr_20261030",
+      "rule_based_v060_accept02_extreme_sctx_20261030",
+      "rule_based_v060_accept02_extreme_scxo_20261030",
+      "rule_based_v060_accept02_roads9_20261030",
+      "rule_based_v060_cli_smoke_20261030",
+      "rule_based_v060_probe09_20261030"
+    ],
+    "archive": "dev060_01"
+  },
+  {
+    "identity": "461a5591a591103b323391f38fe45b4a533598fc07390f4d1706c3ab7eabeaf0",
+    "provenance_path": "runs\\rule_based_v060_accept03_extreme_cr_20261030\\current\\agent_provenance.json",
+    "policy_input_helper_sha256": {
+      "policy.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+      "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+      "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "rule_based_lane_change.py": "daf68b89ee4af6225879da90ac86ea3656dd2640987dcce8ae11d4f69ae945d3",
+      "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9"
+    },
+    "configuration_sha256": "61a28354a10054a5351de7a7d45b6a5efcb6af21ef581a5ed33d14f36bb1489f",
+    "runs": [
+      "rule_based_v060_accept03_extreme_cr_20261030",
+      "rule_based_v060_accept03_extreme_sctx_20261030",
+      "rule_based_v060_accept03_extreme_scxo_20261030",
+      "rule_based_v060_accept03_roads9_20261030"
+    ],
+    "archive": "dev060_02"
+  },
+  {
+    "identity": "13571610bf6c6b7ca0f8523bbde04e3e92cdf34cc94d2ddaf10d640c63306422",
+    "provenance_path": "runs\\rule_based_v060_accept04_env1_20261030\\current\\agent_provenance.json",
+    "policy_input_helper_sha256": {
+      "policy.py": "3ed579b9f1cdcdac0b85bb052afc2c218be32e61734f054877f6690805a598b3",
+      "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+      "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "rule_based_lane_change.py": "07fec91d228965f5ebd571ecfd76364115a4b6bd3d304612598a96272d030b5d",
+      "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9"
+    },
+    "configuration_sha256": "61a28354a10054a5351de7a7d45b6a5efcb6af21ef581a5ed33d14f36bb1489f",
+    "runs": [
+      "rule_based_v060_accept04_env1_20261030",
+      "rule_based_v060_accept04_extreme_cr_20261030",
+      "rule_based_v060_accept04_extreme_sctx_20261030",
+      "rule_based_v060_accept04_extreme_scxo_20261030",
+      "rule_based_v060_accept04_roads9_20261030",
+      "rule_based_v060_cli_smoke02_20261030",
+      "rule_based_v060_probe10_20261030"
+    ],
+    "archive": "0.6.0"
+  },
+  {
+    "identity": "d8f25324771f7bae1a426605cb998887fca3060b22aaecff990ff08668259f9e",
+    "provenance_path": "runs\\rule_based_v060_acceptance_env1_20261030\\current\\agent_provenance.json",
+    "policy_input_helper_sha256": {
+      "policy.py": "001d1875af3709a1ff8f061bd02f3b4c447f3cf6ea206c48a19add0523a9fd06",
+      "agent_input.py": "48f5b76070082760b8264f5391156d44b42342b817214b284f028aa5c4e02566",
+      "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "rule_based_lane_change.py": "1886ac1022b3b21c88ddf2c84850e936bf0772c4eaac478efb86ed728e661e17",
+      "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9"
+    },
+    "configuration_sha256": "6255e872d7c94f9a80c8df9949bde0e933dea44dfd0b8fba097ee607133496ee",
+    "runs": [
+      "rule_based_v060_acceptance_env1_20261030",
+      "rule_based_v060_acceptance_family12_20261030",
+      "rule_based_v060_probe07_20261030"
+    ],
+    "archive": "dev060_03"
+  },
+  {
+    "identity": "bdefc68399e52cbc68d18ebd9e3e777f9da9ff843205bf20c9b3617cbc5044e1",
+    "provenance_path": "runs\\rule_based_v060_draft01_easy3_20261030\\current\\agent_provenance.json",
+    "policy_input_helper_sha256": {
+      "policy.py": "f222931dc2e528dc9fa6a501a4ba606c9645e60abbeb045f81dbea797c89f34e",
+      "agent_input.py": "48f5b76070082760b8264f5391156d44b42342b817214b284f028aa5c4e02566",
+      "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "rule_based_lane_change.py": "524a3aefc87680a3475c5b04a181d2d2e81621a280e5834d5e89caa861447dfa",
+      "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9"
+    },
+    "configuration_sha256": "f292e5e3f076fbbafc133d5b3815918a7ef2cad58e03d09235bbabd79fb0d631",
+    "runs": [
+      "rule_based_v060_draft01_easy3_20261030",
+      "rule_based_v060_probe02_20261030"
+    ],
+    "archive": "dev060_04"
+  },
+  {
+    "identity": "4960e05717971fcd0cb0f579ca6ccda3fd11a1d94b395f318d48941e9f903d39",
+    "provenance_path": "runs\\rule_based_v060_family12_20261030\\current\\agent_provenance.json",
+    "policy_input_helper_sha256": {
+      "policy.py": "d10fb00e0310600a356a9ccb545864bba96ea0e4201760cf5efeee6f9901a2e0",
+      "agent_input.py": "48f5b76070082760b8264f5391156d44b42342b817214b284f028aa5c4e02566",
+      "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "rule_based_lane_change.py": "524a3aefc87680a3475c5b04a181d2d2e81621a280e5834d5e89caa861447dfa",
+      "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9"
+    },
+    "configuration_sha256": "f292e5e3f076fbbafc133d5b3815918a7ef2cad58e03d09235bbabd79fb0d631",
+    "runs": [
+      "rule_based_v060_family12_20261030",
+      "rule_based_v060_probe03_20261030"
+    ],
+    "archive": "dev060_05"
+  },
+  {
+    "identity": "e41dff6aea3fc7311c1c11a11619a72479e0a594aa1c0e2274fda7447f27a2f7",
+    "provenance_path": "runs\\rule_based_v060_final_env1_20261030\\current\\agent_provenance.json",
+    "policy_input_helper_sha256": {
+      "policy.py": "001d1875af3709a1ff8f061bd02f3b4c447f3cf6ea206c48a19add0523a9fd06",
+      "agent_input.py": "48f5b76070082760b8264f5391156d44b42342b817214b284f028aa5c4e02566",
+      "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "rule_based_lane_change.py": "5adf393c1fd5884255bb735cdd3db7d01c35b01063c452c8f9a3536446c9741a",
+      "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9"
+    },
+    "configuration_sha256": "6255e872d7c94f9a80c8df9949bde0e933dea44dfd0b8fba097ee607133496ee",
+    "runs": [
+      "rule_based_v060_final_env1_20261030",
+      "rule_based_v060_final_family12_20261030",
+      "rule_based_v060_probe05_20261030"
+    ],
+    "archive": "dev060_06"
+  },
+  {
+    "identity": "37a36df94433e41879a63b4906b1014f42f86c5109bec4cf2c5043b278ecdd2b",
+    "provenance_path": "runs\\rule_based_v060_probe04_20261030\\fast_rear\\agent_provenance.json",
+    "policy_input_helper_sha256": {
+      "policy.py": "001d1875af3709a1ff8f061bd02f3b4c447f3cf6ea206c48a19add0523a9fd06",
+      "agent_input.py": "48f5b76070082760b8264f5391156d44b42342b817214b284f028aa5c4e02566",
+      "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "rule_based_lane_change.py": "a9b37f357733f4c549b72f9b2fd2f464e9e231ae8e0a48a8fc64f80d7af84b64",
+      "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9"
+    },
+    "configuration_sha256": "6255e872d7c94f9a80c8df9949bde0e933dea44dfd0b8fba097ee607133496ee",
+    "runs": [
+      "rule_based_v060_probe04_20261030"
+    ],
+    "archive": "dev060_07"
+  },
+  {
+    "identity": "b7807d127724d785eca67401360eeadefddfdeb5295bb0d874fe756e187248c6",
+    "provenance_path": "runs\\rule_based_v060_probe06_20261030\\fast_rear\\agent_provenance.json",
+    "policy_input_helper_sha256": {
+      "policy.py": "001d1875af3709a1ff8f061bd02f3b4c447f3cf6ea206c48a19add0523a9fd06",
+      "agent_input.py": "48f5b76070082760b8264f5391156d44b42342b817214b284f028aa5c4e02566",
+      "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "rule_based_lane_change.py": "23b59a6e576655b189110aa6873181659a19a049483ffdd730d9294fa65c0ba8",
+      "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9"
+    },
+    "configuration_sha256": "6255e872d7c94f9a80c8df9949bde0e933dea44dfd0b8fba097ee607133496ee",
+    "runs": [
+      "rule_based_v060_probe06_20261030"
+    ],
+    "archive": "dev060_08"
+  },
+  {
+    "identity": "c18dbb6cff9a3c770fb4efc3a327fed3a79f17de9f021cc9b17c0f7fc0590d92",
+    "provenance_path": "runs\\rule_based_v060_probe08_20261030\\fast_rear\\agent_provenance.json",
+    "policy_input_helper_sha256": {
+      "policy.py": "001d1875af3709a1ff8f061bd02f3b4c447f3cf6ea206c48a19add0523a9fd06",
+      "agent_input.py": "69f3cbc1032289ab8c7e691dd11328fbc6830e3d8635d5d3ae62d96daf7258c1",
+      "rule_based_junction.py": "f36c7a708052175751cc32ff0b5465b890a09f697a800af87d4ac0c57f24fa47",
+      "rule_based_lane_change.py": "1886ac1022b3b21c88ddf2c84850e936bf0772c4eaac478efb86ed728e661e17",
+      "rule_based_memory.py": "bc22bf9b44906670c8a85c9692b773dbb30b5f33043fc2df940965595f2cbb01",
+      "rule_based_traffic.py": "db6b17e607ee3b876ecd99d47072be5d3ad1aa44acd0b06de862a6f07d5a37e9"
+    },
+    "configuration_sha256": "6255e872d7c94f9a80c8df9949bde0e933dea44dfd0b8fba097ee607133496ee",
+    "runs": [
+      "rule_based_v060_probe08_20261030",
+      "rule_based_v060_release_env1_20261030",
+      "rule_based_v060_release_extreme_cr_20261030",
+      "rule_based_v060_release_extreme_sctx_20261030",
+      "rule_based_v060_release_extreme_scxo_20261030",
+      "rule_based_v060_release_roads9_20261030"
+    ],
+    "archive": "dev060_09"
+  }
+]

@@ -8,7 +8,7 @@ Displays read-only registration details for all registered agents in AgentRegist
 - implementation_ref, description
 """
 
-from typing import List, Optional
+from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
@@ -16,7 +16,6 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
     QGroupBox,
     QHeaderView,
-    QLabel,
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
@@ -25,7 +24,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.launcher.models import AgentRegistrationV1
 from src.workbench.core_adapter import CoreAdapter
 
 

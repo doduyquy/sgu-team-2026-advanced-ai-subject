@@ -10,7 +10,7 @@ This module implements the deterministic resolution of LaunchRequestV1 into Reso
 
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from src.launcher.cases import (
     get_default_project_root,
@@ -23,7 +23,6 @@ from src.launcher.models import (
     CheckpointResolvedExperimentPlanV1,
     LaunchRequestV1,
     LauncherMode,
-    ResolvedCaseV1,
     ResolvedExperimentPlanV1,
     compute_resolved_plan_sha256,
     mode_to_run_kind,

@@ -9,3 +9,23 @@ autonomous-driving-rl/results/audits/mapsuite/canonical_candidates.json text eol
 autonomous-driving-rl/results/audits/evaluation_protocol/geometry_split_manifest.csv text eol=crlf
 autonomous-driving-rl/results/audits/evaluation_protocol/validation_case_manifest.csv text eol=crlf
 autonomous-driving-rl/results/audits/evaluation_protocol/test_case_manifest.csv text eol=crlf
+
+# Frozen experiment sources and evidence record raw-byte SHA-256 digests.
+# Disable newline conversion so historical hashes survive add/checkout on any OS.
+autonomous-driving-rl/experiments/rule_based/versions/** -text
+autonomous-driving-rl/experiments/legacy_source/** -text
+autonomous-driving-rl/results/audits/rule_based/** -text
+autonomous-driving-rl/results/audits/source_cleanup/** -text
+
+# Launcher telemetry retains its recorded source bytes.
+autonomous-driving-rl/src/launcher/telemetry.py -text
+
+# Agent4 PDD verifies these release files and dependencies by raw-byte SHA-256.
+autonomous-driving-rl/artifacts/agent4_pdd/1.0.0/** -text
+autonomous-driving-rl/src/agents/_pdd_frozen/** -text
+autonomous-driving-rl/src/agents/agent4_pdd_loader.py -text
+autonomous-driving-rl/src/control_stabilizer/controller.py -text
+autonomous-driving-rl/src/agents/rule_based_*.py text eol=crlf
+autonomous-driving-rl/src/platform/action_adapter.py text eol=crlf
+autonomous-driving-rl/src/platform/agent.py text eol=crlf
+autonomous-driving-rl/src/platform/agent_input.py text eol=crlf

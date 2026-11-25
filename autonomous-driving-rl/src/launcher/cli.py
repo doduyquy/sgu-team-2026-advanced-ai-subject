@@ -79,6 +79,7 @@ def _add_plan_arguments(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--wandb", choices=["AUTO", "DISABLED", "OFFLINE", "ONLINE", "auto", "disabled", "offline", "online"], default="AUTO", help="W&B tracking mode (AUTO defaults to OFFLINE for benchmarks, DISABLED for sandbox)")
     subparser.add_argument("--runs-root", default=None, help="Custom runs storage directory override")
     subparser.add_argument("--run-id", "--custom-run-id", default=None, dest="custom_run_id", help="Custom run_id identifier")
+    subparser.add_argument("--finish-visual", choices=["hologram", "none"], default="hologram", help="3D finish visual in NATIVE render mode: 'hologram' (enabled) or 'none' (disabled)")
     subparser.add_argument("--checkpoint", default=None, help="Explicit checkpoint bundle directory for candidate RL agents (e.g. stage5_sac)")
     subparser.add_argument("--json", action="store_true", help="Output structured JSON")
 
@@ -163,6 +164,10 @@ def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
         checkpoint = next((b for b in bindings if b.training_run_seed == args.training_seed), None)
         if checkpoint is None:
             raise ValueError("No trained checkpoint for the requested training seed")
+
+    if hasattr(args, "finish_visual") and args.finish_visual:
+        import os
+        os.environ["METADRIVE_FINISH_VISUAL_STYLE"] = str(args.finish_visual).lower().strip()
 
     request_class = CheckpointLaunchRequestV1 if checkpoint is not None else LaunchRequestV1
     return request_class(

@@ -1,0 +1,429 @@
+[
+  {
+    "path": "src\\launcher\\cases.py",
+    "line": 20,
+    "removed": [
+      "MapGenerateMethod"
+    ]
+  },
+  {
+    "path": "src\\launcher\\contracts.py",
+    "line": 10,
+    "removed": [
+      "Path"
+    ]
+  },
+  {
+    "path": "src\\launcher\\contracts.py",
+    "line": 11,
+    "removed": [
+      "List"
+    ]
+  },
+  {
+    "path": "src\\launcher\\events.py",
+    "line": 12,
+    "removed": [
+      "Optional"
+    ]
+  },
+  {
+    "path": "src\\launcher\\executor.py",
+    "line": 17,
+    "removed": [
+      "math"
+    ]
+  },
+  {
+    "path": "src\\launcher\\executor.py",
+    "line": 47,
+    "removed": [
+      "RunKind",
+      "TerminalReason",
+      "WandbMode"
+    ]
+  },
+  {
+    "path": "src\\launcher\\preflight.py",
+    "line": 32,
+    "removed": [
+      "PreflightBlockedError"
+    ]
+  },
+  {
+    "path": "src\\launcher\\registry.py",
+    "line": 11,
+    "removed": [
+      "Optional"
+    ]
+  },
+  {
+    "path": "src\\launcher\\resolver.py",
+    "line": 13,
+    "removed": [
+      "Any",
+      "Dict"
+    ]
+  },
+  {
+    "path": "src\\launcher\\resolver.py",
+    "line": 22,
+    "removed": [
+      "ResolvedCaseV1"
+    ]
+  },
+  {
+    "path": "src\\platform\\agent.py",
+    "line": 9,
+    "removed": [
+      "ABC",
+      "abstractmethod"
+    ]
+  },
+  {
+    "path": "src\\platform\\agent.py",
+    "line": 11,
+    "removed": [
+      "field"
+    ]
+  },
+  {
+    "path": "src\\platform\\agent.py",
+    "line": 14,
+    "removed": [
+      "Tuple",
+      "Union"
+    ]
+  },
+  {
+    "path": "src\\platform\\agent.py",
+    "line": 18,
+    "removed": [
+      "CanonicalActionV1",
+      "ContinuousBox2Adapter",
+      "get_action_adapter"
+    ]
+  },
+  {
+    "path": "src\\platform\\agent_input.py",
+    "line": 20,
+    "removed": [
+      "Union"
+    ]
+  },
+  {
+    "path": "src\\platform\\episode.py",
+    "line": 10,
+    "removed": [
+      "Optional"
+    ]
+  },
+  {
+    "path": "src\\platform\\experiment_logging.py",
+    "line": 21,
+    "removed": [
+      "math"
+    ]
+  },
+  {
+    "path": "src\\platform\\experiment_logging.py",
+    "line": 27,
+    "removed": [
+      "sys"
+    ]
+  },
+  {
+    "path": "src\\platform\\experiment_logging.py",
+    "line": 29,
+    "removed": [
+      "Tuple",
+      "Union"
+    ]
+  },
+  {
+    "path": "src\\platform\\experiment_logging.py",
+    "line": 34,
+    "removed": [
+      "AggregateMetrics"
+    ]
+  },
+  {
+    "path": "src\\platform\\metrics.py",
+    "line": 8,
+    "removed": [
+      "field"
+    ]
+  },
+  {
+    "path": "src\\platform\\metrics.py",
+    "line": 11,
+    "removed": [
+      "Union"
+    ]
+  },
+  {
+    "path": "src\\platform\\protocol.py",
+    "line": 13,
+    "removed": [
+      "math"
+    ]
+  },
+  {
+    "path": "src\\platform\\specs.py",
+    "line": 10,
+    "removed": [
+      "Optional"
+    ]
+  },
+  {
+    "path": "src\\platform\\wandb_backend.py",
+    "line": 13,
+    "removed": [
+      "ABC",
+      "abstractmethod"
+    ]
+  },
+  {
+    "path": "src\\platform\\wandb_backend.py",
+    "line": 15,
+    "removed": [
+      "dataclass"
+    ]
+  },
+  {
+    "path": "src\\platform\\wandb_backend.py",
+    "line": 16,
+    "removed": [
+      "Enum"
+    ]
+  },
+  {
+    "path": "src\\platform\\wandb_backend.py",
+    "line": 17,
+    "removed": [
+      "math"
+    ]
+  },
+  {
+    "path": "src\\platform\\wandb_backend.py",
+    "line": 19,
+    "removed": [
+      "Path"
+    ]
+  },
+  {
+    "path": "src\\platform\\wandb_backend.py",
+    "line": 20,
+    "removed": [
+      "Tuple",
+      "Union"
+    ]
+  },
+  {
+    "path": "src\\platform\\wandb_backend.py",
+    "line": 24,
+    "removed": [
+      "RunKind"
+    ]
+  },
+  {
+    "path": "src\\workbench\\app.py",
+    "line": 5,
+    "removed": [
+      "os"
+    ]
+  },
+  {
+    "path": "src\\workbench\\contracts.py",
+    "line": 9,
+    "removed": [
+      "Path"
+    ]
+  },
+  {
+    "path": "src\\workbench\\hardening_contracts.py",
+    "line": 9,
+    "removed": [
+      "Path"
+    ]
+  },
+  {
+    "path": "src\\workbench\\live_telemetry.py",
+    "line": 17,
+    "removed": [
+      "Tuple"
+    ]
+  },
+  {
+    "path": "src\\workbench\\main_window.py",
+    "line": 20,
+    "removed": [
+      "Qt"
+    ]
+  },
+  {
+    "path": "src\\workbench\\process_runner.py",
+    "line": 22,
+    "removed": [
+      "Any",
+      "Dict"
+    ]
+  },
+  {
+    "path": "src\\workbench\\protocol.py",
+    "line": 17,
+    "removed": [
+      "List",
+      "Tuple"
+    ]
+  },
+  {
+    "path": "src\\workbench\\protocol.py",
+    "line": 19,
+    "removed": [
+      "LauncherEventType",
+      "LauncherEventV1"
+    ]
+  },
+  {
+    "path": "src\\workbench\\protocol.py",
+    "line": 20,
+    "removed": [
+      "ResolvedExperimentPlanV1"
+    ]
+  },
+  {
+    "path": "src\\workbench\\protocol.py",
+    "line": 21,
+    "removed": [
+      "PreflightCheckV1",
+      "PreflightReportV1"
+    ]
+  },
+  {
+    "path": "src\\workbench\\results_contracts.py",
+    "line": 9,
+    "removed": [
+      "Path"
+    ]
+  },
+  {
+    "path": "src\\workbench\\results_contracts.py",
+    "line": 13,
+    "removed": [
+      "GATE7_5A_BASELINE_MERGE_SHA",
+      "WORKBENCH_PROTOCOL_VERSION"
+    ]
+  },
+  {
+    "path": "src\\workbench\\results_repository.py",
+    "line": 11,
+    "removed": [
+      "field"
+    ]
+  },
+  {
+    "path": "src\\workbench\\results_repository.py",
+    "line": 18,
+    "removed": [
+      "RunKind",
+      "RunStatus"
+    ]
+  },
+  {
+    "path": "src\\workbench\\worker.py",
+    "line": 29,
+    "removed": [
+      "Optional"
+    ]
+  },
+  {
+    "path": "src\\workbench\\worker.py",
+    "line": 39,
+    "removed": [
+      "LauncherMode"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\agent_explorer_widget.py",
+    "line": 11,
+    "removed": [
+      "List"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\agent_explorer_widget.py",
+    "line": 15,
+    "removed": [
+      "QLabel"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\agent_explorer_widget.py",
+    "line": 28,
+    "removed": [
+      "AgentRegistrationV1"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\case_explorer_widget.py",
+    "line": 15,
+    "removed": [
+      "Qt"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\experiment_setup_widget.py",
+    "line": 17,
+    "removed": [
+      "Dict",
+      "List"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\plan_preflight_widget.py",
+    "line": 11,
+    "removed": [
+      "List"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\plan_preflight_widget.py",
+    "line": 15,
+    "removed": [
+      "QHBoxLayout"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\results_widget.py",
+    "line": 20,
+    "removed": [
+      "Any",
+      "Dict",
+      "List"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\results_widget.py",
+    "line": 25,
+    "removed": [
+      "QComboBox",
+      "QLineEdit",
+      "QScrollArea"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\run_monitor_widget.py",
+    "line": 14,
+    "removed": [
+      "List"
+    ]
+  },
+  {
+    "path": "src\\workbench\\widgets\\run_monitor_widget.py",
+    "line": 19,
+    "removed": [
+      "QTabWidget"
+    ]
+  }
+]

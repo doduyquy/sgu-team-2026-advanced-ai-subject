@@ -1,0 +1,62 @@
+{
+  "recorded_at_utc": "2026-10-30T15:21:39.205817+00:00",
+  "drafts": [
+    {
+      "label": "dev050_01",
+      "source_run_id": "rule_based_v050_trial01_20261030",
+      "fingerprint": "f896b3d3c0512e8afec00aeb5d598664db3b58ba4a0ec3b725a294ff049b8fba"
+    },
+    {
+      "label": "dev050_02",
+      "source_run_id": "rule_based_v050_trial02_20261030",
+      "fingerprint": "f43bf7523a0961df392e894bf2d7ef4e3c06d70e3fce406e4e985d8403708f5d"
+    },
+    {
+      "label": "dev050_03",
+      "source_run_id": "rule_based_v050_trial03_20261030",
+      "fingerprint": "48bc36fb5f4d5578d240d295fa563c5e0a9412d0b8721df450a42a3c55b65edd"
+    },
+    {
+      "label": "dev050_04",
+      "source_run_id": "rule_based_v050_trial04_family12_20261030",
+      "fingerprint": "c29fed14d45f98542bd353f33ca755295594f11e78bcfb81cd677e3190b4ba50"
+    },
+    {
+      "label": "dev050_05",
+      "source_run_id": "rule_based_v050_trial05_geometry_20261030",
+      "fingerprint": "151c66dc266cac6598247187dc2f162ddecb91f45e72629837e5484fec6c16e4"
+    },
+    {
+      "label": "dev050_06",
+      "source_run_id": "rule_based_v050_trial06_road_paths_20261030",
+      "fingerprint": "c68d3bfb900098d67fd7eee0e0cd977ff5de8908158d48d1d77c515c38802e27"
+    },
+    {
+      "label": "dev050_07",
+      "source_run_id": "rule_based_v050_trial07_family12_20261030",
+      "fingerprint": "68cae46d0c5f8393f48e0b52d552208094bdf8b1a7076de375a83a9f6f02efa5"
+    },
+    {
+      "label": "dev050_08",
+      "source_run_id": "rule_based_v050_trial08_rear_side_20261030",
+      "fingerprint": "3ecfec2f34c820bf9d7aa24561e615560b2a2ce179684224fdac3ee4176abcc6"
+    },
+    {
+      "label": "dev050_09",
+      "source_run_id": "rule_based_v050_trial09_rear_side_20261030",
+      "fingerprint": "7df8e029b2eebcc8055017488cd469ed568bbef5874c1adbf3b814d0e0a81499"
+    },
+    {
+      "label": "dev050_10",
+      "source_run_id": "rule_based_v050_trial10_timed_cut_in_20261030",
+      "fingerprint": "afa85f3948ee2b2ecc4bf5063e5e1934e5b7ab4da0e0460f1cfdcac2a1769368"
+    },
+    {
+      "label": "dev050_11",
+      "source_run_id": "rule_based_v050_final_family12_20261030",
+      "fingerprint": "c1ae854dba4efcb74cc20672040f5a227a754a45e5f95bf3123f5095016512f6"
+    }
+  ],
+  "official_release_snapshot": "experiments/rule_based/versions/0.5.0",
+  "note": "dev050_* are historical drafts, including failures; not official releases. Exact recorded defaults may be loaded via --baseline-version <label> for TRAIN development."
+}

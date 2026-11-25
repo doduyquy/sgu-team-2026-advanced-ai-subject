@@ -1,0 +1,127 @@
+{
+  "recorded_at_utc": "2026-10-30T15:37:44.315791+00:00",
+  "release": "0.5.0",
+  "status": "DEVELOPMENT_RELEASE_SCOPED_TRAIN_VERIFIED",
+  "full_agent_plan_complete": false,
+  "source_hashes_match_tested_and_frozen_source": true,
+  "tests_passed": 252,
+  "test_artifact": "results/audits/rule_based/v0.5.0_checks/tests_acceptance_metadrive_20261030.json",
+  "verified_archive_labels": [
+    "0.5.0",
+    "dev050_01",
+    "dev050_02",
+    "dev050_03",
+    "dev050_04",
+    "dev050_05",
+    "dev050_06",
+    "dev050_07",
+    "dev050_08",
+    "dev050_09",
+    "dev050_10",
+    "dev050_11"
+  ],
+  "archive_default_configuration_import_checks": "Passed in read-only load check before this record",
+  "local_document_links_verified": 8,
+  "all_0_5_attempts_have_final_status": true,
+  "run_statuses": {
+    "rule_based_v050_acceptance_env1_20261030": "COMPLETED",
+    "rule_based_v050_acceptance_family12_20261030": "COMPLETED",
+    "rule_based_v050_cli_smoke_20261030": "COMPLETE",
+    "rule_based_v050_env1_targeted_20261030": "COMPLETED",
+    "rule_based_v050_final_env1_20261030": "COMPLETED",
+    "rule_based_v050_final_family12_20261030": "INTERRUPTED",
+    "rule_based_v050_obstacle_probe01_20261030": "COMPLETED",
+    "rule_based_v050_obstacle_probe02_20261030": "FAILED",
+    "rule_based_v050_obstacle_probe03_20261030": "COMPLETED",
+    "rule_based_v050_obstacle_probe04_acceptance_20261030": "COMPLETED",
+    "rule_based_v050_regression12_20261030": "INTERRUPTED",
+    "rule_based_v050_regression_env1_20261030": "COMPLETED",
+    "rule_based_v050_snapshot_smoke_20261030": "COMPLETED",
+    "rule_based_v050_trial01_20261030": "COMPLETED",
+    "rule_based_v050_trial02_20261030": "COMPLETED",
+    "rule_based_v050_trial03_20261030": "COMPLETED",
+    "rule_based_v050_trial04_family12_20261030": "COMPLETED",
+    "rule_based_v050_trial05_geometry_20261030": "COMPLETED",
+    "rule_based_v050_trial06_road_paths_20261030": "COMPLETED",
+    "rule_based_v050_trial07_family12_20261030": "COMPLETED",
+    "rule_based_v050_trial08_rear_side_20261030": "INTERRUPTED",
+    "rule_based_v050_trial09_rear_side_20261030": "COMPLETED",
+    "rule_based_v050_trial10_timed_cut_in_20261030": "COMPLETED"
+  },
+  "paired_summary": {
+    "noncanonical": true,
+    "split": "TRAIN",
+    "paired_cases": 16,
+    "baseline_version": "0.4.0",
+    "candidate_version": "0.5.0",
+    "baseline_successes": 10,
+    "candidate_successes": 13,
+    "baseline_crashes": 4,
+    "candidate_crashes": 0,
+    "baseline_timeouts": 2,
+    "candidate_timeouts": 3,
+    "new_success_cases": [
+      "sandbox/Hard/SCXOCS/0/0",
+      "sandbox/Hard/XTOCS/0/0",
+      "sandbox/Hard/SCXOCS/0/1"
+    ],
+    "lost_success_cases": [],
+    "reports": [
+      "results/audits/rule_based/v0.5.0/comparison.json",
+      "results/audits/rule_based/v0.5.0_env1/comparison.json"
+    ],
+    "comparison_scope": "Policy plus shared input-extractor change; not a policy-only ablation",
+    "full_108_train_suite": false
+  },
+  "frozen_policy_replays": {
+    "scxocs_env1": {
+      "steps": 1482,
+      "passed": true,
+      "artifact": "results\\audits\\rule_based\\v0.5.0_checks\\replay_acceptance_scxocs_env1.json",
+      "sha256": "1b8a7dd844537824828502f414e2a1cf247c6357fcf477c520df6a1979e91a26"
+    },
+    "xtocs_env0": {
+      "steps": 1065,
+      "passed": true,
+      "artifact": "results\\audits\\rule_based\\v0.5.0_checks\\replay_acceptance_xtocs_env0.json",
+      "sha256": "4236e25456b58edbeed49ac333edf3ec01111f3d72015777471e6e552898cf5c"
+    }
+  },
+  "physical_archive_replay": {
+    "source_run": "rule_based_v050_acceptance_family12_20261030",
+    "archive_run": "rule_based_v050_snapshot_smoke_20261030",
+    "case_id": "sandbox/Medium/SCXCCS/0/0",
+    "source_steps": 895,
+    "archive_steps": 895,
+    "equal_step_count": true,
+    "excluded": [
+      "act_latency_ms"
+    ],
+    "trace_sha256": {
+      "source": "987f610bd7462b66e0d45c54fcad39b185d42ce7a8c7473b43a0eb8c607918b1",
+      "archive": "195e2ac198cda6beb8cb093b626365df2437220a6f9d9e3005a7fa89f5093d4c"
+    },
+    "equal_agent_input": true,
+    "equal_decision": true,
+    "equal_canonical_action": true
+  },
+  "physical_obstacle_probe": {
+    "run_id": "rule_based_v050_obstacle_probe04_acceptance_20261030",
+    "passed": 2,
+    "scenarios": 2
+  },
+  "official_cli": {
+    "run_id": "rule_based_v050_cli_smoke_20261030",
+    "status": "COMPLETE",
+    "clean_successes": 1,
+    "episodes": 1,
+    "trace_rows": 1065
+  },
+  "git_diff_check": "Passed; pre-existing lab04 README line-ending warning does not indicate whitespace errors",
+  "remaining": [
+    "3 Extreme TIMEOUT in selected TRAIN suite",
+    "P4 lane changes/overtaking and required lane/marking metadata",
+    "Controller smoothing/jerk and dense-case latency target",
+    "Full 108 TRAIN and canonical VALIDATION/TEST plus contract audit"
+  ]
+}

@@ -1,6 +1,11 @@
 # Legacy and scientific boundaries
 
-Platform V1, the packaged MapSuite V1 benchmark and the hardened Workbench are the current foundation. A canonical Stage 0 agent is still the next research milestone. Use the [build record](PLATFORM_V1_BUILD_RECORD.md) to understand history, the [contract index](PLATFORM_V1_CONTRACT_INDEX.md) to identify current locks, and the [evidence index](PLATFORM_V1_EVIDENCE_INDEX.md) to find their verification.
+Platform V1, the packaged MapSuite V1 benchmark and the Workbench are the foundation.
+Stage 0 random/naive and Stage 1 rule-based are implemented for SANDBOX/AUDIT;
+their benchmark eligibility remains false pending audit. Use the
+[agent guide](RULE_BASED_AGENT_GUIDE.md) for current execution, the
+[build record](PLATFORM_V1_BUILD_RECORD.md) for history and the
+[evidence index](PLATFORM_V1_EVIDENCE_INDEX.md) for platform verification.
 
 ## Legacy prototype
 

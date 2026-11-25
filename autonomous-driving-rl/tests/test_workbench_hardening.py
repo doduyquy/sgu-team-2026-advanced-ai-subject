@@ -480,7 +480,7 @@ class TestWorkbenchHardeningSuite(unittest.TestCase):
         window._on_execution_report({"execution_report": {"run_id": "custom_run", "run_dir": str(custom_run_dir), "status": "COMPLETE"}})
         window._on_worker_done({"operation": "RUN", "success": True, "run_id": "custom_run"})
 
-        self.assertEqual(window.results_widget.runs_root, self.runs_root)
+        self.assertEqual(window.results_widget.runs_root.resolve(), self.runs_root.resolve())
         self.assertIsNotNone(window.results_widget._current_snapshot)
         self.assertEqual(window.results_widget._current_snapshot.run_id, "custom_run")
         window.close()

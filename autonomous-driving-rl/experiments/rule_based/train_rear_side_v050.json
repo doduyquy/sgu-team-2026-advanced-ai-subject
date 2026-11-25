@@ -1,0 +1,8 @@
+{
+  "name": "rule_based_rear_side_cut_in_train_v050",
+  "purpose": "TRAIN diagnosis of a rear-quarter truck cut-in; not canonical evaluation",
+  "environment_seeds": [0],
+  "geometries": [
+    {"tier": "Extreme", "sequence": "CrXROSTR", "geometry_seed": 0}
+  ]
+}

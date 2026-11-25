@@ -888,7 +888,7 @@ def generate_agent_contract_config(configs_dir):
     contract_data = build_agent_contract_core(
         pinned_commit=EXPECTED_COMMIT,
         pinned_version=EXPECTED_VERSION,
-        status="LOCKED-FOR-PLATFORM-V1"
+        status="SANDBOX-EXTENSION-PENDING-AUDIT"
     )
 
     out_path = configs_dir / "agent_contract_v1.json"
@@ -1018,7 +1018,7 @@ def verify_contract_hashes_against_disk(contract_hashes_path, agent_contract_pat
     code_core = build_agent_contract_core(
         pinned_commit=EXPECTED_COMMIT,
         pinned_version=EXPECTED_VERSION,
-        status="LOCKED-FOR-PLATFORM-V1"
+        status="SANDBOX-EXTENSION-PENDING-AUDIT"
     )
 
     code_hash = canonical_json_sha256(code_core)

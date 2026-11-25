@@ -1,0 +1,37 @@
+{
+  "agent_version": "0.3.0",
+  "snapshot_recorded_at_utc": "2026-10-30T12:37:17.495499+00:00",
+  "retrospective_release_record": true,
+  "note": "Exact source archived before v0.4 edits; not a claim of original release timestamp.",
+  "configuration": {
+    "lookahead_m": 5.0,
+    "lookahead_time_s": 0.5,
+    "k_angle": 1.2,
+    "k_lateral": 1.5,
+    "k_preview": 0.5,
+    "speed_softening_mps": 2.0,
+    "max_steering": 0.5,
+    "cruise_speed_kmh": 45.0,
+    "comfortable_deceleration_mps2": 2.5,
+    "response_time_s": 0.4,
+    "braking_buffer_m": 3.0,
+    "junction_speed_kmh": 24.0,
+    "following_time_s": 1.8,
+    "minimum_following_gap_m": 3.0,
+    "emergency_ttc_s": 1.0,
+    "recovery_speed_kmh": 8.0,
+    "max_lateral_accel_mps2": 1.5,
+    "k_speed": 0.12,
+    "max_throttle": 0.55,
+    "safety_margin_m": 0.3,
+    "observation_max_speed_kmh": 80.0,
+    "observation_max_lane_width_m": 4.5,
+    "observation_road_scale_m": 18.0,
+    "vehicle_width_m": 1.852,
+    "vehicle_length_m": 4.515
+  },
+  "source_sha256": {
+    "agent_input.py": "7f12d3e199008244f5c0352ce5fb0c659f6718358043de48d37d41ac90addc12",
+    "policy.py": "57b5691f50375470f60fc996836d0a75f02d3041ad015cc4bd882966eb8171f7"
+  }
+}

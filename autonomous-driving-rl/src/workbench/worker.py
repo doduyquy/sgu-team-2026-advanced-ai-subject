@@ -26,7 +26,7 @@ import os
 from pathlib import Path
 import sys
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 # Ensure project root is in sys.path
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -36,7 +36,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.launcher.events import LauncherEventV1
 from src.launcher.executor import ExperimentExecutor
-from src.launcher.models import LauncherMode, PreflightBlockedError
+from src.launcher.models import PreflightBlockedError
 from src.launcher.preflight import run_preflight
 from src.launcher.resolver import resolve_experiment_plan
 from src.platform import RunStatus
@@ -56,6 +56,13 @@ def emit(msg_type: WorkbenchMessageType, payload: Dict[str, Any]) -> None:
 
 
 def run_worker_main() -> int:
+    # The JSONL protocol is UTF-8 even when this script is invoked directly
+    # from a Windows shell with a legacy code page (without the GUI runner).
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8")
+
     parser = argparse.ArgumentParser(description="Research Workbench Worker Subprocess")
     parser.add_argument("--operation", choices=["PLAN", "RUN"], required=True, help="Workbench operation mode")
     parser.add_argument("--request-json", type=str, default=None, help="Inline serialized LaunchRequestV1 JSON")

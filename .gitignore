@@ -41,10 +41,17 @@ wandb/
 .env.*
 !.env.example
 
-# Derived MapSuite preview bundles and local verification logs
-autonomous-driving-rl/artifacts/
+# Generated artifacts, with the packaged Agent4 PDD release available to Git.
+autonomous-driving-rl/artifacts/*
+!autonomous-driving-rl/artifacts/agent4_pdd/
+autonomous-driving-rl/artifacts/agent4_pdd/*
+!autonomous-driving-rl/artifacts/agent4_pdd/1.0.0/
+
+# Local archive of earlier Agent4 experiments and their raw artifacts.
+/.agent4-backup/
 
 nii_notes/
+AGENTS.md
 
 # Generated EDA figures; rebuild them from the notebook
 autonomous-driving-rl/notebooks/eda_figures/

@@ -69,11 +69,14 @@ python -m src.launcher.cli agents
 # Inspect training cases
 python -m src.launcher.cli cases --split TRAIN --tier Easy --limit 5
 
-# Resolve a safe single-case sandbox plan without running the simulator
-python -m src.launcher.cli plan --mode SANDBOX --agent fixture_seeded_random --tier Easy --agent-seed 101
+# Resolve a single-case TRAIN plan without running the simulator
+python -X utf8 -m src.launcher.cli plan --mode SANDBOX --agent stage1_rule_based --tier Easy --agent-seed 42
 
-# Run one sandbox episode (fixture only, not a benchmark result)
-python -m src.launcher.cli run --mode SANDBOX --agent fixture_seeded_random --tier Easy --agent-seed 101 --render NATIVE
+# Run the rule-based agent, including traffic/junction/lane-change modules
+python -X utf8 -m src.launcher.cli run --mode SANDBOX --agent stage1_rule_based --tier Medium --sequence SCXCS --geom-seed 14 --env-seed 0 --agent-seed 42 --render NATIVE --wandb DISABLED --finish-visual hologram
+
+# Run the random/naive agent
+python -X utf8 -m src.launcher.cli run --mode SANDBOX --agent stage0_random_naive --tier Easy --agent-seed 42 --render NATIVE --wandb DISABLED
 
 # Launch Research Workbench
 python -m src.workbench.app
@@ -90,7 +93,7 @@ autonomous-driving-rl/
 ├── docs/                   # Human-facing guides + detailed audit/reference documents
 ├── experiments/            # Stage-specific training entry points and experiment notes
 ├── results/audits/         # Committed machine-derived platform audit evidence
-├── runs/                   # Local experiment outputs (git-ignored except .gitkeep)
+├── runs/                   # Local experiment outputs and generated caches (git-ignored)
 ├── scripts/                # Platform audit and diagnostic scripts
 ├── src/
 │   ├── agents/             # Research agent implementations (Stage 0 onward)
@@ -98,9 +101,16 @@ autonomous-driving-rl/
 │   ├── evaluation/         # Legacy exploratory evaluator; not the canonical benchmark path
 │   ├── launcher/           # Plan resolver, registry, preflight, executor, CLI
 │   ├── platform/           # Core scientific contracts: input/action/episode/reward/metrics/logging
+│   ├── logging/            # Agent source/configuration and per-step trace recording
+│   ├── visualization/      # Finish hologram/minimap code; generated textures live in runs/.cache/
 │   └── workbench/          # PySide6 Research Workbench
 └── tests/                  # Platform regression tests
 ```
+
+Source-maintenance record: [cleanup 0.6.1](docs/SOURCE_CLEANUP_V0_6_1.md).
+
+Run all regressions with `python -B -X utf8 scripts/run_tests.py`; this isolates
+backend and Qt tests in separate processes and records their commands/logs.
 
 ## Project rule that matters most
 

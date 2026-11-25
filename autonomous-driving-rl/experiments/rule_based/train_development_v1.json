@@ -1,0 +1,19 @@
+{
+  "name": "rule_based_train_development_v1",
+  "purpose": "Non-canonical paired TRAIN development; not VALIDATION/TEST",
+  "environment_seeds": [0, 1],
+  "geometries": [
+    {"tier": "Easy", "sequence": "SCCS", "geometry_seed": 0},
+    {"tier": "Easy", "sequence": "SCS", "geometry_seed": 0},
+    {"tier": "Easy", "sequence": "SCSS", "geometry_seed": 0},
+    {"tier": "Medium", "sequence": "SCTCS", "geometry_seed": 2},
+    {"tier": "Medium", "sequence": "SCXCCS", "geometry_seed": 0},
+    {"tier": "Medium", "sequence": "SCXCS", "geometry_seed": 14},
+    {"tier": "Hard", "sequence": "SCTXrCS", "geometry_seed": 2},
+    {"tier": "Hard", "sequence": "SCXOCS", "geometry_seed": 0},
+    {"tier": "Hard", "sequence": "XTOCS", "geometry_seed": 0},
+    {"tier": "Extreme", "sequence": "CrXROSTR", "geometry_seed": 0},
+    {"tier": "Extreme", "sequence": "SCTXORyCCS", "geometry_seed": 0},
+    {"tier": "Extreme", "sequence": "SCXOCrTYCS", "geometry_seed": 0}
+  ]
+}

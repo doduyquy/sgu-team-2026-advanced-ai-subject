@@ -1,0 +1,2 @@
+case_id,baseline_success,candidate_success,baseline_reason,candidate_reason,baseline_completion,candidate_completion,baseline_simulation_time_s,candidate_simulation_time_s,baseline_speed_kmh,candidate_speed_kmh,candidate_latency_p95_ms,new_success,lost_success,lower_completion
+sandbox/Extreme/SCTXORyCCS/0/0,False,False,TIMEOUT,TIMEOUT,0.4726938856105825,0.4726938856105825,342.90000000000003,342.90000000000003,5.608782777684783,5.608782777684783,56.955379999999984,False,False,False
