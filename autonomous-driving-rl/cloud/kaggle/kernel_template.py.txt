@@ -170,9 +170,12 @@ if JOB.get("sharded_output"):
             run([*python, "-m", "cloud.kaggle.runtime", "evaluate", "--model", str(state / "model.zip"),
                  "--model-sha", digest(state / "model.zip"), "--tier", "Easy", "--out", str(results / "panel.json")],
                 started + JOB["max_seconds"] - 20)
-            if JOB.get("guided_curriculum_from"):
+            tiers = json.loads((workspace / "cloud/kaggle/recipe.json").read_text(encoding="utf-8"))["phase_weights"]
+            for tier in tiers.get(JOB.get("phase"), {}):
+                if tier == "Easy":
+                    continue
                 run([*python, "-m", "cloud.kaggle.runtime", "evaluate", "--model", str(state / "model.zip"),
-                     "--model-sha", digest(state / "model.zip"), "--tier", "Medium", "--out", str(results / "panel-medium.json")],
+                     "--model-sha", digest(state / "model.zip"), "--tier", tier, "--out", str(results / f"panel-{tier.lower()}.json")],
                     started + JOB["max_seconds"] - 20)
             evaluation_status = "COMPLETE"
         except (subprocess.TimeoutExpired, TimeoutError):

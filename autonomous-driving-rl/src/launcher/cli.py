@@ -150,8 +150,10 @@ def handle_cases(args: argparse.Namespace) -> int:
 
 
 def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
+    if args.agent == "stage5_sac_terminal_preview" and args.mode != "SANDBOX":
+        raise ValueError("Terminal Preview SAC is available in SANDBOX only")
     if getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER) != LEGACY_TASK_PRODUCER:
-        if args.agent != "stage5_sac" or args.mode != "SANDBOX":
+        if args.agent not in {"stage5_sac", "stage5_sac_terminal_preview"} or args.mode != "SANDBOX":
             raise ValueError("Corrected TaskContext producer is only available for Stage 5 SANDBOX")
     """Builds LaunchRequestV1 from parsed CLI arguments."""
     mode = LauncherMode(args.mode.upper())
@@ -187,7 +189,7 @@ def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
 
 
 def handle_plan(args: argparse.Namespace) -> int:
-    if args.agent == "stage5_sac":
+    if args.agent in {"stage5_sac", "stage5_sac_terminal_preview"}:
         if not getattr(args, "checkpoint", None):
             print("[ERROR] Agent 'stage5_sac' requires an explicit checkpoint bundle directory via --checkpoint <path>.", file=sys.stderr)
             return 1
@@ -198,6 +200,9 @@ def handle_plan(args: argparse.Namespace) -> int:
         try:
             meta = verify_checkpoint_integrity(ckpt_dir, expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
                                                task_context_producer_id=getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER))
+            if args.agent == "stage5_sac_terminal_preview":
+                from src.launcher.registry import make_sac_agent_factory
+                make_sac_agent_factory(ckpt_dir, task_context_producer_id=args.task_context_producer, terminal_preview=True)
             if not args.json:
                 print(f"[OK] Verified SAC checkpoint bundle: {ckpt_dir} (SHA256: {meta.get('model_sha256')[:16]}...)")
         except (CheckpointIntegrityError, ValueError, FileNotFoundError) as exc:
@@ -206,6 +211,9 @@ def handle_plan(args: argparse.Namespace) -> int:
 
     request = build_launch_request_from_args(args)
     registry = None if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST) else build_default_agent_registry()
+    if args.agent == "stage5_sac_terminal_preview":
+        from src.launcher.registry import build_terminal_preview_sandbox_registry
+        registry = build_terminal_preview_sandbox_registry()
 
     try:
         plan = resolve_experiment_plan(request, registry=registry)
@@ -238,7 +246,7 @@ def handle_plan(args: argparse.Namespace) -> int:
 
 def handle_run(args: argparse.Namespace) -> int:
     agent_factory = None
-    if args.agent == "stage5_sac":
+    if args.agent in {"stage5_sac", "stage5_sac_terminal_preview"}:
         if not getattr(args, "checkpoint", None):
             print("[ERROR] Agent 'stage5_sac' requires an explicit checkpoint bundle directory via --checkpoint <path>.", file=sys.stderr)
             return 1
@@ -250,13 +258,17 @@ def handle_run(args: argparse.Namespace) -> int:
         try:
             meta = verify_checkpoint_integrity(ckpt_dir, expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
                                                task_context_producer_id=getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER))
-            agent_factory = make_sac_agent_factory(ckpt_dir, task_context_producer_id=getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER))
+            agent_factory = make_sac_agent_factory(ckpt_dir, task_context_producer_id=getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER),
+                                                   terminal_preview=args.agent == "stage5_sac_terminal_preview")
         except (CheckpointIntegrityError, ValueError, FileNotFoundError) as exc:
             print(f"[ERROR] SAC checkpoint verification failed: {exc}", file=sys.stderr)
             return 1
 
     request = build_launch_request_from_args(args)
     registry = None if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST) else build_default_agent_registry()
+    if args.agent == "stage5_sac_terminal_preview":
+        from src.launcher.registry import build_terminal_preview_sandbox_registry
+        registry = build_terminal_preview_sandbox_registry(agent_factory)
 
     try:
         plan = resolve_experiment_plan(request, registry=registry)

@@ -106,7 +106,7 @@ def train(args):
     parser.add_argument("--guided-gradient-steps", type=int, choices=(1,))
     parser.add_argument("--guided-actor-lr-scale", type=float, choices=(0.25,))
     parser.add_argument("--phase", default="easy", choices=("easy", "medium", "hard", "extreme", "mixed"))
-    parser.add_argument("--guided-curriculum-from", choices=("easy",))
+    parser.add_argument("--guided-curriculum-from", choices=("easy", "medium", "hard"))
     parser.add_argument("--guided-rollout-axis", choices=("steering", "throttle_brake"))
     parser.add_argument("--capacity", type=int, default=runtime.RECIPE["preflight"]["capacity"])
     parser.add_argument("--transitions", required=True, type=int)
@@ -120,8 +120,10 @@ def train(args):
     learner_args.extend(["--capacity", str(config.capacity), "--transitions", str(config.transitions), "--phase", config.phase])
     if (config.guided_curriculum_from or config.guided_rollout_axis) and not config.resume:
         parser.error("Curriculum transition and axis retention require a verified guided parent")
-    if config.guided_curriculum_from and (config.phase != "medium" or config.guided_rollout_axis):
-        parser.error("Initial curriculum transition requires the unassisted Easy-to-Medium profile")
+    if config.guided_curriculum_from and (
+            {"easy": "medium", "medium": "hard", "hard": "extreme"}[config.guided_curriculum_from] != config.phase
+            or config.guided_rollout_axis):
+        parser.error("Curriculum transition requires the next phase and unassisted collection")
     parent = None
     parent_gradient_steps = -1
     parent_actor_lr_scale = 1.0
@@ -158,6 +160,15 @@ def train(args):
 
         def load_replay_buffer(self, path, truncate_last_traj=True):
             super().load_replay_buffer(path, truncate_last_traj=truncate_last_traj)
+            if self.device.type == "cuda":
+                optimizers = (self.actor.optimizer, self.critic.optimizer, self.ent_coef_optimizer)
+                actor_device = next(self.actor.parameters()).device
+                if (self.replay_buffer.device.type != "cuda" or self.log_ent_coef.device != actor_device
+                        or any(not optimizer.state for optimizer in optimizers)
+                        or any(moment.device != actor_device for optimizer in optimizers
+                               for state in optimizer.state.values() for key, moment in state.items()
+                               if key in {"exp_avg", "exp_avg_sq"})):
+                    raise ValueError("Guided GPU resume did not move replay sampling, alpha and Adam moments")
             evidence = self.guided_prefill
             if (self.buffer_size != parent["identity"]["capacity"]
                     or self.replay_buffer.buffer_size * self.replay_buffer.n_envs != self.buffer_size

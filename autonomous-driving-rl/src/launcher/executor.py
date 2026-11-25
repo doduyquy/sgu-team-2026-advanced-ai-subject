@@ -266,15 +266,15 @@ class ExperimentExecutor:
         }
 
         checkpoint = getattr(self.plan, "checkpoint_binding", None)
+        is_stage5 = self.plan.agent_registration.agent_id in {"stage5_sac", "stage5_sac_terminal_preview"}
         algorithm_parameters = {"launcher": launcher_prov}
         parameter_provider = getattr(self.agent_factory, "experiment_parameters", None)
         if parameter_provider is not None:
-            param_key = "sac_checkpoint" if self.plan.agent_registration.method_family == "MODEL_FREE_RL" else "planner"
+            param_key = "sac_checkpoint" if is_stage5 or self.plan.agent_registration.method_family == "MODEL_FREE_RL" else "planner"
             algorithm_parameters[param_key] = parameter_provider()
         if checkpoint is not None:
             algorithm_parameters["checkpoint"] = checkpoint.semantic_identity()
 
-        is_stage5 = self.plan.agent_registration.agent_id == "stage5_sac"
         producer_id = LEGACY_TASK_PRODUCER
         if is_stage5:
             recorded = algorithm_parameters.get("sac_checkpoint", {}).get("task_context_producer")

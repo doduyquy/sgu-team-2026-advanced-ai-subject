@@ -64,7 +64,7 @@ def screen(args):
     seeds = runtime.RECIPE["evaluation_seeds"]
     try:
         runtime.RECIPE["evaluation_seeds"] = seeds[:1]
-        sys.argv = [argv[0], "evaluate", *args, "--tier", "Easy"]
+        sys.argv = [argv[0], "evaluate", *args]
         runtime.main()
     finally:
         runtime.RECIPE["evaluation_seeds"] = seeds

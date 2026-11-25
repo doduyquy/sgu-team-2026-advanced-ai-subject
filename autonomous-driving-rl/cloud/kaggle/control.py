@@ -94,13 +94,28 @@ def archive(target, entries):
             member = zipfile.ZipInfo(name, (2026, 11, 25, 0, 0, 0))
             out.writestr(member, data, compress_type=zipfile.ZIP_DEFLATED)
 
-def package():
-    verify(SOURCE, SOURCE_SHA)
-    anchor = WORK / "parity.json"
-    if not anchor.is_file():
-        raise RuntimeError("Run the local parity command first")
+def package(base_job=None):
+    source = SOURCE
+    if base_job:
+        entry = registry()["jobs"][base_job]
+        if entry["status"] != "HARVESTED_VERIFIED" or entry.get("imported_evidence"):
+            raise ValueError("Package inputs must come from a locally harvested learner")
+        previous = entry["planned"]
+        inputs = (ROOT / previous["runtime_path"]).resolve()
+        if not inputs.is_relative_to(WORK.resolve()):
+            raise ValueError("Base runtime path escapes the campaign workspace")
+        verify(inputs / "runtime.zip", previous["runtime_sha"])
+        with zipfile.ZipFile(inputs / "runtime.zip") as bundle:
+            anchor = bundle.read("parity.json")
+        source = inputs / "model.zip"
+    else:
+        path = WORK / "parity.json"
+        if not path.is_file():
+            raise RuntimeError("Run the local parity command first")
+        anchor = path.read_bytes()
+    verify(source, SOURCE_SHA)
     files = {name: (ROOT / name).read_bytes() for name in BUNDLE_PATHS}
-    files["parity.json"] = anchor.read_bytes()
+    files["parity.json"] = anchor
     if any(SECRET.search(data) for data in files.values()):
         raise RuntimeError("Secret-pattern audit failed for allowlisted runtime")
     identifiers = {name: hashlib.sha256(data).hexdigest() for name, data in files.items()}
@@ -112,14 +127,14 @@ def package():
     if not staging.exists():
         staging.mkdir()
         archive(staging / "runtime.zip", files)
-        shutil.copyfile(SOURCE, staging / "model.zip")
+        shutil.copyfile(source, staging / "model.zip")
         write(staging / "source_inventory.json", inventory)
     verify(staging / "model.zip", SOURCE_SHA)
     with zipfile.ZipFile(staging / "runtime.zip") as bundle:
         if set(bundle.namelist()) != set(files) or any(bundle.read(name) != data for name, data in files.items()):
             raise ValueError("Existing immutable package differs. Preserve it and investigate.")
     result = {"runtime_sha": sha(staging / "runtime.zip"), "source_sha": SOURCE_SHA,
-              "runtime_bytes": (staging / "runtime.zip").stat().st_size, "source_bytes": SOURCE.stat().st_size,
+              "runtime_bytes": (staging / "runtime.zip").stat().st_size, "source_bytes": source.stat().st_size,
               "runtime_id": inventory["runtime_id"], "path": str(staging.relative_to(ROOT)),
               "template_sha": identifiers["cloud/kaggle/kernel_template.py.txt"]}
     write(WORK / "bundle.json", result)
@@ -395,7 +410,7 @@ def plan_learning_resume(args, state):
     compare_utd = getattr(args, "reduce_guided_utd_after", None)
     actor_lr_control = getattr(args, "dampen_guided_actor_after", None)
     comparison_id = compare_utd or actor_lr_control
-    budgets = (5000,) if comparison_id else ((10000, 12500, 25000) if guided else (12500, 25000, 50000))
+    budgets = (5000,) if comparison_id else ((10000, 12500, 25000, 50000, 100000) if guided else (12500, 25000, 50000))
     if args.transitions not in budgets:
         raise ValueError("Unsupported continuation budget for this learner")
     step = getattr(args, "parent_step", None)
@@ -403,6 +418,13 @@ def plan_learning_resume(args, state):
     state_path = parent / "COMPLETE.json"
     verify(state_path, state_sha)
     checkpoint = read(state_path)
+    device = getattr(args, "device", None)
+    seconds = getattr(args, "max_seconds", None)
+    next_phase = getattr(args, "phase", None)
+    if (device or seconds or next_phase) and (not guided or comparison_id):
+        raise ValueError("Production options require a Guided SAC continuation")
+    if seconds is not None and not 1800 <= seconds <= 14400:
+        raise ValueError("Production time budget must be 1,800–14,400 seconds")
     if comparison_id:
         comparison = state["jobs"][comparison_id]
         execution = comparison.get("execution", {})
@@ -419,12 +441,15 @@ def plan_learning_resume(args, state):
                     or utd_control["execution"].get("parent_sha") != state_sha):
                 raise ValueError("The actor profile requires both harvested UTD controls from the same parent")
     bundle = read(WORK / "bundle.json")
-    allowed = {"cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/learning_hooks.py"}
+    allowed = {"cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/learning_hooks.py",
+               "src/launcher/registry.py", "src/launcher/executor.py"}
     if guided:
         if (checkpoint.get("learning_mode") != "champion_guided_v1"
                 or checkpoint["identity"].get("online_behavior") != "champion_guided_v1"
                 or checkpoint["external_admitted"] <= 0 or not checkpoint["ledger"]):
             raise ValueError("Guided continuation requires the verified behavior and replay provenance")
+        if checkpoint["identity"].get("guided_rollout_axis"):
+            raise ValueError("Continuation of an anchored collector requires its original frozen behavior anchor")
         allowed.add("cloud/kaggle/guided.py")
     inventories = []
     for archive_path, expected in ((planned["runtime_path"], planned["runtime_sha"]), (bundle["path"], bundle["runtime_sha"])):
@@ -440,7 +465,7 @@ def plan_learning_resume(args, state):
         raise RuntimeError("Full-state continuation requires the original learner, dependencies, and TRAIN schedule")
     job = {key: value for key, value in planned.items()
            if key not in {"warm_step", "warm_start_cursor", "parent_step", "policy_every", "guided_path", "guided_sha",
-                          "utd_control", "actor_lr_control"}}
+                          "utd_control", "actor_lr_control", "guided_curriculum_from"}}
     job.update(job="s5-" + fingerprint([args.campaign, args.round])[:12] + "-j10-a1",
                round=args.round, role="easy_resume", account=args.account, transitions=args.transitions,
                start_transition=checkpoint["transitions"], parent_job=args.parent, parent_sha=state_sha,
@@ -453,8 +478,25 @@ def plan_learning_resume(args, state):
     if guided:
         live_rows = checkpoint["external_admitted"] + checkpoint["transitions"]
         capacity = max(checkpoint["identity"]["capacity"], math.ceil((live_rows + args.transitions) / 4096) * 4096)
-        job.update(guided_resume=True, capacity=capacity, max_seconds=2400, export_reserve=480,
-                   checkpoint_every=10000)
+        if capacity * 3300 + 32_000_000 > LONG_PARENT_LIMIT:
+            raise ValueError("Projected Guided replay exceeds the verified long-parent transport budget")
+        job.update(guided_resume=True, capacity=capacity, max_seconds=seconds or 2400, export_reserve=480,
+                   checkpoint_every=25000 if args.transitions >= 50000 else 10000)
+        parent_phase = checkpoint["identity"].get("phase", planned.get("phase", "easy"))
+        job["phase"] = parent_phase
+        if next_phase:
+            if {"easy": "medium", "medium": "hard", "hard": "extreme"}.get(parent_phase) != next_phase:
+                raise ValueError("Curriculum may advance only to the next approved phase")
+            job.update(phase=next_phase, guided_curriculum_from=parent_phase)
+        if device:
+            job["device"] = device
+        job.pop("accelerator", None)
+        if job.get("device") == "cuda":
+            job["accelerator"] = "NvidiaTeslaT4"
+        if policy_hooks and args.transitions >= 25000:
+            job["policy_every"] = 5000
+        if not comparison_id and (device or seconds or next_phase or args.transitions >= 50000):
+            job["production_continuation"] = True
         if comparison_id:
             if execution["capacity"] < capacity:
                 raise ValueError("The matched control capacity cannot retain the experiment replay")
@@ -857,14 +899,17 @@ def launch(args, state):
         roles = {"j02": "cpu1", "j03": "cpu2", "j04": "gpu2", "j07": "resume", "j08": "easy_pilot",
                  "j09": "easy_long", "j10": "easy_resume", "j11": "easy_guided"}
         budget = 2400 if job["role"] in {"easy_long", "easy_resume"} else RECIPE["preflight"]["max_seconds"]
+        production = (job.get("production_continuation") and job.get("guided_resume") and job.get("parent_sha")
+                      and 1800 <= job["max_seconds"] <= 14400)
         if (sessions is not None or roles.get(args.job) != job["role"]
-                or job["max_seconds"] != budget):
+                or (job["max_seconds"] != budget and not production)):
             raise RuntimeError("Server admission requires unknown capacity and a gated Stage 5 follow-up preflight")
         if active or any(
             row["planned"]["campaign"] == job["campaign"]
             and ((row.get("submitted") and row["planned"]["role"] == job["role"]
                   and row["planned"]["account"] == job["account"]
                   and row["planned"].get("parallel_workload") == job.get("parallel_workload")
+                  and (not production or row["planned"].get("parent_sha") == job["parent_sha"])
                   and row["planned"]["runtime_sha"] == job["runtime_sha"])
                  or (row.get("owner") == owner and row["status"] == "CAPACITY_REJECTED"))
             for row in state["jobs"].values()
@@ -1090,8 +1135,9 @@ def harvest_sharded(entry, staging, temp):
     shutil.copyfile(staging / "execution.json", temp / "execution.json")
     if read(temp / "timing.json")["evaluation_status"] == "COMPLETE":
         fetch_output(entry, job, temp, "panel.json")
-        if expected.get("guided_curriculum_from"):
-            fetch_output(entry, job, temp, "panel-medium.json")
+        for tier in RECIPE["phase_weights"].get(expected.get("phase"), {}):
+            if tier != "Easy":
+                fetch_output(entry, job, temp, f"panel-{tier.lower()}.json")
     return verify_state_artifact(read(temp / "COMPLETE.json"), temp, expected), index_sha
 
 def harvest(state, job):
@@ -1269,7 +1315,7 @@ def verify_cloud_evidence(path, manifest, entry, state):
                 tiers = metrics["online_tier_decisions"]
                 if (parent["identity"]["phase"] != job["guided_curriculum_from"]
                         or metrics["curriculum_from"] != job["guided_curriculum_from"]
-                        or set(tiers) != {"Easy", "Medium"} or min(tiers.values()) <= 0
+                        or set(tiers) != set(RECIPE["phase_weights"][job["phase"]]) or min(tiers.values()) <= 0
                         or sum(tiers.values()) != metrics["transitions"]):
                     raise ValueError("Curriculum evidence must contain both Easy retention and Medium collection")
                 identity["phase"] = job["phase"]
@@ -1335,7 +1381,7 @@ def main():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor")
-    commands.add_parser("package")
+    commands.add_parser("package").add_argument("--from-job")
     pilot = commands.add_parser("pilot-plan")
     pilot.add_argument("--campaign", required=True)
     pilot.add_argument("--round", required=True)
@@ -1357,7 +1403,10 @@ def main():
     resume.add_argument("--account", choices=SLOTS, default=operator_slot())
     resume.add_argument("--parent", required=True)
     resume.add_argument("--parent-step", type=int)
-    resume.add_argument("--transitions", choices=(5000, 10000, 12500, 25000, 50000), required=True, type=int)
+    resume.add_argument("--transitions", choices=(5000, 10000, 12500, 25000, 50000, 100000), required=True, type=int)
+    resume.add_argument("--device", choices=("cpu", "cuda"))
+    resume.add_argument("--max-seconds", type=int)
+    resume.add_argument("--phase", choices=("medium", "hard", "extreme"))
     profile = resume.add_mutually_exclusive_group()
     profile.add_argument("--reduce-guided-utd-after", metavar="HARVESTED_CONTROL_JOB")
     profile.add_argument("--dampen-guided-actor-after", metavar="HARVESTED_UTD_05_JOB")
@@ -1423,7 +1472,7 @@ def main():
         with locked():
             state = registry()
             if args.command == "package":
-                print(package())
+                print(package(args.from_job))
             elif args.command == "plan":
                 plan(args, state)
             elif args.command in {"pilot-plan", "learning-plan"}:

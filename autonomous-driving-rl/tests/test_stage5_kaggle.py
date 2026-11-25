@@ -306,6 +306,11 @@ def test_easy_pilot_compares_two_distinct_checkpoints_on_exact_panel():
     challenger["cases"] = [row for row in challenger["cases"] if row["seed"] == 0]
     ranked = screen_candidates(candidate, [challenger], reference_sha="checkpoint-1")
     assert ranked["purpose"] == "SCREENING_ONLY" and ranked["seed"] == 0
+    medium = {**evaluation("medium-baseline", 0), "tier": "Medium"}
+    improved = {**evaluation("medium-candidate", 2), "tier": "Medium"}
+    assert compare(medium, [improved], reference_sha="medium-baseline", tier="Medium")["milestones"][0]["improved_cases"] == 2
+    with pytest.raises(ValueError, match="12-case Medium"):
+        compare(medium, [candidate], reference_sha="medium-baseline", tier="Medium")
     candidate["cases"][0]["seed"] = 99
     with pytest.raises(ValueError, match="exact baseline case IDs"):
         compare(baseline, [candidate])
@@ -472,6 +477,12 @@ def test_pilot_plan_uses_verified_cpu_when_gpu_only_wins_after_warmup(tmp_path, 
     assert continuation["guided_resume"] and continuation["capacity"] == 20480
     assert continuation["start_transition"] == 5000 and continuation["checkpoint_every"] == 10000
     assert not {"guided_path", "guided_sha", "warm_step"} & continuation.keys()
+    production = SimpleNamespace(campaign="stage5", round="guided-prod", account="account_01", parent=guided_parent,
+                                 transitions=100000, device="cuda", max_seconds=5400, phase="medium")
+    control.plan_learning_resume(production, {"jobs": rows})
+    large = control.read(tmp_path / "plan-stage5-guided-prod.json")["jobs"]["j10"]
+    assert (large["phase"], large["guided_curriculum_from"], large["accelerator"]) == ("medium", "easy", "NvidiaTeslaT4")
+    assert large["capacity"] >= 110300 and large["checkpoint_every"] == 25000 and large["production_continuation"]
     control_id = continuation["job"]
     rows[control_id].update(status="HARVESTED_VERIFIED", execution=continuation)
     args = SimpleNamespace(campaign="stage5", round="guided-utd05", account="account_01", parent=guided_parent,
