@@ -1,5 +1,11 @@
 # Stage 5 Kaggle handoff · 2026-11-25
 
+## Cập nhật cloud activation02
+
+Kaggle tiếp nhận J01 `s5-94d391e6b785-j01-a1` version 1 lúc 18:56:53 ICT sau một lần thử cấp phiên CPU. Job chuyển sang `RUNNING`, sau đó dừng ở kiểm tra Python ABI trước khi cài dependency hoặc chạy parity. Cả 8 account đã xác minh danh tính. G2–G4 vẫn `BLOCKED`. Phiên bản kế tiếp hỗ trợ CPython 3.13 trên Linux x86-64 và cần bundle cùng fingerprint mới. Một lần probe khi capacity chưa xác định đã được sử dụng trong campaign `stage5`.
+
+Các mục dưới đây lưu kết quả của đợt local trước khi kích hoạt cloud.
+
 **Đợt 1 PARTIAL. Cloud READY_FOR_CREDENTIALS.** Kaggle CLI 2.2.4 có sẵn. `account_01`–`account_08` đều MISSING. Owner, quota, ACL, kernel/version và thời gian chạy thực tế chưa được xác minh. Registry có 4 job `PLANNED`, 0 job đã gửi. J05/J06 chờ xác minh B1 cloud, J07 chờ state cha đã harvest.
 
 ## A. Repository và bảo toàn

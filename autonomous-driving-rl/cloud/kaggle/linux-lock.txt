@@ -1,4 +1,4 @@
-# Python 3.10–3.12, Linux x86_64. Resolve under the target Kaggle image.
+# CPython 3.10–3.13, Linux x86_64. Resolve under the target Kaggle image.
 numpy==2.2.6
 gymnasium==1.3.0
 stable-baselines3==2.9.2

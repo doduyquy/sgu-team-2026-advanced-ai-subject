@@ -1,4 +1,5 @@
 """Local correctness regressions for the Stage 5 Kaggle campaign."""
+import ast
 from pathlib import Path
 from types import SimpleNamespace
 import zipfile
@@ -211,6 +212,26 @@ def test_probe_checks_pagination_slug_and_recent_run(monkeypatch, run_state):
             "notebooks_listed": 1, "unaddressable_or_unowned": 1, "latest_runs_checked": 1,
             "latest_run_status_unknown": 0,
         }
+
+
+@pytest.mark.parametrize("machine, version, supported", [
+    ("x86_64", (3, 13, 8), True), ("AMD64", (3, 13, 8), True),
+    ("aarch64", (3, 13, 8), False), ("x86_64", (3, 14, 0), False),
+])
+def test_kernel_runtime_abi(machine, version, supported):
+    template = Path(control.__file__).with_name("kernel_template.py.txt")
+    tree = ast.parse(template.read_text(encoding="utf-8"))
+    guard = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "check_runtime_abi")
+    version_label = ".".join(map(str, version))
+    scope = {"platform": SimpleNamespace(system=lambda: "Linux", machine=lambda: machine,
+                                         python_version=lambda: version_label),
+             "sys": SimpleNamespace(implementation=SimpleNamespace(name="cpython"), version_info=version)}
+    exec(compile(ast.Module(body=[guard], type_ignores=[]), str(template), "exec"), scope)
+    if supported:
+        scope["check_runtime_abi"]()
+    else:
+        with pytest.raises(RuntimeError, match=f"Linux {machine} Python {version_label}"):
+            scope["check_runtime_abi"]()
 
 
 def test_quota_uses_verified_api_minutes(monkeypatch):

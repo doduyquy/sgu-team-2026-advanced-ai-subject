@@ -518,6 +518,7 @@ def diagnose(state, job):
     code, output = cli(alias, ["kernels", "logs", f"{entry['ref']}/{entry['version']}"], timeout=30)
     patterns = {
         "DEPENDENCY_RESOLUTION": r"No matching distribution|ResolutionImpossible|Could not find a version",
+        "PYTHON_ABI": r"(?:Unvalidated|Unsupported) Kaggle Python ABI",
         "RUNTIME_IMPORT": r"ModuleNotFoundError|ImportError",
         "METADRIVE_ASSETS": r"Assets folder does not exist|Assets version misses|pull_asset.*returned non-zero",
         "PRIVATE_INPUT": r"Missing, ambiguous or mismatched private input",

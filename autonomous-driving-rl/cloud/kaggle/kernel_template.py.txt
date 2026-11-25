@@ -14,7 +14,6 @@ JOB = __JOB__
 started = time.monotonic()
 working = Path("/kaggle/working")
 workspace = Path("/tmp") / JOB["job"]
-workspace.mkdir()
 
 def digest(path):
     h = hashlib.sha256()
@@ -52,8 +51,16 @@ def run(command, deadline):
         raise TimeoutError("Preflight time budget exhausted")
     subprocess.run(command, cwd=workspace, check=True, timeout=time_left)
 
-if platform.machine() != "x86_64" or not (3, 10) <= sys.version_info[:2] <= (3, 12):
-    raise RuntimeError("Unvalidated Kaggle Python ABI")
+def check_runtime_abi():
+    system, machine, python_version = platform.system(), platform.machine(), platform.python_version()
+    print(f"Kaggle runtime ABI: {system} {machine} Python {python_version}", flush=True)
+    if (system != "Linux" or machine.lower() not in {"x86_64", "amd64"}
+            or sys.implementation.name != "cpython" or not (3, 10) <= sys.version_info[:2] <= (3, 13)):
+        raise RuntimeError(f"Unsupported Kaggle Python ABI: {system} {machine} Python {python_version}")
+
+
+check_runtime_abi()
+workspace.mkdir()
 source = workspace / "model.zip"
 shutil.copyfile(input_file(JOB["source_ref"], "model.bin", JOB["source_sha"]), source)
 bundle = input_file(JOB["runtime_ref"], "runtime.bin", JOB["runtime_sha"])
