@@ -119,7 +119,7 @@ if JOB.get("measure_optimizer"):
 if JOB.get("parent_sha"):
     parent_zip = input_file(JOB["parent_ref"], "parent.bin", JOB["parent_zip_sha"])
     parent = workspace / "parent"
-    unpack(parent_zip, parent, 120_000_000)
+    unpack(parent_zip, parent, JOB.get("parent_archive_limit", 120_000_000))
     command.extend(["--resume", str(parent), "--parent-sha", JOB["parent_sha"]])
 elif JOB.get("warm_ref"):
     warm_model = workspace / "warm.zip"

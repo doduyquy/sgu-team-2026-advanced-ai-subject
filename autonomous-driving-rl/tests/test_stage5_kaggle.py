@@ -126,6 +126,39 @@ def test_publish_b1_snapshot_requires_matching_runtime_inventory(tmp_path, monke
         control.publish_initial_snapshot(args, {})
 
 
+def test_publish_replay_chunk_requires_attested_learner_and_private_snapshot(tmp_path, monkeypatch):
+    monkeypatch.setattr(control, "WORK", tmp_path)
+    chunk, learner = tmp_path / "chunk", tmp_path / "learner"
+    chunk.mkdir()
+    learner.mkdir()
+    (chunk / "rows.npz").write_bytes(b"replay")
+    snapshot_sha = "f" * 64
+    meta = {"stream": 100, "sequence": 0, "identity": {"workers": 2}, "count": 256,
+            "payload_sha": sha(chunk / "rows.npz"), "snapshot_sha": snapshot_sha, "policy_version": 0}
+    write(chunk / "CHUNK.json", meta)
+    chunk_sha = sha(chunk / "CHUNK.json")
+    write(learner / "metrics.json", {"snapshot_sha": snapshot_sha, "admitted": 256, "updates": 8})
+    manifest = {"job": "external-import", "ledger": {"100:0": chunk_sha}, "identity": meta["identity"],
+                "external_admitted": 256, "files": {"metrics.json": sha(learner / "metrics.json")}}
+    write(learner / "COMPLETE.json", manifest)
+    snapshot = tmp_path / "b1" / snapshot_sha
+    snapshot.mkdir(parents=True)
+    write(snapshot / "receipt.json", {"snapshot_sha256": snapshot_sha, "policy_version": 0, "dataset": "example/snapshot"})
+    state = {"uploads": {"example/snapshot": {"private_verified_at": "today", "remote_sha_verified_at": "today"}}}
+    monkeypatch.setattr(control, "account_for", lambda _: ("account_01", {"owner": "example"}))
+    def upload(state, alias, owner, label, name, path, digest):
+        assert (label, name, digest) == ("replay", "replay.zip", sha(path))
+        control.audit_zip(path, label)
+        return "example/replay"
+    monkeypatch.setattr(control, "upload", upload)
+    args = SimpleNamespace(chunk=chunk, learner=learner, chunk_sha=chunk_sha, learner_sha=sha(learner / "COMPLETE.json"))
+    control.publish_verified_replay_chunk(args, state)
+    assert control.read(tmp_path / "b1" / chunk_sha / "receipt.json")["admitted_rows"] == 256
+    state["uploads"]["example/snapshot"].pop("remote_sha_verified_at")
+    with pytest.raises(ValueError, match="private transfer"):
+        control.publish_verified_replay_chunk(args, state)
+
+
 def test_easy_pilot_compares_two_distinct_checkpoints_on_exact_panel():
     def evaluation(model, successes):
         rows = [{"geometry": str(i // 2), "family": "SCS", "seed": i % 2, "censored": False,
@@ -234,6 +267,38 @@ def test_pilot_plan_uses_verified_cpu_when_gpu_only_wins_after_warmup(tmp_path, 
     assert (job["workers"], job["device"], job["transitions"]) == (2, "cuda", 25000)
     assert job["warm_model_sha"] == milestones[0]["model_sha"]
     assert job["sharded_output"] and "parent_job" not in job
+
+    parent = job["job"]
+    marker = tmp_path / "harvest" / parent / "COMPLETE.json"
+    marker.parent.mkdir()
+    write(marker, {"transitions": 25000})
+    rows[parent] = {"status": "HARVESTED_VERIFIED", "planned": job, "state_sha": sha(marker)}
+    control.plan_learning_resume(SimpleNamespace(
+        campaign="stage5", round="resume", account="account_01", parent=parent, transitions=12500,
+    ), {"jobs": rows})
+    continued = control.read(tmp_path / "plan-stage5-resume.json")["jobs"]["j10"]
+    assert (continued["device"], continued["workers"], continued["start_transition"]) == ("cuda", 2, 25000)
+    assert continued["parent_sha"] == sha(marker)
+    assert continued["parent_archive_limit"] > 120_000_000 and "warm_step" not in continued
+
+
+def test_large_parent_audit_accepts_expected_members_over_preflight_limit(tmp_path):
+    from io import BytesIO
+    model = BytesIO()
+    with zipfile.ZipFile(model, "w") as inner:
+        inner.writestr("data", "{}")
+    state = tmp_path / "parent.zip"
+    with zipfile.ZipFile(state, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("model.zip", model.getvalue())
+        for name in ("COMPLETE.json", "rng.pt", "metrics.json"):
+            archive.writestr(name, "{}")
+        with archive.open("replay.pkl", "w") as replay:
+            block = b"\0" * 1_000_000
+            for _ in range(121):
+                replay.write(block)
+    with pytest.raises(ValueError, match="size"):
+        control.audit_zip(state, "parent")
+    control.audit_zip(state, "long-parent")
 
 
 @pytest.mark.parametrize("workers", [2, 4])

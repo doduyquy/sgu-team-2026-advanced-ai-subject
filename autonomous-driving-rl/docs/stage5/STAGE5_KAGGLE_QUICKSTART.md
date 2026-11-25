@@ -60,9 +60,13 @@ Trong lần đầu, Kaggle có thể trả trạng thái dataset đang được 
 
 `runtime train` hỗ trợ phase, ngân sách thời gian và checkpoint qua `--checkpoint-every` cùng `--checkpoint-dir`. `cloud.kaggle.checkpoint export` chia state thành các phần tối đa 64 MiB, với checksum riêng cho từng phần. `runtime train --resume-package <thư-mục> --resume-index-sha <sha>` kiểm tra rồi dựng lại toàn bộ state trước khi nạp. Pilot ngắn dùng ZIP cho checkpoint cuối. Phiên dài cần xác minh đường vận chuyển và resume cloud với artifact lớn.
 
+Sau khi ghép hai checkpoint J08 với baseline, `control learning-plan` tạo J09 trên T4 với hai môi trường. Lệnh nhận checkpoint được chọn và ngân sách 25.000 hoặc 50.000 transitions. Nếu đổi topology hoặc device, lượt này warm-start weights-only. J09 ghi thời gian optimizer, checkpoint, evaluation và chạy trọn kernel. Sau khi harvest J09, `control learning-resume-plan` tạo J10 từ toàn bộ state đã xác minh với cùng phase, device, topology và learner. Đường private input của J10 cho phép parent đến 512 MB, xác minh lại byte từ Kaggle trước khi nạp. Cần kiểm chứng J10 trên cloud trước khi dùng cho phiên dài.
+
 ## Snapshot B1
 
 `control publish-b1-snapshot --snapshot <thư-mục> --snapshot-sha <sha>` đối chiếu policy nguồn, lineage, version và recipe với bundle đã đóng gói. Lệnh tạo private dataset version 1 và tải lại `snapshot.bin` để kiểm SHA-256. Learner kiểm snapshot được cấp qua `replay import --snapshot <thư-mục> --snapshot-sha <sha>` và tính tuổi policy từ checkpoint learner đã xác minh.
+
+`control publish-b1-chunk` nhận chunk và state importer cùng SHA của từng manifest. Lệnh đối chiếu ledger, snapshot version, số transitions được chấp nhận và SAC updates, rồi xác minh tải lại private `replay.bin`.
 
 ## Resume trong Kaggle session mới
 

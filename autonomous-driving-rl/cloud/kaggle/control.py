@@ -47,6 +47,7 @@ BUNDLE_PATHS = (
 )
 STATE_FILES = {"model.zip", "replay.pkl", "rng.pt", "metrics.json", "COMPLETE.json"}
 OUTPUT_FILES = STATE_FILES | {"runtime_versions.txt", "execution.json", "parity.json"}
+LONG_PARENT_LIMIT = 512_000_000
 SECRET = re.compile(rb"(?i)(?:KGAT_[a-zA-Z0-9_-]{12,}|gh[pousr]_[a-zA-Z0-9_]{20,}|github_pat_[a-zA-Z0-9_]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|AIza[a-zA-Z0-9_-]{30,})")
 ACTIVE = {"SUBMITTING", "SUBMIT_UNKNOWN", "SUBMITTED", "QUEUED", "RUNNING", "STATUS_UNKNOWN"}
 REPAIR_FILES = {
@@ -136,24 +137,32 @@ class DatasetPending(RuntimeError):
 def audit_zip(path, label):
     with zipfile.ZipFile(path) as bundle:
         names = bundle.namelist()
-        if len(set(names)) != len(names) or sum(x.file_size for x in bundle.infolist()) > 120_000_000:
+        limit = LONG_PARENT_LIMIT if label == "long-parent" else 120_000_000
+        if len(set(names)) != len(names) or sum(x.file_size for x in bundle.infolist()) > limit:
             raise ValueError("Unexpected upload archive size or duplicate members")
         if label == "runtime":
             current = set(BUNDLE_PATHS) | {"parity.json", "source_inventory.json"}
             previous = current - {"cloud/kaggle/checkpoint.py"}
             if set(names) not in (current, previous):
                 raise ValueError("Runtime upload member allowlist mismatch")
-        if label == "parent" and set(names) != STATE_FILES:
+        if label in {"parent", "long-parent"} and set(names) != STATE_FILES:
             raise ValueError("Parent upload member allowlist mismatch")
         if label == "snapshot" and set(names) != {"policy.zip", "SNAPSHOT.json"}:
             raise ValueError("B1 snapshot upload member allowlist mismatch")
+        if label == "replay" and set(names) != {"CHUNK.json", "rows.npz"}:
+            raise ValueError("B1 replay upload member allowlist mismatch")
         for name in names:
-            data = bundle.read(name)
-            if SECRET.search(data):
-                raise ValueError("Secret-pattern audit failed inside upload archive")
-            if (label, name) in {("parent", "model.zip"), ("snapshot", "policy.zip")}:
+            with bundle.open(name) as stream:
+                overlap = b""
+                while block := stream.read(1024 * 1024):
+                    if SECRET.search(overlap + block):
+                        raise ValueError("Secret-pattern audit failed inside upload archive")
+                    overlap = block[-128:]
+            if (label, name) in {("parent", "model.zip"), ("long-parent", "model.zip"), ("snapshot", "policy.zip")}:
                 from io import BytesIO
-                with zipfile.ZipFile(BytesIO(data)) as model:
+                if bundle.getinfo(name).file_size > 32_000_000:
+                    raise ValueError("Unexpected compressed parent model archive size")
+                with zipfile.ZipFile(BytesIO(bundle.read(name))) as model:
                     if sum(x.file_size for x in model.infolist()) > 32_000_000:
                         raise ValueError("Unexpected parent model archive size")
                     if any(SECRET.search(model.read(member)) for member in model.infolist()):
@@ -320,6 +329,40 @@ def pilot_checkpoint(state, job, step):
     verify(path / "model.zip", manifest["files"]["model.zip"])
     return path, manifest
 
+
+def plan_learning_resume(args, state):
+    identity_part(args.campaign)
+    identity_part(args.round)
+    previous = state["jobs"][args.parent]
+    planned = previous["planned"]
+    if (previous["status"] != "HARVESTED_VERIFIED" or planned["role"] not in {"easy_long", "easy_resume"}
+            or planned["campaign"] != args.campaign):
+        raise RuntimeError("Full-state continuation requires a harvested long Easy checkpoint from this campaign")
+    state_path = WORK / "harvest" / args.parent / "COMPLETE.json"
+    verify(state_path, previous["state_sha"])
+    checkpoint = read(state_path)
+    bundle = read(WORK / "bundle.json")
+    allowed = "cloud/kaggle/kernel_template.py.txt"
+    inventories = []
+    for archive_path, expected in ((planned["runtime_path"], planned["runtime_sha"]), (bundle["path"], bundle["runtime_sha"])):
+        archive = (ROOT / archive_path / "runtime.zip").resolve()
+        if not archive.is_relative_to(WORK.resolve()):
+            raise ValueError("Resume bundle path escapes campaign workspace")
+        verify(archive, expected)
+        with zipfile.ZipFile(archive) as runtime:
+            files = json.loads(runtime.read("source_inventory.json"))["files"]
+        inventories.append({name: digest for name, digest in files.items() if name != allowed})
+    if inventories[0] != inventories[1] or planned["source_sha"] != bundle["source_sha"]:
+        raise RuntimeError("Full-state continuation requires the original learner, dependencies, and TRAIN schedule")
+    job = {key: value for key, value in planned.items() if key != "warm_step"}
+    job.update(job="s5-" + fingerprint([args.campaign, args.round])[:12] + "-j10-a1",
+               round=args.round, role="easy_resume", account=args.account, transitions=args.transitions,
+               start_transition=checkpoint["transitions"], parent_job=args.parent, parent_sha=previous["state_sha"],
+               parent_archive_limit=LONG_PARENT_LIMIT, runtime_path=bundle["path"], runtime_sha=bundle["runtime_sha"],
+               template_sha=bundle["template_sha"])
+    require_gate(state, job)
+    save_plan(f"{args.campaign}-{args.round}", {"j10": job}, {}, state)
+
 def upload(state, alias, owner, label, name, source, digest):
     verify(source, digest)
     audit_zip(source, label)
@@ -347,8 +390,11 @@ def upload(state, alias, owner, label, name, source, digest):
         raise ValueError("Upload staging must contain only the audited payload and generated metadata")
     state["uploads"][ref] = {"status": "UPLOADING", "sha": digest, "alias": alias,
                              "transport_name": transport_name, "at": now()}
+    if label == "long-parent":
+        state["uploads"][ref]["byte_limit"] = LONG_PARENT_LIMIT + 1_000_000
     persist(state)
-    code, output = cli(alias, ["datasets", "create", "-p", str(staging), "-q", "-t"], timeout=240)
+    code, output = cli(alias, ["datasets", "create", "-p", str(staging), "-q", "-t"],
+                       timeout=600 if label == "long-parent" else 240)
     accepted = code == 0 and f"/datasets/{ref}" in output
     state["uploads"][ref].update(status="ACCEPTED" if accepted else "UPLOAD_UNKNOWN",
                                  at=now(), cli_exit=code)
@@ -366,23 +412,27 @@ def dataset_ready(state, alias, ref):
         raise RuntimeError("Dataset API did not verify private ACL for version 1")
     row = state["uploads"][ref]
     if row.get("transport_name") and not row.get("remote_sha_verified_at"):
-        verify_remote_input(alias, ref, row["transport_name"], row["sha"])
+        if row.get("byte_limit"):
+            verify_remote_input(alias, ref, row["transport_name"], row["sha"], byte_limit=row["byte_limit"])
+        else:
+            verify_remote_input(alias, ref, row["transport_name"], row["sha"])
         row["remote_sha_verified_at"] = now()
     row.update(version=1, private_verified_at=now())
     persist(state)
     return ref
 
-def verify_remote_input(alias, ref, name, digest):
+def verify_remote_input(alias, ref, name, digest, *, byte_limit=120_000_000):
     from tempfile import TemporaryDirectory
     from hashlib import sha256
 
     with TemporaryDirectory(prefix="stage5-kaggle-download-") as directory:
-        code, _ = cli(alias, ["datasets", "download", ref + "/1", "-p", directory, "-q"], timeout=90)
+        code, _ = cli(alias, ["datasets", "download", ref + "/1", "-p", directory, "-q"],
+                      timeout=600 if byte_limit > 120_000_000 else 90)
         files = list(Path(directory).iterdir())
-        if code or len(files) != 1 or not files[0].is_file() or files[0].stat().st_size > 125_000_000:
+        if code or len(files) != 1 or not files[0].is_file() or files[0].stat().st_size > byte_limit + 5_000_000:
             raise RuntimeError("Private version 1 could not be retrieved for byte verification")
         with zipfile.ZipFile(files[0]) as archive:
-            if archive.namelist() != [name] or archive.getinfo(name).file_size > 120_000_000:
+            if archive.namelist() != [name] or archive.getinfo(name).file_size > byte_limit:
                 raise RuntimeError("Private dataset layout differs from the exact transport file")
             digest_remote = sha256()
             with archive.open(name) as stream:
@@ -446,6 +496,53 @@ def publish_initial_snapshot(args, state):
     write(target / "receipt.json", receipt)
     print(receipt)
 
+
+def publish_verified_replay_chunk(args, state):
+    chunk = args.chunk.resolve(strict=True)
+    learner = args.learner.resolve(strict=True)
+    if any(not path.is_relative_to(WORK.resolve()) for path in (chunk, learner)):
+        raise ValueError("B1 artifacts must be stored in the campaign workspace")
+    verify(chunk / "CHUNK.json", args.chunk_sha)
+    verify(learner / "COMPLETE.json", args.learner_sha)
+    meta = read(chunk / "CHUNK.json")
+    trained = read(learner / "COMPLETE.json")
+    if not re.fullmatch(r"[0-9a-f]{64}", meta["snapshot_sha"]):
+        raise ValueError("Malformed B1 snapshot digest")
+    key = f"{meta['stream']}:{meta['sequence']}"
+    if (trained["job"] != "external-import" or trained["ledger"].get(key) != args.chunk_sha
+            or meta["identity"] != trained["identity"] or trained["external_admitted"] < meta["count"]):
+        raise ValueError("Replay chunk has no matching verified learner admission")
+    verify(learner / "metrics.json", trained["files"]["metrics.json"])
+    metrics = read(learner / "metrics.json")
+    if metrics["snapshot_sha"] != meta["snapshot_sha"] or metrics["admitted"] != meta["count"] or metrics["updates"] <= 0:
+        raise ValueError("Learner metrics do not attest the replay snapshot, accounting and updates")
+    snapshot = read(WORK / "b1" / meta["snapshot_sha"] / "receipt.json")
+    source = state["uploads"][snapshot["dataset"]]
+    if (not source.get("private_verified_at") or not source.get("remote_sha_verified_at")
+            or snapshot["snapshot_sha256"] != meta["snapshot_sha"]
+            or snapshot["policy_version"] != meta["policy_version"]):
+        raise ValueError("B1 snapshot version or private transfer is unverified")
+    verify(chunk / "rows.npz", meta["payload_sha"])
+    if (chunk / "rows.npz").stat().st_size > 20_000_000:
+        raise ValueError("Replay chunk exceeds the verified B1 transport budget")
+    target = WORK / "b1" / args.chunk_sha
+    target.mkdir(parents=True, exist_ok=True)
+    parcel = target / "replay.zip"
+    contents = {name: (chunk / name).read_bytes() for name in ("CHUNK.json", "rows.npz")}
+    if not parcel.exists():
+        archive(parcel, contents)
+    with zipfile.ZipFile(parcel) as stored:
+        if stored.namelist() != sorted(contents) or any(stored.read(name) != data for name, data in contents.items()):
+            raise ValueError("Existing replay archive differs from verified chunk")
+    alias, creds = account_for({"account": operator_slot()})
+    digest = sha(parcel)
+    ref = upload(state, alias, creds["owner"], "replay", "replay.zip", parcel, digest)
+    receipt = {"dataset": ref, "version": 1, "chunk_sha256": args.chunk_sha, "archive_sha256": digest,
+               "snapshot_sha256": meta["snapshot_sha"], "policy_version": meta["policy_version"],
+               "admitted_rows": metrics["admitted"], "learner_sha256": args.learner_sha}
+    write(target / "receipt.json", receipt)
+    print(receipt)
+
 def planned_job(args, state):
     path = WORK / f"plan-{args.campaign}-{args.round}.json"
     identity_part(args.campaign)
@@ -475,7 +572,7 @@ def require_gate(state, job):
                and entry["execution"]["campaign"] == job["campaign"]
                and entry["execution"]["runtime_sha"] == validated_runtime for entry in state["jobs"].values()):
         raise RuntimeError("G2 requires a verified J01 cloud artifact for this campaign and runtime")
-    if job["role"] in {"easy_pilot", "easy_long"} and not any(
+    if job["role"] in {"easy_pilot", "easy_long", "easy_resume"} and not any(
         entry["status"] == "HARVESTED_VERIFIED" and entry.get("gates", {}).get("G3") == "PASS"
         and entry["execution"]["campaign"] == job["campaign"]
         and entry["execution"]["runtime_sha"] == validated_runtime for entry in state["jobs"].values()
@@ -646,8 +743,9 @@ def launch(args, state):
             raise RuntimeError("An active receipt blocks this submission")
         repair = probe_retry(state, job, retry_of, owner)
     elif server_admission:
-        roles = {"j02": "cpu1", "j03": "cpu2", "j04": "gpu2", "j07": "resume", "j08": "easy_pilot", "j09": "easy_long"}
-        budget = 2400 if job["role"] == "easy_long" else RECIPE["preflight"]["max_seconds"]
+        roles = {"j02": "cpu1", "j03": "cpu2", "j04": "gpu2", "j07": "resume", "j08": "easy_pilot",
+                 "j09": "easy_long", "j10": "easy_resume"}
+        budget = 2400 if job["role"] in {"easy_long", "easy_resume"} else RECIPE["preflight"]["max_seconds"]
         if (sessions is not None or roles.get(args.job) != job["role"]
                 or job["max_seconds"] != budget):
             raise RuntimeError("Server admission requires unknown capacity and a gated Stage 5 follow-up preflight")
@@ -694,6 +792,8 @@ def launch(args, state):
         verify(parent / "COMPLETE.json", job["parent_sha"])
         parent_archive = parent / "parent.zip"
         manifest = read(parent / "COMPLETE.json")
+        if set(manifest["files"]) != STATE_FILES - {"COMPLETE.json"}:
+            raise ValueError("Unexpected parent checkpoint members")
         for name, expected in manifest["files"].items():
             verify(parent / name, expected)
         if not parent_archive.exists():
@@ -702,10 +802,18 @@ def launch(args, state):
                     output.write(parent / name, name)
             parent_archive.with_suffix(".tmp").rename(parent_archive)
         with zipfile.ZipFile(parent_archive) as archived:
-            if set(archived.namelist()) != STATE_FILES or any(archived.read(name) != (parent / name).read_bytes() for name in STATE_FILES):
+            if len(archived.namelist()) != len(STATE_FILES) or set(archived.namelist()) != STATE_FILES:
                 raise ValueError("Parent archive differs from verified state")
+            for name, expected in {**manifest["files"], "COMPLETE.json": job["parent_sha"]}.items():
+                with archived.open(name) as stream:
+                    digest = hashlib.sha256()
+                    for block in iter(lambda: stream.read(1024 * 1024), b""):
+                        digest.update(block)
+                if digest.hexdigest() != expected:
+                    raise ValueError("Parent archive differs from verified state")
         actual_job["parent_zip_sha"] = sha(parent_archive)
-        actual_job["parent_ref"] = upload(state, alias, owner, "parent", "parent.zip",
+        label = "long-parent" if job.get("parent_archive_limit") == LONG_PARENT_LIMIT else "parent"
+        actual_job["parent_ref"] = upload(state, alias, owner, label, "parent.zip",
                                          parent_archive, actual_job["parent_zip_sha"])
     staging = WORK / "kernels" / job["job"]
     staging.mkdir(parents=True, exist_ok=True)
@@ -907,7 +1015,8 @@ def harvest_periodic(state, job, step):
     entry = state["jobs"][job]
     planned = entry["planned"]
     interval = planned.get("checkpoint_every")
-    if not interval or not 0 < step < planned["transitions"] or step % interval or not entry.get("version"):
+    start = planned.get("start_transition", 0)
+    if not interval or not start < step < start + planned["transitions"] or step % interval or not entry.get("version"):
         raise ValueError("Requested step is outside the job's periodic checkpoint schedule")
     name = f"step-{step:012d}"
     root = WORK / "periodic" / job
@@ -1026,6 +1135,12 @@ def main():
     longer.add_argument("--evaluation-report", required=True, type=Path)
     longer.add_argument("--checkpoint", choices=("source", "4096", "8192"), required=True)
     longer.add_argument("--transitions", choices=(25000, 50000), required=True, type=int)
+    resume = commands.add_parser("learning-resume-plan")
+    resume.add_argument("--campaign", required=True)
+    resume.add_argument("--round", required=True)
+    resume.add_argument("--account", choices=SLOTS, default=operator_slot())
+    resume.add_argument("--parent", required=True)
+    resume.add_argument("--transitions", choices=(12500, 25000, 50000), required=True, type=int)
     setup = commands.add_parser("setup")
     setup.add_argument("--account", choices=SLOTS, required=True)
     setup.add_argument("--owner", required=True)
@@ -1042,7 +1157,7 @@ def main():
             anchor.add_argument("--capacity-after", metavar="VERIFIED_J01_ID")
             item.add_argument("--assign", action="append", default=[], metavar="JOB=SLOT")
         else:
-            item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08", "j09"), required=True)
+            item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08", "j09", "j10"), required=True)
             item.add_argument("--fingerprint", required=True)
             admission = item.add_mutually_exclusive_group()
             admission.add_argument("--admission-probe", action="store_true")
@@ -1056,10 +1171,15 @@ def main():
     snapshot = commands.add_parser("publish-b1-snapshot")
     snapshot.add_argument("--snapshot", required=True, type=Path)
     snapshot.add_argument("--snapshot-sha", required=True)
+    replay_chunk = commands.add_parser("publish-b1-chunk")
+    replay_chunk.add_argument("--chunk", required=True, type=Path)
+    replay_chunk.add_argument("--chunk-sha", required=True)
+    replay_chunk.add_argument("--learner", required=True, type=Path)
+    replay_chunk.add_argument("--learner-sha", required=True)
     prepare = commands.add_parser("prepare-inputs")
     prepare.add_argument("--campaign", required=True)
     prepare.add_argument("--round", required=True)
-    prepare.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08", "j09"), required=True)
+    prepare.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08", "j09", "j10"), required=True)
     prepare.add_argument("--fingerprint", required=True)
     observe = commands.add_parser("observe")
     observe.add_argument("--account", choices=SLOTS, required=True)
@@ -1085,6 +1205,8 @@ def main():
                 plan(args, state)
             elif args.command in {"pilot-plan", "learning-plan"}:
                 plan_pilot(args, state)
+            elif args.command == "learning-resume-plan":
+                plan_learning_resume(args, state)
             elif args.command == "launch":
                 launch(args, state)
             elif args.command == "prepare-inputs":
@@ -1102,6 +1224,8 @@ def main():
                 harvest_periodic(state, args.job, args.step)
             elif args.command == "publish-b1-snapshot":
                 publish_initial_snapshot(args, state)
+            elif args.command == "publish-b1-chunk":
+                publish_verified_replay_chunk(args, state)
             elif args.command == "logs":
                 diagnose(state, args.job)
             elif args.command == "analyze":
