@@ -1,5 +1,11 @@
 # Stage 5 Kaggle handoff · 2026-11-25
 
+## Easy learning pilot J08
+
+Hai checkpoint version 1 được đánh giá trên đúng 12 case Easy của baseline đóng băng. Mốc 4.096 giữ 8/12 clean, giảm 4 ca văng đường thành 4 timeout và nhanh hơn 31,2 giây trên 8 ca thành công chung. Mốc 8.192 đạt 0/12 clean. Tám ca từng clean chuyển thành văng đường khi đã đi qua 92,8–96,1% route. J08 chỉ ghé 7/39 hình học Easy TRAIN qua ba family. Báo cáo ghép case nằm trong `runs/kaggle/easypilot01-paired-report.json`.
+
+Lượt học tiếp theo dùng mốc 4.096 làm warm-start weights-only cho T4 và hai môi trường, với 25.000 transitions và checkpoint ở mỗi 12.500. Learner dựng replay, optimizer và sampler mới. Đánh giá tín hiệu học giữa kỳ và cuối trên cùng panel trước khi cân nhắc mốc 50.000.
+
 ## Cập nhật cloud activation04
 
 **G2 PASS.** Output version 1 của J01 `s5-910b612f2a22-j01-a1` đã được tải bằng API theo đúng version. Artifact khớp checksum nội bộ, parity trên cả hai hình học TRAIN và counter của checkpoint SAC. Job ghi 1.280 transitions, 256 SAC updates, PyTorch 2.14.1+cpu và CPython 3.13.18. SHA-256 của `COMPLETE.json` là `18fa92be8690cb5683ed24d524d12aabf8e81fc5f87d6a46056dff8740623fcc`. Kế hoạch capacity và resume dùng bundle đã vượt G2. Registry lưu tiến độ mới nhất của G3 và G4.

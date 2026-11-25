@@ -114,23 +114,48 @@ command = [*python, "-m", "cloud.kaggle.runtime", "train", "--out", str(state),
 if JOB.get("checkpoint_every"):
     command.extend(["--checkpoint-every", str(JOB["checkpoint_every"]),
                     "--checkpoint-dir", str(working / JOB["job"] / "periodic")])
+if JOB.get("measure_optimizer"):
+    command.append("--measure-optimizer")
 if JOB.get("parent_sha"):
     parent_zip = input_file(JOB["parent_ref"], "parent.bin", JOB["parent_zip_sha"])
     parent = workspace / "parent"
     unpack(parent_zip, parent, 120_000_000)
     command.extend(["--resume", str(parent), "--parent-sha", JOB["parent_sha"]])
+elif JOB.get("warm_ref"):
+    warm_model = workspace / "warm.zip"
+    shutil.copyfile(input_file(JOB["warm_ref"], "warm.bin", JOB["warm_model_sha"]), warm_model)
+    command.extend(["--warm-model", str(warm_model), "--warm-sha", JOB["warm_model_sha"]])
 else:
     command.extend(["--source", str(source)])
+training_start = time.monotonic()
 run(command, started + JOB["max_seconds"] - 30)
+training_end = time.monotonic()
 if JOB.get("sharded_output"):
     results = working / JOB["job"]
     index_sha = run([*python, "-m", "cloud.kaggle.checkpoint", "export", "--input", str(state),
                      "--sha", digest(state / "COMPLETE.json"), "--out", str(results / "final")],
-                    started + JOB["max_seconds"] - 5, capture=True).strip()
+                    started + JOB["max_seconds"] - 30, capture=True).strip()
     for source_name, target_name in (("runtime_versions.txt", "runtime_versions.txt"), ("observed_parity.json", "parity.json")):
         shutil.copyfile(workspace / source_name, results / target_name)
     with (results / "execution.json").open("x", encoding="utf-8") as output:
         json.dump({"job": JOB, "index_sha256": index_sha}, output, sort_keys=True)
+    checkpoint_end = time.monotonic()
+    evaluation_status = "NOT_REQUESTED"
+    if JOB.get("evaluate_easy"):
+        try:
+            run([*python, "-m", "cloud.kaggle.runtime", "evaluate", "--model", str(state / "model.zip"),
+                 "--model-sha", digest(state / "model.zip"), "--tier", "Easy", "--out", str(results / "panel.json")],
+                started + JOB["max_seconds"] - 20)
+            evaluation_status = "COMPLETE"
+        except (subprocess.TimeoutExpired, TimeoutError):
+            evaluation_status = "TIME_BUDGET"
+        except subprocess.CalledProcessError:
+            evaluation_status = "FAILED"
+    finished = time.monotonic()
+    with (results / "timing.json").open("x", encoding="utf-8") as output:
+        json.dump({"startup_seconds": training_start - started, "training_process_seconds": training_end - training_start,
+                   "final_checkpoint_seconds": checkpoint_end - training_end, "evaluation_seconds": finished - checkpoint_end,
+                   "end_to_end_seconds": finished - started, "evaluation_status": evaluation_status}, output, sort_keys=True)
 else:
     temp_zip = working / (JOB["job"] + ".zip.partial")
     with zipfile.ZipFile(temp_zip, "x", zipfile.ZIP_STORED) as archive:

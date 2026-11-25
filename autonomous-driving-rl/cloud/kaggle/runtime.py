@@ -147,19 +147,32 @@ def recipe_identity(phase, workers, capacity, learning_starts, warm):
             "files": {p.relative_to(ROOT).as_posix(): sha(p) for p in paths},
             "sb3": stable_baselines3.__version__}
 
-def model_for(env, device, capacity, learning_starts, source=None):
+class TimedSAC(SAC):
+    def train(self, gradient_steps, batch_size=64):
+        cuda = self.device.type == "cuda"
+        if cuda:
+            torch.cuda.synchronize(self.device)
+        started = time.monotonic()
+        super().train(gradient_steps, batch_size)
+        if cuda:
+            torch.cuda.synchronize(self.device)
+        self.optimizer_seconds = getattr(self, "optimizer_seconds", 0.0) + time.monotonic() - started
+
+
+def model_for(env, device, capacity, learning_starts, source=None, *, warm_model=None, warm_sha=None, metered=False):
     config = SOURCE_RECIPE["sac"]
-    model = SAC("MlpPolicy", env, device=device, seed=RECIPE["seed"], buffer_size=capacity,
+    learner = TimedSAC if metered else SAC
+    model = learner("MlpPolicy", env, device=device, seed=RECIPE["seed"], buffer_size=capacity,
                 learning_starts=learning_starts, gradient_steps=-1, train_freq=1,
                 batch_size=config["batch_size"], learning_rate=config["learning_rate"], gamma=config["gamma"],
                 tau=config["tau"], ent_coef=config["ent_coef"], target_entropy=config["target_entropy"],
                 policy_kwargs={"net_arch": config["actor_critic_architecture"]})
-    if source:
-        verify(source, SOURCE_SHA)
-        parent = load_policy(source, device)
+    if source or warm_model:
+        verify(source or warm_model, SOURCE_SHA if source else warm_sha)
+        parent = load_policy(source or warm_model, device)
         for attr in ("actor", "critic", "critic_target"):
             getattr(model, attr).load_state_dict(getattr(parent, attr).state_dict())
-        if parent.num_timesteps != 100000:
+        if source and parent.num_timesteps != 100000:
             raise ValueError("Warm source counter differs from registered 100k")
     return model
 
@@ -249,15 +262,21 @@ def train(args):
             (interval <= 0 or interval % args.workers or checkpoint_dir.resolve().is_relative_to(args.out.resolve()))):
         raise ValueError("Periodic checkpoints require a separate directory and a positive worker-aligned interval")
     parent = check_state(args.resume, args.parent_sha) if args.resume else None
-    identity = recipe_identity(args.phase, args.workers, args.capacity, args.learning_starts,
-                               bool(args.source or (parent and parent["identity"]["warm_source"])))
+    warm_model = getattr(args, "warm_model", None)
+    warm_sha = getattr(args, "warm_sha", None)
+    metered = getattr(args, "measure_optimizer", False)
+    initial_policy = warm_sha or (parent and parent["identity"]["warm_source"])
+    identity = recipe_identity(args.phase, args.workers, args.capacity, args.learning_starts, bool(args.source or initial_policy))
+    if initial_policy:
+        identity["warm_source"] = initial_policy
     if parent and parent["identity"] != identity:
         raise ValueError("Resume recipe, source, capacity or worker mismatch")
     cursors = [item["next_cursor"] for item in parent["workers"]] if parent else [0] * args.workers
     env = make_vec(args.workers, args.phase, cursors)
     try:
         if parent:
-            model = SAC.load(args.resume / "model.zip", env=env, device=args.device)
+            learner = TimedSAC if metered else SAC
+            model = learner.load(args.resume / "model.zip", env=env, device=args.device)
             model.load_replay_buffer(args.resume / "replay.pkl")
             if (model.num_timesteps, model._n_updates) != (parent["transitions"], parent["updates"]):
                 raise ValueError("Resume model counters differ from manifest")
@@ -265,12 +284,15 @@ def train(args):
                 raise ValueError("Resume replay shape differs from recipe")
             restore_rng(torch.load(args.resume / "rng.pt", map_location="cpu", weights_only=False), args.device)
         else:
-            model = model_for(env, args.device, args.capacity, args.learning_starts, args.source)
+            model = model_for(env, args.device, args.capacity, args.learning_starts, args.source,
+                              warm_model=warm_model, warm_sha=warm_sha, metered=metered)
+        initial_optimizer_time = getattr(model, "optimizer_seconds", 0.0)
         before, updates = model.num_timesteps, model._n_updates
         next_checkpoint = (before // interval + 1) * interval if interval else None
         end = min(t0 + args.max_seconds, args.stop_at) if args.stop_at else t0 + args.max_seconds
         callback = Telemetry()
         start = time.monotonic()
+        checkpoint_seconds = 0.0
         while model.num_timesteps - before < args.transitions and time.monotonic() < end:
             block = min(args.transitions - (model.num_timesteps - before), 32 * args.workers)
             if next_checkpoint is not None:
@@ -284,6 +306,7 @@ def train(args):
                                 "workers": boundaries, "ledger": parent.get("ledger", {}) if parent else {},
                                 "external_admitted": parent.get("external_admitted", 0) if parent else 0,
                                 "result": "PARTIAL"}
+                    checkpoint_start = time.monotonic()
                     with TemporaryDirectory(prefix="stage5-periodic-", dir=args.out.parent) as directory:
                         raw = Path(directory) / "state"
                         save_state(raw, model, periodic, {"transitions": model.num_timesteps - before,
@@ -291,6 +314,7 @@ def train(args):
                                                         "seconds": time.monotonic() - start})
                         target = checkpoint_dir / f"step-{model.num_timesteps:012d}"
                         index_sha = export_checkpoint(raw, sha(raw / "COMPLETE.json"), target)
+                    checkpoint_seconds += time.monotonic() - checkpoint_start
                     print(f"Periodic checkpoint {target.name} index_sha256={index_sha}", flush=True)
                 next_checkpoint += interval
         boundaries = env.env_method("boundary") if model.num_timesteps > before else []
@@ -303,6 +327,8 @@ def train(args):
         losses = {key: float(value) for key, value in model.logger.name_to_value.items()
                   if key in {"train/actor_loss", "train/critic_loss", "train/ent_coef"}}
         metrics = {"seconds": elapsed, "transitions": local, "updates": delta, "utd": delta / local,
+                   "periodic_checkpoint_seconds": checkpoint_seconds,
+                   "post_warmup_transitions": max(0, local - max(0, model.learning_starts - before)),
                    "sample_rows_per_transition": delta * model.batch_size / local,
                    "decisions_per_second": local / elapsed, "updates_per_second": delta / elapsed,
                    "post_warmup_seconds": time.monotonic() - callback.steady_start if callback.steady_start else None,
@@ -314,6 +340,10 @@ def train(args):
                    "python": sys.version, "torch": torch.__version__, "sb3": stable_baselines3.__version__,
                    "gymnasium": gym.__version__, "numpy": np.__version__, "losses": losses,
                    "episodes": list(callback.episodes), "decisions_by_geometry": dict(callback.geometries)}
+        if metered:
+            optimizer_seconds = model.optimizer_seconds - initial_optimizer_time if delta else 0.0
+            metrics.update(optimizer_seconds=optimizer_seconds,
+                           optimizer_updates_per_second=delta / optimizer_seconds if optimizer_seconds else None)
         manifest = {"identity": identity, "job": args.job, "parent_sha": args.parent_sha,
                     "transitions": model.num_timesteps, "updates": model._n_updates, "workers": boundaries,
                     "ledger": parent.get("ledger", {}) if parent else {},
@@ -407,12 +437,15 @@ def main():
     run.add_argument("--stop-at", type=float)
     run.add_argument("--checkpoint-every", type=int)
     run.add_argument("--checkpoint-dir", type=Path)
+    run.add_argument("--measure-optimizer", action="store_true")
     group = run.add_mutually_exclusive_group()
     group.add_argument("--source", type=Path)
+    group.add_argument("--warm-model", type=Path)
     group.add_argument("--resume", type=Path)
     group.add_argument("--resume-package", type=Path)
     run.add_argument("--parent-sha")
     run.add_argument("--resume-index-sha")
+    run.add_argument("--warm-sha")
     ev = sub.add_parser("evaluate")
     ev.add_argument("--model", type=Path, required=True)
     ev.add_argument("--model-sha", required=True)
@@ -428,6 +461,8 @@ def main():
             parser.error("--resume and --parent-sha must be supplied together")
         if bool(args.resume_package) != bool(args.resume_index_sha):
             parser.error("--resume-package and --resume-index-sha must be supplied together")
+        if bool(args.warm_model) != bool(args.warm_sha):
+            parser.error("--warm-model and --warm-sha must be supplied together")
         args.out.parent.mkdir(parents=True, exist_ok=True)
         if args.resume_package:
             args.resume = args.out.with_name(args.out.name + ".parent")

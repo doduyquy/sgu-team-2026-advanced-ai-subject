@@ -239,6 +239,7 @@ def plan_pilot(args, state):
     if evidence["G4"] != "PASS" or set(evidence["samples"]) != {"j02", "j03", "j04"}:
         raise RuntimeError("Easy pilot requires verified CPU1, CPU2 and GPU2 capacity samples")
     samples = evidence["samples"]
+    reference = getattr(args, "reference_job", None)
     for row in samples.values():
         receipt = state["jobs"][row["job"]]
         if receipt["status"] != "HARVESTED_VERIFIED" or receipt["output_version"] != row["version"]:
@@ -249,6 +250,8 @@ def plan_pilot(args, state):
     gpu = samples["j04"]
     selected = gpu if (gpu["end_to_end_transitions_per_second"] > cpu["end_to_end_transitions_per_second"]
                        and gpu["post_warmup_transitions_per_second"] > cpu["post_warmup_transitions_per_second"]) else cpu
+    if reference:
+        selected = gpu
     validated = state["jobs"][selected["job"]]["planned"]
     bundle = read(WORK / "bundle.json")
     allowed_changes = {"cloud/kaggle/runtime.py", "cloud/kaggle/kernel_template.py.txt",
@@ -266,7 +269,8 @@ def plan_pilot(args, state):
             or {k: v for k, v in before.items() if k not in allowed_changes}
             != {k: v for k, v in after.items() if k not in allowed_changes}):
         raise RuntimeError("Pilot bundle must match the verified physics, dependencies and parity anchors")
-    job = {"job": "s5-" + fingerprint([args.campaign, args.round])[:12] + "-j08-a1",
+    label = "j09" if reference else "j08"
+    job = {"job": "s5-" + fingerprint([args.campaign, args.round])[:12] + "-" + label + "-a1",
            "campaign": args.campaign, "round": args.round, "attempt": 1, "role": "easy_pilot",
            "account": args.account, "workers": validated["workers"], "device": validated["device"],
            "runtime_sha": bundle["runtime_sha"], "source_sha": bundle["source_sha"], "runtime_path": bundle["path"],
@@ -274,8 +278,47 @@ def plan_pilot(args, state):
            "capacity_sample_job": selected["job"], "phase": "easy", "checkpoint_every": 4096,
            **{key: validated[key] for key in RECIPE["preflight"]}}
     job["transitions"] = 8192
+    if reference:
+        previous = state["jobs"][reference]
+        if previous["status"] != "HARVESTED_VERIFIED" or previous["planned"]["role"] != "easy_pilot":
+            raise RuntimeError("Longer pilot requires the verified Easy pilot as an evaluation reference")
+        report_path = args.evaluation_report.resolve()
+        if not report_path.is_relative_to(WORK.resolve()):
+            raise ValueError("Evaluation report must be stored in the campaign workspace")
+        evaluation = read(report_path)
+        confirmed = set()
+        for step in (4096, 8192):
+            _, manifest = pilot_checkpoint(state, reference, step)
+            confirmed.add(manifest["files"]["model.zip"])
+        if (evaluation["baseline_clean_successes"] != 8 or evaluation["baseline_cases"] != 12
+                or {row["model_sha"] for row in evaluation["milestones"]} != confirmed):
+            raise ValueError("Evaluation does not match the two verified Easy pilot checkpoints")
+        job.update(role="easy_long", transitions=args.transitions, capacity=65536, max_seconds=2400,
+                   export_reserve=480, checkpoint_every=12500, sharded_output=True,
+                   measure_optimizer=True, evaluate_easy=True, evaluation_sha=sha(report_path),
+                   reference_job=reference, accelerator="NvidiaTeslaT4")
+        if args.checkpoint != "source":
+            step = int(args.checkpoint)
+            _, manifest = pilot_checkpoint(state, reference, step)
+            job.update(warm_step=step, warm_model_sha=manifest["files"]["model.zip"])
     require_gate(state, job)
-    save_plan(f"{args.campaign}-{args.round}", {"j08": job}, {}, state)
+    save_plan(f"{args.campaign}-{args.round}", {label: job}, {}, state)
+
+
+def pilot_checkpoint(state, job, step):
+    receipt = state["jobs"][job]
+    if step == receipt["planned"]["transitions"]:
+        path = WORK / "harvest" / job
+        digest = receipt["state_sha"]
+    else:
+        path = WORK / "periodic" / job / f"step-{step:012d}"
+        digest = receipt["periodic"][str(step)]["state_sha"]
+    verify(path / "COMPLETE.json", digest)
+    manifest = read(path / "COMPLETE.json")
+    if manifest["job"] != job or manifest["transitions"] != step:
+        raise ValueError("Unexpected Easy pilot checkpoint milestone")
+    verify(path / "model.zip", manifest["files"]["model.zip"])
+    return path, manifest
 
 def upload(state, alias, owner, label, name, source, digest):
     verify(source, digest)
@@ -432,7 +475,7 @@ def require_gate(state, job):
                and entry["execution"]["campaign"] == job["campaign"]
                and entry["execution"]["runtime_sha"] == validated_runtime for entry in state["jobs"].values()):
         raise RuntimeError("G2 requires a verified J01 cloud artifact for this campaign and runtime")
-    if job["role"] == "easy_pilot" and not any(
+    if job["role"] in {"easy_pilot", "easy_long"} and not any(
         entry["status"] == "HARVESTED_VERIFIED" and entry.get("gates", {}).get("G3") == "PASS"
         and entry["execution"]["campaign"] == job["campaign"]
         and entry["execution"]["runtime_sha"] == validated_runtime for entry in state["jobs"].values()
@@ -603,9 +646,10 @@ def launch(args, state):
             raise RuntimeError("An active receipt blocks this submission")
         repair = probe_retry(state, job, retry_of, owner)
     elif server_admission:
-        roles = {"j02": "cpu1", "j03": "cpu2", "j04": "gpu2", "j07": "resume", "j08": "easy_pilot"}
+        roles = {"j02": "cpu1", "j03": "cpu2", "j04": "gpu2", "j07": "resume", "j08": "easy_pilot", "j09": "easy_long"}
+        budget = 2400 if job["role"] == "easy_long" else RECIPE["preflight"]["max_seconds"]
         if (sessions is not None or roles.get(args.job) != job["role"]
-                or job["max_seconds"] != RECIPE["preflight"]["max_seconds"]):
+                or job["max_seconds"] != budget):
             raise RuntimeError("Server admission requires unknown capacity and a gated Stage 5 follow-up preflight")
         if active or any(
             row["planned"]["campaign"] == job["campaign"]
@@ -640,6 +684,11 @@ def launch(args, state):
         raise ValueError("Kernel template differs from the pinned runtime")
     actual_job = {k: v for k, v in job.items() if k not in ("runtime_path", "account")}
     actual_job.update(inputs_for(job, state, alias, owner))
+    if job.get("warm_step"):
+        path, manifest = pilot_checkpoint(state, job["reference_job"], job["warm_step"])
+        if manifest["files"]["model.zip"] != job["warm_model_sha"]:
+            raise ValueError("Warm-start checkpoint differs from the approved plan")
+        actual_job["warm_ref"] = upload(state, alias, owner, "warm", "warm.zip", path / "model.zip", job["warm_model_sha"])
     if job.get("parent_job"):
         parent = WORK / "harvest" / job["parent_job"]
         verify(parent / "COMPLETE.json", job["parent_sha"])
@@ -662,6 +711,8 @@ def launch(args, state):
     staging.mkdir(parents=True, exist_ok=True)
     template_text = template.decode("utf-8")
     refs = [actual_job["runtime_ref"], actual_job["source_ref"]]
+    if actual_job.get("warm_ref"):
+        refs.append(actual_job["warm_ref"])
     if actual_job.get("parent_ref"):
         refs.append(actual_job["parent_ref"])
     actual_job["input_versions"] = {key: state["uploads"].get(key, {}).get("version", 1) for key in refs}
@@ -676,6 +727,8 @@ def launch(args, state):
     ):
         raise ValueError("Kernel upload staging failed the allowlist or secret audit")
     push = ["kernels", "push", "-p", str(staging), "-t", str(job["max_seconds"])]
+    if job.get("accelerator"):
+        push.extend(["--accelerator", job["accelerator"]])
     if admission_probe:
         entry["admission_probe"] = {"capacity": "UNKNOWN", **repair, **probe_inventory(alias, owner, ref)}
     if server_admission:
@@ -744,15 +797,19 @@ def inspect_artifact(source, out, expected):
         if json.loads(bundle.read("execution.json")) != expected:
             raise ValueError("Wrong campaign, attempt or input identity")
         manifest = json.loads(bundle.read("COMPLETE.json"))
-        if (manifest["job"] != expected["job"] or manifest["parent_sha"] != expected.get("parent_sha")
-                or set(manifest["files"]) != STATE_FILES - {"COMPLETE.json"}
-                or manifest["identity"]["workers"] != expected["workers"]
-                or manifest["identity"]["warm_source"] != SOURCE_SHA):
-            raise ValueError("Wrong checkpoint identity")
         out.mkdir(parents=True)
         for name in names:
             with bundle.open(name) as stream, (out / name).open("xb") as target:
                 shutil.copyfileobj(stream, target)
+    return verify_state_artifact(manifest, out, expected)
+
+
+def verify_state_artifact(manifest, out, expected):
+    if (manifest["job"] != expected["job"] or manifest["parent_sha"] != expected.get("parent_sha")
+            or set(manifest["files"]) != STATE_FILES - {"COMPLETE.json"}
+            or manifest["identity"]["workers"] != expected["workers"]
+            or manifest["identity"]["warm_source"] != expected.get("warm_model_sha", SOURCE_SHA)):
+        raise ValueError("Wrong checkpoint identity")
     for name, digest in manifest["files"].items():
         verify(out / name, digest)
     metrics = read(out / "metrics.json")
@@ -770,6 +827,43 @@ def inspect_artifact(source, out, expected):
             raise ValueError("Saved SAC counters differ from the checkpoint manifest")
     return manifest
 
+
+def fetch_output(entry, prefix, local, filename):
+    alias = entry["planned"]["account"]
+    if not download_kernel_output(alias, entry["ref"], entry["version"], local / filename, f"{prefix}/{filename}"):
+        raise RuntimeError("Expected version-specific Kaggle output unavailable")
+
+
+def fetch_state_shards(entry, prefix, local, restored, index_sha):
+    local.mkdir(parents=True, exist_ok=True)
+    fetch_output(entry, prefix, local, "INDEX.json")
+    verify(local / "INDEX.json", index_sha)
+    index = read(local / "INDEX.json")
+    if index["schema"] != 1 or set(index["files"]) != STATE_FILES:
+        raise ValueError("Unexpected sharded checkpoint index")
+    for filename, shards in index["files"].items():
+        for ordinal in range(len(shards)):
+            fetch_output(entry, prefix, local, f"{filename}.{ordinal:06d}.bin")
+    return restore_checkpoint(local, index_sha, restored)
+
+
+def harvest_sharded(entry, staging, temp):
+    expected = entry["execution"]
+    job = expected["job"]
+    fetch_output(entry, job, staging, "execution.json")
+    envelope = read(staging / "execution.json")
+    if envelope["job"] != expected:
+        raise ValueError("Wrong campaign, attempt or input identity for sharded output")
+    index_sha = envelope["index_sha256"]
+    fetch_state_shards(entry, f"{job}/final", staging / "final-package", temp, index_sha)
+    fetch_output(entry, job, temp, "runtime_versions.txt")
+    fetch_output(entry, job, temp, "parity.json")
+    fetch_output(entry, job, temp, "timing.json")
+    shutil.copyfile(staging / "execution.json", temp / "execution.json")
+    if read(temp / "timing.json")["evaluation_status"] == "COMPLETE":
+        fetch_output(entry, job, temp, "panel.json")
+    return verify_state_artifact(read(temp / "COMPLETE.json"), temp, expected), index_sha
+
 def harvest(state, job):
     entry = state["jobs"][job]
     if entry["status"] in {"HARVESTED_VERIFIED", "PARTIAL"}:
@@ -783,14 +877,18 @@ def harvest(state, job):
     staging = Path(mkdtemp(prefix=f"v{entry['version']}-", dir=downloads))
     alias = entry["planned"]["account"]
     filename = job + ".zip"
-    if not download_kernel_output(alias, entry["ref"], entry["version"], staging / filename):
-        raise RuntimeError("Expected version-specific Kaggle output unavailable")
     final = WORK / "harvest" / job
     final.parent.mkdir(parents=True, exist_ok=True)
     temp = staging / "verified-state"
     try:
         expected = entry["execution"]
-        manifest = inspect_artifact(staging / filename, temp, expected)
+        if expected.get("sharded_output"):
+            manifest, output_sha = harvest_sharded(entry, staging, temp)
+        else:
+            if not download_kernel_output(alias, entry["ref"], entry["version"], staging / filename):
+                raise RuntimeError("Expected version-specific Kaggle output unavailable")
+            manifest = inspect_artifact(staging / filename, temp, expected)
+            output_sha = sha(staging / filename)
         gates = verify_cloud_evidence(temp, manifest, entry, state) if manifest["result"] == "COMPLETE" else {}
         temp.rename(final)
     except (ValueError, KeyError, zipfile.BadZipFile):
@@ -798,7 +896,8 @@ def harvest(state, job):
         persist(state)
         raise
     entry.update(status="HARVESTED_VERIFIED" if manifest["result"] == "COMPLETE" else "PARTIAL",
-                 state_sha=sha(final / "COMPLETE.json"), output_sha=sha(staging / filename),
+                 state_sha=sha(final / "COMPLETE.json"), output_sha=output_sha,
+                 output_format="shards" if expected.get("sharded_output") else "zip",
                  output_version=entry["version"], gates=gates, at=now())
     persist(state)
     print(job, entry["status"], entry["state_sha"])
@@ -829,20 +928,8 @@ def harvest_periodic(state, job, step):
     index_sha = hashes.pop()
     root.mkdir(parents=True, exist_ok=True)
     staging = Path(mkdtemp(prefix=f"v{version}-", dir=root))
-    prefix = f"{job}/periodic/{name}"
-    def retrieve(filename):
-        if not download_kernel_output(alias, entry["ref"], version, staging / filename, f"{prefix}/{filename}"):
-            raise RuntimeError("Periodic checkpoint output unavailable")
-    retrieve("INDEX.json")
-    verify(staging / "INDEX.json", index_sha)
-    index = read(staging / "INDEX.json")
-    if index["schema"] != 1 or set(index["files"]) != STATE_FILES:
-        raise ValueError("Unexpected periodic checkpoint index")
-    for filename, shards in index["files"].items():
-        for ordinal in range(len(shards)):
-            retrieve(f"{filename}.{ordinal:06d}.bin")
     restored = staging / "state"
-    state_sha = restore_checkpoint(staging, index_sha, restored)
+    state_sha = fetch_state_shards(entry, f"{job}/periodic/{name}", staging, restored, index_sha)
     manifest = read(restored / "COMPLETE.json")
     if (manifest["job"] != job or manifest["transitions"] != step
             or manifest["identity"]["phase"] != planned["phase"]):
@@ -887,6 +974,8 @@ def verify_cloud_evidence(path, manifest, entry, state):
     metrics = read(path / "metrics.json")
     if not str(metrics["device"]).startswith(job["device"]):
         raise ValueError("Cloud run used a different compute device")
+    if job.get("accelerator") == "NvidiaTeslaT4" and "T4" not in (metrics.get("gpu") or ""):
+        raise ValueError("Cloud learner did not run on the requested T4")
     if any(metrics[k] <= 0 or not math.isfinite(metrics[k]) for k in (
         "seconds", "decisions_per_second", "updates_per_second", "post_warmup_seconds", "rss_peak_sampled_bytes"
     )):
@@ -899,7 +988,7 @@ def verify_cloud_evidence(path, manifest, entry, state):
         return {"G3": "PASS"}
     if (manifest["transitions"], manifest["updates"]) != (metrics["transitions"], metrics["updates"]):
         raise ValueError("Cloud checkpoint counters do not match its measured work")
-    if job["role"] == "easy_pilot":
+    if job["role"] in {"easy_pilot", "easy_long"}:
         if manifest["identity"]["phase"] != "easy" or len(metrics["decisions_by_geometry"]) < 2:
             raise ValueError("Easy pilot did not train on multiple geometries in the planned phase")
         return {"pilot_training": "PASS"}
@@ -928,6 +1017,15 @@ def main():
     pilot.add_argument("--round", required=True)
     pilot.add_argument("--capacity-round", required=True)
     pilot.add_argument("--account", choices=SLOTS, default=operator_slot())
+    longer = commands.add_parser("learning-plan")
+    longer.add_argument("--campaign", required=True)
+    longer.add_argument("--round", required=True)
+    longer.add_argument("--capacity-round", required=True)
+    longer.add_argument("--account", choices=SLOTS, default=operator_slot())
+    longer.add_argument("--reference-job", required=True)
+    longer.add_argument("--evaluation-report", required=True, type=Path)
+    longer.add_argument("--checkpoint", choices=("source", "4096", "8192"), required=True)
+    longer.add_argument("--transitions", choices=(25000, 50000), required=True, type=int)
     setup = commands.add_parser("setup")
     setup.add_argument("--account", choices=SLOTS, required=True)
     setup.add_argument("--owner", required=True)
@@ -944,7 +1042,7 @@ def main():
             anchor.add_argument("--capacity-after", metavar="VERIFIED_J01_ID")
             item.add_argument("--assign", action="append", default=[], metavar="JOB=SLOT")
         else:
-            item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08"), required=True)
+            item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08", "j09"), required=True)
             item.add_argument("--fingerprint", required=True)
             admission = item.add_mutually_exclusive_group()
             admission.add_argument("--admission-probe", action="store_true")
@@ -961,7 +1059,7 @@ def main():
     prepare = commands.add_parser("prepare-inputs")
     prepare.add_argument("--campaign", required=True)
     prepare.add_argument("--round", required=True)
-    prepare.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08"), required=True)
+    prepare.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08", "j09"), required=True)
     prepare.add_argument("--fingerprint", required=True)
     observe = commands.add_parser("observe")
     observe.add_argument("--account", choices=SLOTS, required=True)
@@ -985,7 +1083,7 @@ def main():
                 print(package())
             elif args.command == "plan":
                 plan(args, state)
-            elif args.command == "pilot-plan":
+            elif args.command in {"pilot-plan", "learning-plan"}:
                 plan_pilot(args, state)
             elif args.command == "launch":
                 launch(args, state)

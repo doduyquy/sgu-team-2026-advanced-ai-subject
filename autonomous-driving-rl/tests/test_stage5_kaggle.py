@@ -24,7 +24,7 @@ from cloud.kaggle.common import SOURCE_SHA, sha, write
 from cloud.kaggle.credentials import dpapi
 from cloud.kaggle.pilot import compare
 from cloud.kaggle.replay import admit, check_snapshot, validate
-from cloud.kaggle.runtime import check_state, load_policy, pool, restore_rng, save_state, schedule
+from cloud.kaggle.runtime import check_state, load_policy, model_for, pool, restore_rng, save_state, schedule
 
 class TinyEnv(gym.Env):
     observation_space = gym.spaces.Box(-2, 2, shape=(409,), dtype=np.float32)
@@ -129,7 +129,9 @@ def test_publish_b1_snapshot_requires_matching_runtime_inventory(tmp_path, monke
 def test_easy_pilot_compares_two_distinct_checkpoints_on_exact_panel():
     def evaluation(model, successes):
         rows = [{"geometry": str(i // 2), "family": "SCS", "seed": i % 2, "censored": False,
-                 "clean": i < successes, "outcome": "SUCCESS" if i < successes else "OUT_OF_ROAD"}
+                 "clean": i < successes, "outcome": "SUCCESS" if i < successes else "OUT_OF_ROAD",
+                 "progress": 1.0 if i < successes else 0.4, "speed_km_h": 35,
+                 "success_seconds": 40 if i < successes else None}
                 for i in range(12)]
         return {"model_sha": model, "tier": "Easy", "cases": rows}
     baseline = evaluation(SOURCE_SHA, 8)
@@ -137,9 +139,33 @@ def test_easy_pilot_compares_two_distinct_checkpoints_on_exact_panel():
     report = compare(baseline, [candidate, evaluation("checkpoint-2", 11)])
     assert report["two_milestones_meet_thresholds"]
     assert report["milestones"][0]["improved_cases"] == 2
+    assert report["milestones"][0]["mean_time_delta_on_common_successes_seconds"] == 0
+    assert len(report["milestones"][0]["paired_cases"]) == 12
     candidate["cases"][0]["seed"] = 99
     with pytest.raises(ValueError, match="exact baseline case IDs"):
         compare(baseline, [candidate])
+
+
+def test_checkpoint_warm_start_copies_weights_without_replay_or_optimizers(tmp_path):
+    torch.set_num_threads(1)
+    env = DummyVecEnv([TinyEnv])
+    target = DummyVecEnv([TinyEnv])
+    try:
+        source = model_for(env, "cpu", 32, 0)
+        source.learn(4)
+        path = tmp_path / "learned.zip"
+        source.save(path)
+        warmed = model_for(target, "cpu", 32, 0, warm_model=path, warm_sha=sha(path), metered=True)
+        for key in ("actor", "critic", "critic_target"):
+            for previous, current in zip(getattr(source, key).parameters(), getattr(warmed, key).parameters(), strict=True):
+                torch.testing.assert_close(previous, current, rtol=0, atol=0)
+        assert source.actor.optimizer.state and not warmed.actor.optimizer.state
+        assert warmed.num_timesteps == warmed._n_updates == warmed.replay_buffer.size() == 0
+        warmed.learn(4)
+        assert warmed._n_updates == 4 and warmed.optimizer_seconds > 0
+    finally:
+        env.close()
+        target.close()
 
 
 def test_capacity_timing_uses_kernel_elapsed_clock():
@@ -183,6 +209,31 @@ def test_pilot_plan_uses_verified_cpu_when_gpu_only_wins_after_warmup(tmp_path, 
     job = control.read(tmp_path / "plan-stage5-easy.json")["jobs"]["j08"]
     assert (job["workers"], job["device"], job["phase"]) == (2, "cpu", "easy")
     assert job["checkpoint_every"] == 4096 and job["runtime_sha"] == candidate["runtime_sha"]
+
+    pilot_id = job["job"]
+    receipts = {"status": "HARVESTED_VERIFIED", "planned": job, "periodic": {}}
+    milestones = []
+    for step, path in ((4096, tmp_path / "periodic" / pilot_id / "step-000000004096"),
+                       (8192, tmp_path / "harvest" / pilot_id)):
+        path.mkdir(parents=True)
+        (path / "model.zip").write_bytes(str(step).encode())
+        model_digest = sha(path / "model.zip")
+        write(path / "COMPLETE.json", {"transitions": step, "job": pilot_id, "files": {"model.zip": model_digest}})
+        checkpoint_digest = sha(path / "COMPLETE.json")
+        milestones.append({"model_sha": model_digest})
+        if step == 4096:
+            receipts["periodic"]["4096"] = {"state_sha": checkpoint_digest}
+        else:
+            receipts["state_sha"] = checkpoint_digest
+    rows[pilot_id] = receipts
+    args.round, args.reference_job, args.checkpoint, args.transitions = "longer", pilot_id, "4096", 25000
+    args.evaluation_report = tmp_path / "report.json"
+    write(args.evaluation_report, {"baseline_clean_successes": 8, "baseline_cases": 12, "milestones": milestones})
+    control.plan_pilot(args, {"jobs": rows})
+    job = control.read(tmp_path / "plan-stage5-longer.json")["jobs"]["j09"]
+    assert (job["workers"], job["device"], job["transitions"]) == (2, "cuda", 25000)
+    assert job["warm_model_sha"] == milestones[0]["model_sha"]
+    assert job["sharded_output"] and "parent_job" not in job
 
 
 @pytest.mark.parametrize("workers", [2, 4])
