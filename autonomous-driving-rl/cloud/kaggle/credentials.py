@@ -154,7 +154,8 @@ def register(alias, owner, token, minutes=None, concurrency=None):
 def setup(alias, owner, minutes, concurrency):
     if alias != operator_slot():
         raise ValueError("Credential setup is restricted to the configured operator slot")
-    if not OWNER.fullmatch(owner) or not 0 <= minutes <= 10080 or not 0 <= concurrency <= 2:
+    if (not OWNER.fullmatch(owner) or (minutes is not None and not 0 <= minutes <= 10080)
+            or (concurrency is not None and not 0 <= concurrency <= 2)):
         raise ValueError("Invalid owner or observed quota/concurrency")
     if input("Chủ tài khoản xác nhận quyền sử dụng slot này? Gõ YES: ") != "YES":
         raise ValueError("Owner authorization is required")

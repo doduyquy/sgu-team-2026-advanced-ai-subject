@@ -65,6 +65,7 @@ def prefill(root, identity):
 
 class GuidedSAC(runtime.TimedSAC):
     actor_lr_scale = 1.0
+    rollout_axis = None
 
     def _update_learning_rate(self, optimizers):
         super()._update_learning_rate(optimizers)
@@ -75,6 +76,9 @@ class GuidedSAC(runtime.TimedSAC):
         action, _ = self.predict(self._last_obs, deterministic=True)
         scaled = self.policy.scale_action(action)
         scaled = np.clip(scaled + np.random.normal(0, NOISE_STD, scaled.shape), -1, 1).astype(np.float32)
+        if getattr(self, "rollout_axis", None) is not None:
+            anchored, _ = self.rollout_anchor.predict(self._last_obs, deterministic=True)
+            scaled[:, self.rollout_axis] = self.policy.scale_action(anchored)[:, self.rollout_axis]
         return self.policy.unscale_action(scaled), scaled
 
 
@@ -101,6 +105,9 @@ def train(args):
     parser.add_argument("--parent-sha")
     parser.add_argument("--guided-gradient-steps", type=int, choices=(1,))
     parser.add_argument("--guided-actor-lr-scale", type=float, choices=(0.25,))
+    parser.add_argument("--phase", default="easy", choices=("easy", "medium", "hard", "extreme", "mixed"))
+    parser.add_argument("--guided-curriculum-from", choices=("easy",))
+    parser.add_argument("--guided-rollout-axis", choices=("steering", "throttle_brake"))
     parser.add_argument("--capacity", type=int, default=runtime.RECIPE["preflight"]["capacity"])
     parser.add_argument("--transitions", required=True, type=int)
     config, learner_args = parser.parse_known_args(args)
@@ -110,13 +117,19 @@ def train(args):
         parser.error("Guided training requires the metered GuidedSAC learner")
     if (config.guided_gradient_steps or config.guided_actor_lr_scale) and not config.resume:
         parser.error("Update profile changes require guided full-state resume")
-    learner_args.extend(["--capacity", str(config.capacity), "--transitions", str(config.transitions)])
+    learner_args.extend(["--capacity", str(config.capacity), "--transitions", str(config.transitions), "--phase", config.phase])
+    if (config.guided_curriculum_from or config.guided_rollout_axis) and not config.resume:
+        parser.error("Curriculum transition and axis retention require a verified guided parent")
+    if config.guided_curriculum_from and (config.phase != "medium" or config.guided_rollout_axis):
+        parser.error("Initial curriculum transition requires the unassisted Easy-to-Medium profile")
     parent = None
     parent_gradient_steps = -1
     parent_actor_lr_scale = 1.0
     if config.resume:
         learner_args.extend(["--resume", str(config.resume), "--parent-sha", config.parent_sha])
         parent = runtime.check_state(config.resume, config.parent_sha)
+        if parent["identity"]["phase"] != (config.guided_curriculum_from or config.phase):
+            raise ValueError("Phase must match the parent or use the approved curriculum transition")
         parent_gradient_steps = parent["identity"].get("guided_gradient_steps", -1)
         parent_actor_lr_scale = parent["identity"].get("guided_actor_lr_scale", 1.0)
         if (parent.get("learning_mode") != BEHAVIOR or parent["identity"].get("online_behavior") != BEHAVIOR
@@ -129,9 +142,10 @@ def train(args):
     model_for, base_sac, telemetry, save = runtime.model_for, runtime.TimedSAC, runtime.Telemetry, runtime.save_state
     recipe_identity = runtime.recipe_identity
     online = Counter()
+    tiers = Counter()
 
     def parent_identity(phase, workers, capacity, learning_starts, warm):
-        identity = recipe_identity(phase, workers, parent["identity"]["capacity"], learning_starts, warm)
+        identity = recipe_identity(config.guided_curriculum_from or phase, workers, parent["identity"]["capacity"], learning_starts, warm)
         if parent_gradient_steps == 1:
             identity["guided_gradient_steps"] = 1
         if parent_actor_lr_scale != 1.0:
@@ -139,6 +153,9 @@ def train(args):
         return {**identity, "online_behavior": BEHAVIOR}
 
     class ResumedGuidedSAC(GuidedSAC):
+        def _excluded_save_params(self):
+            return [*super()._excluded_save_params(), "rollout_anchor"]
+
         def load_replay_buffer(self, path, truncate_last_traj=True):
             super().load_replay_buffer(path, truncate_last_traj=truncate_last_traj)
             evidence = self.guided_prefill
@@ -154,6 +171,9 @@ def train(args):
                     raise ValueError("The reduced update profile requires two environments")
                 self.gradient_steps = config.guided_gradient_steps
             self.actor_lr_scale = config.guided_actor_lr_scale or parent_actor_lr_scale
+            if config.guided_rollout_axis:
+                self.rollout_anchor = runtime.load_policy(config.resume / "model.zip", self.device)
+                self.rollout_axis = ("steering", "throttle_brake").index(config.guided_rollout_axis)
 
     def seeded(env, device, capacity, learning_starts, source=None, *, warm_model=None, warm_sha=None, metered=False):
         if learning_starts != 0 or not warm_model or not metered or source:
@@ -171,6 +191,7 @@ def train(args):
     class GuidedTelemetry(telemetry):
         def _on_step(self):
             online.update(progress_band(info["route_completion"]) for info in self.locals["infos"])
+            tiers.update(info["tier"] for info in self.locals["infos"])
             return super()._on_step()
 
     def save_guided(out, model, manifest, metrics):
@@ -179,13 +200,22 @@ def train(args):
             raise ValueError("Guided replay was overwritten or replay accounting diverged")
         manifest.update(external_admitted=evidence["rows"], ledger=evidence["ledger"], learning_mode=BEHAVIOR)
         manifest["identity"] = {**manifest["identity"], "online_behavior": BEHAVIOR, "capacity": config.capacity}
+        manifest["identity"]["phase"] = config.phase
+        if config.guided_rollout_axis:
+            manifest["identity"]["guided_rollout_axis"] = config.guided_rollout_axis
+            metrics["guided_rollout_anchor_sha"] = parent["files"]["model.zip"]
+        if config.guided_curriculum_from:
+            metrics["curriculum_from"] = config.guided_curriculum_from
         if model.gradient_steps == 1:
             manifest["identity"]["guided_gradient_steps"] = 1
         if model.actor_lr_scale != 1.0:
             manifest["identity"]["guided_actor_lr_scale"] = model.actor_lr_scale
             metrics["guided_actor_lr"] = model.actor.optimizer.param_groups[0]["lr"]
-        metrics.update(guided_prefill=evidence, online_progress_bands=dict(online),
-                       online_behavior=BEHAVIOR_CONFIG,
+        behavior = dict(BEHAVIOR_CONFIG)
+        if config.guided_rollout_axis:
+            behavior.update(anchored_axis=config.guided_rollout_axis, anchor_model_sha=parent["files"]["model.zip"])
+        metrics.update(guided_prefill=evidence, online_progress_bands=dict(online), online_tier_decisions=dict(tiers),
+                       online_behavior=behavior,
                        guided_live_rows=evidence["rows"], online_live_rows=model.num_timesteps,
                        updates_per_total_real_transition=model._n_updates / (evidence["rows"] + model.num_timesteps))
         save(out, model, manifest, metrics)

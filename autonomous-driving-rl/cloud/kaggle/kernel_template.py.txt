@@ -124,6 +124,10 @@ if JOB.get("guided_gradient_steps"):
     command.extend(["--guided-gradient-steps", str(JOB["guided_gradient_steps"])])
 if JOB.get("guided_actor_lr_scale"):
     command.extend(["--guided-actor-lr-scale", str(JOB["guided_actor_lr_scale"])])
+if JOB.get("guided_curriculum_from"):
+    command.extend(["--guided-curriculum-from", JOB["guided_curriculum_from"]])
+if JOB.get("guided_rollout_axis"):
+    command.extend(["--guided-rollout-axis", JOB["guided_rollout_axis"]])
 if JOB.get("policy_every"):
     command.extend(["--policy-every", str(JOB["policy_every"]),
                     "--policy-dir", str(working / JOB["job"] / "screening")])
@@ -166,6 +170,10 @@ if JOB.get("sharded_output"):
             run([*python, "-m", "cloud.kaggle.runtime", "evaluate", "--model", str(state / "model.zip"),
                  "--model-sha", digest(state / "model.zip"), "--tier", "Easy", "--out", str(results / "panel.json")],
                 started + JOB["max_seconds"] - 20)
+            if JOB.get("guided_curriculum_from"):
+                run([*python, "-m", "cloud.kaggle.runtime", "evaluate", "--model", str(state / "model.zip"),
+                     "--model-sha", digest(state / "model.zip"), "--tier", "Medium", "--out", str(results / "panel-medium.json")],
+                    started + JOB["max_seconds"] - 20)
             evaluation_status = "COMPLETE"
         except (subprocess.TimeoutExpired, TimeoutError):
             evaluation_status = "TIME_BUDGET"

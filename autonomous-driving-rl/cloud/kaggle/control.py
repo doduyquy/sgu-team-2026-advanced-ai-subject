@@ -819,6 +819,8 @@ def launch(args, state):
     if any(other_id != job["job"] and other["status"] in ACTIVE
            and other["planned"]["campaign"] == job["campaign"]
            and other["planned"]["role"] == job["role"]
+           and other["planned"]["account"] == job["account"]
+           and other["planned"].get("parallel_workload") == job.get("parallel_workload")
            and other["planned"]["runtime_sha"] == job["runtime_sha"]
            and other["planned"].get("parent_sha") == job.get("parent_sha")
            for other_id, other in state["jobs"].items()):
@@ -828,7 +830,11 @@ def launch(args, state):
     prior_continuations = {key: row for key, row in state["jobs"].items() if job.get("parent_sha")
                            and row.get("execution", {}).get("parent_sha") == job["parent_sha"]}
     controls = {job[key] for key in ("utd_control", "actor_lr_control") if key in job}
-    if prior_continuations and not (job.get("guided_gradient_steps") == 1 and prior_continuations.keys() == controls
+    if job.get("parallel_workload"):
+        if any(row["status"] in ACTIVE or row["planned"].get("parallel_workload") == job["parallel_workload"]
+               for row in prior_continuations.values() if row["planned"]["account"] == job["account"]):
+            raise RuntimeError("A matching parallel workload or unresolved parent receipt already exists")
+    elif prior_continuations and not (job.get("guided_gradient_steps") == 1 and prior_continuations.keys() == controls
                                     and all(row["status"] == "HARVESTED_VERIFIED" for row in prior_continuations.values())):
         raise RuntimeError("This parent already has a submitted or uncertain continuation")
     age = datetime.now(timezone.utc) - datetime.fromisoformat(creds["observed_at"])
@@ -857,6 +863,8 @@ def launch(args, state):
         if active or any(
             row["planned"]["campaign"] == job["campaign"]
             and ((row.get("submitted") and row["planned"]["role"] == job["role"]
+                  and row["planned"]["account"] == job["account"]
+                  and row["planned"].get("parallel_workload") == job.get("parallel_workload")
                   and row["planned"]["runtime_sha"] == job["runtime_sha"])
                  or (row.get("owner") == owner and row["status"] == "CAPACITY_REJECTED"))
             for row in state["jobs"].values()
@@ -1082,6 +1090,8 @@ def harvest_sharded(entry, staging, temp):
     shutil.copyfile(staging / "execution.json", temp / "execution.json")
     if read(temp / "timing.json")["evaluation_status"] == "COMPLETE":
         fetch_output(entry, job, temp, "panel.json")
+        if expected.get("guided_curriculum_from"):
+            fetch_output(entry, job, temp, "panel-medium.json")
     return verify_state_artifact(read(temp / "COMPLETE.json"), temp, expected), index_sha
 
 def harvest(state, job):
@@ -1254,6 +1264,22 @@ def verify_cloud_evidence(path, manifest, entry, state):
             parent_metrics_path = parent_path / "metrics.json"
             verify(parent_metrics_path, parent["files"]["metrics.json"])
             parent_metrics = read(parent_metrics_path)
+            behavior = dict(parent_metrics["online_behavior"])
+            if job.get("guided_curriculum_from"):
+                tiers = metrics["online_tier_decisions"]
+                if (parent["identity"]["phase"] != job["guided_curriculum_from"]
+                        or metrics["curriculum_from"] != job["guided_curriculum_from"]
+                        or set(tiers) != {"Easy", "Medium"} or min(tiers.values()) <= 0
+                        or sum(tiers.values()) != metrics["transitions"]):
+                    raise ValueError("Curriculum evidence must contain both Easy retention and Medium collection")
+                identity["phase"] = job["phase"]
+            if job.get("guided_rollout_axis"):
+                axis = job["guided_rollout_axis"]
+                anchor = parent["files"]["model.zip"]
+                identity["guided_rollout_axis"] = axis
+                behavior.update(anchored_axis=axis, anchor_model_sha=anchor)
+                if metrics["guided_rollout_anchor_sha"] != anchor:
+                    raise ValueError("Guided rollout anchor differs from the verified parent")
             gradient_steps = job.get("guided_gradient_steps", identity.get("guided_gradient_steps", -1))
             expected_updates = metrics["transitions"]
             if gradient_steps == 1:
@@ -1267,7 +1293,7 @@ def verify_cloud_evidence(path, manifest, entry, state):
                     raise ValueError("Cloud guided actor learning rate differs from the plan")
             if (manifest["identity"] != identity or manifest["learning_mode"] != parent["learning_mode"]
                     or manifest["ledger"] != parent["ledger"] or manifest["external_admitted"] != guided_rows
-                    or metrics["online_behavior"] != parent_metrics["online_behavior"]
+                    or metrics["online_behavior"] != behavior
                     or metrics["guided_prefill"] != parent_metrics["guided_prefill"]
                     or metrics["guided_prefill"]["ledger"] != parent["ledger"]
                     or metrics["guided_live_rows"] != guided_rows or metrics["online_live_rows"] != manifest["transitions"]
@@ -1338,8 +1364,8 @@ def main():
     setup = commands.add_parser("setup")
     setup.add_argument("--account", choices=SLOTS, required=True)
     setup.add_argument("--owner", required=True)
-    setup.add_argument("--gpu-minutes", type=int, default=0)
-    setup.add_argument("--concurrency", type=int, default=0)
+    setup.add_argument("--gpu-minutes", type=int)
+    setup.add_argument("--concurrency", type=int)
     for name in ("plan", "launch"):
         item = commands.add_parser(name)
         item.add_argument("--campaign", required=True)

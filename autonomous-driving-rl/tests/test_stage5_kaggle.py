@@ -79,6 +79,18 @@ def test_guided_actor_learning_rate_does_not_change_critic_or_alpha():
         env.close()
 
 
+@pytest.mark.parametrize("axis,expected", [(0, [[0.3, -0.2]]), (1, [[0.8, -0.4]])])
+def test_guided_retention_stores_the_executed_anchored_axis(monkeypatch, axis, expected):
+    policy = SimpleNamespace(scale_action=lambda x: x, unscale_action=lambda x: x)
+    anchor = SimpleNamespace(predict=lambda *_args, **_kwargs: (np.array([[0.3, -0.4]]), None))
+    model = SimpleNamespace(predict=lambda *_args, **_kwargs: (np.array([[0.8, -0.2]]), None),
+                            _last_obs=None, policy=policy, rollout_axis=axis, rollout_anchor=anchor)
+    monkeypatch.setattr(np.random, "normal", lambda *_args: 0)
+    executed, stored = GuidedSAC._sample_action(model, 0)
+    np.testing.assert_allclose(executed, expected)
+    np.testing.assert_array_equal(stored, executed)
+
+
 def test_guided_notebook_command_passes_training_flags_once(monkeypatch):
     calls = []
     monkeypatch.setattr(guided, "train", calls.append)
