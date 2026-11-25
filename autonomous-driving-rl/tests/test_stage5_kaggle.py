@@ -282,6 +282,28 @@ def test_kernel_runtime_abi(machine, version, supported):
             scope["check_runtime_abi"]()
 
 
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_kernel_bootstrap_uses_isolated_pinned_runtime(tmp_path, device):
+    template = Path(control.__file__).with_name("kernel_template.py.txt")
+    tree = ast.parse(template.read_text(encoding="utf-8"))
+    bootstrap = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "prepare_runtime")
+    lock = tmp_path / "cloud/kaggle/linux-lock.txt"
+    lock.parent.mkdir(parents=True)
+    lock.write_text("torch==2.14.1\n", encoding="utf-8")
+    calls = []
+    scope = {"workspace": tmp_path, "JOB": {"device": device}, "sys": SimpleNamespace(executable="launcher-python"),
+             "run": lambda command, deadline: calls.append((command, deadline))}
+    exec(compile(ast.Module(body=[bootstrap], type_ignores=[]), str(template), "exec"), scope)
+    interpreter, pip = scope["prepare_runtime"](10)
+    assert "--without-pip" in calls[0][0]
+    assert interpreter == [str(tmp_path / "venv/bin/python"), "-X", "faulthandler", "-u"]
+    assert pip[pip.index("--python") + 1] == interpreter[0]
+    assert any(cmd[-1] == "torch==2.14.1+cpu" for cmd, _ in calls) == (device == "cpu")
+    assert calls[-2][0][-2:] == ["-r", str(lock)]
+    assert calls[-1][0] == [*pip, "check"]
+    assert all(deadline == 10 for _, deadline in calls)
+
+
 def test_quota_uses_verified_api_minutes(monkeypatch):
     monkeypatch.setattr(credentials, "cli", lambda *a, **kw: (
         0, "informational prefix\nresource,used,remaining,total,refreshAt\n"

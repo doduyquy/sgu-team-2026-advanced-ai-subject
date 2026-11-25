@@ -47,6 +47,7 @@ REPAIR_FILES = {
     "PYTHON_ABI": {"cloud/kaggle/kernel_template.py.txt"},
     "DEPENDENCY_RESOLUTION": {"cloud/kaggle/linux-lock.txt", "cloud/kaggle/kernel_template.py.txt"},
     "RUNTIME_IMPORT": {"cloud/kaggle/linux-lock.txt", "cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/runtime.py"},
+    "NATIVE_RUNTIME_CRASH": {"cloud/kaggle/linux-lock.txt", "cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/runtime.py"},
     "METADRIVE_ASSETS": {"cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/linux-lock.txt"},
     "PRIVATE_INPUT": {"cloud/kaggle/kernel_template.py.txt"},
 }
@@ -573,6 +574,7 @@ def diagnose(state, job):
         "DEPENDENCY_RESOLUTION": r"No matching distribution|ResolutionImpossible|Could not find a version",
         "PYTHON_ABI": r"(?:Unvalidated|Unsupported) Kaggle Python ABI",
         "RUNTIME_IMPORT": r"ModuleNotFoundError|ImportError",
+        "NATIVE_RUNTIME_CRASH": r"SIGSEGV|Fatal Python error: Segmentation fault",
         "METADRIVE_ASSETS": r"Assets folder does not exist|Assets version misses|pull_asset.*returned non-zero",
         "PRIVATE_INPUT": r"Missing, ambiguous or mismatched private input",
         "CLOUD_PARITY": r"Cloud parity drift|GEOMETRY DRIFT",

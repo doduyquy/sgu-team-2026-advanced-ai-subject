@@ -4,6 +4,10 @@
 
 Kaggle tiếp nhận J01 `s5-94d391e6b785-j01-a1` version 1 lúc 18:56:53 ICT sau một lần thử cấp phiên CPU. Job chuyển sang `RUNNING`, sau đó dừng ở kiểm tra Python ABI trước khi cài dependency hoặc chạy parity. Cả 8 account đã xác minh danh tính. G2–G4 vẫn `BLOCKED`. Phiên bản kế tiếp hỗ trợ CPython 3.13 trên Linux x86-64 và cần bundle cùng fingerprint mới. Một lần probe khi capacity chưa xác định đã được sử dụng trong campaign `stage5`.
 
+## Cập nhật cloud activation03
+
+J01 `s5-d77e2268cbc3-j01-a1` version 1 đã vượt kiểm tra Python 3.13 và tải được MetaDrive assets. Tiến trình parity dừng với `SIGSEGV` sau khi pip cài PyTorch kèm CUDA vào môi trường gốc của image CPU và báo xung đột với các gói có sẵn. Log của phiên này chưa chỉ ra native frame gây lỗi. Runtime kế tiếp dùng virtualenv riêng, wheel PyTorch CPU từ nguồn chính thức cho job CPU, `pip check` và Python faulthandler. G2 vẫn chờ artifact đã kiểm chứng.
+
 Các mục dưới đây lưu kết quả của đợt local trước khi kích hoạt cloud.
 
 **Đợt 1 PARTIAL. Cloud READY_FOR_CREDENTIALS.** Kaggle CLI 2.2.4 có sẵn. `account_01`–`account_08` đều MISSING. Owner, quota, ACL, kernel/version và thời gian chạy thực tế chưa được xác minh. Registry có 4 job `PLANNED`, 0 job đã gửi. J05/J06 chờ xác minh B1 cloud, J07 chờ state cha đã harvest.

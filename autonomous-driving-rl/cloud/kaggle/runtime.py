@@ -329,9 +329,11 @@ def evaluate(args):
 def parity(args):
     torch.set_num_threads(1)
     verify(args.source, SOURCE_SHA)
+    print("Parity: loading verified source checkpoint", flush=True)
     model = load_policy(args.source)
     anchors = []
     for i, row in enumerate(pool("smoke")):
+        print(f"Parity: resetting {row['geometry_id']}", flush=True)
         env = ScheduledEnv("smoke", i, 0, fixed=(row["geometry_id"], 10101))
         try:
             obs, info = env.reset()

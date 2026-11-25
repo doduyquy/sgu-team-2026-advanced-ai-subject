@@ -1,7 +1,7 @@
 """Generated with an immutable preflight job configuration."""
 import hashlib
-from importlib.metadata import distribution
 import json
+import os
 from pathlib import Path, PurePosixPath
 import platform
 import shutil
@@ -14,6 +14,9 @@ JOB = __JOB__
 started = time.monotonic()
 working = Path("/kaggle/working")
 workspace = Path("/tmp") / JOB["job"]
+child_env = {key: value for key, value in os.environ.items()
+             if key not in {"PYTHONHOME", "PYTHONPATH", "PYTHONUSERBASE", "PIP_TARGET", "PIP_PREFIX", "PIP_USER"}}
+child_env.update(PYTHONNOUSERSITE="1", PYTHONFAULTHANDLER="1")
 
 def digest(path):
     h = hashlib.sha256()
@@ -45,11 +48,27 @@ def unpack(source, target, max_bytes):
             with archive.open(row) as stream, dest.open("xb") as output:
                 shutil.copyfileobj(stream, output)
 
-def run(command, deadline):
+def run(command, deadline, capture=False):
     time_left = deadline - time.monotonic()
     if time_left <= 0:
         raise TimeoutError("Preflight time budget exhausted")
-    subprocess.run(command, cwd=workspace, check=True, timeout=time_left)
+    return subprocess.run(command, cwd=workspace, env=child_env, check=True, timeout=time_left,
+                          capture_output=capture, text=capture).stdout
+
+def prepare_runtime(deadline):
+    # Keep Kaggle's own TensorFlow, Gym and Torch installations out of the learner.
+    environment = workspace / "venv"
+    run([sys.executable, "-I", "-m", "venv", "--without-pip", str(environment)], deadline)
+    python = str(environment / "bin" / "python")
+    pip = [sys.executable, "-I", "-m", "pip", "--python", python, "--disable-pip-version-check"]
+    lock = workspace / "cloud/kaggle/linux-lock.txt"
+    install = [*pip, "install", "--no-input"]
+    if JOB["device"] == "cpu":
+        torch_pin, = (line for line in lock.read_text(encoding="utf-8").splitlines() if line.startswith("torch=="))
+        run([*install, "--no-deps", "--index-url", "https://download.pytorch.org/whl/cpu", torch_pin + "+cpu"], deadline)
+    run([*install, "-r", str(lock)], deadline)
+    run([*pip, "check"], deadline)
+    return [python, "-X", "faulthandler", "-u"], pip
 
 def check_runtime_abi():
     system, machine, python_version = platform.system(), platform.machine(), platform.python_version()
@@ -70,21 +89,23 @@ for name, expected in inventory["files"].items():
     if digest(workspace / name) != expected:
         raise ValueError(f"Runtime fingerprint mismatch: {name}")
 stop = started + JOB["max_seconds"] - JOB["export_reserve"]
-run([sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "--no-input",
-     "-r", "cloud/kaggle/linux-lock.txt"], stop)
-commit = json.loads(distribution("metadrive-simulator").read_text("direct_url.json"))["vcs_info"]["commit_id"]
+python, pip = prepare_runtime(stop)
+commit_query = (
+    'import json; from importlib.metadata import distribution; '
+    'print(json.loads(distribution("metadrive-simulator").read_text("direct_url.json"))["vcs_info"]["commit_id"])'
+)
+commit = run([*python, "-c", commit_query], stop, capture=True).strip()
 if commit != inventory["metadrive_pin"]:
     raise RuntimeError("Installed MetaDrive commit differs from the bundle pin")
-run([sys.executable, "-m", "metadrive.pull_asset"], stop)
-freeze = subprocess.check_output([sys.executable, "-m", "pip", "freeze"], text=True,
-                                 timeout=max(1, stop - time.monotonic()))
+run([*python, "-m", "metadrive.pull_asset"], stop)
+freeze = run([*pip, "freeze"], stop, capture=True)
 # Export versions only. Kaggle's preinstalled direct URLs can carry credentials.
 versions = [line for line in freeze.splitlines() if "==" in line and line.split("==", 1)[0].replace("-", "").replace("_", "").isalnum()]
 (workspace / "runtime_versions.txt").write_text("\n".join([f"metadrive-commit={commit}", *versions]), encoding="utf-8")
 state = workspace / "state"
-run([sys.executable, "-m", "cloud.kaggle.runtime", "parity", "--source", str(source),
+run([*python, "-m", "cloud.kaggle.runtime", "parity", "--source", str(source),
      "--out", "observed_parity.json", "--reference", "parity.json"], stop)
-command = [sys.executable, "-m", "cloud.kaggle.runtime", "train", "--out", str(state),
+command = [*python, "-m", "cloud.kaggle.runtime", "train", "--out", str(state),
            "--job", JOB["job"], "--workers", str(JOB["workers"]), "--device", JOB["device"],
            "--transitions", str(JOB["transitions"]), "--capacity", str(JOB["capacity"]),
            "--learning-starts", str(JOB["learning_starts"]),
