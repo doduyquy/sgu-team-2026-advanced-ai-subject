@@ -24,6 +24,7 @@ DTYPES = {
     "terminated": (np.bool_, ()), "truncated": (np.bool_, ()),
     "episode": (np.int32, ()), "step": (np.int32, ()),
 }
+GUIDED_DTYPES = {**DTYPES, "progress": (np.float32, ()), "speed_km_h": (np.float32, ())}
 
 def publish(model_path, expected, identity, version, out):
     verify(model_path, expected)
@@ -44,39 +45,57 @@ def collect(args):
         raise ValueError("Unexpected snapshot lineage or schema")
     model = load_policy(args.snapshot / "policy.zip")
     torch.manual_seed(int(fingerprint((args.stream, args.sequence))[:8], 16))
-    rows = pool("smoke")
+    geometry = getattr(args, "geometry", None)
+    phase = "easy" if geometry else "smoke"
+    rows = pool(phase)
+    if geometry and (geometry not in {r["geometry_id"] for r in rows} or snapshot["identity"]["phase"] != "easy"):
+        raise ValueError("Guided collection requires a geometry in the locked Easy TRAIN pool")
+    dtypes = GUIDED_DTYPES if geometry else DTYPES
     start = time.monotonic()
-    data = {key: [] for key in DTYPES}
+    data = {key: [] for key in dtypes}
     episodes = []
-    env = ScheduledEnv("smoke", args.stream, args.sequence * MAX_ROWS)
+    fixed = (geometry, args.seed) if geometry else None
+    env = ScheduledEnv(phase, args.stream, args.sequence * MAX_ROWS, fixed=fixed)
+    outcome = None
     try:
         obs, info = env.reset()
         episodes.append(info)
         for _ in range(args.rows):
-            action, _ = model.predict(obs, deterministic=False)
+            action, _ = model.predict(obs, deterministic=bool(geometry))
             successor, reward, terminated, truncated, step_info = env.step(action)
             row = (obs, successor, action, reward, terminated, truncated,
                    len(episodes) - 1, step_info["step_index"])
-            for key, value in zip(DTYPES, row):
+            if geometry:
+                executed = np.asarray([step_info["action_steering"], step_info["action_throttle_brake"]], dtype=np.float32)
+                row = (obs, successor, executed, reward, terminated, truncated, 0, step_info["step_index"],
+                       step_info["route_completion"], step_info["speed_km_h"])
+            for key, value in zip(dtypes, row, strict=True):
                 data[key].append(value)
             obs = successor
             if terminated or truncated:
+                if geometry:
+                    outcome = step_info["primary_reason"]
+                    break
                 obs, info = env.reset()
                 episodes.append(info)
         if data["episode"][-1] != len(episodes) - 1:
             episodes.pop()
     finally:
         env.close()
+    if geometry and not outcome:
+        raise ValueError("Guided collection requires the full episode through a real terminal or timeout")
     args.out.mkdir(parents=True)
     payload = args.out / "rows.npz"
-    np.savez(payload, **{key: np.asarray(values, dtype=DTYPES[key][0]) for key, values in data.items()})
-    meta = {"schema": 1, "count": args.rows, "stream": args.stream, "sequence": args.sequence,
+    np.savez(payload, **{key: np.asarray(values, dtype=dtypes[key][0]) for key, values in data.items()})
+    meta = {"schema": 1, "count": len(data["reward"]), "stream": args.stream, "sequence": args.sequence,
             "policy_version": snapshot["policy_version"], "snapshot_sha": args.snapshot_sha,
             "identity": snapshot["identity"], "geometry_pool": fingerprint(rows),
             "payload_sha": sha(payload), "episodes": [{k: info[k] for k in (
                 "episode", "geometry_id", "geometry_sha256", "environment_seed", "horizon_steps",
                 "traffic_density", "training_reward_mode_fingerprint")} for info in episodes],
             "seconds": time.monotonic() - start}
+    if geometry:
+        meta["guided"] = {"geometry": geometry, "seed": args.seed, "behavior": "frozen_deterministic", "outcome": outcome}
     write(args.out / "CHUNK.json", meta)
     print(sha(args.out / "CHUNK.json"))
 
@@ -90,7 +109,7 @@ def check_snapshot(path, digest, identity):
     return snapshot["policy_version"]
 
 
-def validate(chunk, expected, identity, ledger, policy_version, snapshot=None):
+def validate(chunk, expected, identity, ledger, policy_version, snapshot=None, *, guided=False):
     marker = chunk / "CHUNK.json"
     if marker.stat().st_size > 4_000_000:
         raise ValueError("Chunk manifest is too large")
@@ -110,7 +129,11 @@ def validate(chunk, expected, identity, ledger, policy_version, snapshot=None):
         raise ValueError("Future or stale actor snapshot")
     if not 100 <= meta["stream"] <= 999 or not 0 <= meta["sequence"] <= 1000:
         raise ValueError("Collector namespace outside preflight range")
-    rows = pool("smoke")
+    guidance = meta.get("guided")
+    if bool(guidance) != guided:
+        raise ValueError("Replay collection mode mismatch")
+    rows = pool("easy" if guided else "smoke")
+    dtypes = GUIDED_DTYPES if guided else DTYPES
     if meta["geometry_pool"] != fingerprint(rows):
         raise ValueError("Replay geometry pool mismatch")
     lookup = {r["geometry_id"]: r["geometry_sha256"] for r in rows}
@@ -120,12 +143,12 @@ def validate(chunk, expected, identity, ledger, policy_version, snapshot=None):
     verify(payload, meta["payload_sha"])
     with zipfile.ZipFile(payload) as archive:
         entries = archive.infolist()
-        if len(entries) != len(DTYPES) or {x.filename for x in entries} != {f"{k}.npy" for k in DTYPES}:
+        if len(entries) != len(dtypes) or {x.filename for x in entries} != {f"{k}.npy" for k in dtypes}:
             raise ValueError("Unexpected payload members")
         if sum(x.file_size for x in entries) > 20_000_000:
             raise ValueError("Expanded replay exceeds preflight size limit")
         # Inspect headers before NumPy allocates arrays from the payload.
-        for name, (dtype, tail) in DTYPES.items():
+        for name, (dtype, tail) in dtypes.items():
             entry = archive.getinfo(f"{name}.npy")
             with archive.open(entry) as stream:
                 version = np.lib.format.read_magic(stream)
@@ -137,8 +160,8 @@ def validate(chunk, expected, identity, ledger, policy_version, snapshot=None):
                 if entry.file_size != stream.tell() + int(np.prod(shape)) * actual_dtype.itemsize:
                     raise ValueError(f"Unexpected byte size for {name}")
     with np.load(payload, allow_pickle=False) as arrays:
-        data = {key: arrays[key] for key in DTYPES}
-    for name, (dtype, tail) in DTYPES.items():
+        data = {key: arrays[key] for key in dtypes}
+    for name, (dtype, tail) in dtypes.items():
         value = data[name]
         if value.shape != (n, *tail) or value.dtype != dtype or not np.isfinite(value).all():
             raise ValueError(f"Malformed replay field {name}")
@@ -146,6 +169,15 @@ def validate(chunk, expected, identity, ledger, policy_version, snapshot=None):
         raise ValueError("Replay action outside Box2")
     episode_index, decision = 0, 1
     episodes = meta["episodes"]
+    if guided:
+        done = data["terminated"] | data["truncated"]
+        if (len(episodes) != 1 or not done[-1] or done[:-1].any()
+                or guidance["behavior"] != "frozen_deterministic" or guidance["geometry"] not in lookup
+                or type(guidance["seed"]) is not int or not 0 <= guidance["seed"] < 2**31
+                or not isinstance(guidance["outcome"], str) or not guidance["outcome"]
+                or (guidance["outcome"] == "TIMEOUT") != bool(data["truncated"][-1] and not data["terminated"][-1])
+                or (guidance["outcome"] != "TIMEOUT" and not data["terminated"][-1])):
+            raise ValueError("Invalid full-episode guided replay")
     from cloud.kaggle.runtime import schedule
     from src.training.stage5.train_sampler import TrainCaseSampler
     sampler = TrainCaseSampler(allowed_geometry_ids=list(lookup))
@@ -154,7 +186,8 @@ def validate(chunk, expected, identity, ledger, policy_version, snapshot=None):
             raise ValueError("Missing replay episode metadata")
         episode = episodes[episode_index]
         cursor = meta["sequence"] * MAX_ROWS + episode_index
-        geom, seed = schedule(rows, "smoke", meta["stream"], cursor)
+        geom, seed = ((guidance["geometry"], guidance["seed"]) if guided
+                      else schedule(rows, "smoke", meta["stream"], cursor))
         case = sampler.get_case_for_geometry_id(geom, environment_seed=seed)
         if (episode["episode"], episode["geometry_id"], episode["geometry_sha256"],
             episode["environment_seed"], episode["horizon_steps"], episode["traffic_density"]) != (
@@ -275,6 +308,8 @@ def main():
     collection.add_argument("--stream", type=int, default=100)
     collection.add_argument("--sequence", type=int, default=0)
     collection.add_argument("--rows", type=int, default=1024)
+    collection.add_argument("--geometry")
+    collection.add_argument("--seed", type=int, default=30811)
     learner = sub.add_parser("import")
     learner.add_argument("--out", type=Path, required=True)
     learner.add_argument("--source", type=Path, required=True)

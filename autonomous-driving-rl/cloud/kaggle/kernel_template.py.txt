@@ -108,12 +108,18 @@ run([*python, "-m", "cloud.kaggle.runtime", "parity", "--source", str(source),
 learner_module = "cloud.kaggle.runtime"
 if JOB.get("policy_every") or JOB.get("warm_start_cursor") is not None:
     learner_module = "cloud.kaggle.learning_hooks"
+if JOB.get("guided_ref"):
+    learner_module = "cloud.kaggle.guided"
 command = [*python, "-m", learner_module, "train", "--out", str(state),
            "--job", JOB["job"], "--workers", str(JOB["workers"]), "--device", JOB["device"],
            "--phase", JOB.get("phase", "smoke"), "--max-seconds", str(JOB["max_seconds"]),
            "--transitions", str(JOB["transitions"]), "--capacity", str(JOB["capacity"]),
            "--learning-starts", str(JOB["learning_starts"]),
            "--stop-at", str(stop)]
+if JOB.get("guided_ref"):
+    guided = workspace / "guided"
+    unpack(input_file(JOB["guided_ref"], "guided.bin", JOB["guided_sha"]), guided, 120_000_000)
+    command.extend(["--guided-prefill", str(guided)])
 if JOB.get("policy_every"):
     command.extend(["--policy-every", str(JOB["policy_every"]),
                     "--policy-dir", str(working / JOB["job"] / "screening")])

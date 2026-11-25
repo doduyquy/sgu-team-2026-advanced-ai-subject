@@ -1,5 +1,11 @@
 # Stage 5 Kaggle handoff · 2026-11-25
 
+## Champion-guided Easy J11
+
+J09 giữ 8/12 clean ở 25.000 nhưng có bốn ca văng đường. Replay J09 ghi 19 timeout và hai ca văng đường. Cả 21 episode TRAIN đã kết thúc dừng trước 7% route. Trong probe 128 bước trên ba hình học TRAIN, action stochastic chỉ đạt 0,68–0,74 km/h, còn action deterministic từ champion đạt 4,56 km/h.
+
+J11 warm-start từ J08–4.096. Prefill dùng sáu episode frozen deterministic trên ba family Easy TRAIN, gồm bốn success và hai timeout. Buffer nhận 5.300 transitions, với 1.637 ở đầu, 3.066 ở giữa và 597 ở cuối route. Pilot thu thêm 5.000 transitions online với nhiễu Gaussian Box2 chuẩn 0,04 quanh action deterministic, khởi tạo optimizer mới và bỏ random warm-up. Mốc 2.500 dùng để sàng lọc. So checkpoint cuối trên panel khóa với safety champion và speed challenger trước khi tăng budget.
+
 ## Easy learning pilot J08
 
 Hai checkpoint version 1 được đánh giá trên đúng 12 case Easy của baseline đóng băng. Mốc 4.096 giữ 8/12 clean, giảm 4 ca văng đường thành 4 timeout và nhanh hơn 31,2 giây trên 8 ca thành công chung. Mốc 8.192 đạt 0/12 clean. Tám ca từng clean chuyển thành văng đường khi đã đi qua 92,8–96,1% route. J08 chỉ ghé 7/39 hình học Easy TRAIN qua ba family. Báo cáo ghép case nằm trong `runs/kaggle/easypilot01-paired-report.json`.

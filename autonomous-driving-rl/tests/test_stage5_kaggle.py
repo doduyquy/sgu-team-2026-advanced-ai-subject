@@ -24,6 +24,7 @@ from cloud.kaggle.common import SOURCE_SHA, sha, write
 from cloud.kaggle.credentials import dpapi
 from cloud.kaggle.pilot import compare, easy_coverage, screen_candidates
 from cloud.kaggle import learning_hooks
+from cloud.kaggle.guided import GuidedSAC, NOISE_STD, progress_band
 from cloud.kaggle.replay import admit, check_snapshot, validate
 from cloud.kaggle.runtime import check_state, load_policy, model_for, pool, restore_rng, save_state, schedule
 
@@ -44,6 +45,22 @@ class NonPortableReplay:
     def __init__(self, *args, storage_dir, **kwargs):
         Path(storage_dir).write_bytes(b"would overwrite")
         raise RuntimeError("Historical replay factory must never initialize")
+
+
+def test_guided_behavior_uses_deterministic_actor_and_valid_box2(monkeypatch):
+    def predict(obs, *, deterministic):
+        assert deterministic
+        return np.array([[0.99, -0.99]], dtype=np.float32), None
+    policy = SimpleNamespace(scale_action=lambda x: x, unscale_action=lambda x: x)
+    model = SimpleNamespace(predict=predict, _last_obs=None, policy=policy)
+    def noise(mean, sigma, shape):
+        assert sigma == NOISE_STD and shape == (1, 2)
+        return np.array([[0.1, -0.1]])
+    monkeypatch.setattr(np.random, "normal", noise)
+    executed, stored = GuidedSAC._sample_action(model, 0)
+    np.testing.assert_array_equal(executed, [[1, -1]])
+    np.testing.assert_array_equal(stored, executed)
+    assert [progress_band(x) for x in (0.0, 0.25, 0.75, 1.0)] == ["early", "middle", "late", "late"]
 
 
 def test_operator_cannot_open_another_slot(monkeypatch):

@@ -25,7 +25,7 @@ from cloud.kaggle.credentials import (
 RECIPE = read(Path(__file__).with_name("recipe.json"))
 BUNDLE_PATHS = (
     "cloud/kaggle/common.py", "cloud/kaggle/runtime.py", "cloud/kaggle/replay.py", "cloud/kaggle/checkpoint.py",
-    "cloud/kaggle/learning_hooks.py",
+    "cloud/kaggle/learning_hooks.py", "cloud/kaggle/guided.py",
     "cloud/kaggle/recipe.json", "cloud/kaggle/linux-lock.txt", "cloud/kaggle/kernel_template.py.txt",
     "configs/experiments/stage5_native_reward_integration_v1.json",
     "results/audits/evaluation_protocol/geometry_split_manifest.csv",
@@ -143,9 +143,10 @@ def audit_zip(path, label):
             raise ValueError("Unexpected upload archive size or duplicate members")
         if label == "runtime":
             current = set(BUNDLE_PATHS) | {"parity.json", "source_inventory.json"}
-            previous = current - {"cloud/kaggle/learning_hooks.py"}
-            oldest = previous - {"cloud/kaggle/checkpoint.py"}
-            if set(names) not in (current, previous, oldest):
+            previous = current - {"cloud/kaggle/guided.py"}
+            older = previous - {"cloud/kaggle/learning_hooks.py"}
+            oldest = older - {"cloud/kaggle/checkpoint.py"}
+            if set(names) not in (current, previous, older, oldest):
                 raise ValueError("Runtime upload member allowlist mismatch")
         if label in {"parent", "long-parent"} and set(names) != STATE_FILES:
             raise ValueError("Parent upload member allowlist mismatch")
@@ -153,6 +154,12 @@ def audit_zip(path, label):
             raise ValueError("B1 snapshot upload member allowlist mismatch")
         if label == "replay" and set(names) != {"CHUNK.json", "rows.npz"}:
             raise ValueError("B1 replay upload member allowlist mismatch")
+        if label == "guided":
+            manifest = json.loads(bundle.read("GUIDED.json"))
+            allowed = {"GUIDED.json", "snapshot/SNAPSHOT.json", "snapshot/policy.zip"}
+            allowed.update(f"chunk-{i:02}/{name}" for i in range(len(manifest["chunks"])) for name in ("CHUNK.json", "rows.npz"))
+            if not 1 <= len(manifest["chunks"]) <= 39 or set(names) != allowed:
+                raise ValueError("Unexpected guided replay archive members")
         for name in names:
             with bundle.open(name) as stream:
                 overlap = b""
@@ -160,7 +167,8 @@ def audit_zip(path, label):
                     if SECRET.search(overlap + block):
                         raise ValueError("Secret-pattern audit failed inside upload archive")
                     overlap = block[-128:]
-            if (label, name) in {("parent", "model.zip"), ("long-parent", "model.zip"), ("snapshot", "policy.zip")}:
+            if (label, name) in {("parent", "model.zip"), ("long-parent", "model.zip"), ("snapshot", "policy.zip"),
+                                 ("guided", "snapshot/policy.zip")}:
                 from io import BytesIO
                 if bundle.getinfo(name).file_size > 32_000_000:
                     raise ValueError("Unexpected compressed parent model archive size")
@@ -251,6 +259,7 @@ def plan_pilot(args, state):
         raise RuntimeError("Easy pilot requires verified CPU1, CPU2 and GPU2 capacity samples")
     samples = evidence["samples"]
     reference = getattr(args, "reference_job", None)
+    guided = getattr(args, "guided_prefill", None)
     for row in samples.values():
         receipt = state["jobs"][row["job"]]
         if receipt["status"] != "HARVESTED_VERIFIED" or receipt["output_version"] != row["version"]:
@@ -262,11 +271,12 @@ def plan_pilot(args, state):
     selected = gpu if (gpu["end_to_end_transitions_per_second"] > cpu["end_to_end_transitions_per_second"]
                        and gpu["post_warmup_transitions_per_second"] > cpu["post_warmup_transitions_per_second"]) else cpu
     if reference:
-        selected = gpu
+        selected = samples["j03"] if guided else gpu
     validated = state["jobs"][selected["job"]]["planned"]
     bundle = read(WORK / "bundle.json")
     allowed_changes = {"cloud/kaggle/runtime.py", "cloud/kaggle/kernel_template.py.txt",
-                       "cloud/kaggle/checkpoint.py", "cloud/kaggle/replay.py", "cloud/kaggle/learning_hooks.py"}
+                       "cloud/kaggle/checkpoint.py", "cloud/kaggle/replay.py", "cloud/kaggle/learning_hooks.py",
+                       "cloud/kaggle/guided.py"}
     inventories = []
     for path, digest in ((validated["runtime_path"], validated["runtime_sha"]), (bundle["path"], bundle["runtime_sha"])):
         source = (ROOT / path / "runtime.zip").resolve()
@@ -280,7 +290,7 @@ def plan_pilot(args, state):
             or {k: v for k, v in before.items() if k not in allowed_changes}
             != {k: v for k, v in after.items() if k not in allowed_changes}):
         raise RuntimeError("Pilot bundle must match the verified physics, dependencies and parity anchors")
-    label = "j09" if reference else "j08"
+    label = "j11" if guided else "j09" if reference else "j08"
     job = {"job": "s5-" + fingerprint([args.campaign, args.round])[:12] + "-" + label + "-a1",
            "campaign": args.campaign, "round": args.round, "attempt": 1, "role": "easy_pilot",
            "account": args.account, "workers": validated["workers"], "device": validated["device"],
@@ -315,6 +325,21 @@ def plan_pilot(args, state):
             step = int(args.checkpoint)
             _, manifest = pilot_checkpoint(state, reference, step)
             job.update(warm_step=step, warm_model_sha=manifest["files"]["model.zip"])
+        if guided:
+            archive = guided.resolve(strict=True)
+            if not archive.is_relative_to(WORK.resolve()) or args.transitions != 5000 or args.checkpoint != "4096":
+                raise ValueError("Guided pilot requires the approved champion and a 5,000-step budget")
+            audit_zip(archive, "guided")
+            with zipfile.ZipFile(archive) as replay:
+                snapshot = json.loads(replay.read("snapshot/SNAPSHOT.json"))
+            if snapshot["policy_sha"] != job["warm_model_sha"]:
+                raise ValueError("Guided replay is tied to a different champion")
+            job.pop("accelerator")
+            job.update(role="easy_guided", capacity=16384, max_seconds=1200, export_reserve=300,
+                       checkpoint_every=5000, learning_starts=0, guided_sha=sha(archive),
+                       guided_path=str(archive.relative_to(ROOT)))
+        elif args.transitions == 5000:
+            raise ValueError("The 5,000-step profile requires approved guided replay")
     require_gate(state, job)
     save_plan(f"{args.campaign}-{args.round}", {label: job}, {}, state)
 
@@ -608,7 +633,7 @@ def require_gate(state, job):
                and entry["execution"]["campaign"] == job["campaign"]
                and entry["execution"]["runtime_sha"] == validated_runtime for entry in state["jobs"].values()):
         raise RuntimeError("G2 requires a verified J01 cloud artifact for this campaign and runtime")
-    if job["role"] in {"easy_pilot", "easy_long", "easy_resume"} and not any(
+    if job["role"] in {"easy_pilot", "easy_long", "easy_resume", "easy_guided"} and not any(
         entry["status"] == "HARVESTED_VERIFIED" and entry.get("gates", {}).get("G3") == "PASS"
         and entry["execution"]["campaign"] == job["campaign"]
         and entry["execution"]["runtime_sha"] == validated_runtime for entry in state["jobs"].values()
@@ -780,7 +805,7 @@ def launch(args, state):
         repair = probe_retry(state, job, retry_of, owner)
     elif server_admission:
         roles = {"j02": "cpu1", "j03": "cpu2", "j04": "gpu2", "j07": "resume", "j08": "easy_pilot",
-                 "j09": "easy_long", "j10": "easy_resume"}
+                 "j09": "easy_long", "j10": "easy_resume", "j11": "easy_guided"}
         budget = 2400 if job["role"] in {"easy_long", "easy_resume"} else RECIPE["preflight"]["max_seconds"]
         if (sessions is not None or roles.get(args.job) != job["role"]
                 or job["max_seconds"] != budget):
@@ -816,8 +841,13 @@ def launch(args, state):
         template = bundle.read("cloud/kaggle/kernel_template.py.txt")
     if hashlib.sha256(template).hexdigest() != job["template_sha"]:
         raise ValueError("Kernel template differs from the pinned runtime")
-    actual_job = {k: v for k, v in job.items() if k not in ("runtime_path", "account")}
+    actual_job = {k: v for k, v in job.items() if k not in ("runtime_path", "account", "guided_path")}
     actual_job.update(inputs_for(job, state, alias, owner))
+    if job.get("guided_sha"):
+        archive = (ROOT / job["guided_path"]).resolve()
+        if not archive.is_relative_to(WORK.resolve()):
+            raise ValueError("Guided replay escapes campaign workspace")
+        actual_job["guided_ref"] = upload(state, alias, owner, "guided", "guided.zip", archive, job["guided_sha"])
     if job.get("warm_step"):
         path, manifest = pilot_checkpoint(state, job["reference_job"], job["warm_step"])
         if manifest["files"]["model.zip"] != job["warm_model_sha"]:
@@ -855,6 +885,8 @@ def launch(args, state):
     staging.mkdir(parents=True, exist_ok=True)
     template_text = template.decode("utf-8")
     refs = [actual_job["runtime_ref"], actual_job["source_ref"]]
+    if actual_job.get("guided_ref"):
+        refs.append(actual_job["guided_ref"])
     if actual_job.get("warm_ref"):
         refs.append(actual_job["warm_ref"])
     if actual_job.get("parent_ref"):
@@ -1175,9 +1207,17 @@ def verify_cloud_evidence(path, manifest, entry, state):
         return {"G3": "PASS"}
     if (manifest["transitions"], manifest["updates"]) != (metrics["transitions"], metrics["updates"]):
         raise ValueError("Cloud checkpoint counters do not match its measured work")
-    if job["role"] in {"easy_pilot", "easy_long"}:
+    if job["role"] in {"easy_pilot", "easy_long", "easy_guided"}:
         if manifest["identity"]["phase"] != "easy" or len(metrics["decisions_by_geometry"]) < 2:
             raise ValueError("Easy pilot did not train on multiple geometries in the planned phase")
+        if job["role"] == "easy_guided":
+            admitted = metrics["guided_live_rows"]
+            if (manifest["learning_mode"] != "champion_guided_v1" or admitted != manifest["external_admitted"]
+                    or admitted != sum(metrics["guided_prefill"]["progress_bands"].values())
+                    or metrics["online_live_rows"] != metrics["transitions"]
+                    or admitted + metrics["online_live_rows"] != metrics["replay_size"]
+                    or metrics["updates"] != metrics["transitions"]):
+                raise ValueError("Guided pilot replay composition or update counters differ from the plan")
         return {"pilot_training": "PASS"}
     return {"G2": "PASS"} if job["role"] == "parity" else {"capacity_sample": "PASS"}
 
@@ -1212,7 +1252,8 @@ def main():
     longer.add_argument("--reference-job", required=True)
     longer.add_argument("--evaluation-report", required=True, type=Path)
     longer.add_argument("--checkpoint", choices=("source", "4096", "8192"), required=True)
-    longer.add_argument("--transitions", choices=(25000, 50000), required=True, type=int)
+    longer.add_argument("--transitions", choices=(5000, 25000, 50000), required=True, type=int)
+    longer.add_argument("--guided-prefill", type=Path)
     resume = commands.add_parser("learning-resume-plan")
     resume.add_argument("--campaign", required=True)
     resume.add_argument("--round", required=True)
@@ -1236,7 +1277,7 @@ def main():
             anchor.add_argument("--capacity-after", metavar="VERIFIED_J01_ID")
             item.add_argument("--assign", action="append", default=[], metavar="JOB=SLOT")
         else:
-            item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08", "j09", "j10"), required=True)
+            item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08", "j09", "j10", "j11"), required=True)
             item.add_argument("--fingerprint", required=True)
             admission = item.add_mutually_exclusive_group()
             admission.add_argument("--admission-probe", action="store_true")
@@ -1261,7 +1302,7 @@ def main():
     prepare = commands.add_parser("prepare-inputs")
     prepare.add_argument("--campaign", required=True)
     prepare.add_argument("--round", required=True)
-    prepare.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08", "j09", "j10"), required=True)
+    prepare.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07", "j08", "j09", "j10", "j11"), required=True)
     prepare.add_argument("--fingerprint", required=True)
     observe = commands.add_parser("observe")
     observe.add_argument("--account", choices=SLOTS, required=True)
