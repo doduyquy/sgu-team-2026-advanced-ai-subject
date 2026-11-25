@@ -50,7 +50,8 @@ CAPACITY_ERROR = re.compile(
     r"\b(?:too many (?:active |concurrent |running )?(?:notebook |cpu )?(?:sessions|kernels|notebooks)"
     r"|(?:no|zero) (?:free |available )?(?:cpu |notebook )?sessions? (?:available|remaining|left)"
     r"|(?:session|concurrency|concurrent sessions?) (?:limit|quota) (?:reached|exceeded)"
-    r"|(?:maximum|max number) of (?:concurrent |active |running )?(?:notebook |cpu )?sessions)\b",
+    r"|(?:maximum|max) number of (?:concurrent |active |running )?(?:notebook |cpu )?sessions"
+    r"|maximum (?:batch )?(?:cpu |notebook )?session count of \d+ (?:reached|exceeded))\b",
     re.I,
 )
 

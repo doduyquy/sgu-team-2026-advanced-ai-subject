@@ -187,6 +187,9 @@ def test_submit_response_requires_exact_ref_or_explicit_capacity_error():
     assert control.push_result(0, receipt + ref, ref) == ("SUBMITTED", 2)
     assert control.push_result(0, receipt + ref + "-other", ref) == ("SUBMIT_UNKNOWN", None)
     assert control.push_result(0, "Kernel push error: Too many concurrent sessions", ref) == ("CAPACITY_REJECTED", None)
+    assert control.push_result(1, "409 Client Error: Maximum batch CPU session count of 1 reached", ref) == (
+        "CAPACITY_REJECTED", None
+    )
     assert control.push_result(1, "429 Client Error: Too Many Requests", ref) == ("SUBMIT_UNKNOWN", None)
     assert control.kernel_state(0, 'example/preflight has status "KernelWorkerStatus.QUEUED"') == "QUEUED"
 
