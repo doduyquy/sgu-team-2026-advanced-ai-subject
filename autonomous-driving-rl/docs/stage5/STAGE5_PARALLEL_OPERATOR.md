@@ -49,9 +49,13 @@ python -B -m cloud.kaggle.parallel collect --package $parcel --sha $digest --out
 
 ```powershell
 $env:STAGE5_KAGGLE_OPERATOR_SLOT = 'account_07'
+$champion = 'runs/kaggle/harvest/s5-e2938ff0e622-j11-a1/model.zip'
+$championSha = 'f82ca94d27ebd9fc3468081e20631536c959990a708398f5474bebee986e6d07'
+python -B -m cloud.kaggle.parallel evaluate --package $parcel --sha $digest --model $champion --model-sha $championSha --tier Easy --out runs/kaggle/eval-champion-easy.json
+python -B -m cloud.kaggle.parallel evaluate --package $parcel --sha $digest --model $champion --model-sha $championSha --tier Medium --out runs/kaggle/eval-champion-medium.json
 python -B -m cloud.kaggle.parallel evaluate --package $parcel --sha $digest --model PATH_TO_VERIFIED_MODEL_ZIP --model-sha VERIFIED_MODEL_SHA --tier Easy --out runs/kaggle/eval-candidate-easy.json
 python -B -m cloud.kaggle.parallel evaluate --package $parcel --sha $digest --model PATH_TO_VERIFIED_MODEL_ZIP --model-sha VERIFIED_MODEL_SHA --tier Medium --out runs/kaggle/eval-candidate-medium.json
-python -B -m cloud.kaggle.pilot --baseline PATH_TO_FROZEN_EASY_PANEL --candidate runs/kaggle/eval-candidate-easy.json --reference-sha f82ca94d27ebd9fc3468081e20631536c959990a708398f5474bebee986e6d07 --out runs/kaggle/eval-candidate-paired.json
+python -B -m cloud.kaggle.pilot --baseline runs/kaggle/eval-champion-easy.json --candidate runs/kaggle/eval-candidate-easy.json --reference-sha $championSha --out runs/kaggle/eval-candidate-paired.json
 ```
 
 Use Easy for retention and compare Medium on the locked internal diagnostic panel. Keep confirmation seeds from the frozen champion out of the tuning loop. Collector chunks require provenance verification and a matched learner comparison before claiming a learning gain.
