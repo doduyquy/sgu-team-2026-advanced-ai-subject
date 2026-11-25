@@ -28,11 +28,12 @@ def summarize(cases):
             "mean_success_seconds": mean(times) if times else None}
 
 
-def compare(baseline, candidates):
+def compare(baseline, candidates, *, reference_sha=SOURCE_SHA):
     frozen = panel(baseline)
-    if baseline["model_sha"] != SOURCE_SHA or sum(row["clean"] for row in frozen.values()) != 8:
-        raise ValueError("Baseline must be the registered source with 8/12 clean successes")
-    evaluated = {SOURCE_SHA}
+    reference_summary = summarize(frozen)
+    if baseline["model_sha"] != reference_sha or (reference_sha == SOURCE_SHA and reference_summary["clean_successes"] != 8):
+        raise ValueError("Reference checkpoint does not match the registered panel")
+    evaluated = {reference_sha}
     milestones = []
     for result in candidates:
         current = panel(result)
@@ -53,8 +54,53 @@ def compare(baseline, candidates):
                            "mean_time_delta_on_common_successes_seconds": mean(common) if common else None,
                            "paired_cases": pairs,
                            "meets_thresholds": summary["clean_successes"] >= 10 and summary["safety_failures"] <= 2})
-    return {"baseline_clean_successes": 8, "baseline_cases": 12, "baseline": summarize(frozen), "milestones": milestones,
+    admissible = [row for row in milestones if
+                  row["clean_successes"] >= reference_summary["clean_successes"]
+                  and row["safety_failures"] <= reference_summary["safety_failures"]]
+    best = max([{"model_sha": reference_sha, **reference_summary}, *admissible],
+               key=lambda row: (row["clean_successes"], -row["safety_failures"], row["mean_route_completion"],
+                                -(row.get("mean_time_delta_on_common_successes_seconds") or 0)))
+    return {"baseline_clean_successes": reference_summary["clean_successes"], "baseline_cases": 12,
+            "reference_model_sha": reference_sha, "baseline": reference_summary, "milestones": milestones,
+            "recommended_model_sha": best["model_sha"],
             "two_milestones_meet_thresholds": len(milestones) >= 2 and all(row["meets_thresholds"] for row in milestones)}
+
+
+def screen_candidates(reference, candidates, *, reference_sha):
+    reference_cases = panel(reference)
+    if reference["model_sha"] != reference_sha:
+        raise ValueError("Reference checkpoint does not match the registered panel")
+    seed = min(key[2] for key in reference_cases)
+    frozen = {key: row for key, row in reference_cases.items() if key[2] == seed}
+    rows = []
+    seen = {reference_sha}
+    for document in candidates:
+        candidate = {(row["geometry"], row["family"], row["seed"]): row for row in document["cases"]}
+        if (len(frozen) != 6 or len(document["cases"]) != 6 or candidate.keys() != frozen.keys()
+                or document["tier"] != "Easy" or any(row["censored"] for row in candidate.values())
+                or document["model_sha"] in seen):
+            raise ValueError("Screening needs distinct models on the locked six Easy cases")
+        seen.add(document["model_sha"])
+        rows.append({"model_sha": document["model_sha"], **summarize(candidate)})
+    rank = sorted(rows, key=lambda row: (-row["clean_successes"], row["safety_failures"], -row["mean_route_completion"]))
+    return {"purpose": "SCREENING_ONLY", "seed": seed, "reference_model_sha": reference_sha,
+            "reference": summarize(frozen), "ranked": rank}
+
+
+def easy_coverage(split, runs):
+    easy = {row["geometry_id"]: row["sequence"] for row in split["pilot_train"] if row["tier"] == "Easy"}
+    diagnostic = {row["geometry_id"] for row in split["pilot_diagnostic"]}
+    if len(easy) != 39 or easy.keys() & diagnostic:
+        raise ValueError("Expected the locked 39-geometry Easy TRAIN pool")
+    totals = dict.fromkeys(sorted(easy), 0)
+    for metrics in runs:
+        counts = metrics["decisions_by_geometry"]
+        if counts.keys() - easy.keys() or any(type(value) is not int or value < 0 for value in counts.values()):
+            raise ValueError("Telemetry falls outside the locked Easy TRAIN pool")
+        for key, value in counts.items():
+            totals[key] += value
+    return {"pool": len(easy), "visited": sum(value > 0 for value in totals.values()),
+            "unvisited": [key for key, value in totals.items() if not value], "decisions": totals}
 
 
 def main():
@@ -62,10 +108,13 @@ def main():
     parser.add_argument("--baseline", type=Path, required=True)
     parser.add_argument("--candidate", type=Path, action="append", required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--reference-sha", default=SOURCE_SHA)
+    parser.add_argument("--screen", action="store_true")
     args = parser.parse_args()
     if args.out.exists():
         raise FileExistsError(args.out)
-    result = compare(read(args.baseline), [read(path) for path in args.candidate])
+    action = screen_candidates if args.screen else compare
+    result = action(read(args.baseline), [read(path) for path in args.candidate], reference_sha=args.reference_sha)
     result["baseline_artifact_sha256"] = sha(args.baseline)
     write(args.out, result)
     print(result)

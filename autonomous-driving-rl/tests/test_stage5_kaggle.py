@@ -22,7 +22,8 @@ from cloud.kaggle.capacity import log_times
 from cloud.kaggle.checkpoint import PARTS, export_checkpoint, restore_checkpoint
 from cloud.kaggle.common import SOURCE_SHA, sha, write
 from cloud.kaggle.credentials import dpapi
-from cloud.kaggle.pilot import compare
+from cloud.kaggle.pilot import compare, easy_coverage, screen_candidates
+from cloud.kaggle import learning_hooks
 from cloud.kaggle.replay import admit, check_snapshot, validate
 from cloud.kaggle.runtime import check_state, load_policy, model_for, pool, restore_rng, save_state, schedule
 
@@ -174,9 +175,48 @@ def test_easy_pilot_compares_two_distinct_checkpoints_on_exact_panel():
     assert report["milestones"][0]["improved_cases"] == 2
     assert report["milestones"][0]["mean_time_delta_on_common_successes_seconds"] == 0
     assert len(report["milestones"][0]["paired_cases"]) == 12
+    assert report["recommended_model_sha"] == "checkpoint-2"
+    challenger = evaluation("challenger", 11)
+    compared = compare(candidate, [challenger], reference_sha="checkpoint-1")
+    assert compared["reference_model_sha"] == "checkpoint-1"
+    challenger["cases"] = [row for row in challenger["cases"] if row["seed"] == 0]
+    ranked = screen_candidates(candidate, [challenger], reference_sha="checkpoint-1")
+    assert ranked["purpose"] == "SCREENING_ONLY" and ranked["seed"] == 0
     candidate["cases"][0]["seed"] = 99
     with pytest.raises(ValueError, match="exact baseline case IDs"):
         compare(baseline, [candidate])
+
+
+def test_easy_coverage_counts_all_train_geometries_and_rejects_diagnostic():
+    split = {"pilot_train": [{"geometry_id": f"train-{i}", "tier": "Easy", "sequence": "SCS"} for i in range(39)],
+             "pilot_diagnostic": [{"geometry_id": "diag-1"}]}
+    report = easy_coverage(split, [{"decisions_by_geometry": {"train-0": 11}},
+                                   {"decisions_by_geometry": {"train-0": 12, "train-2": 2}}])
+    assert report["pool"] == 39 and report["visited"] == 2 and report["decisions"]["train-0"] == 23
+    with pytest.raises(ValueError, match="outside"):
+        easy_coverage(split, [{"decisions_by_geometry": {"diag-1": 3}}])
+
+
+def test_policy_screening_hooks_export_only_between_full_states(monkeypatch, tmp_path):
+    class Telemetry:
+        def _on_step(self):
+            return True
+    monkeypatch.setattr(learning_hooks.runtime, "Telemetry", Telemetry)
+    monkeypatch.setattr(learning_hooks.runtime, "make_vec", lambda _, __, cursors: cursors)
+    def simulate():
+        assert learning_hooks.runtime.make_vec(2, "easy", [0, 0]) == [8, 8]
+        probe = learning_hooks.runtime.Telemetry()
+        probe.model = SimpleNamespace(_n_updates=1400, save=lambda path: path.write_bytes(b"policy"))
+        for step in (2500, 2501, 12500, 15000):
+            probe.num_timesteps = step
+            assert probe._on_step()
+    monkeypatch.setattr(learning_hooks.runtime, "main", simulate)
+    learning_hooks.train(["--policy-dir", str(tmp_path), "--policy-every", "2500", "--state-every",
+                          "12500", "--warm-start-cursor", "8", "--source", "checkpoint.zip"])
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["step-000000002500", "step-000000015000"]
+    marker = tmp_path / "step-000000002500" / "POLICY.json"
+    assert control.read(marker)["purpose"] == "SCREENING_ONLY"
+    assert learning_hooks.runtime.Telemetry is Telemetry
 
 
 def test_checkpoint_warm_start_copies_weights_without_replay_or_optimizers(tmp_path):
@@ -280,6 +320,19 @@ def test_pilot_plan_uses_verified_cpu_when_gpu_only_wins_after_warmup(tmp_path, 
     assert (continued["device"], continued["workers"], continued["start_transition"]) == ("cuda", 2, 25000)
     assert continued["parent_sha"] == sha(marker)
     assert continued["parent_archive_limit"] > 120_000_000 and "warm_step" not in continued
+    periodic = tmp_path / "periodic" / parent / "step-000000012500" / "COMPLETE.json"
+    periodic.parent.mkdir(parents=True)
+    write(periodic, {"transitions": 12500})
+    rows[parent].update(version=1, periodic={"12500": {"version": 1, "state_sha": sha(periodic)}})
+    control.plan_learning_resume(SimpleNamespace(
+        campaign="stage5", round="mid-resume", account="account_01", parent=parent, parent_step=12500,
+        transitions=12500,
+    ), {"jobs": rows})
+    mid = control.read(tmp_path / "plan-stage5-mid-resume.json")["jobs"]["j10"]
+    assert (mid["parent_step"], mid["parent_sha"], mid["start_transition"]) == (12500, sha(periodic), 12500)
+    rows[parent]["periodic"]["12500"]["version"] = 2
+    with pytest.raises(ValueError, match="recorded version"):
+        control.parent_checkpoint({"jobs": rows}, parent, 12500)
 
 
 def test_large_parent_audit_accepts_expected_members_over_preflight_limit(tmp_path):

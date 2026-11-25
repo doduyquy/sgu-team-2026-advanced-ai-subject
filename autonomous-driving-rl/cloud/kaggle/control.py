@@ -25,6 +25,7 @@ from cloud.kaggle.credentials import (
 RECIPE = read(Path(__file__).with_name("recipe.json"))
 BUNDLE_PATHS = (
     "cloud/kaggle/common.py", "cloud/kaggle/runtime.py", "cloud/kaggle/replay.py", "cloud/kaggle/checkpoint.py",
+    "cloud/kaggle/learning_hooks.py",
     "cloud/kaggle/recipe.json", "cloud/kaggle/linux-lock.txt", "cloud/kaggle/kernel_template.py.txt",
     "configs/experiments/stage5_native_reward_integration_v1.json",
     "results/audits/evaluation_protocol/geometry_split_manifest.csv",
@@ -142,8 +143,9 @@ def audit_zip(path, label):
             raise ValueError("Unexpected upload archive size or duplicate members")
         if label == "runtime":
             current = set(BUNDLE_PATHS) | {"parity.json", "source_inventory.json"}
-            previous = current - {"cloud/kaggle/checkpoint.py"}
-            if set(names) not in (current, previous):
+            previous = current - {"cloud/kaggle/learning_hooks.py"}
+            oldest = previous - {"cloud/kaggle/checkpoint.py"}
+            if set(names) not in (current, previous, oldest):
                 raise ValueError("Runtime upload member allowlist mismatch")
         if label in {"parent", "long-parent"} and set(names) != STATE_FILES:
             raise ValueError("Parent upload member allowlist mismatch")
@@ -264,7 +266,7 @@ def plan_pilot(args, state):
     validated = state["jobs"][selected["job"]]["planned"]
     bundle = read(WORK / "bundle.json")
     allowed_changes = {"cloud/kaggle/runtime.py", "cloud/kaggle/kernel_template.py.txt",
-                       "cloud/kaggle/checkpoint.py", "cloud/kaggle/replay.py"}
+                       "cloud/kaggle/checkpoint.py", "cloud/kaggle/replay.py", "cloud/kaggle/learning_hooks.py"}
     inventories = []
     for path, digest in ((validated["runtime_path"], validated["runtime_sha"]), (bundle["path"], bundle["runtime_sha"])):
         source = (ROOT / path / "runtime.zip").resolve()
@@ -306,6 +308,9 @@ def plan_pilot(args, state):
                    export_reserve=480, checkpoint_every=12500, sharded_output=True,
                    measure_optimizer=True, evaluate_easy=True, evaluation_sha=sha(report_path),
                    reference_job=reference, accelerator="NvidiaTeslaT4")
+        if "cloud/kaggle/learning_hooks.py" in after:
+            job["policy_every"] = 2500
+            job["warm_start_cursor"] = next_easy_cursor(state, args.campaign)
         if args.checkpoint != "source":
             step = int(args.checkpoint)
             _, manifest = pilot_checkpoint(state, reference, step)
@@ -330,19 +335,44 @@ def pilot_checkpoint(state, job, step):
     return path, manifest
 
 
+def next_easy_cursor(state, campaign):
+    cursors = []
+    for entry in state["jobs"].values():
+        planned = entry["planned"]
+        if entry["status"] != "HARVESTED_VERIFIED" or planned["campaign"] != campaign or planned.get("phase") != "easy":
+            continue
+        marker = WORK / "harvest" / planned["job"] / "COMPLETE.json"
+        verify(marker, entry["state_sha"])
+        cursors.extend(worker["next_cursor"] for worker in read(marker)["workers"])
+    return max(cursors, default=0)
+
+
+def parent_checkpoint(state, parent_id, step=None):
+    receipt = state["jobs"][parent_id]
+    if step is not None:
+        milestone = receipt.get("periodic", {}).get(str(step))
+        if not milestone or not receipt.get("version") or milestone.get("version") != receipt["version"]:
+            raise ValueError("Resume requires a verified periodic checkpoint from the recorded version")
+        return WORK / "periodic" / parent_id / f"step-{step:012d}", milestone["state_sha"]
+    if receipt["status"] != "HARVESTED_VERIFIED":
+        raise ValueError("Resume requires a verified harvested final checkpoint")
+    return WORK / "harvest" / parent_id, receipt["state_sha"]
+
+
 def plan_learning_resume(args, state):
     identity_part(args.campaign)
     identity_part(args.round)
     previous = state["jobs"][args.parent]
     planned = previous["planned"]
-    if (previous["status"] != "HARVESTED_VERIFIED" or planned["role"] not in {"easy_long", "easy_resume"}
-            or planned["campaign"] != args.campaign):
+    if planned["role"] not in {"easy_long", "easy_resume"} or planned["campaign"] != args.campaign:
         raise RuntimeError("Full-state continuation requires a harvested long Easy checkpoint from this campaign")
-    state_path = WORK / "harvest" / args.parent / "COMPLETE.json"
-    verify(state_path, previous["state_sha"])
+    step = getattr(args, "parent_step", None)
+    parent, state_sha = parent_checkpoint(state, args.parent, step)
+    state_path = parent / "COMPLETE.json"
+    verify(state_path, state_sha)
     checkpoint = read(state_path)
     bundle = read(WORK / "bundle.json")
-    allowed = "cloud/kaggle/kernel_template.py.txt"
+    allowed = {"cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/learning_hooks.py"}
     inventories = []
     for archive_path, expected in ((planned["runtime_path"], planned["runtime_sha"]), (bundle["path"], bundle["runtime_sha"])):
         archive = (ROOT / archive_path / "runtime.zip").resolve()
@@ -351,15 +381,21 @@ def plan_learning_resume(args, state):
         verify(archive, expected)
         with zipfile.ZipFile(archive) as runtime:
             files = json.loads(runtime.read("source_inventory.json"))["files"]
-        inventories.append({name: digest for name, digest in files.items() if name != allowed})
+        inventories.append({name: digest for name, digest in files.items() if name not in allowed})
+    policy_hooks = "cloud/kaggle/learning_hooks.py" in files
     if inventories[0] != inventories[1] or planned["source_sha"] != bundle["source_sha"]:
         raise RuntimeError("Full-state continuation requires the original learner, dependencies, and TRAIN schedule")
-    job = {key: value for key, value in planned.items() if key != "warm_step"}
+    job = {key: value for key, value in planned.items()
+           if key not in {"warm_step", "warm_start_cursor", "parent_step", "policy_every"}}
     job.update(job="s5-" + fingerprint([args.campaign, args.round])[:12] + "-j10-a1",
                round=args.round, role="easy_resume", account=args.account, transitions=args.transitions,
-               start_transition=checkpoint["transitions"], parent_job=args.parent, parent_sha=previous["state_sha"],
+               start_transition=checkpoint["transitions"], parent_job=args.parent, parent_sha=state_sha,
                parent_archive_limit=LONG_PARENT_LIMIT, runtime_path=bundle["path"], runtime_sha=bundle["runtime_sha"],
                template_sha=bundle["template_sha"])
+    if step is not None:
+        job["parent_step"] = step
+    if policy_hooks:
+        job["policy_every"] = 2500
     require_gate(state, job)
     save_plan(f"{args.campaign}-{args.round}", {"j10": job}, {}, state)
 
@@ -579,8 +615,8 @@ def require_gate(state, job):
     ):
         raise RuntimeError("Easy pilot requires verified cloud resume")
     if job.get("parent_job"):
-        parent = state["jobs"].get(job["parent_job"])
-        if not parent or parent["status"] != "HARVESTED_VERIFIED" or parent.get("state_sha") != job["parent_sha"]:
+        _, digest = parent_checkpoint(state, job["parent_job"], job.get("parent_step"))
+        if digest != job["parent_sha"]:
             raise ValueError("Resume parent is not a matching harvested state")
 
 def inputs_for(job, state, alias, owner):
@@ -788,7 +824,7 @@ def launch(args, state):
             raise ValueError("Warm-start checkpoint differs from the approved plan")
         actual_job["warm_ref"] = upload(state, alias, owner, "warm", "warm.zip", path / "model.zip", job["warm_model_sha"])
     if job.get("parent_job"):
-        parent = WORK / "harvest" / job["parent_job"]
+        parent, _ = parent_checkpoint(state, job["parent_job"], job.get("parent_step"))
         verify(parent / "COMPLETE.json", job["parent_sha"])
         parent_archive = parent / "parent.zip"
         manifest = read(parent / "COMPLETE.json")
@@ -1011,6 +1047,18 @@ def harvest(state, job):
     print(job, entry["status"], entry["state_sha"])
 
 
+def checkpoint_log_digest(entry, pattern):
+    alias, _ = account_for(entry["planned"])
+    version = entry["version"]
+    if current_private_kernel_version(alias, entry["ref"]) != version:
+        raise RuntimeError("Kaggle log version differs from the checkpoint receipt")
+    code, output = cli(alias, ["kernels", "logs", f"{entry['ref']}/{version}"], timeout=30)
+    hashes = set(re.findall(pattern, output))
+    if code or len(hashes) != 1:
+        raise RuntimeError("Expected checkpoint hash is unavailable in the cloud log")
+    return hashes.pop()
+
+
 def harvest_periodic(state, job, step):
     entry = state["jobs"][job]
     planned = entry["planned"]
@@ -1026,15 +1074,8 @@ def harvest_periodic(state, job, step):
         verify(final / "COMPLETE.json", previous["state_sha"])
         print(job, name, "HARVESTED_VERIFIED", previous["state_sha"])
         return
-    alias, _ = account_for(planned)
     version = entry["version"]
-    if current_private_kernel_version(alias, entry["ref"]) != version:
-        raise RuntimeError("Kaggle log version differs from the checkpoint receipt")
-    code, output = cli(alias, ["kernels", "logs", f"{entry['ref']}/{version}"], timeout=30)
-    hashes = set(re.findall(fr"Periodic checkpoint {name} index_sha256=([0-9a-f]{{64}})", output))
-    if code or len(hashes) != 1:
-        raise RuntimeError("Expected verified checkpoint index hash is unavailable in the cloud log")
-    index_sha = hashes.pop()
+    index_sha = checkpoint_log_digest(entry, fr"Periodic checkpoint {name} index_sha256=([0-9a-f]{{64}})")
     root.mkdir(parents=True, exist_ok=True)
     staging = Path(mkdtemp(prefix=f"v{version}-", dir=root))
     restored = staging / "state"
@@ -1049,6 +1090,41 @@ def harvest_periodic(state, job, step):
     }
     persist(state)
     print(job, name, "HARVESTED_VERIFIED", state_sha)
+
+
+def harvest_policy(state, job, step):
+    entry = state["jobs"][job]
+    planned = entry["planned"]
+    interval, state_interval = planned.get("policy_every"), planned.get("checkpoint_every")
+    start = planned.get("start_transition", 0)
+    if (not interval or not start < step <= start + planned["transitions"] or step % interval
+            or (state_interval and step % state_interval == 0) or not entry.get("version")):
+        raise ValueError("Requested step is outside the screening checkpoint schedule")
+    name = f"step-{step:012d}"
+    root = WORK / "screening" / job
+    final = root / name
+    recorded = entry.get("screening", {}).get(str(step))
+    if recorded:
+        verify(final / "POLICY.json", recorded["marker_sha"])
+        verify(final / "policy.zip", recorded["model_sha"])
+        print(job, name, "SCREENING_ONLY", recorded["model_sha"])
+        return
+    digest = checkpoint_log_digest(entry, fr"Screening policy {name} marker_sha256=([0-9a-f]{{64}})")
+    root.mkdir(parents=True, exist_ok=True)
+    staging = Path(mkdtemp(prefix=f"v{entry['version']}-", dir=root))
+    prefix = f"{job}/screening/{name}"
+    fetch_output(entry, prefix, staging, "POLICY.json")
+    verify(staging / "POLICY.json", digest)
+    marker = read(staging / "POLICY.json")
+    if (marker["schema"], marker["transitions"], marker["purpose"]) != (1, step, "SCREENING_ONLY"):
+        raise ValueError("Screening checkpoint identity differs from the plan")
+    fetch_output(entry, prefix, staging, "policy.zip")
+    verify(staging / "policy.zip", marker["model_sha256"])
+    staging.rename(final)
+    entry.setdefault("screening", {})[str(step)] = {"marker_sha": digest, "model_sha": marker["model_sha256"],
+                                                    "version": entry["version"], "at": now()}
+    persist(state)
+    print(job, name, "SCREENING_ONLY", marker["model_sha256"])
 
 def verify_cloud_evidence(path, manifest, entry, state):
     job = entry["execution"]
@@ -1090,7 +1166,9 @@ def verify_cloud_evidence(path, manifest, entry, state):
     )):
         raise ValueError("Cloud run did not report finite positive capacity samples")
     if job.get("parent_job"):
-        parent = read(WORK / "harvest" / job["parent_job"] / "COMPLETE.json")
+        path, digest = parent_checkpoint(state, job["parent_job"], job.get("parent_step"))
+        verify(path / "COMPLETE.json", digest)
+        parent = read(path / "COMPLETE.json")
         if (manifest["transitions"] - parent["transitions"] != metrics["transitions"]
             or manifest["updates"] - parent["updates"] != metrics["updates"]):
             raise ValueError("Cloud resume counters do not extend the parent")
@@ -1140,6 +1218,7 @@ def main():
     resume.add_argument("--round", required=True)
     resume.add_argument("--account", choices=SLOTS, default=operator_slot())
     resume.add_argument("--parent", required=True)
+    resume.add_argument("--parent-step", type=int)
     resume.add_argument("--transitions", choices=(12500, 25000, 50000), required=True, type=int)
     setup = commands.add_parser("setup")
     setup.add_argument("--account", choices=SLOTS, required=True)
@@ -1168,6 +1247,9 @@ def main():
     periodic = commands.add_parser("harvest-periodic")
     periodic.add_argument("--job", required=True)
     periodic.add_argument("--step", required=True, type=int)
+    policy = commands.add_parser("harvest-policy")
+    policy.add_argument("--job", required=True)
+    policy.add_argument("--step", required=True, type=int)
     snapshot = commands.add_parser("publish-b1-snapshot")
     snapshot.add_argument("--snapshot", required=True, type=Path)
     snapshot.add_argument("--snapshot-sha", required=True)
@@ -1222,6 +1304,8 @@ def main():
                 harvest(state, args.job)
             elif args.command == "harvest-periodic":
                 harvest_periodic(state, args.job, args.step)
+            elif args.command == "harvest-policy":
+                harvest_policy(state, args.job, args.step)
             elif args.command == "publish-b1-snapshot":
                 publish_initial_snapshot(args, state)
             elif args.command == "publish-b1-chunk":
