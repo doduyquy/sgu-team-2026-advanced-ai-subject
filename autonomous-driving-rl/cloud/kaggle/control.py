@@ -393,7 +393,9 @@ def plan_learning_resume(args, state):
     if planned["role"] not in {"easy_long", "easy_resume", "easy_guided"} or planned["campaign"] != args.campaign:
         raise RuntimeError("Full-state continuation requires a harvested long Easy checkpoint from this campaign")
     compare_utd = getattr(args, "reduce_guided_utd_after", None)
-    budgets = (5000,) if compare_utd else ((10000, 12500, 25000) if guided else (12500, 25000, 50000))
+    actor_lr_control = getattr(args, "dampen_guided_actor_after", None)
+    comparison_id = compare_utd or actor_lr_control
+    budgets = (5000,) if comparison_id else ((10000, 12500, 25000) if guided else (12500, 25000, 50000))
     if args.transitions not in budgets:
         raise ValueError("Unsupported continuation budget for this learner")
     step = getattr(args, "parent_step", None)
@@ -401,15 +403,21 @@ def plan_learning_resume(args, state):
     state_path = parent / "COMPLETE.json"
     verify(state_path, state_sha)
     checkpoint = read(state_path)
-    if compare_utd:
-        comparison = state["jobs"][compare_utd]
+    if comparison_id:
+        comparison = state["jobs"][comparison_id]
         execution = comparison.get("execution", {})
         if (not guided or checkpoint["identity"].get("guided_gradient_steps", -1) != -1
                 or comparison["status"] != "HARVESTED_VERIFIED"
                 or execution.get("parent_sha") != state_sha or comparison["planned"]["account"] != args.account
-                or not execution.get("guided_resume") or execution.get("guided_gradient_steps")
+                or not execution.get("guided_resume") or execution.get("guided_actor_lr_scale")
+                or execution.get("guided_gradient_steps") != (1 if actor_lr_control else None)
                 or execution["workers"] != 2 or execution["device"] != "cpu"):
-            raise ValueError("Reduced UTD requires a verified two-environment CPU control from the same parent")
+            raise ValueError("The matched profile requires a verified two-environment CPU control from the same parent")
+        if actor_lr_control:
+            utd_control = state["jobs"].get(execution.get("utd_control"), {})
+            if (execution["transitions"] != args.transitions or utd_control.get("status") != "HARVESTED_VERIFIED"
+                    or utd_control["execution"].get("parent_sha") != state_sha):
+                raise ValueError("The actor profile requires both harvested UTD controls from the same parent")
     bundle = read(WORK / "bundle.json")
     allowed = {"cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/learning_hooks.py"}
     if guided:
@@ -431,7 +439,8 @@ def plan_learning_resume(args, state):
     if inventories[0] != inventories[1] or planned["source_sha"] != bundle["source_sha"]:
         raise RuntimeError("Full-state continuation requires the original learner, dependencies, and TRAIN schedule")
     job = {key: value for key, value in planned.items()
-           if key not in {"warm_step", "warm_start_cursor", "parent_step", "policy_every", "guided_path", "guided_sha", "utd_control"}}
+           if key not in {"warm_step", "warm_start_cursor", "parent_step", "policy_every", "guided_path", "guided_sha",
+                          "utd_control", "actor_lr_control"}}
     job.update(job="s5-" + fingerprint([args.campaign, args.round])[:12] + "-j10-a1",
                round=args.round, role="easy_resume", account=args.account, transitions=args.transitions,
                start_transition=checkpoint["transitions"], parent_job=args.parent, parent_sha=state_sha,
@@ -446,10 +455,13 @@ def plan_learning_resume(args, state):
         capacity = max(checkpoint["identity"]["capacity"], math.ceil((live_rows + args.transitions) / 4096) * 4096)
         job.update(guided_resume=True, capacity=capacity, max_seconds=2400, export_reserve=480,
                    checkpoint_every=10000)
-        if compare_utd:
+        if comparison_id:
             if execution["capacity"] < capacity:
                 raise ValueError("The matched control capacity cannot retain the experiment replay")
-            job.update(guided_gradient_steps=1, utd_control=compare_utd, capacity=execution["capacity"], workers=2, device="cpu")
+            job.update(guided_gradient_steps=1, utd_control=compare_utd or execution["utd_control"],
+                       capacity=execution["capacity"], workers=2, device="cpu")
+            if actor_lr_control:
+                job.update(actor_lr_control=actor_lr_control, guided_actor_lr_scale=0.25)
     require_gate(state, job)
     save_plan(f"{args.campaign}-{args.round}", {"j10": job}, {}, state)
 
@@ -815,9 +827,9 @@ def launch(args, state):
     owner = creds["owner"]
     prior_continuations = {key: row for key, row in state["jobs"].items() if job.get("parent_sha")
                            and row.get("execution", {}).get("parent_sha") == job["parent_sha"]}
-    control_job = job.get("utd_control")
-    if prior_continuations and not (job.get("guided_gradient_steps") == 1 and set(prior_continuations) == {control_job}
-                                    and prior_continuations[control_job]["status"] == "HARVESTED_VERIFIED"):
+    controls = {job[key] for key in ("utd_control", "actor_lr_control") if key in job}
+    if prior_continuations and not (job.get("guided_gradient_steps") == 1 and prior_continuations.keys() == controls
+                                    and all(row["status"] == "HARVESTED_VERIFIED" for row in prior_continuations.values())):
         raise RuntimeError("This parent already has a submitted or uncertain continuation")
     age = datetime.now(timezone.utc) - datetime.fromisoformat(creds["observed_at"])
     sessions = creds["concurrency_observed"] if 0 <= age.total_seconds() <= 86400 else None
@@ -1247,6 +1259,12 @@ def verify_cloud_evidence(path, manifest, entry, state):
             if gradient_steps == 1:
                 identity["guided_gradient_steps"] = 1
                 expected_updates //= job["workers"]
+            actor_lr_scale = job.get("guided_actor_lr_scale", identity.get("guided_actor_lr_scale"))
+            if actor_lr_scale is not None:
+                identity["guided_actor_lr_scale"] = actor_lr_scale
+                base_lr = identity["source_recipe"]["sac"]["learning_rate"]
+                if not math.isclose(metrics["guided_actor_lr"], base_lr * actor_lr_scale):
+                    raise ValueError("Cloud guided actor learning rate differs from the plan")
             if (manifest["identity"] != identity or manifest["learning_mode"] != parent["learning_mode"]
                     or manifest["ledger"] != parent["ledger"] or manifest["external_admitted"] != guided_rows
                     or metrics["online_behavior"] != parent_metrics["online_behavior"]
@@ -1314,7 +1332,9 @@ def main():
     resume.add_argument("--parent", required=True)
     resume.add_argument("--parent-step", type=int)
     resume.add_argument("--transitions", choices=(5000, 10000, 12500, 25000, 50000), required=True, type=int)
-    resume.add_argument("--reduce-guided-utd-after", metavar="HARVESTED_CONTROL_JOB")
+    profile = resume.add_mutually_exclusive_group()
+    profile.add_argument("--reduce-guided-utd-after", metavar="HARVESTED_CONTROL_JOB")
+    profile.add_argument("--dampen-guided-actor-after", metavar="HARVESTED_UTD_05_JOB")
     setup = commands.add_parser("setup")
     setup.add_argument("--account", choices=SLOTS, required=True)
     setup.add_argument("--owner", required=True)

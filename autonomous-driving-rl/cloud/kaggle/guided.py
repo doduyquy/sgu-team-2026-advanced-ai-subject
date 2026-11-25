@@ -64,6 +64,13 @@ def prefill(root, identity):
 
 
 class GuidedSAC(runtime.TimedSAC):
+    actor_lr_scale = 1.0
+
+    def _update_learning_rate(self, optimizers):
+        super()._update_learning_rate(optimizers)
+        for group in self.actor.optimizer.param_groups:
+            group["lr"] *= self.actor_lr_scale
+
     def _sample_action(self, learning_starts, action_noise=None, n_envs=1):
         action, _ = self.predict(self._last_obs, deterministic=True)
         scaled = self.policy.scale_action(action)
@@ -93,6 +100,7 @@ def train(args):
     parser.add_argument("--resume", type=Path)
     parser.add_argument("--parent-sha")
     parser.add_argument("--guided-gradient-steps", type=int, choices=(1,))
+    parser.add_argument("--guided-actor-lr-scale", type=float, choices=(0.25,))
     parser.add_argument("--capacity", type=int, default=runtime.RECIPE["preflight"]["capacity"])
     parser.add_argument("--transitions", required=True, type=int)
     config, learner_args = parser.parse_known_args(args)
@@ -100,19 +108,22 @@ def train(args):
         parser.error("Specify guided prefill or a verified guided resume")
     if "--measure-optimizer" not in learner_args:
         parser.error("Guided training requires the metered GuidedSAC learner")
-    if config.guided_gradient_steps and not config.resume:
-        parser.error("The reduced update profile requires guided full-state resume")
+    if (config.guided_gradient_steps or config.guided_actor_lr_scale) and not config.resume:
+        parser.error("Update profile changes require guided full-state resume")
     learner_args.extend(["--capacity", str(config.capacity), "--transitions", str(config.transitions)])
     parent = None
     parent_gradient_steps = -1
+    parent_actor_lr_scale = 1.0
     if config.resume:
         learner_args.extend(["--resume", str(config.resume), "--parent-sha", config.parent_sha])
         parent = runtime.check_state(config.resume, config.parent_sha)
         parent_gradient_steps = parent["identity"].get("guided_gradient_steps", -1)
+        parent_actor_lr_scale = parent["identity"].get("guided_actor_lr_scale", 1.0)
         if (parent.get("learning_mode") != BEHAVIOR or parent["identity"].get("online_behavior") != BEHAVIOR
                 or read(config.resume / "metrics.json")["online_behavior"] != BEHAVIOR_CONFIG
                 or not parent["ledger"] or parent["external_admitted"] <= 0
                 or parent_gradient_steps not in (-1, 1)
+                or parent_actor_lr_scale not in (1.0, 0.25)
                 or parent["external_admitted"] + parent["transitions"] + config.transitions > config.capacity):
             raise ValueError("Resume must retain guided behavior and all prior replay throughout the budget")
     model_for, base_sac, telemetry, save = runtime.model_for, runtime.TimedSAC, runtime.Telemetry, runtime.save_state
@@ -123,6 +134,8 @@ def train(args):
         identity = recipe_identity(phase, workers, parent["identity"]["capacity"], learning_starts, warm)
         if parent_gradient_steps == 1:
             identity["guided_gradient_steps"] = 1
+        if parent_actor_lr_scale != 1.0:
+            identity["guided_actor_lr_scale"] = parent_actor_lr_scale
         return {**identity, "online_behavior": BEHAVIOR}
 
     class ResumedGuidedSAC(GuidedSAC):
@@ -131,6 +144,7 @@ def train(args):
             evidence = self.guided_prefill
             if (self.buffer_size != parent["identity"]["capacity"]
                     or self.replay_buffer.buffer_size * self.replay_buffer.n_envs != self.buffer_size
+                    or self.actor_lr_scale != parent_actor_lr_scale
                     or self.gradient_steps != parent_gradient_steps or evidence["rows"] != parent["external_admitted"]
                     or evidence["ledger"] != parent["ledger"]):
                 raise ValueError("Guided state differs from parent identity, behavior or provenance")
@@ -139,6 +153,7 @@ def train(args):
                 if self.n_envs != 2:
                     raise ValueError("The reduced update profile requires two environments")
                 self.gradient_steps = config.guided_gradient_steps
+            self.actor_lr_scale = config.guided_actor_lr_scale or parent_actor_lr_scale
 
     def seeded(env, device, capacity, learning_starts, source=None, *, warm_model=None, warm_sha=None, metered=False):
         if learning_starts != 0 or not warm_model or not metered or source:
@@ -166,6 +181,9 @@ def train(args):
         manifest["identity"] = {**manifest["identity"], "online_behavior": BEHAVIOR, "capacity": config.capacity}
         if model.gradient_steps == 1:
             manifest["identity"]["guided_gradient_steps"] = 1
+        if model.actor_lr_scale != 1.0:
+            manifest["identity"]["guided_actor_lr_scale"] = model.actor_lr_scale
+            metrics["guided_actor_lr"] = model.actor.optimizer.param_groups[0]["lr"]
         metrics.update(guided_prefill=evidence, online_progress_bands=dict(online),
                        online_behavior=BEHAVIOR_CONFIG,
                        guided_live_rows=evidence["rows"], online_live_rows=model.num_timesteps,

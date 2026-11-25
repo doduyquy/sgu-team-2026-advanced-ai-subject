@@ -13,6 +13,7 @@ import pytest
 import torch
 from stable_baselines3 import SAC
 from stable_baselines3.common.buffers import ReplayBuffer
+from stable_baselines3.common.logger import configure
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 from cloud.kaggle import control
@@ -62,6 +63,20 @@ def test_guided_behavior_uses_deterministic_actor_and_valid_box2(monkeypatch):
     np.testing.assert_array_equal(executed, [[1, -1]])
     np.testing.assert_array_equal(stored, executed)
     assert [progress_band(x) for x in (0.0, 0.25, 0.75, 1.0)] == ["early", "middle", "late", "late"]
+
+
+def test_guided_actor_learning_rate_does_not_change_critic_or_alpha():
+    env = DummyVecEnv([TinyEnv])
+    try:
+        model = GuidedSAC("MlpPolicy", env, learning_rate=1e-4, buffer_size=8, device="cpu")
+        model.set_logger(configure(format_strings=[]))
+        model.actor_lr_scale = 0.25
+        optimizers = [model.actor.optimizer, model.critic.optimizer, model.ent_coef_optimizer]
+        for _ in range(2):
+            model._update_learning_rate(optimizers)
+            assert [o.param_groups[0]["lr"] for o in optimizers] == [2.5e-5, 1e-4, 1e-4]
+    finally:
+        env.close()
 
 
 def test_guided_notebook_command_passes_training_flags_once(monkeypatch):
@@ -453,6 +468,14 @@ def test_pilot_plan_uses_verified_cpu_when_gpu_only_wins_after_warmup(tmp_path, 
     comparison = control.read(tmp_path / "plan-stage5-guided-utd05.json")["jobs"]["j10"]
     assert (comparison["utd_control"], comparison["guided_gradient_steps"]) == (control_id, 1)
     assert comparison["parent_sha"] == continuation["parent_sha"] and comparison["capacity"] == continuation["capacity"]
+    rows[comparison["job"]].update(status="HARVESTED_VERIFIED", execution=comparison)
+    actor = SimpleNamespace(campaign="stage5", round="guided-actor25", account="account_01", parent=guided_parent,
+                            transitions=5000, dampen_guided_actor_after=comparison["job"])
+    control.plan_learning_resume(actor, {"jobs": rows})
+    planned_actor = control.read(tmp_path / "plan-stage5-guided-actor25.json")["jobs"]["j10"]
+    assert planned_actor["actor_lr_control"] == comparison["job"] and planned_actor["guided_actor_lr_scale"] == 0.25
+    for key in ("parent_sha", "device", "workers", "capacity", "transitions", "guided_gradient_steps"):
+        assert planned_actor[key] == comparison[key]
     rows[control_id]["status"] = "RUNNING"
     with pytest.raises(ValueError, match="verified two-environment CPU control"):
         control.plan_learning_resume(args, {"jobs": rows})
