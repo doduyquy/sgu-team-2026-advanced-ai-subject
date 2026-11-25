@@ -1,0 +1,16 @@
+{
+  "model_sha": "f82ca94d27ebd9fc3468081e20631536c959990a708398f5474bebee986e6d07",
+  "panel_lock_sha256": "7c2ded7af42688800cff018ba00582696dcb1af700163d8b4b8854a3ba95a543",
+  "pass": true,
+  "result": {
+    "clean_successes": 12,
+    "mean_route_completion": 0.9897647681864619,
+    "mean_speed_km_h": 32.29903383304058,
+    "mean_success_seconds": 45.55,
+    "safety_failures": 0
+  },
+  "threshold": {
+    "maximum_safety_failures": 0,
+    "minimum_clean": 10
+  }
+}
