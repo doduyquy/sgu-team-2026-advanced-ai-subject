@@ -1,0 +1,101 @@
+"""Generated with an immutable preflight job configuration."""
+import hashlib
+from importlib.metadata import distribution
+import json
+from pathlib import Path, PurePosixPath
+import platform
+import shutil
+import subprocess
+import sys
+import time
+import zipfile
+
+JOB = __JOB__
+started = time.monotonic()
+working = Path("/kaggle/working")
+workspace = Path("/tmp") / JOB["job"]
+workspace.mkdir()
+
+def digest(path):
+    h = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+def input_file(ref, name, expected):
+    owner, slug = ref.split("/")
+    mounts = [Path("/kaggle/input") / slug, Path("/kaggle/input/datasets") / owner / slug]
+    files = [mount / name for mount in mounts if (mount / name).is_file()]
+    if len(files) != 1 or digest(files[0]) != expected:
+        raise ValueError(f"Missing, ambiguous or mismatched private input: {name}")
+    return files[0]
+
+def unpack(source, target, max_bytes):
+    with zipfile.ZipFile(source) as archive:
+        entries = archive.infolist()
+        names = [x.filename for x in entries]
+        if len(names) != len(set(names)) or len(names) > 300 or sum(x.file_size for x in entries) > max_bytes:
+            raise ValueError("Unexpected input archive size or duplicate paths")
+        for row in entries:
+            path = PurePosixPath(row.filename)
+            if path.is_absolute() or ".." in path.parts or "\\" in row.filename or row.is_dir():
+                raise ValueError("Invalid input path")
+            dest = target.joinpath(*path.parts)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with archive.open(row) as stream, dest.open("xb") as output:
+                shutil.copyfileobj(stream, output)
+
+def run(command, deadline):
+    time_left = deadline - time.monotonic()
+    if time_left <= 0:
+        raise TimeoutError("Preflight time budget exhausted")
+    subprocess.run(command, cwd=workspace, check=True, timeout=time_left)
+
+if platform.machine() != "x86_64" or not (3, 10) <= sys.version_info[:2] <= (3, 12):
+    raise RuntimeError("Unvalidated Kaggle Python ABI")
+source = input_file(JOB["source_ref"], "model.zip", JOB["source_sha"])
+bundle = input_file(JOB["runtime_ref"], "runtime.zip", JOB["runtime_sha"])
+unpack(bundle, workspace, 32_000_000)
+inventory = json.loads((workspace / "source_inventory.json").read_text(encoding="utf-8"))
+for name, expected in inventory["files"].items():
+    if digest(workspace / name) != expected:
+        raise ValueError(f"Runtime fingerprint mismatch: {name}")
+stop = started + JOB["max_seconds"] - JOB["export_reserve"]
+run([sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "--no-input",
+     "-r", "cloud/kaggle/linux-lock.txt"], stop)
+commit = json.loads(distribution("metadrive-simulator").read_text("direct_url.json"))["vcs_info"]["commit_id"]
+if commit != inventory["metadrive_pin"]:
+    raise RuntimeError("Installed MetaDrive commit differs from the bundle pin")
+run([sys.executable, "-m", "metadrive.pull_asset"], stop)
+freeze = subprocess.check_output([sys.executable, "-m", "pip", "freeze"], text=True,
+                                 timeout=max(1, stop - time.monotonic()))
+# Export versions only. Kaggle's preinstalled direct URLs can carry credentials.
+versions = [line for line in freeze.splitlines() if "==" in line and line.split("==", 1)[0].replace("-", "").replace("_", "").isalnum()]
+(workspace / "runtime_versions.txt").write_text("\n".join([f"metadrive-commit={commit}", *versions]), encoding="utf-8")
+state = workspace / "state"
+run([sys.executable, "-m", "cloud.kaggle.runtime", "parity", "--source", str(source),
+     "--out", "observed_parity.json", "--reference", "parity.json"], stop)
+command = [sys.executable, "-m", "cloud.kaggle.runtime", "train", "--out", str(state),
+           "--job", JOB["job"], "--workers", str(JOB["workers"]), "--device", JOB["device"],
+           "--transitions", str(JOB["transitions"]), "--capacity", str(JOB["capacity"]),
+           "--learning-starts", str(JOB["learning_starts"]),
+           "--stop-at", str(stop)]
+if JOB.get("parent_sha"):
+    parent_zip = input_file(JOB["parent_ref"], "parent.zip", JOB["parent_zip_sha"])
+    parent = workspace / "parent"
+    unpack(parent_zip, parent, 120_000_000)
+    command.extend(["--resume", str(parent), "--parent-sha", JOB["parent_sha"]])
+else:
+    command.extend(["--source", str(source)])
+run(command, started + JOB["max_seconds"] - 30)
+temp_zip = working / (JOB["job"] + ".zip.partial")
+with zipfile.ZipFile(temp_zip, "x", zipfile.ZIP_STORED) as archive:
+    for name in ("model.zip", "replay.pkl", "rng.pt", "metrics.json"):
+        archive.write(state / name, name)
+    archive.write(workspace / "runtime_versions.txt", "runtime_versions.txt")
+    archive.write(workspace / "observed_parity.json", "parity.json")
+    archive.writestr("execution.json", json.dumps(JOB, sort_keys=True))
+    archive.write(state / "COMPLETE.json", "COMPLETE.json")
+temp_zip.rename(working / (JOB["job"] + ".zip"))
+
