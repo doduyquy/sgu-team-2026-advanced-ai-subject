@@ -54,8 +54,9 @@ def run(command, deadline):
 
 if platform.machine() != "x86_64" or not (3, 10) <= sys.version_info[:2] <= (3, 12):
     raise RuntimeError("Unvalidated Kaggle Python ABI")
-source = input_file(JOB["source_ref"], "model.zip", JOB["source_sha"])
-bundle = input_file(JOB["runtime_ref"], "runtime.zip", JOB["runtime_sha"])
+source = workspace / "model.zip"
+shutil.copyfile(input_file(JOB["source_ref"], "model.bin", JOB["source_sha"]), source)
+bundle = input_file(JOB["runtime_ref"], "runtime.bin", JOB["runtime_sha"])
 unpack(bundle, workspace, 32_000_000)
 inventory = json.loads((workspace / "source_inventory.json").read_text(encoding="utf-8"))
 for name, expected in inventory["files"].items():
@@ -82,7 +83,7 @@ command = [sys.executable, "-m", "cloud.kaggle.runtime", "train", "--out", str(s
            "--learning-starts", str(JOB["learning_starts"]),
            "--stop-at", str(stop)]
 if JOB.get("parent_sha"):
-    parent_zip = input_file(JOB["parent_ref"], "parent.zip", JOB["parent_zip_sha"])
+    parent_zip = input_file(JOB["parent_ref"], "parent.bin", JOB["parent_zip_sha"])
     parent = workspace / "parent"
     unpack(parent_zip, parent, 120_000_000)
     command.extend(["--resume", str(parent), "--parent-sha", JOB["parent_sha"]])

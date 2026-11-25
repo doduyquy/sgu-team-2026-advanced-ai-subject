@@ -185,7 +185,10 @@ def plan(args, state):
 def upload(state, alias, owner, label, name, source, digest):
     verify(source, digest)
     audit_zip(source, label)
-    slug = f"s5-{label}-{digest[:20]}"
+    # Kaggle expands archives uploaded with a .zip extension, even in private datasets.
+    # Keep the exact bytes as an opaque file with a distinct immutable dataset slug.
+    transport_name = name.removesuffix(".zip") + ".bin"
+    slug = f"s5-{label}-{digest[:20]}-bin"
     ref = f"{owner}/{slug}"
     if state["uploads"].get(ref, {}).get("status") == "ACCEPTED":
         return dataset_ready(state, alias, ref)
@@ -193,23 +196,24 @@ def upload(state, alias, owner, label, name, source, digest):
         raise RuntimeError("Prior dataset upload is uncertain. Inspect the private dataset before any recovery.")
     staging = WORK / "uploads" / alias / slug
     staging.mkdir(parents=True, exist_ok=True)
-    dest = staging / name
+    dest = staging / transport_name
     if dest.exists():
         verify(dest, digest)
     else:
         shutil.copyfile(source, dest)
     write(staging / "dataset-metadata.json", {"id": ref, "title": slug, "licenses": [{"name": "other"}]})
-    if {p.name for p in staging.iterdir()} != {name, "dataset-metadata.json"} or any(
+    if {p.name for p in staging.iterdir()} != {transport_name, "dataset-metadata.json"} or any(
         p.is_symlink() or not p.is_file() or not p.resolve().is_relative_to(staging.resolve())
         for p in staging.iterdir()
     ):
         raise ValueError("Upload staging must contain only the audited payload and generated metadata")
-    state["uploads"][ref] = {"status": "UPLOADING", "sha": digest, "alias": alias, "at": now()}
+    state["uploads"][ref] = {"status": "UPLOADING", "sha": digest, "alias": alias,
+                             "transport_name": transport_name, "at": now()}
     persist(state)
     code, output = cli(alias, ["datasets", "create", "-p", str(staging), "-q", "-t"], timeout=240)
     accepted = code == 0 and f"/datasets/{ref}" in output
-    state["uploads"][ref] = {"status": "ACCEPTED" if accepted else "UPLOAD_UNKNOWN",
-                             "sha": digest, "alias": alias, "at": now(), "cli_exit": code}
+    state["uploads"][ref].update(status="ACCEPTED" if accepted else "UPLOAD_UNKNOWN",
+                                 at=now(), cli_exit=code)
     persist(state)
     if not accepted:
         raise RuntimeError("Dataset creation acceptance is uncertain. See registry; automatic retry is disabled.")
@@ -222,9 +226,32 @@ def dataset_ready(state, alias, ref):
         raise DatasetPending("Private input version 1 is not yet verified ready.")
     if not private_input(alias, ref):
         raise RuntimeError("Dataset API did not verify private ACL for version 1")
-    state["uploads"][ref].update(version=1, private_verified_at=now())
+    row = state["uploads"][ref]
+    if row.get("transport_name") and not row.get("remote_sha_verified_at"):
+        verify_remote_input(alias, ref, row["transport_name"], row["sha"])
+        row["remote_sha_verified_at"] = now()
+    row.update(version=1, private_verified_at=now())
     persist(state)
     return ref
+
+def verify_remote_input(alias, ref, name, digest):
+    from tempfile import TemporaryDirectory
+    from hashlib import sha256
+
+    with TemporaryDirectory(prefix="stage5-kaggle-download-") as directory:
+        code, _ = cli(alias, ["datasets", "download", ref + "/1", "-p", directory, "-q"], timeout=90)
+        files = list(Path(directory).iterdir())
+        if code or len(files) != 1 or not files[0].is_file() or files[0].stat().st_size > 125_000_000:
+            raise RuntimeError("Private version 1 could not be retrieved for byte verification")
+        with zipfile.ZipFile(files[0]) as archive:
+            if archive.namelist() != [name] or archive.getinfo(name).file_size > 120_000_000:
+                raise RuntimeError("Private dataset layout differs from the exact transport file")
+            digest_remote = sha256()
+            with archive.open(name) as stream:
+                for block in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest_remote.update(block)
+            if digest_remote.hexdigest() != digest:
+                raise RuntimeError("Private dataset content hash mismatch")
 
 def dataset_status_response(code, output):
     if code:

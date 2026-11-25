@@ -1,6 +1,7 @@
 """Local correctness regressions for the Stage 5 Kaggle campaign."""
 from pathlib import Path
 from types import SimpleNamespace
+import zipfile
 
 import gymnasium as gym
 import numpy as np
@@ -189,6 +190,25 @@ def test_private_input_requires_ready_version_and_acl(tmp_path, monkeypatch):
     monkeypatch.setattr(control, "private_input", lambda *a: True)
     assert control.dataset_ready(state, "account_01", ref) == ref
     assert state["uploads"][ref]["version"] == 1
+
+
+def test_remote_input_requires_original_bytes_and_opaque_filename(tmp_path, monkeypatch):
+    payload = tmp_path / "model.zip"
+    payload.write_bytes(b"artifact bytes")
+    remote_name = "model.bin"
+
+    def fake_cli(alias, args, **kwargs):
+        assert args[2] == "example/private/1"
+        directory = Path(args[args.index("-p") + 1])
+        with zipfile.ZipFile(directory / "download.zip", "w") as output:
+            output.writestr(remote_name, payload.read_bytes())
+        return 0, ""
+
+    monkeypatch.setattr(control, "cli", fake_cli)
+    control.verify_remote_input("account_01", "example/private", "model.bin", sha(payload))
+    remote_name = "data"
+    with pytest.raises(RuntimeError, match="layout differs"):
+        control.verify_remote_input("account_01", "example/private", "model.bin", sha(payload))
 
 
 def test_job_assignments_are_immutable(tmp_path, monkeypatch):
