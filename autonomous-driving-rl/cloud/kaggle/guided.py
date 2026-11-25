@@ -92,6 +92,7 @@ def train(args):
     parser.add_argument("--guided-prefill", type=Path)
     parser.add_argument("--resume", type=Path)
     parser.add_argument("--parent-sha")
+    parser.add_argument("--guided-gradient-steps", type=int, choices=(1,))
     parser.add_argument("--capacity", type=int, default=runtime.RECIPE["preflight"]["capacity"])
     parser.add_argument("--transitions", required=True, type=int)
     config, learner_args = parser.parse_known_args(args)
@@ -99,14 +100,19 @@ def train(args):
         parser.error("Specify guided prefill or a verified guided resume")
     if "--measure-optimizer" not in learner_args:
         parser.error("Guided training requires the metered GuidedSAC learner")
+    if config.guided_gradient_steps and not config.resume:
+        parser.error("The reduced update profile requires guided full-state resume")
     learner_args.extend(["--capacity", str(config.capacity), "--transitions", str(config.transitions)])
     parent = None
+    parent_gradient_steps = -1
     if config.resume:
         learner_args.extend(["--resume", str(config.resume), "--parent-sha", config.parent_sha])
         parent = runtime.check_state(config.resume, config.parent_sha)
+        parent_gradient_steps = parent["identity"].get("guided_gradient_steps", -1)
         if (parent.get("learning_mode") != BEHAVIOR or parent["identity"].get("online_behavior") != BEHAVIOR
                 or read(config.resume / "metrics.json")["online_behavior"] != BEHAVIOR_CONFIG
                 or not parent["ledger"] or parent["external_admitted"] <= 0
+                or parent_gradient_steps not in (-1, 1)
                 or parent["external_admitted"] + parent["transitions"] + config.transitions > config.capacity):
             raise ValueError("Resume must retain guided behavior and all prior replay throughout the budget")
     model_for, base_sac, telemetry, save = runtime.model_for, runtime.TimedSAC, runtime.Telemetry, runtime.save_state
@@ -115,6 +121,8 @@ def train(args):
 
     def parent_identity(phase, workers, capacity, learning_starts, warm):
         identity = recipe_identity(phase, workers, parent["identity"]["capacity"], learning_starts, warm)
+        if parent_gradient_steps == 1:
+            identity["guided_gradient_steps"] = 1
         return {**identity, "online_behavior": BEHAVIOR}
 
     class ResumedGuidedSAC(GuidedSAC):
@@ -123,10 +131,14 @@ def train(args):
             evidence = self.guided_prefill
             if (self.buffer_size != parent["identity"]["capacity"]
                     or self.replay_buffer.buffer_size * self.replay_buffer.n_envs != self.buffer_size
-                    or self.gradient_steps != -1 or evidence["rows"] != parent["external_admitted"]
+                    or self.gradient_steps != parent_gradient_steps or evidence["rows"] != parent["external_admitted"]
                     or evidence["ledger"] != parent["ledger"]):
                 raise ValueError("Guided state differs from parent identity, behavior or provenance")
             grow_replay(self, config.capacity, evidence["rows"] + parent["transitions"])
+            if config.guided_gradient_steps:
+                if self.n_envs != 2:
+                    raise ValueError("The reduced update profile requires two environments")
+                self.gradient_steps = config.guided_gradient_steps
 
     def seeded(env, device, capacity, learning_starts, source=None, *, warm_model=None, warm_sha=None, metered=False):
         if learning_starts != 0 or not warm_model or not metered or source:
@@ -152,6 +164,8 @@ def train(args):
             raise ValueError("Guided replay was overwritten or replay accounting diverged")
         manifest.update(external_admitted=evidence["rows"], ledger=evidence["ledger"], learning_mode=BEHAVIOR)
         manifest["identity"] = {**manifest["identity"], "online_behavior": BEHAVIOR, "capacity": config.capacity}
+        if model.gradient_steps == 1:
+            manifest["identity"]["guided_gradient_steps"] = 1
         metrics.update(guided_prefill=evidence, online_progress_bands=dict(online),
                        online_behavior=BEHAVIOR_CONFIG,
                        guided_live_rows=evidence["rows"], online_live_rows=model.num_timesteps,

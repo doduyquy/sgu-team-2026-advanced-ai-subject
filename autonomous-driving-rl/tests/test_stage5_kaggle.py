@@ -91,6 +91,58 @@ def test_guided_resume_grows_replay_without_reordering_or_overwriting():
         np.testing.assert_array_equal(getattr(model.replay_buffer, field)[:3], getattr(replay, field)[:3])
 
 
+def test_cloud_guided_resume_checks_verified_parent_behavior_and_provenance(tmp_path, monkeypatch):
+    parent_path = tmp_path / "parent"
+    parent_path.mkdir()
+    output = tmp_path / "output"
+    output.mkdir()
+    anchors = [{"reward": 0.5}, {"reward": 1.0}]
+    bundle = tmp_path / "runtime.zip"
+    with zipfile.ZipFile(bundle, "x") as archive:
+        archive.writestr("parity.json", json.dumps(anchors))
+        archive.writestr("source_inventory.json", json.dumps({"metadrive_pin": "pinned"}))
+    (output / "runtime_versions.txt").write_text("metadrive-commit=pinned\nstable_baselines3==2.9.2\n")
+    write(output / "parity.json", anchors)
+
+    ledger = {"chunk": "digest"}
+    evidence = {"ledger": ledger, "snapshot_sha256": "snapshot"}
+    parent_metrics = {"guided_prefill": evidence, "online_behavior": guided.BEHAVIOR_CONFIG}
+    write(parent_path / "metrics.json", parent_metrics)
+    parent = {"identity": {"capacity": 8}, "learning_mode": guided.BEHAVIOR, "ledger": ledger,
+              "external_admitted": 4, "transitions": 2, "updates": 2,
+              "files": {"metrics.json": sha(parent_path / "metrics.json")}}
+    marker = parent_path / "COMPLETE.json"
+    write(marker, parent)
+    monkeypatch.setattr(control, "parent_checkpoint", lambda *_: (parent_path, sha(marker)))
+
+    manifest = {**parent, "identity": {"capacity": 12}, "transitions": 4, "updates": 4}
+    metrics = {**parent_metrics, "guided_live_rows": 4, "online_live_rows": 4, "replay_size": 8,
+               "online_progress_bands": {"early": 2}, "transitions": 2, "updates": 2, "device": "cpu",
+               "seconds": 1, "decisions_per_second": 2, "updates_per_second": 2,
+               "post_warmup_seconds": 1, "rss_peak_sampled_bytes": 1}
+    entry = {"execution": {"parent_job": "parent", "runtime_sha": sha(bundle), "device": "cpu",
+                           "guided_resume": True, "capacity": 12}, "planned": {"runtime_path": tmp_path}}
+    write(output / "metrics.json", metrics)
+    assert control.verify_cloud_evidence(output, manifest, entry, {}) == {"G3": "PASS"}
+    entry["execution"].update(guided_gradient_steps=1, workers=2)
+    reduced = {**manifest, "updates": 3, "identity": {**manifest["identity"], "guided_gradient_steps": 1}}
+    write(output / "metrics.json", {**metrics, "updates": 1})
+    assert control.verify_cloud_evidence(output, reduced, entry, {}) == {"G3": "PASS"}
+    write(output / "metrics.json", metrics)
+    with pytest.raises(ValueError, match="provenance, behavior or accounting"):
+        control.verify_cloud_evidence(output, {**reduced, "updates": 4}, entry, {})
+    del entry["execution"]["guided_gradient_steps"]
+    for override in ({"online_behavior": {**guided.BEHAVIOR_CONFIG, "std": 0.4}},
+                     {"guided_prefill": {**evidence, "snapshot_sha256": "other"}}):
+        write(output / "metrics.json", {**metrics, **override})
+        with pytest.raises(ValueError, match="provenance, behavior or accounting"):
+            control.verify_cloud_evidence(output, manifest, entry, {})
+    write(output / "metrics.json", metrics)
+    write(parent_path / "metrics.json", {**parent_metrics, "additional": True})
+    with pytest.raises(ValueError, match="mismatched SHA-256"):
+        control.verify_cloud_evidence(output, manifest, entry, {})
+
+
 def test_operator_cannot_open_another_slot(monkeypatch):
     monkeypatch.setenv("STAGE5_KAGGLE_OPERATOR_SLOT", "account_02")
     monkeypatch.setattr(credentials, "slot", lambda *_: pytest.fail("Another operator's slot was opened"))
@@ -393,6 +445,17 @@ def test_pilot_plan_uses_verified_cpu_when_gpu_only_wins_after_warmup(tmp_path, 
     assert continuation["guided_resume"] and continuation["capacity"] == 20480
     assert continuation["start_transition"] == 5000 and continuation["checkpoint_every"] == 10000
     assert not {"guided_path", "guided_sha", "warm_step"} & continuation.keys()
+    control_id = continuation["job"]
+    rows[control_id].update(status="HARVESTED_VERIFIED", execution=continuation)
+    args = SimpleNamespace(campaign="stage5", round="guided-utd05", account="account_01", parent=guided_parent,
+                           transitions=5000, reduce_guided_utd_after=control_id)
+    control.plan_learning_resume(args, {"jobs": rows})
+    comparison = control.read(tmp_path / "plan-stage5-guided-utd05.json")["jobs"]["j10"]
+    assert (comparison["utd_control"], comparison["guided_gradient_steps"]) == (control_id, 1)
+    assert comparison["parent_sha"] == continuation["parent_sha"] and comparison["capacity"] == continuation["capacity"]
+    rows[control_id]["status"] = "RUNNING"
+    with pytest.raises(ValueError, match="verified two-environment CPU control"):
+        control.plan_learning_resume(args, {"jobs": rows})
 
 
 def test_large_parent_audit_accepts_expected_members_over_preflight_limit(tmp_path):

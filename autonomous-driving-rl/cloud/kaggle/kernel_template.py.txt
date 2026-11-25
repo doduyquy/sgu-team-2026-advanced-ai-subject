@@ -120,6 +120,8 @@ if JOB.get("guided_ref"):
     guided = workspace / "guided"
     unpack(input_file(JOB["guided_ref"], "guided.bin", JOB["guided_sha"]), guided, 120_000_000)
     command.extend(["--guided-prefill", str(guided)])
+if JOB.get("guided_gradient_steps"):
+    command.extend(["--guided-gradient-steps", str(JOB["guided_gradient_steps"])])
 if JOB.get("policy_every"):
     command.extend(["--policy-every", str(JOB["policy_every"]),
                     "--policy-dir", str(working / JOB["job"] / "screening")])
