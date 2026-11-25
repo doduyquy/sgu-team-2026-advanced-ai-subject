@@ -14,6 +14,12 @@ python -B -m cloud.kaggle.control doctor
 
 Lệnh hỏi xác nhận chủ tài khoản rồi nhận API token bằng input ẩn. Làm tương tự cho `account_02` đến `account_08` khi cần. Token bảo vệ bằng Windows DPAPI theo Windows user trong `%LOCALAPPDATA%\XeTuHanh\Kaggle\`. Số phút và concurrency được chủ tài khoản quan sát trực tiếp, có hiệu lực lập lịch trong 24 giờ. Thành viên có thể chạy launcher với tài khoản của mình. [Kaggle Terms](https://www.kaggle.com/terms) · [Kaggle API](https://www.kaggle.com/docs/api)
 
+Với tệp local do chủ tài khoản chỉ định và có đúng 8 access token, `control import-slots --file <đường-dẫn>` xác minh từng danh tính và lưu vào DPAPI theo thứ tự xuất hiện. Slot có sẵn được giữ nguyên. `control doctor` lấy quota GPU/TPU từ API. Sau khi kiểm tra số phiên còn trống trong Kaggle Session Management, cập nhật số quan sát mà không nhập lại token:
+
+```powershell
+python -B -m cloud.kaggle.control observe --account account_01 --available-sessions 1
+```
+
 ## Đóng gói và xem kế hoạch
 
 Bundle hiện có được chỉ ra trong `runs/kaggle/bundle.json`. Khi đóng lại từ source mới, dùng tên round mới để giữ kế hoạch cũ.
@@ -30,12 +36,15 @@ Kế hoạch `preflight02` có J01 parity CPU, J02 CPU1, J03 CPU2, J04 GPU2, t�
 
 ```powershell
 $plan = Get-Content runs/kaggle/plan-stage5-preflight02.json -Raw | ConvertFrom-Json
+python -B -m cloud.kaggle.control prepare-inputs --campaign stage5 --round preflight02 --job j01 --fingerprint $plan.fingerprint
 python -B -m cloud.kaggle.control launch --campaign stage5 --round preflight02 --job j01 --fingerprint $plan.fingerprint
 $job = $plan.jobs.j01.job
 python -B -m cloud.kaggle.control status --job $job
 python -B -m cloud.kaggle.control harvest --job $job
 python -B -m cloud.kaggle.control analyze --job $job
 ```
+
+Nếu job lỗi, `control logs --job <job>` lấy log của version đã xác nhận và lưu nhóm lỗi kỹ thuật. J02–J04 và J07 yêu cầu artifact J01 xác minh G2 cùng campaign và runtime. Kế hoạch mới hỗ trợ `--assign j03=account_02 --assign j04=account_03` cho các slot có phiên còn trống đã xác minh. Dataset được chuẩn bị private theo account được giao; không dùng public sharing để chuyển artifact.
 
 Trong lần đầu, Kaggle có thể trả trạng thái dataset đang được tạo. Chạy lại lệnh launch khi dataset version 1 đã sẵn sàng. Khi registry ghi `SUBMIT_UNKNOWN`, đối chiếu notebook slug/version trên Kaggle trước khi làm gì thêm. Khi Kaggle chấp nhận kernel, máy local có thể tắt. Registry ghi `ref`, version, thời điểm UTC/ICT và trạng thái. Output chỉ được đánh dấu `HARVESTED_VERIFIED` khi đúng attempt, đúng checksum và job có cập nhật SAC. [Kaggle kernel commands](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels.md)
 

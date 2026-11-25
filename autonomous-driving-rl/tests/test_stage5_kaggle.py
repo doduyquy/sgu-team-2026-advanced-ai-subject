@@ -11,6 +11,7 @@ from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 from cloud.kaggle import control
+from cloud.kaggle import credentials
 from cloud.kaggle.common import sha
 from cloud.kaggle.credentials import dpapi
 from cloud.kaggle.replay import admit
@@ -152,4 +153,58 @@ def test_timeout_receipt_prevents_duplicate_submit(tmp_path, monkeypatch):
     assert job["status"] == "SUBMIT_UNKNOWN"
     script = tmp_path / "kernels" / job["planned"]["job"] / "run.py"
     compile(script.read_text(encoding="utf-8"), str(script), "exec")
+
+
+def test_quota_uses_verified_api_minutes(monkeypatch):
+    monkeypatch.setattr(credentials, "cli", lambda *a, **kw: (
+        0, "informational prefix\nresource,used,remaining,total,refreshAt\n"
+           "GPU,2.50h,27.50h,30.00h,2026-11-30\nTPU,0.00h,0.00h,0.00h,\n"))
+    assert credentials.accelerator_quota("account_01") == {"GPU": 1649, "TPU": 0}
+    assert credentials.authenticated_owner(0, "- username: person\n- auth_method: OAUTH") is None
+    assert credentials.authenticated_owner(0, "- username: Person\n- auth_method: ACCESS_TOKEN") == "person"
+
+
+def test_gate_requires_verified_matching_cloud_artifact():
+    job = {"role": "cpu1", "campaign": "stage5", "runtime_sha": "current"}
+    reference = {"status": "CLOUD_SUCCEEDED", "execution": {"campaign": "stage5", "runtime_sha": "current"}}
+    state = {"jobs": {"j01": reference}}
+    with pytest.raises(RuntimeError, match="verified J01"):
+        control.require_gate(state, job)
+    reference.update(status="HARVESTED_VERIFIED", gates={"G2": "PASS"})
+    control.require_gate(state, job)
+    with pytest.raises(RuntimeError, match="verified J01"):
+        control.require_gate(state, {**job, "runtime_sha": "different"})
+
+
+def test_private_input_requires_ready_version_and_acl(tmp_path, monkeypatch):
+    ref = "example/private"
+    state = {"uploads": {ref: {"status": "ACCEPTED"}}}
+    monkeypatch.setattr(control, "WORK", tmp_path)
+    monkeypatch.setattr(control, "cli", lambda *a: (
+        0, 'informational prefix\n{"status":"ready","current_version_number":1}'))
+    monkeypatch.setattr(control, "private_input", lambda *a: False)
+    with pytest.raises(RuntimeError, match="private ACL"):
+        control.dataset_ready(state, "account_01", ref)
+    assert "version" not in state["uploads"][ref]
+    monkeypatch.setattr(control, "private_input", lambda *a: True)
+    assert control.dataset_ready(state, "account_01", ref) == ref
+    assert state["uploads"][ref]["version"] == 1
+
+
+def test_job_assignments_are_immutable(tmp_path, monkeypatch):
+    monkeypatch.setattr(control, "WORK", tmp_path)
+    monkeypatch.setattr(control, "ROOT", tmp_path)
+    args = SimpleNamespace(campaign="stage5", round="slots", account="account_01", parent=None,
+                           assign=["j03=account_02", "j04=account_08"])
+    control.write(tmp_path / "bundle.json", {"runtime_sha": "runtime", "source_sha": "source", "path": ".",
+                                            "template_sha": "template"})
+    state = control.registry()
+    control.plan(args, state)
+    jobs = control.read(tmp_path / "plan-stage5-slots.json")["jobs"]
+    assert jobs["j01"]["account"] == "account_01"
+    assert jobs["j03"]["account"] == "account_02"
+    assert jobs["j04"]["account"] == "account_08"
+    args.assign = ["j03=account_03"]
+    with pytest.raises(ValueError, match="Immutable plan"):
+        control.plan(args, state)
 

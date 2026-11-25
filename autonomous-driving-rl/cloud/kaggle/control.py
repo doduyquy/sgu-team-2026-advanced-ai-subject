@@ -5,6 +5,7 @@ import argparse
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 import json
+import math
 from pathlib import Path
 import re
 import shutil
@@ -13,7 +14,7 @@ import sys
 import zipfile
 
 from cloud.kaggle.common import METADRIVE_PIN, ROOT, SOURCE, SOURCE_SHA, WORK, fingerprint, read, sha, verify, write
-from cloud.kaggle.credentials import SLOTS, cli, slot, verify_owner
+from cloud.kaggle.credentials import SLOTS, accelerator_quota, cli, private_input, slot, verify_owner
 
 RECIPE = read(Path(__file__).with_name("recipe.json"))
 BUNDLE_PATHS = (
@@ -105,6 +106,30 @@ def registry():
 def persist(state):
     write(WORK / "job_registry.json", state)
 
+class DatasetPending(RuntimeError):
+    pass
+
+def audit_zip(path, label):
+    with zipfile.ZipFile(path) as bundle:
+        names = bundle.namelist()
+        if len(set(names)) != len(names) or sum(x.file_size for x in bundle.infolist()) > 120_000_000:
+            raise ValueError("Unexpected upload archive size or duplicate members")
+        if label == "runtime" and set(names) != set(BUNDLE_PATHS) | {"parity.json", "source_inventory.json"}:
+            raise ValueError("Runtime upload member allowlist mismatch")
+        if label == "parent" and set(names) != STATE_FILES:
+            raise ValueError("Parent upload member allowlist mismatch")
+        for name in names:
+            data = bundle.read(name)
+            if SECRET.search(data):
+                raise ValueError("Secret-pattern audit failed inside upload archive")
+            if label == "parent" and name == "model.zip":
+                from io import BytesIO
+                with zipfile.ZipFile(BytesIO(data)) as model:
+                    if sum(x.file_size for x in model.infolist()) > 32_000_000:
+                        raise ValueError("Unexpected parent model archive size")
+                    if any(SECRET.search(model.read(member)) for member in model.infolist()):
+                        raise ValueError("Secret-pattern audit failed inside parent model")
+
 def identity_part(text):
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,17}", text):
         raise ValueError("Campaign and round identifiers require 1–18 lowercase slug characters")
@@ -114,6 +139,9 @@ def plan(args, state):
     identity_part(args.round)
     bundle = read(WORK / "bundle.json")
     plan_id = f"{args.campaign}-{args.round}"
+    assignments = dict(item.split("=") for item in getattr(args, "assign", []))
+    if set(assignments) - ({"j07"} if args.parent else {"j01", "j02", "j03", "j04"}) or set(assignments.values()) - set(SLOTS):
+        raise ValueError("Job assignment format is j01=account_01")
     jobs = {}
     for label, role, workers, device in (
         ("j01", "parity", 1, "cpu"), ("j02", "cpu1", 1, "cpu"),
@@ -121,7 +149,7 @@ def plan(args, state):
     ):
         short_slug = "s5-" + fingerprint([args.campaign, args.round])[:12] + "-" + label + "-a1"
         jobs[label] = {"job": short_slug, "campaign": args.campaign, "round": args.round, "attempt": 1,
-                       "role": role, "account": args.account, "workers": workers, "device": device,
+                       "role": role, "account": assignments.get(label, args.account), "workers": workers, "device": device,
                        "runtime_sha": bundle["runtime_sha"], "source_sha": bundle["source_sha"],
                        "runtime_path": bundle["path"], "template_sha": bundle["template_sha"], **RECIPE["preflight"]}
     deferred = {"j05": "Local B1 collector proof only; cloud snapshot sharing unverified",
@@ -132,11 +160,11 @@ def plan(args, state):
         if not record or record["status"] != "HARVESTED_VERIFIED":
             raise ValueError("Resume needs a verified harvested parent")
         parent = record["execution"]
-        if parent["runtime_sha"] != bundle["runtime_sha"]:
+        if parent["campaign"] != args.campaign or parent["runtime_sha"] != bundle["runtime_sha"]:
             raise ValueError("Resume requires the original runtime bundle")
         job = {"job": "s5-" + fingerprint([args.campaign, args.round])[:12] + "-j07-a1",
                "campaign": args.campaign, "round": args.round, "attempt": 1, "role": "resume",
-               "account": args.account, "workers": parent["workers"], "device": parent["device"],
+               "account": assignments.get("j07", args.account), "workers": parent["workers"], "device": parent["device"],
                "runtime_sha": bundle["runtime_sha"], "source_sha": bundle["source_sha"],
                "runtime_path": bundle["path"], "template_sha": bundle["template_sha"], "parent_job": args.parent,
                "parent_sha": record["state_sha"], **RECIPE["preflight"]}
@@ -156,6 +184,7 @@ def plan(args, state):
 
 def upload(state, alias, owner, label, name, source, digest):
     verify(source, digest)
+    audit_zip(source, label)
     slug = f"s5-{label}-{digest[:20]}"
     ref = f"{owner}/{slug}"
     if state["uploads"].get(ref, {}).get("status") == "ACCEPTED":
@@ -170,6 +199,11 @@ def upload(state, alias, owner, label, name, source, digest):
     else:
         shutil.copyfile(source, dest)
     write(staging / "dataset-metadata.json", {"id": ref, "title": slug, "licenses": [{"name": "other"}]})
+    if {p.name for p in staging.iterdir()} != {name, "dataset-metadata.json"} or any(
+        p.is_symlink() or not p.is_file() or not p.resolve().is_relative_to(staging.resolve())
+        for p in staging.iterdir()
+    ):
+        raise ValueError("Upload staging must contain only the audited payload and generated metadata")
     state["uploads"][ref] = {"status": "UPLOADING", "sha": digest, "alias": alias, "at": now()}
     persist(state)
     code, output = cli(alias, ["datasets", "create", "-p", str(staging), "-q", "-t"], timeout=240)
@@ -183,17 +217,32 @@ def upload(state, alias, owner, label, name, source, digest):
 
 def dataset_ready(state, alias, ref):
     code, output = cli(alias, ["datasets", "status", ref, "--format", "json"])
-    try:
-        response = json.loads(output) if code == 0 else {}
-    except json.JSONDecodeError:
-        response = {}
+    response = dataset_status_response(code, output)
     if response.get("status") != "ready" or response.get("current_version_number") != 1:
-        raise RuntimeError("Private input version 1 is not yet verified ready. Check status and repeat launch later.")
-    state["uploads"][ref]["version"] = 1
+        raise DatasetPending("Private input version 1 is not yet verified ready.")
+    if not private_input(alias, ref):
+        raise RuntimeError("Dataset API did not verify private ACL for version 1")
+    state["uploads"][ref].update(version=1, private_verified_at=now())
     persist(state)
     return ref
 
-def launch(args, state):
+def dataset_status_response(code, output):
+    if code:
+        return {}
+    # Installed CLI can prepend an SDK message even when JSON output was requested.
+    lines = output.splitlines()
+    for index, line in enumerate(lines):
+        if not line.lstrip().startswith("{"):
+            continue
+        try:
+            result = json.loads("\n".join(lines[index:]))
+        except json.JSONDecodeError:
+            continue
+        if isinstance(result, dict) and set(result) == {"status", "current_version_number"}:
+            return result
+    return {}
+
+def planned_job(args, state):
     path = WORK / f"plan-{args.campaign}-{args.round}.json"
     identity_part(args.campaign)
     identity_part(args.round)
@@ -203,19 +252,63 @@ def launch(args, state):
         raise ValueError("Plan fingerprint mismatch")
     job = body["jobs"][args.job]
     entry = state["jobs"][job["job"]]
-    if entry["status"] != "PLANNED":
-        print(f"{job['job']} {entry['status']}")
-        return
+    if entry["planned"] != job:
+        raise ValueError("Registry plan differs from approved plan")
+    return job, entry
+
+def account_for(job):
     alias = job["account"]
     _, creds = slot(alias)
     if not creds or not verify_owner(alias):
         raise RuntimeError("READY_FOR_CREDENTIALS: account identity unverified")
+    return alias, creds
+
+def require_gate(state, job):
+    if job["role"] == "parity":
+        return
+    if not any(entry["status"] == "HARVESTED_VERIFIED" and entry.get("gates", {}).get("G2") == "PASS"
+               and entry["execution"]["campaign"] == job["campaign"]
+               and entry["execution"]["runtime_sha"] == job["runtime_sha"] for entry in state["jobs"].values()):
+        raise RuntimeError("G2 requires a verified J01 cloud artifact for this campaign and runtime")
+    if job.get("parent_job"):
+        parent = state["jobs"].get(job["parent_job"])
+        if not parent or parent["status"] != "HARVESTED_VERIFIED" or parent.get("state_sha") != job["parent_sha"]:
+            raise ValueError("Resume parent is not a matching harvested state")
+
+def inputs_for(job, state, alias, owner):
+    runtime_dir = (ROOT / job["runtime_path"]).resolve()
+    if not runtime_dir.is_relative_to(WORK.resolve()):
+        raise ValueError("Plan runtime path is outside campaign workspace")
+    inputs = {}
+    for label, name, key in (("runtime", "runtime.zip", "runtime_sha"), ("source", "model.zip", "source_sha")):
+        try:
+            inputs[label + "_ref"] = upload(state, alias, owner, label, name, runtime_dir / name, job[key])
+        except DatasetPending:
+            continue
+    if len(inputs) != 2:
+        raise DatasetPending("Dataset processing pending; repeat preparation to check version 1")
+    return inputs
+
+def launch(args, state):
+    job, entry = planned_job(args, state)
+    if entry["status"] != "PLANNED":
+        print(f"{job['job']} {entry['status']}")
+        return
+    require_gate(state, job)
+    if any(other_id != job["job"] and other["status"] in ACTIVE
+           and other["planned"]["campaign"] == job["campaign"]
+           and other["planned"]["role"] == job["role"]
+           and other["planned"]["runtime_sha"] == job["runtime_sha"]
+           and other["planned"].get("parent_sha") == job.get("parent_sha")
+           for other_id, other in state["jobs"].items()):
+        raise RuntimeError("Matching campaign work is active or awaits submission reconciliation")
+    alias, creds = account_for(job)
     owner = creds["owner"]
     if job.get("parent_sha") and any(x.get("execution", {}).get("parent_sha") == job["parent_sha"]
                                     for x in state["jobs"].values()):
         raise RuntimeError("This parent already has a submitted or uncertain continuation")
     age = datetime.now(timezone.utc) - datetime.fromisoformat(creds["observed_at"])
-    if not 0 <= age.total_seconds() <= 86400 or creds["concurrency_observed"] < 1:
+    if not 0 <= age.total_seconds() <= 86400 or (creds["concurrency_observed"] or 0) < 1:
         raise RuntimeError("Fresh owner observation of available concurrency is required")
     active = [x for x in state["jobs"].values() if x.get("owner") == owner and x["status"] in ACTIVE]
     if len(active) >= creds["concurrency_observed"]:
@@ -224,18 +317,17 @@ def launch(args, state):
                          and x.get("execution", {}).get("device") == "cuda"
                          and x.get("submitted", {}).get("utc", "") >= creds["observed_at"]]
     gpu_minutes = sum(x["execution"]["max_seconds"] / 60 for x in observed_gpu_jobs)
-    if job["device"] == "cuda" and gpu_minutes + job["max_seconds"] / 60 > creds["gpu_minutes_observed"]:
-        raise RuntimeError("Observed GPU budget is insufficient")
-    runtime_dir = (ROOT / job["runtime_path"]).resolve()
-    if not runtime_dir.is_relative_to(WORK.resolve()):
-        raise ValueError("Plan runtime path is outside campaign workspace")
+    if job["device"] == "cuda":
+        available = accelerator_quota(alias).get("GPU")
+        owner_limit = creds["gpu_minutes_observed"]
+        if available is not None and owner_limit is not None:
+            available = min(available, owner_limit)
+        if available is None or gpu_minutes + job["max_seconds"] / 60 > available:
+            raise RuntimeError("Verified GPU budget is insufficient or unavailable")
     template = Path(__file__).with_name("kernel_template.py.txt")
     verify(template, job["template_sha"])
     actual_job = {k: v for k, v in job.items() if k not in ("runtime_path", "account")}
-    actual_job["runtime_ref"] = upload(state, alias, owner, "runtime", "runtime.zip",
-                                       runtime_dir / "runtime.zip", job["runtime_sha"])
-    actual_job["source_ref"] = upload(state, alias, owner, "source", "model.zip",
-                                      runtime_dir / "model.zip", job["source_sha"])
+    actual_job.update(inputs_for(job, state, alias, owner))
     if job.get("parent_job"):
         parent = WORK / "harvest" / job["parent_job"]
         verify(parent / "COMPLETE.json", job["parent_sha"])
@@ -267,13 +359,20 @@ def launch(args, state):
           "language": "python", "kernel_type": "script", "is_private": True, "enable_internet": True,
           "enable_gpu": job["device"] == "cuda", "dataset_sources": refs,
           "competition_sources": [], "kernel_sources": [], "model_sources": []})
+    if {p.name for p in staging.iterdir()} != {"run.py", "kernel-metadata.json"} or any(
+        p.is_symlink() or SECRET.search(p.read_bytes()) for p in staging.iterdir()
+    ):
+        raise ValueError("Kernel upload staging failed the allowlist or secret audit")
     push = ["kernels", "push", "-p", str(staging), "-t", str(job["max_seconds"])]
     entry.update(status="SUBMITTING", owner=owner, ref=ref, execution=actual_job, submitted=now())
     persist(state)
     code, output = cli(alias, push, timeout=90)
-    match = re.search(r"\bversion\s+(\d+)\b", output, re.I)
-    entry.update(status="SUBMITTED" if code == 0 and match and ref in output else "SUBMIT_UNKNOWN",
-                 version=int(match[1]) if match else None, cli_exit=code, at=now())
+    match = re.search(r"\bversion\s+(\d+)\s+successfully pushed\b", output, re.I)
+    accepted = code == 0 and match and f"/code/{ref}" in output
+    entry.update(status="SUBMITTED" if accepted else "SUBMIT_UNKNOWN",
+                 version=int(match[1]) if accepted else None, cli_exit=code, at=now())
+    if accepted:
+        entry["accepted_at"] = entry["at"]
     persist(state)
     print(job["job"], entry["status"], entry["version"])
 
@@ -286,12 +385,36 @@ def status(state, job):
     if not verify_owner(alias):
         raise RuntimeError("Account identity unverified")
     code, output = cli(alias, ["kernels", "status", f"{entry['ref']}/{entry['version']}"])
-    match = re.search(r'has status "\s*(?:KernelWorkerStatus\.)?(complete|running|queued|error|cancelled)\s*"', output, re.I)
-    mapping = {"complete": "CLOUD_SUCCEEDED", "error": "FAILED", "cancelled": "CANCELLED"}
+    match = re.search(r'has status "\s*(?:KernelWorkerStatus\.)?([a-z_]+)\s*"', output, re.I)
+    mapping = {"complete": "CLOUD_SUCCEEDED", "error": "FAILED", "cancelled": "CANCELLED",
+               "cancel_acknowledged": "CANCELLED", "cancel_requested": "RUNNING", "new_script": "QUEUED",
+               "running": "RUNNING", "queued": "QUEUED"}
     label = match[1].lower() if code == 0 and match else ""
-    entry.update(status=mapping.get(label, label.upper() or "STATUS_UNKNOWN"), at=now())
+    entry.update(status=mapping.get(label, "STATUS_UNKNOWN"), at=now())
     persist(state)
     print(job, entry["status"])
+
+def diagnose(state, job):
+    entry = state["jobs"][job]
+    if not entry.get("version"):
+        raise ValueError("A confirmed kernel version is required to inspect logs")
+    alias = entry["planned"]["account"]
+    if not verify_owner(alias):
+        raise RuntimeError("Account identity unverified")
+    code, output = cli(alias, ["kernels", "logs", f"{entry['ref']}/{entry['version']}"], timeout=30)
+    patterns = {
+        "DEPENDENCY_RESOLUTION": r"No matching distribution|ResolutionImpossible|Could not find a version",
+        "RUNTIME_IMPORT": r"ModuleNotFoundError|ImportError",
+        "METADRIVE_ASSETS": r"Assets folder does not exist|Assets version misses|pull_asset.*returned non-zero",
+        "PRIVATE_INPUT": r"Missing, ambiguous or mismatched private input",
+        "CLOUD_PARITY": r"Cloud parity drift|GEOMETRY DRIFT",
+        "TIMEOUT": r"TimeoutExpired|Preflight time budget exhausted",
+        "DISK_CAPACITY": r"No space left on device",
+    }
+    labels = [label for label, pattern in patterns.items() if code == 0 and re.search(pattern, output, re.I)]
+    entry["log_diagnostic"] = {"at": now(), "exit": code, "categories": labels}
+    persist(state)
+    print(job, "LOG_CATEGORIES", labels)
 
 def inspect_artifact(source, out, expected):
     if source.stat().st_size > 120_000_000:
@@ -318,8 +441,11 @@ def inspect_artifact(source, out, expected):
         verify(out / name, digest)
     metrics = read(out / "metrics.json")
     fingerprint(metrics)
-    if manifest["result"] == "COMPLETE" and (metrics["transitions"] != expected["transitions"] or metrics["updates"] <= 0):
-        raise ValueError("Complete artifact does not show the planned collection and updates")
+    if manifest["result"] == "COMPLETE":
+        if metrics["transitions"] != expected["transitions"] or metrics["updates"] <= 0:
+            raise ValueError("Complete artifact does not show the planned collection and updates")
+        if manifest["files"]["model.zip"] == SOURCE_SHA:
+            raise ValueError("The historical warm-start model cannot be a resume checkpoint")
     return manifest
 
 def harvest(state, job):
@@ -341,16 +467,65 @@ def harvest(state, job):
     final = WORK / "harvest" / job
     temp = final.with_name(job + ".staging")
     try:
-        manifest = inspect_artifact(staging / filename, temp, entry["execution"])
+        expected = entry["execution"]
+        manifest = inspect_artifact(staging / filename, temp, expected)
+        gates = verify_cloud_evidence(temp, manifest, entry, state) if manifest["result"] == "COMPLETE" else {}
         temp.rename(final)
     except (ValueError, KeyError, zipfile.BadZipFile):
         entry.update(status="ARTIFACT_INVALID", at=now())
         persist(state)
         raise
     entry.update(status="HARVESTED_VERIFIED" if manifest["result"] == "COMPLETE" else "PARTIAL",
-                 state_sha=sha(final / "COMPLETE.json"), at=now())
+                 state_sha=sha(final / "COMPLETE.json"), gates=gates, at=now())
     persist(state)
     print(job, entry["status"], entry["state_sha"])
+
+def verify_cloud_evidence(path, manifest, entry, state):
+    job = entry["execution"]
+    bundle = ROOT / entry["planned"]["runtime_path"] / "runtime.zip"
+    verify(bundle, job["runtime_sha"])
+    with zipfile.ZipFile(bundle) as runtime:
+        anchors = json.loads(runtime.read("parity.json"))
+        inventory = json.loads(runtime.read("source_inventory.json"))
+    versions = (path / "runtime_versions.txt").read_text(encoding="utf-8").splitlines()
+    if f"metadrive-commit={inventory['metadrive_pin']}" not in versions or "stable_baselines3==2.9.2" not in {
+        line.lower().replace("-", "_") for line in versions
+    }:
+        raise ValueError("Runtime artifact did not confirm the expected MetaDrive and SB3 versions")
+    actual = read(path / "parity.json")
+    if len(anchors) != 2 or len(actual) != 2:
+        raise ValueError("Both locked parity geometries are required")
+    for expected, observed in zip(anchors, actual, strict=True):
+        if expected.keys() != observed.keys():
+            raise ValueError("Parity field mismatch")
+        for name, value in expected.items():
+            other = observed[name]
+            if name in {"obs", "action", "reward"}:
+                a = value if isinstance(value, list) else [value]
+                b = other if isinstance(other, list) else [other]
+                match = len(a) == len(b) and all(
+                    abs(x - y) <= 1e-4 + 1e-4 * abs(x) and math.isfinite(y) for x, y in zip(a, b)
+                )
+            else:
+                match = value == other
+            if not match:
+                raise ValueError(f"Cloud parity mismatch in {name}")
+    metrics = read(path / "metrics.json")
+    if not str(metrics["device"]).startswith(job["device"]):
+        raise ValueError("Cloud run used a different compute device")
+    if any(metrics[k] <= 0 or not math.isfinite(metrics[k]) for k in (
+        "seconds", "decisions_per_second", "updates_per_second", "post_warmup_seconds", "rss_peak_sampled_bytes"
+    )):
+        raise ValueError("Cloud run did not report finite positive capacity samples")
+    if job.get("parent_job"):
+        parent = read(WORK / "harvest" / job["parent_job"] / "COMPLETE.json")
+        if (manifest["transitions"] - parent["transitions"] != metrics["transitions"]
+            or manifest["updates"] - parent["updates"] != metrics["updates"]):
+            raise ValueError("Cloud resume counters do not extend the parent")
+        return {"G3": "PASS"}
+    if (manifest["transitions"], manifest["updates"]) != (metrics["transitions"], metrics["updates"]):
+        raise ValueError("Cloud checkpoint counters do not match its measured work")
+    return {"G2": "PASS"} if job["role"] == "parity" else {"capacity_sample": "PASS"}
 
 def doctor():
     exe = shutil.which("kaggle")
@@ -362,7 +537,8 @@ def doctor():
         elif not verify_owner(alias):
             print(alias, "IDENTITY_UNVERIFIED")
         else:
-            print(alias, "IDENTITY_VERIFIED", "owner-observed quota", record["observed_at"])
+            print(alias, "IDENTITY_VERIFIED", "accelerator_minutes", accelerator_quota(alias),
+                  "owner-observed sessions", record["concurrency_observed"])
 
 def main():
     parser = argparse.ArgumentParser()
@@ -381,15 +557,35 @@ def main():
         if name == "plan":
             item.add_argument("--account", choices=SLOTS, default=SLOTS[0])
             item.add_argument("--parent")
+            item.add_argument("--assign", action="append", default=[], metavar="JOB=SLOT")
         else:
             item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07"), required=True)
             item.add_argument("--fingerprint", required=True)
-    for name in ("status", "harvest", "analyze"):
+    for name in ("status", "harvest", "analyze", "logs"):
         commands.add_parser(name).add_argument("--job", required=True)
+    prepare = commands.add_parser("prepare-inputs")
+    prepare.add_argument("--campaign", required=True)
+    prepare.add_argument("--round", required=True)
+    prepare.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07"), required=True)
+    prepare.add_argument("--fingerprint", required=True)
+    import_slots = commands.add_parser("import-slots")
+    import_slots.add_argument("--file", type=Path, required=True)
+    observe = commands.add_parser("observe")
+    observe.add_argument("--account", choices=SLOTS, required=True)
+    observe.add_argument("--available-sessions", type=int, choices=(0, 1, 2), required=True)
     args = parser.parse_args()
     if args.command == "setup":
         from cloud.kaggle.credentials import setup as enter
         enter(args.account, args.owner, args.gpu_minutes, args.concurrency)
+    elif args.command == "import-slots":
+        from cloud.kaggle.credentials import import_file
+        import_file(args.file)
+    elif args.command == "observe":
+        directory, record = slot(args.account)
+        if not record or not verify_owner(args.account):
+            raise ValueError("Account identity is unverified")
+        record.update(concurrency_observed=args.available_sessions, observed_at=now()["utc"])
+        write(directory / "slot.json", record)
     elif args.command == "doctor":
         doctor()
     else:
@@ -401,10 +597,19 @@ def main():
                 plan(args, state)
             elif args.command == "launch":
                 launch(args, state)
+            elif args.command == "prepare-inputs":
+                job, entry = planned_job(args, state)
+                if entry["status"] != "PLANNED":
+                    raise ValueError("Prepare inputs only for a planned job")
+                require_gate(state, job)
+                alias, creds = account_for(job)
+                print(inputs_for(job, state, alias, creds["owner"]))
             elif args.command == "status":
                 status(state, args.job)
             elif args.command == "harvest":
                 harvest(state, args.job)
+            elif args.command == "logs":
+                diagnose(state, args.job)
             elif args.command == "analyze":
                 entry = state["jobs"][args.job]
                 if entry["status"] not in {"HARVESTED_VERIFIED", "PARTIAL"}:
