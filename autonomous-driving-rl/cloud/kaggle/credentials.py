@@ -53,8 +53,8 @@ def slot(alias):
     directory = home() / alias
     return directory, read(directory / "slot.json") if (directory / "slot.json").exists() else None
 
-def cli(alias, args, timeout=90):
-    return token_cli(slot_token(alias), args, timeout)
+def cli(alias, args, timeout=90, *, include_stderr=False):
+    return token_cli(slot_token(alias), args, timeout, include_stderr=include_stderr)
 
 def slot_token(alias):
     directory, record = slot(alias)
@@ -62,13 +62,13 @@ def slot_token(alias):
         raise RuntimeError("Slot missing owner authorization")
     return dpapi((directory / "token.dpapi").read_bytes(), False).decode("utf-8")
 
-def token_cli(token, args, timeout=90):
+def token_cli(token, args, timeout=90, *, include_stderr=False):
     exe = shutil.which("kaggle")
     if not exe:
         raise RuntimeError("Kaggle CLI is unavailable")
-    return token_command(token, [exe, "-W", *args], timeout)
+    return token_command(token, [exe, "-W", *args], timeout, include_stderr=include_stderr)
 
-def token_command(token, command, timeout):
+def token_command(token, command, timeout, *, include_stderr=False):
     env = {k: v for k, v in os.environ.items() if not k.upper().startswith("KAGGLE_") and k.upper() != "KGAT_TOKEN"}
     env["KAGGLE_API_TOKEN"] = token
     with TemporaryDirectory(prefix="stage5-kaggle-cli-") as config:
@@ -79,7 +79,8 @@ def token_command(token, command, timeout):
         except subprocess.TimeoutExpired:
             return -1, ""
     # Callers may extract only validated owner, version and status fields.
-    return result.returncode, TOKEN.sub("<redacted>", result.stdout.replace(token, "<redacted>"))
+    output = result.stdout + ("\n" + result.stderr if include_stderr else "")
+    return result.returncode, TOKEN.sub("<redacted>", output.replace(token, "<redacted>"))
 
 def private_input(alias, ref):
     # The dataset status CLI omits ACL. Kaggle's SDK GetDataset response includes it.

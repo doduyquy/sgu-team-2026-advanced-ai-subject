@@ -128,14 +128,26 @@ def test_dpapi_round_trip():
     assert sample not in encrypted
     assert dpapi(encrypted, False) == sample
 
-def test_timeout_receipt_prevents_duplicate_submit(tmp_path, monkeypatch):
+@pytest.mark.parametrize("admission_probe, sessions, prior, expected", [
+    (False, 1, None, "SUBMIT_UNKNOWN"),
+    (True, None, None, "SUBMIT_UNKNOWN"),
+    (True, 0, None, "PLANNED"),
+    (False, None, None, "PLANNED"),
+    (True, None, "SUBMIT_UNKNOWN", "PLANNED"),
+    (True, None, "CAPACITY_REJECTED", "PLANNED"),
+])
+def test_admission_and_timeout_receipts_prevent_duplicate_submit(
+    tmp_path, monkeypatch, admission_probe, sessions, prior, expected
+):
     wrapper = SimpleNamespace(campaign="stage5", round="test", account="account_01", job="j01", parent=None)
+    wrapper.admission_probe = admission_probe
     monkeypatch.setattr(control, "WORK", tmp_path)
     monkeypatch.setattr(control, "ROOT", tmp_path)
     monkeypatch.setattr(control, "slot", lambda _: (tmp_path, {"owner": "example", "observed_at": control.now()["utc"],
-                                                               "concurrency_observed": 1, "gpu_minutes_observed": 0}))
+                                                               "concurrency_observed": sessions, "gpu_minutes_observed": 0}))
     monkeypatch.setattr(control, "verify_owner", lambda _: True)
     monkeypatch.setattr(control, "upload", lambda *a: "example/private-test")
+    monkeypatch.setattr(control, "probe_inventory", lambda *a: {"notebooks_listed": 0})
     pushes = []
     def fake_cli(alias, arguments, **kwargs):
         pushes.append((alias, arguments))
@@ -146,14 +158,59 @@ def test_timeout_receipt_prevents_duplicate_submit(tmp_path, monkeypatch):
                                             "template_sha": sha(template)})
     state = control.registry()
     control.plan(wrapper, state)
-    wrapper.fingerprint = control.read(tmp_path / "plan-stage5-test.json")["fingerprint"]
+    plan = control.read(tmp_path / "plan-stage5-test.json")
+    wrapper.fingerprint = plan["fingerprint"]
+    job_id = plan["jobs"]["j01"]["job"]
+    if prior:
+        state["jobs"]["old"] = {"status": prior, "owner": "example", "admission_probe": {"capacity": "UNKNOWN"},
+                                "planned": {**plan["jobs"]["j01"], "role": "cpu1"}}
+    if expected == "PLANNED":
+        with pytest.raises(RuntimeError, match="concurrency|Admission probe|active receipt"):
+            control.launch(wrapper, state)
+        assert not pushes
+        assert state["jobs"][job_id]["status"] == expected
+        return
     control.launch(wrapper, state)
     control.launch(wrapper, control.registry())
     assert len(pushes) == 1
-    job = next(x for x in state["jobs"].values() if x["planned"]["role"] == "parity")
-    assert job["status"] == "SUBMIT_UNKNOWN"
-    script = tmp_path / "kernels" / job["planned"]["job"] / "run.py"
+    job = control.registry()["jobs"][job_id]
+    assert job["status"] == expected
+    assert ("admission_probe" in job) is admission_probe
+    script = tmp_path / "kernels" / job_id / "run.py"
     compile(script.read_text(encoding="utf-8"), str(script), "exec")
+
+
+def test_submit_response_requires_exact_ref_or_explicit_capacity_error():
+    ref = "example/preflight"
+    receipt = "Kernel version 2 successfully pushed.  Please check progress at https://www.kaggle.com/code/"
+    assert control.push_result(0, receipt + ref, ref) == ("SUBMITTED", 2)
+    assert control.push_result(0, receipt + ref + "-other", ref) == ("SUBMIT_UNKNOWN", None)
+    assert control.push_result(0, "Kernel push error: Too many concurrent sessions", ref) == ("CAPACITY_REJECTED", None)
+    assert control.push_result(1, "429 Client Error: Too Many Requests", ref) == ("SUBMIT_UNKNOWN", None)
+    assert control.kernel_state(0, 'example/preflight has status "KernelWorkerStatus.QUEUED"') == "QUEUED"
+
+
+@pytest.mark.parametrize("run_state", ["COMPLETE", "RUNNING"])
+def test_probe_checks_pagination_slug_and_recent_run(monkeypatch, run_state):
+    def fake_cli(alias, args, **kwargs):
+        if "--search" in args:
+            assert args[args.index("--search") + 1] == "preflight"
+            return 0, "Not found\n"
+        if args[1] == "status":
+            return 0, f'{args[2]} has status "KernelWorkerStatus.{run_state}"'
+        if "--page-token" in args:
+            assert args[-1] == "next"
+            return 0, '[{"ref":"example/other","lastRunTime":""}]'
+        return 0, 'Next Page Token = next\n[{"ref":"","lastRunTime":""}]'
+    monkeypatch.setattr(control, "cli", fake_cli)
+    if run_state == "RUNNING":
+        with pytest.raises(RuntimeError, match="queued or running"):
+            control.probe_inventory("account_01", "example", "example/preflight")
+    else:
+        assert control.probe_inventory("account_01", "example", "example/preflight") == {
+            "notebooks_listed": 1, "unaddressable_or_unowned": 1, "latest_runs_checked": 1,
+            "latest_run_status_unknown": 0,
+        }
 
 
 def test_quota_uses_verified_api_minutes(monkeypatch):

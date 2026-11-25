@@ -43,6 +43,16 @@ STATE_FILES = {"model.zip", "replay.pkl", "rng.pt", "metrics.json", "COMPLETE.js
 OUTPUT_FILES = STATE_FILES | {"runtime_versions.txt", "execution.json", "parity.json"}
 SECRET = re.compile(rb"(?i)(?:KGAT_[a-zA-Z0-9_-]{12,}|gh[pousr]_[a-zA-Z0-9_]{20,}|github_pat_[a-zA-Z0-9_]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|AIza[a-zA-Z0-9_-]{30,})")
 ACTIVE = {"SUBMITTING", "SUBMIT_UNKNOWN", "SUBMITTED", "QUEUED", "RUNNING", "STATUS_UNKNOWN"}
+KERNEL_STATES = {"complete": "CLOUD_SUCCEEDED", "error": "FAILED", "cancelled": "CANCELLED",
+                 "cancel_acknowledged": "CANCELLED", "cancel_requested": "RUNNING",
+                 "new_script": "QUEUED", "running": "RUNNING", "queued": "QUEUED"}
+CAPACITY_ERROR = re.compile(
+    r"\b(?:too many (?:active |concurrent |running )?(?:notebook |cpu )?(?:sessions|kernels|notebooks)"
+    r"|(?:no|zero) (?:free |available )?(?:cpu |notebook )?sessions? (?:available|remaining|left)"
+    r"|(?:session|concurrency|concurrent sessions?) (?:limit|quota) (?:reached|exceeded)"
+    r"|(?:maximum|max number) of (?:concurrent |active |running )?(?:notebook |cpu )?sessions)\b",
+    re.I,
+)
 
 def now():
     stamp = datetime.now(timezone.utc)
@@ -316,6 +326,76 @@ def inputs_for(job, state, alias, owner):
         raise DatasetPending("Dataset processing pending; repeat preparation to check version 1")
     return inputs
 
+def kernel_state(code, output):
+    match = re.search(r'has status "\s*(?:KernelWorkerStatus\.)?([a-z_]+)\s*"', output, re.I)
+    if code or not match:
+        return "STATUS_UNKNOWN"
+    label = KERNEL_STATES.get(match[1].lower(), "STATUS_UNKNOWN")
+    if label == "FAILED" and CAPACITY_ERROR.search(output):
+        return "CAPACITY_REJECTED"
+    return label
+
+def probe_inventory(alias, owner, target):
+    # Kaggle lists saved notebooks, and its status endpoint describes their latest run.
+    # Interactive sessions and available CPU slots are not exposed by these calls.
+    arguments = ["kernels", "list", "--mine", "--page-size", "100", "--sort-by", "dateRun", "--format", "json"]
+    rows, tokens = [], set()
+    page = arguments
+    while True:
+        code, output = cli(alias, page, timeout=25)
+        match = re.search(r"^\[", output, re.M)
+        if code or (not match and "Not found" not in output.splitlines()):
+            raise RuntimeError("Kaggle notebook inventory unavailable")
+        if match:
+            result = json.loads(output[match.start():])
+            if not isinstance(result, list):
+                raise ValueError("Unexpected Kaggle notebook inventory")
+            rows.extend(result)
+        token = re.search(r"^Next Page Token = (\S+)\s*$", output, re.M)
+        if not token:
+            break
+        if token[1] in tokens:
+            raise RuntimeError("Kaggle notebook pagination repeated a token")
+        tokens.add(token[1])
+        page = [*arguments, "--page-token", token[1]]
+    owned = [row for row in rows if re.fullmatch(re.escape(owner) + r"/[a-z0-9_-]+", row["ref"], re.I)]
+    refs = [row["ref"].lower() for row in owned]
+    if target in refs:
+        raise RuntimeError("J01 notebook already exists on Kaggle and requires reconciliation")
+    # Direct GetKernel can return 403 for an unused slug. Search the authenticated
+    # owner's inventory by the exact slug to cover the server's listing limit.
+    query = ["kernels", "list", "--mine", "--search", target.split("/")[1], "--format", "json"]
+    code, output = cli(alias, query, timeout=25)
+    if code or output.splitlines()[-1:] != ["Not found"]:
+        raise RuntimeError("Kaggle J01 slug search requires reconciliation")
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=1)).replace(tzinfo=None).isoformat()
+    recent = dict.fromkeys(
+        row["ref"] for index, row in enumerate(owned)
+        if index < 5 or (row.get("lastRunTime") or "") >= cutoff
+    )
+    no_visible_session = 0
+    for ref in recent:
+        code, output = cli(alias, ["kernels", "status", ref], timeout=25, include_stderr=True)
+        label = kernel_state(code, output)
+        if label in {"QUEUED", "RUNNING"}:
+            raise RuntimeError("A recent Kaggle notebook is queued or running")
+        no_visible_session += label == "STATUS_UNKNOWN"
+    return {"notebooks_listed": len(refs), "unaddressable_or_unowned": len(rows) - len(owned),
+            "latest_runs_checked": len(recent), "latest_run_status_unknown": no_visible_session}
+
+def push_result(code, output, ref):
+    match = re.search(
+        r"^Kernel version ([1-9]\d*) successfully pushed\.\s+Please check progress at "
+        r"https://www\.kaggle\.com/code/" + re.escape(ref) + r"(?:[/?#][^\s]*)?\s*$",
+        output, re.I | re.M,
+    )
+    if code == 0 and match:
+        return "SUBMITTED", int(match[1])
+    rejection = re.search(r"^(?:Kernel push error:|(?:400|403|409|429) Client Error:).*$", output, re.I | re.M)
+    if rejection and CAPACITY_ERROR.search(rejection[0]):
+        return "CAPACITY_REJECTED", None
+    return "SUBMIT_UNKNOWN", None
+
 def launch(args, state):
     job, entry = planned_job(args, state)
     if entry["status"] != "PLANNED":
@@ -335,10 +415,19 @@ def launch(args, state):
                                     for x in state["jobs"].values()):
         raise RuntimeError("This parent already has a submitted or uncertain continuation")
     age = datetime.now(timezone.utc) - datetime.fromisoformat(creds["observed_at"])
-    if not 0 <= age.total_seconds() <= 86400 or (creds["concurrency_observed"] or 0) < 1:
-        raise RuntimeError("Fresh owner observation of available concurrency is required")
+    sessions = creds["concurrency_observed"] if 0 <= age.total_seconds() <= 86400 else None
     active = [x for x in state["jobs"].values() if x.get("owner") == owner and x["status"] in ACTIVE]
-    if len(active) >= creds["concurrency_observed"]:
+    admission_probe = getattr(args, "admission_probe", False)
+    if admission_probe:
+        if (sessions is not None or args.job != "j01" or job["role"] != "parity" or job["device"] != "cpu"
+                or job["workers"] != 1 or job.get("parent_job") or job["max_seconds"] != RECIPE["preflight"]["max_seconds"]):
+            raise RuntimeError("Admission probe requires unknown capacity and the planned J01 CPU preflight")
+        if active or any(x.get("admission_probe") and x["planned"]["campaign"] == job["campaign"]
+                         for x in state["jobs"].values()):
+            raise RuntimeError("An active receipt or prior admission probe blocks this submission")
+    elif sessions is None:
+        raise RuntimeError("Fresh owner observation of available concurrency is required")
+    elif len(active) >= sessions:
         raise RuntimeError("Account concurrency budget is occupied")
     observed_gpu_jobs = [x for x in state["jobs"].values() if x.get("owner") == owner
                          and x.get("execution", {}).get("device") == "cuda"
@@ -391,14 +480,17 @@ def launch(args, state):
     ):
         raise ValueError("Kernel upload staging failed the allowlist or secret audit")
     push = ["kernels", "push", "-p", str(staging), "-t", str(job["max_seconds"])]
+    if admission_probe:
+        entry["admission_probe"] = {"capacity": "UNKNOWN", **probe_inventory(alias, owner, ref)}
     entry.update(status="SUBMITTING", owner=owner, ref=ref, execution=actual_job, submitted=now())
     persist(state)
-    code, output = cli(alias, push, timeout=90)
-    match = re.search(r"\bversion\s+(\d+)\s+successfully pushed\b", output, re.I)
-    accepted = code == 0 and match and f"/code/{ref}" in output
-    entry.update(status="SUBMITTED" if accepted else "SUBMIT_UNKNOWN",
-                 version=int(match[1]) if accepted else None, cli_exit=code, at=now())
-    if accepted:
+    try:
+        code, output = cli(alias, push, timeout=90, include_stderr=True)
+    except (OSError, RuntimeError):
+        code, output = -1, ""
+    outcome, version = push_result(code, output, ref)
+    entry.update(status=outcome, version=version, cli_exit=code, at=now())
+    if version is not None:
         entry["accepted_at"] = entry["at"]
     persist(state)
     print(job["job"], entry["status"], entry["version"])
@@ -412,12 +504,7 @@ def status(state, job):
     if not verify_owner(alias):
         raise RuntimeError("Account identity unverified")
     code, output = cli(alias, ["kernels", "status", f"{entry['ref']}/{entry['version']}"])
-    match = re.search(r'has status "\s*(?:KernelWorkerStatus\.)?([a-z_]+)\s*"', output, re.I)
-    mapping = {"complete": "CLOUD_SUCCEEDED", "error": "FAILED", "cancelled": "CANCELLED",
-               "cancel_acknowledged": "CANCELLED", "cancel_requested": "RUNNING", "new_script": "QUEUED",
-               "running": "RUNNING", "queued": "QUEUED"}
-    label = match[1].lower() if code == 0 and match else ""
-    entry.update(status=mapping.get(label, "STATUS_UNKNOWN"), at=now())
+    entry.update(status=kernel_state(code, output), at=now())
     persist(state)
     print(job, entry["status"])
 
@@ -588,6 +675,7 @@ def main():
         else:
             item.add_argument("--job", choices=("j01", "j02", "j03", "j04", "j07"), required=True)
             item.add_argument("--fingerprint", required=True)
+            item.add_argument("--admission-probe", action="store_true")
     for name in ("status", "harvest", "analyze", "logs"):
         commands.add_parser(name).add_argument("--job", required=True)
     prepare = commands.add_parser("prepare-inputs")

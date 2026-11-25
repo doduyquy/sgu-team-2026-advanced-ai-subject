@@ -44,6 +44,8 @@ python -B -m cloud.kaggle.control harvest --job $job
 python -B -m cloud.kaggle.control analyze --job $job
 ```
 
+Nếu chưa rõ còn bao nhiêu phiên CPU, thêm `--admission-probe` vào lệnh `launch` của J01. Launcher tra danh sách notebook và kiểm tra các lượt chạy gần đây qua API. Kaggle quyết định tiếp nhận vì API chỉ công bố quota GPU/TPU. Probe áp dụng một lần trong campaign cho J01 CPU và yêu cầu registry của tài khoản đã được đối chiếu. Quan sát còn 0 phiên vẫn chặn submit. `CAPACITY_REJECTED` ghi nhận phản hồi từ Kaggle, còn `SUBMIT_UNKNOWN` cần đối chiếu notebook và version trước khi tiếp tục. [Kaggle Kernels CLI](https://github.com/Kaggle/kaggle-cli/blob/main/skills/references/kernels.md)
+
 Nếu job lỗi, `control logs --job <job>` lấy log của version đã xác nhận và lưu nhóm lỗi kỹ thuật. J02–J04 và J07 yêu cầu artifact J01 xác minh G2 cùng campaign và runtime. Kế hoạch mới hỗ trợ `--assign j03=account_02 --assign j04=account_03` cho các slot có phiên còn trống đã xác minh. Dataset được chuẩn bị private theo account được giao; không dùng public sharing để chuyển artifact.
 
 Trong lần đầu, Kaggle có thể trả trạng thái dataset đang được tạo. Chạy lại lệnh launch khi dataset version 1 đã sẵn sàng. Khi registry ghi `SUBMIT_UNKNOWN`, đối chiếu notebook slug/version trên Kaggle trước khi làm gì thêm. Khi Kaggle chấp nhận kernel, máy local có thể tắt. Registry ghi `ref`, version, thời điểm UTC/ICT và trạng thái. Output chỉ được đánh dấu `HARVESTED_VERIFIED` khi đúng attempt, đúng checksum và job có cập nhật SAC. [Kaggle kernel commands](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels.md)
