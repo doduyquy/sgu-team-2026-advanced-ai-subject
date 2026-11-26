@@ -65,7 +65,8 @@ def test_guided_behavior_uses_deterministic_actor_and_valid_box2(monkeypatch):
     assert [progress_band(x) for x in (0.0, 0.25, 0.75, 1.0)] == ["early", "middle", "late", "late"]
 
 
-def test_campaign_unknown_capacity_admits_once_and_reports_other_identities(tmp_path, monkeypatch):
+@pytest.mark.parametrize("capacity,accepted", [(None, 1), (2, 2)])
+def test_campaign_admits_within_capacity_and_reports_other_identities(tmp_path, monkeypatch, capacity, accepted):
     from collections import Counter
     from contextlib import nullcontext
     from cloud.kaggle import campaign, parallel
@@ -80,7 +81,7 @@ def test_campaign_unknown_capacity_admits_once_and_reports_other_identities(tmp_
     registry = {"jobs": {}}
     monkeypatch.setattr(campaign, "WORK", tmp_path)
     monkeypatch.setattr(campaign, "slot", lambda _: (None, {"owner": "own", "observed_at": control.now()["utc"],
-                                                         "concurrency_observed": None}))
+                                                         "concurrency_observed": capacity}))
     monkeypatch.setattr(campaign, "verify_owner", lambda alias: alias == "account_01")
     monkeypatch.setattr(control, "locked", nullcontext)
     monkeypatch.setattr(control, "registry", lambda: registry)
@@ -94,8 +95,8 @@ def test_campaign_unknown_capacity_admits_once_and_reports_other_identities(tmp_
     launched = []
 
     def launch(args, state):
-        assert args.server_admission
-        job = next(iter(state["jobs"]))
+        assert args.server_admission == (capacity is None)
+        job = next(key for key, row in state["jobs"].items() if row["status"] == "PLANNED")
         launched.append(job)
         state["jobs"][job].update(status="QUEUED", version=1, submitted=control.now(), owner="own")
 
@@ -107,8 +108,9 @@ def test_campaign_unknown_capacity_admits_once_and_reports_other_identities(tmp_
         campaign.run_once(root, bundle, doc, "account_01")
     campaign.report(root, doc)
     r = control.read(root / "status.json")
-    assert len(launched) == 1 and r["totals"]["queued"] == 1 and r["totals"]["running"] == 0
-    assert r["sessions"][1]["blocker"] == "LAUNCHER_UNKNOWN_CAPACITY_WITH_ACTIVE_RECEIPT"
+    assert len(launched) == accepted and r["totals"]["queued"] == accepted and r["totals"]["running"] == 0
+    if capacity is None:
+        assert r["sessions"][1]["blocker"] == "LAUNCHER_UNKNOWN_CAPACITY_WITH_ACTIVE_RECEIPT"
     assert r["sessions"][2]["blocker"] == "OPERATOR_RECEIPT_MISSING"
 
 
