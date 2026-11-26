@@ -144,6 +144,15 @@ if JOB.get("parent_sha"):
     parent_zip = input_file(JOB["parent_ref"], "parent.bin", JOB["parent_zip_sha"])
     parent = workspace / "parent"
     unpack(parent_zip, parent, JOB.get("parent_archive_limit", 120_000_000))
+    if JOB.get("parallel_task"):
+        task = [*python, "-m", "cloud.kaggle.campaign_tasks", "--kind", JOB["parallel_task"],
+                "--parent", str(parent), "--parent-sha", JOB["parent_sha"], "--out", str(working / JOB["job"])]
+        if JOB.get("collector_stream"):
+            task.extend(["--stream", str(JOB["collector_stream"])])
+        if JOB.get("evaluation_tier"):
+            task.extend(["--tier", JOB["evaluation_tier"]])
+        run(task, started + JOB["max_seconds"] - 30)
+        raise SystemExit(0)
     command.extend(["--resume", str(parent), "--parent-sha", JOB["parent_sha"]])
 elif JOB.get("warm_ref"):
     warm_model = workspace / "warm.zip"

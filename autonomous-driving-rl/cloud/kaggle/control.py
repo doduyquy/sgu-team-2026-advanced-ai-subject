@@ -25,7 +25,7 @@ from cloud.kaggle.credentials import (
 RECIPE = read(Path(__file__).with_name("recipe.json"))
 BUNDLE_PATHS = (
     "cloud/kaggle/common.py", "cloud/kaggle/runtime.py", "cloud/kaggle/replay.py", "cloud/kaggle/checkpoint.py",
-    "cloud/kaggle/learning_hooks.py", "cloud/kaggle/guided.py",
+    "cloud/kaggle/learning_hooks.py", "cloud/kaggle/guided.py", "cloud/kaggle/campaign_tasks.py",
     "cloud/kaggle/recipe.json", "cloud/kaggle/linux-lock.txt", "cloud/kaggle/kernel_template.py.txt",
     "configs/experiments/stage5_native_reward_integration_v1.json",
     "results/audits/evaluation_protocol/geometry_split_manifest.csv",
@@ -158,10 +158,11 @@ def audit_zip(path, label):
             raise ValueError("Unexpected upload archive size or duplicate members")
         if label == "runtime":
             current = set(BUNDLE_PATHS) | {"parity.json", "source_inventory.json"}
-            previous = current - {"cloud/kaggle/guided.py"}
+            baseline = current - {"cloud/kaggle/campaign_tasks.py"}
+            previous = baseline - {"cloud/kaggle/guided.py"}
             older = previous - {"cloud/kaggle/learning_hooks.py"}
             oldest = older - {"cloud/kaggle/checkpoint.py"}
-            if set(names) not in (current, previous, older, oldest):
+            if set(names) not in (current, baseline, previous, older, oldest):
                 raise ValueError("Runtime upload member allowlist mismatch")
         if label in {"parent", "long-parent"} and set(names) != STATE_FILES:
             raise ValueError("Parent upload member allowlist mismatch")
@@ -441,7 +442,7 @@ def plan_learning_resume(args, state):
                     or utd_control["execution"].get("parent_sha") != state_sha):
                 raise ValueError("The actor profile requires both harvested UTD controls from the same parent")
     bundle = read(WORK / "bundle.json")
-    allowed = {"cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/learning_hooks.py",
+    allowed = {"cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/learning_hooks.py", "cloud/kaggle/campaign_tasks.py",
                "src/launcher/registry.py", "src/launcher/executor.py"}
     if guided:
         if (checkpoint.get("learning_mode") != "champion_guided_v1"
@@ -873,7 +874,8 @@ def launch(args, state):
                            and row.get("execution", {}).get("parent_sha") == job["parent_sha"]}
     controls = {job[key] for key in ("utd_control", "actor_lr_control") if key in job}
     if job.get("parallel_workload"):
-        if any(row["status"] in ACTIVE or row["planned"].get("parallel_workload") == job["parallel_workload"]
+        if any(row["status"] in {"SUBMITTING", "SUBMIT_UNKNOWN", "STATUS_UNKNOWN"}
+               or row["planned"].get("parallel_workload") == job["parallel_workload"]
                for row in prior_continuations.values() if row["planned"]["account"] == job["account"]):
             raise RuntimeError("A matching parallel workload or unresolved parent receipt already exists")
     elif prior_continuations and not (job.get("guided_gradient_steps") == 1 and prior_continuations.keys() == controls

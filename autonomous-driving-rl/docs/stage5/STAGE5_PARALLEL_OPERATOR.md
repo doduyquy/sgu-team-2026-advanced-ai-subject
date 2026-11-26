@@ -1,5 +1,26 @@
 # Stage 5 Parallel SAC
 
+## Central campaign queue
+
+`cloud.kaggle.campaign` pins 16 session IDs with a target of two per identity. The coordinator writes `campaign.json` in a private shared directory. Give each agent read access to the campaign and package, and write access only to `receipts/<account>`. Keep the account-specific DPAPI credential on the agent host. Keep the coordinator and execution logs outside the shared directory. Reported API status is the last observation from the corresponding identity, with its timestamp in `status.json`.
+
+```powershell
+# Coordinator on the existing operator's host, once per campaign
+python -B -m cloud.kaggle.parallel export --out runs/kaggle/stage5-central01.zip
+python -B -m cloud.kaggle.campaign init --root PATH_TO_PRIVATE_SHARED_QUEUE --package runs/kaggle/stage5-central01.zip
+
+# Each authorized host runs its long-lived agent against the same queue and parcel
+$env:STAGE5_KAGGLE_OPERATOR_SLOT = 'account_02'
+python -B -m cloud.kaggle.campaign agent --root PATH_TO_PRIVATE_SHARED_QUEUE --package PATH_TO_PRIVATE_PACKAGE --watch
+
+# Coordinator, without accessing credentials on the agent hosts
+python -B -m cloud.kaggle.campaign report --root PATH_TO_PRIVATE_SHARED_QUEUE
+```
+
+Omit `--watch` for one reconciliation cycle. Agents fetch Kaggle status and harvest version 1 artifacts, then refill their queue within verified capacity. Unknown capacity permits at most the existing server-admission path when the identity has no active receipt. The CLI distinguishes a local admission block, an API inventory observation, a capacity rejection, and an unresolved submit. A blocked Mixed session requires a verified multi-tier candidate before a new continuation can be selected. The output includes eligible continuation candidates and the verified parent digest. Artifact handoff to another identity uses the existing private transfer path.
+
+The central package includes Kaggle-native collector and evaluation entry points. The older deployment bundle remains usable for the individual learner workloads below. Collector and evaluator notebooks are harvested by `campaign agent`. `status.json` contains receipt evidence and `status.csv` is the 16-session table.
+
 Each member runs one assigned slot on their own Windows session and Kaggle account. Use a private team channel for the deployment ZIP and its SHA-256. The ZIP contains the frozen J11–5.000 full state, runtime, source model for parity, and historical G2/G3 evidence. Each operator's Kaggle uploads are private and verified at version 1 by the launcher.
 
 | Slot | Workload | Execution |

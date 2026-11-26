@@ -29,6 +29,17 @@ WORKLOADS = {
     "throttle": ("account_04", 5000, {"guided_rollout_axis": "throttle_brake"}),
     "retention": ("account_05", 10000, {}),
     "easy-stable": ("account_08", 10000, {"guided_actor_lr_scale": 0.25}),
+    "medium-t4": ("account_01", 25000, {"phase": "medium", "guided_curriculum_from": "easy",
+                                       "device": "cuda", "accelerator": "NvidiaTeslaT4", "max_seconds": 4200,
+                                       "production_continuation": True, "policy_every": 5000}),
+    "main-long": ("account_02", 25000, {"guided_actor_lr_scale": 0.25}),
+    "steer-long": ("account_03", 25000, {"guided_rollout_axis": "steering", "guided_actor_lr_scale": 0.25}),
+    "brake-long": ("account_04", 25000, {"guided_rollout_axis": "throttle_brake", "guided_actor_lr_scale": 0.25}),
+    "medium-cpu": ("account_05", 25000, {"phase": "medium", "guided_curriculum_from": "easy"}),
+    "guided-a": ("account_06", 3, {"parallel_task": "collect", "collector_stream": 106}),
+    "guided-b": ("account_06", 3, {"parallel_task": "collect", "collector_stream": 116}),
+    "eval-easy": ("account_07", 12, {"parallel_task": "evaluate", "evaluation_tier": "Easy"}),
+    "eval-medium": ("account_07", 12, {"parallel_task": "evaluate", "evaluation_tier": "Medium"}),
 }
 INPUTS = {"runtime.zip", "model.zip", "parent.zip"}
 
@@ -142,7 +153,7 @@ def plan(package, digest, workload, registry):
     bundle, path, champion = install(package, digest, registry)
     round_id = f"par1-{workload}"
     runtime_sha = bundle["files"]["runtime.zip"]
-    job = {"job": "s5-" + fingerprint(["stage5", round_id, account])[:12] + "-j10-a1",
+    job = {"job": job_id(workload),
            "campaign": "stage5", "round": round_id, "parallel_workload": workload,
            "account": account, "role": "easy_resume", "device": "cpu", "workers": 2,
            "capacity": 24576 if budget == 10000 else 20480, "phase": "easy", "transitions": budget,
@@ -152,12 +163,22 @@ def plan(package, digest, workload, registry):
            "template_sha": bundle["template_sha"], "validated_runtime_sha": bundle["validated_runtime_sha"],
            "sharded_output": True, "evaluate_easy": True, "policy_every": 2500, "checkpoint_every": 10000,
            "learning_starts": 0, "measure_optimizer": True, "max_seconds": 2400, "export_reserve": 480, **profile}
+    if not job.get("parallel_task") and budget >= 25000:
+        job.setdefault("production_continuation", True)
+        job["capacity"] = max(job["capacity"], ((champion["external_admitted"] + 5000 + budget + 4095) // 4096) * 4096)
+        if "max_seconds" not in profile:
+            job.update(max_seconds=4800, policy_every=5000)
     if workload != "retention":
         job["guided_gradient_steps"] = 1
     job["guided_resume"] = True
     c.require_gate(registry, job)
     c.save_plan(f"stage5-{round_id}", {"j10": job}, {}, registry)
     return job
+
+
+def job_id(workload):
+    account = WORKLOADS[workload][0]
+    return "s5-" + fingerprint(["stage5", f"par1-{workload}", account])[:12] + "-j10-a1"
 
 
 def run_companion(args, registry):

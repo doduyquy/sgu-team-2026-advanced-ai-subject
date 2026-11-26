@@ -65,6 +65,53 @@ def test_guided_behavior_uses_deterministic_actor_and_valid_box2(monkeypatch):
     assert [progress_band(x) for x in (0.0, 0.25, 0.75, 1.0)] == ["early", "middle", "late", "late"]
 
 
+def test_campaign_unknown_capacity_admits_once_and_reports_other_identities(tmp_path, monkeypatch):
+    from collections import Counter
+    from contextlib import nullcontext
+    from cloud.kaggle import campaign, parallel
+
+    root = tmp_path / "queue"
+    bundle = tmp_path / "payload.zip"
+    bundle.write_bytes(b"test payload")
+    campaign.init(root, bundle)
+    doc = campaign.manifest(root)
+    assert Counter(x["account"] for x in doc["sessions"]) == {slot: 2 for slot in control.SLOTS}
+    assert len({x["job"] for x in doc["sessions"]}) == 16
+    registry = {"jobs": {}}
+    monkeypatch.setattr(campaign, "WORK", tmp_path)
+    monkeypatch.setattr(campaign, "slot", lambda _: (None, {"owner": "own", "observed_at": control.now()["utc"],
+                                                         "concurrency_observed": None}))
+    monkeypatch.setattr(campaign, "verify_owner", lambda alias: alias == "account_01")
+    monkeypatch.setattr(control, "locked", nullcontext)
+    monkeypatch.setattr(control, "registry", lambda: registry)
+
+    def planned(package, digest, workload, state):
+        job = {"round": "test", "job": parallel.job_id(workload), "account": "account_01"}
+        state["jobs"][job["job"]] = {"status": "PLANNED", "planned": job}
+        write(tmp_path / "plan-stage5-test.json", {"fingerprint": "test-plan"})
+        return job
+
+    launched = []
+
+    def launch(args, state):
+        assert args.server_admission
+        job = next(iter(state["jobs"]))
+        launched.append(job)
+        state["jobs"][job].update(status="QUEUED", version=1, submitted=control.now(), owner="own")
+
+    monkeypatch.setattr(parallel, "plan", planned)
+    monkeypatch.setattr(control, "launch", launch)
+    monkeypatch.setattr(control, "status", lambda *_: None)
+    with campaign.agent_lock(root / "receipts/account_01"):
+        campaign.run_once(root, bundle, doc, "account_01")
+        campaign.run_once(root, bundle, doc, "account_01")
+    campaign.report(root, doc)
+    r = control.read(root / "status.json")
+    assert len(launched) == 1 and r["totals"]["queued"] == 1 and r["totals"]["running"] == 0
+    assert r["sessions"][1]["blocker"] == "LAUNCHER_UNKNOWN_CAPACITY_WITH_ACTIVE_RECEIPT"
+    assert r["sessions"][2]["blocker"] == "OPERATOR_RECEIPT_MISSING"
+
+
 def test_guided_actor_learning_rate_does_not_change_critic_or_alpha():
     env = DummyVecEnv([TinyEnv])
     try:
