@@ -1,0 +1,36 @@
+{
+  "kind": "RENDER_ONLY_COMMUNITY_ASSETS",
+  "license": "CC-BY-4.0",
+  "models": {
+    "lamborghini": {
+      "file": "assets/vehicles/lamborghini/model.glb",
+      "author": "Arion Digital",
+      "sha256": "72beab0139dc7212f63d79822a9a6250fb9e77f81ef86f10e010d92e49146367",
+      "bytes": 2602000,
+      "license": "CC-BY-4.0",
+      "source": "https://sketchfab.com/3d-models/lamborghini-aventador-888e37a3641d4f7b94bc1a39396e2441"
+    },
+    "tesla": {
+      "file": "assets/vehicles/tesla/model.glb",
+      "title": "Tesla Cybertruck",
+      "author": "Nieve5677",
+      "license": "CC-BY-4.0",
+      "sha256": "0bc94231db4127124be8028c7be1a0d632acbf8e5a789fd5979e7ff7c1c5f774",
+      "bytes": 2074320,
+      "triangles": 42161,
+      "source": "https://sketchfab.com/3d-models/tesla-cybertruck-2025-0fe4980c8cbc441382bfb7d4cf9f092e",
+      "public_copy": "https://github.com/aditano/tesla-studio/blob/main/public/models/cybertruck-import/model.glb",
+      "separate_animated_wheels": true
+    }
+  },
+  "source_hashes": {
+    "highland-source.glb": "15bc5e9988afbbcc2e8d5be50b44a3ed02065aa635b2f5624465e9e3ebe9dfc9",
+    "texture-0.png": "dfc314564377b3ecace966be7a739dc89ef5a631141becc9cef41ee02ed605cf",
+    "texture-1.png": "225aa3a10aa182606ac3212a2f7ed3bbbced7abd9a2a265ad7563df51a0a8b33",
+    "texture-2.png": "c27c9d0e836d5f87cec940eda13169a2eedda51f958b403952927052329f3422",
+    "texture-3.png": "f971bd2f41de6bd5d39eab9b45e01359ca632eb7602bcf988721043e04881469",
+    "texture-4.png": "6bc3099f0dc90911c3acb6e88e8570a64856c9e67aa4f2b77c74336672ebb480",
+    "texture-5.png": "9ce79d0a505354a47233b25da2dc303210de3f841b7f3782a250a1c47621e280",
+    "cybertruck-source.glb": "e3f5ad5f71a85150e003f0588783d4ba076581d638b6fe0d2d42d49e36807830"
+  }
+}
