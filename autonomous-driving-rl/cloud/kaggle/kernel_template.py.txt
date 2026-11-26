@@ -128,6 +128,8 @@ if JOB.get("guided_curriculum_from"):
     command.extend(["--guided-curriculum-from", JOB["guided_curriculum_from"]])
 if JOB.get("guided_rollout_axis"):
     command.extend(["--guided-rollout-axis", JOB["guided_rollout_axis"]])
+if JOB.get("traffic_guidance"):
+    command.append("--traffic-guidance")
 if JOB.get("policy_every"):
     command.extend(["--policy-every", str(JOB["policy_every"]),
                     "--policy-dir", str(working / JOB["job"] / "screening")])

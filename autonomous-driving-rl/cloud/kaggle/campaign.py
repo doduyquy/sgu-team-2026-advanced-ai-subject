@@ -77,6 +77,49 @@ def agent_lock(folder):
         lock.rmdir()
 
 
+def enqueue_continuation(root, document, args):
+    account = operator_slot()
+    with c.locked():
+        registry = c.registry()
+        parent = registry["jobs"][args.parent]
+        if parent.get("imported_evidence") or parent["planned"]["account"] != account:
+            raise ValueError("Continuation must be queued from the verified parent on its owning host")
+        c.package(args.parent)
+        c.plan_learning_resume(SimpleNamespace(campaign="stage5", round=args.round, account=account,
+                                               parent=args.parent, parent_step=args.parent_step,
+                                               transitions=args.transitions, device=args.device,
+                                               max_seconds=args.max_seconds, phase=args.phase,
+                                               traffic_guidance=args.traffic_guidance), registry)
+        planned = read(WORK / f"plan-stage5-{args.round}.json")
+        job = planned["jobs"]["j10"]
+    folder = root / "rounds" / account
+    folder.mkdir(parents=True, exist_ok=True)
+    item = {"session": f"R-{args.round}", "account": account, "workload": job.get("parallel_workload", "continuation"),
+            "job": job["job"], "device": job["device"], "budget": f"{job['transitions']} transitions",
+            "round": args.round, "plan_fingerprint": planned["fingerprint"], "manifest": document["fingerprint"]}
+    path = folder / f"{args.round}.json"
+    if path.exists() and read(path) != item:
+        raise ValueError("Continuation dispatch is immutable")
+    write(path, item)
+    print(job["job"])
+
+
+def job_queue(root, document):
+    queue = list(document["sessions"])
+    known = {row["job"] for row in queue}
+    for account in c.SLOTS:
+        for path in sorted((root / "rounds" / account).glob("*.json")):
+            data = read(path)
+            c.identity_part(path.stem)
+            if (data["manifest"] != document["fingerprint"] or data["account"] != account
+                    or data["round"] != path.stem or data["session"] != f"R-{path.stem}"
+                    or not data["job"] or data["job"] in known):
+                raise ValueError("Invalid continuation dispatch")
+            known.add(data["job"])
+            queue.append(data)
+    return queue
+
+
 def harvest_aux(state, job):
     entry = state["jobs"][job]
     plan = entry["execution"]
@@ -153,7 +196,7 @@ def run_once(root, package, document, account):
     capacity = own["concurrency_observed"] if age is not None and 0 <= age <= 86400 else None
     folder = root / "receipts" / account
     pending = False
-    for item in document["sessions"]:
+    for item in job_queue(root, document):
         if item["account"] != account:
             continue
         receipt = folder / f"{item['session']}.json"
@@ -193,10 +236,18 @@ def run_once(root, package, document, account):
                         elif capacity is not None and len(active) >= capacity:
                             status["blocker"] = "LAUNCHER_OBSERVED_CAPACITY_OCCUPIED"
                         else:
-                            plan = parallel.plan(package, document["package_sha"], item["workload"], registry)
-                            doc = read(WORK / f"plan-stage5-{plan['round']}.json")
-                            c.launch(SimpleNamespace(job="j10", campaign="stage5", round=plan["round"],
-                                                     fingerprint=doc["fingerprint"], server_admission=capacity is None), registry)
+                            if item.get("round"):
+                                request = SimpleNamespace(job="j10", campaign="stage5", round=item["round"],
+                                                          fingerprint=item["plan_fingerprint"], server_admission=capacity is None)
+                                plan, _ = c.planned_job(request, registry)
+                                if plan["job"] != job or plan["account"] != account:
+                                    raise ValueError("Approved continuation differs from dispatch")
+                            else:
+                                plan = parallel.plan(package, document["package_sha"], item["workload"], registry)
+                                doc = read(WORK / f"plan-stage5-{plan['round']}.json")
+                                request = SimpleNamespace(job="j10", campaign="stage5", round=plan["round"],
+                                                          fingerprint=doc["fingerprint"], server_admission=capacity is None)
+                            c.launch(request, registry)
                 except c.DatasetPending:
                     status["blocker"] = "API_PRIVATE_INPUT_PROCESSING"
                 except (RuntimeError, ValueError, OSError, KeyError) as error:
@@ -234,7 +285,7 @@ def run_once(root, package, document, account):
 
 def report(root, document):
     rows = []
-    for row in document["sessions"]:
+    for row in job_queue(root, document):
         receipt = root / "receipts" / row["account"] / f"{row['session']}.json"
         status = read(receipt) if receipt.exists() else {**row, "status": "PLANNED", "api_status": None,
                     "submitted": False, "blocker": "OPERATOR_RECEIPT_MISSING" if row["job"] else
@@ -271,10 +322,18 @@ def report(root, document):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("init", "agent", "report"))
+    parser.add_argument("command", choices=("init", "agent", "report", "enqueue"))
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--package", type=Path)
     parser.add_argument("--watch", action="store_true")
+    parser.add_argument("--parent")
+    parser.add_argument("--parent-step", type=int)
+    parser.add_argument("--round")
+    parser.add_argument("--transitions", type=int)
+    parser.add_argument("--device", choices=("cpu", "cuda"))
+    parser.add_argument("--max-seconds", type=int)
+    parser.add_argument("--phase", choices=("medium", "hard", "extreme"))
+    parser.add_argument("--traffic-guidance", action="store_true")
     args = parser.parse_args()
     if args.command in {"init", "agent"} and not args.package:
         parser.error("--package is required")
@@ -282,6 +341,11 @@ def main():
         init(args.root, args.package)
         return
     document = manifest(args.root)
+    if args.command == "enqueue":
+        if not (args.parent and args.round and args.transitions):
+            parser.error("enqueue requires --parent, --round and --transitions")
+        enqueue_continuation(args.root, document, args)
+        return
     if args.command == "report":
         report(args.root, document)
         return

@@ -26,6 +26,7 @@ RECIPE = read(Path(__file__).with_name("recipe.json"))
 BUNDLE_PATHS = (
     "cloud/kaggle/common.py", "cloud/kaggle/runtime.py", "cloud/kaggle/replay.py", "cloud/kaggle/checkpoint.py",
     "cloud/kaggle/learning_hooks.py", "cloud/kaggle/guided.py", "cloud/kaggle/campaign_tasks.py",
+    "cloud/kaggle/traffic_guidance.py",
     "cloud/kaggle/recipe.json", "cloud/kaggle/linux-lock.txt", "cloud/kaggle/kernel_template.py.txt",
     "configs/experiments/stage5_native_reward_integration_v1.json",
     "results/audits/evaluation_protocol/geometry_split_manifest.csv",
@@ -158,11 +159,12 @@ def audit_zip(path, label):
             raise ValueError("Unexpected upload archive size or duplicate members")
         if label == "runtime":
             current = set(BUNDLE_PATHS) | {"parity.json", "source_inventory.json"}
-            baseline = current - {"cloud/kaggle/campaign_tasks.py"}
+            pre_traffic = current - {"cloud/kaggle/traffic_guidance.py"}
+            baseline = pre_traffic - {"cloud/kaggle/campaign_tasks.py"}
             previous = baseline - {"cloud/kaggle/guided.py"}
             older = previous - {"cloud/kaggle/learning_hooks.py"}
             oldest = older - {"cloud/kaggle/checkpoint.py"}
-            if set(names) not in (current, baseline, previous, older, oldest):
+            if set(names) not in (current, pre_traffic, baseline, previous, older, oldest):
                 raise ValueError("Runtime upload member allowlist mismatch")
         if label in {"parent", "long-parent"} and set(names) != STATE_FILES:
             raise ValueError("Parent upload member allowlist mismatch")
@@ -422,7 +424,8 @@ def plan_learning_resume(args, state):
     device = getattr(args, "device", None)
     seconds = getattr(args, "max_seconds", None)
     next_phase = getattr(args, "phase", None)
-    if (device or seconds or next_phase) and (not guided or comparison_id):
+    traffic_guidance = getattr(args, "traffic_guidance", False)
+    if (device or seconds or next_phase or traffic_guidance) and (not guided or comparison_id):
         raise ValueError("Production options require a Guided SAC continuation")
     if seconds is not None and not 1800 <= seconds <= 14400:
         raise ValueError("Production time budget must be 1,800–14,400 seconds")
@@ -443,6 +446,7 @@ def plan_learning_resume(args, state):
                 raise ValueError("The actor profile requires both harvested UTD controls from the same parent")
     bundle = read(WORK / "bundle.json")
     allowed = {"cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/learning_hooks.py", "cloud/kaggle/campaign_tasks.py",
+               "cloud/kaggle/traffic_guidance.py",
                "src/launcher/registry.py", "src/launcher/executor.py"}
     if guided:
         if (checkpoint.get("learning_mode") != "champion_guided_v1"
@@ -485,6 +489,15 @@ def plan_learning_resume(args, state):
                    checkpoint_every=25000 if args.transitions >= 50000 else 10000)
         parent_phase = checkpoint["identity"].get("phase", planned.get("phase", "easy"))
         job["phase"] = parent_phase
+        if traffic_guidance and ((parent_phase, next_phase) not in {("medium", None), ("easy", "medium")} or comparison_id):
+            raise ValueError("Traffic guidance requires a verified Medium parent or an Easy-to-Medium transition")
+        if traffic_guidance or checkpoint["identity"].get("traffic_guidance"):
+            job["traffic_guidance"] = "traffic_follow_v1"
+            if parent_phase == "medium" and next_phase:
+                raise ValueError("A traffic-guided state requires same-phase continuation")
+        if traffic_guidance:
+            job["parallel_workload"] = "traffic-follow-medium"
+            job["guided_gradient_steps"] = 1
         if next_phase:
             if {"easy": "medium", "medium": "hard", "hard": "extreme"}.get(parent_phase) != next_phase:
                 raise ValueError("Curriculum may advance only to the next approved phase")
@@ -496,7 +509,7 @@ def plan_learning_resume(args, state):
             job["accelerator"] = "NvidiaTeslaT4"
         if policy_hooks and args.transitions >= 25000:
             job["policy_every"] = 5000
-        if not comparison_id and (device or seconds or next_phase or args.transitions >= 50000):
+        if not comparison_id and (device or seconds or next_phase or traffic_guidance or args.transitions >= 50000):
             job["production_continuation"] = True
         if comparison_id:
             if execution["capacity"] < capacity:
@@ -1313,6 +1326,11 @@ def verify_cloud_evidence(path, manifest, entry, state):
             verify(parent_metrics_path, parent["files"]["metrics.json"])
             parent_metrics = read(parent_metrics_path)
             behavior = dict(parent_metrics["online_behavior"])
+            if job.get("traffic_guidance"):
+                if not 0 < metrics["traffic_guided_decisions"] <= metrics["transitions"]:
+                    raise ValueError("Traffic guidance did not affect the collected actions")
+                identity["traffic_guidance"] = job["traffic_guidance"]
+                behavior["traffic_guidance"] = job["traffic_guidance"]
             if job.get("guided_curriculum_from"):
                 tiers = metrics["online_tier_decisions"]
                 if (parent["identity"]["phase"] != job["guided_curriculum_from"]
@@ -1409,6 +1427,7 @@ def main():
     resume.add_argument("--device", choices=("cpu", "cuda"))
     resume.add_argument("--max-seconds", type=int)
     resume.add_argument("--phase", choices=("medium", "hard", "extreme"))
+    resume.add_argument("--traffic-guidance", action="store_true")
     profile = resume.add_mutually_exclusive_group()
     profile.add_argument("--reduce-guided-utd-after", metavar="HARVESTED_CONTROL_JOB")
     profile.add_argument("--dampen-guided-actor-after", metavar="HARVESTED_UTD_05_JOB")

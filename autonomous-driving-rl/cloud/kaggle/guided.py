@@ -79,6 +79,11 @@ class GuidedSAC(runtime.TimedSAC):
         if getattr(self, "rollout_axis", None) is not None:
             anchored, _ = self.rollout_anchor.predict(self._last_obs, deterministic=True)
             scaled[:, self.rollout_axis] = self.policy.scale_action(anchored)[:, self.rollout_axis]
+        if getattr(self, "traffic_guidance", False):
+            from cloud.kaggle.traffic_guidance import traffic_follow
+            guided = traffic_follow(self._last_obs, scaled)
+            self.traffic_guided_decisions += int(np.count_nonzero(guided[:, 1] != scaled[:, 1]))
+            scaled = guided
         return self.policy.unscale_action(scaled), scaled
 
 
@@ -108,6 +113,7 @@ def train(args):
     parser.add_argument("--phase", default="easy", choices=("easy", "medium", "hard", "extreme", "mixed"))
     parser.add_argument("--guided-curriculum-from", choices=("easy", "medium", "hard"))
     parser.add_argument("--guided-rollout-axis", choices=("steering", "throttle_brake"))
+    parser.add_argument("--traffic-guidance", action="store_true")
     parser.add_argument("--capacity", type=int, default=runtime.RECIPE["preflight"]["capacity"])
     parser.add_argument("--transitions", required=True, type=int)
     config, learner_args = parser.parse_known_args(args)
@@ -120,6 +126,8 @@ def train(args):
     learner_args.extend(["--capacity", str(config.capacity), "--transitions", str(config.transitions), "--phase", config.phase])
     if (config.guided_curriculum_from or config.guided_rollout_axis) and not config.resume:
         parser.error("Curriculum transition and axis retention require a verified guided parent")
+    if config.traffic_guidance and (not config.resume or config.phase != "medium" or config.guided_rollout_axis):
+        parser.error("Traffic guidance requires continuation in the Medium phase")
     if config.guided_curriculum_from and (
             {"easy": "medium", "medium": "hard", "hard": "extreme"}[config.guided_curriculum_from] != config.phase
             or config.guided_rollout_axis):
@@ -127,6 +135,8 @@ def train(args):
     parent = None
     parent_gradient_steps = -1
     parent_actor_lr_scale = 1.0
+    traffic_profile = "traffic_follow_v1"
+    parent_traffic = False
     if config.resume:
         learner_args.extend(["--resume", str(config.resume), "--parent-sha", config.parent_sha])
         parent = runtime.check_state(config.resume, config.parent_sha)
@@ -134,8 +144,10 @@ def train(args):
             raise ValueError("Phase must match the parent or use the approved curriculum transition")
         parent_gradient_steps = parent["identity"].get("guided_gradient_steps", -1)
         parent_actor_lr_scale = parent["identity"].get("guided_actor_lr_scale", 1.0)
+        parent_traffic = parent["identity"].get("traffic_guidance") == traffic_profile
+        parent_behavior = {**BEHAVIOR_CONFIG, **({"traffic_guidance": traffic_profile} if parent_traffic else {})}
         if (parent.get("learning_mode") != BEHAVIOR or parent["identity"].get("online_behavior") != BEHAVIOR
-                or read(config.resume / "metrics.json")["online_behavior"] != BEHAVIOR_CONFIG
+                or read(config.resume / "metrics.json")["online_behavior"] != parent_behavior
                 or not parent["ledger"] or parent["external_admitted"] <= 0
                 or parent_gradient_steps not in (-1, 1)
                 or parent_actor_lr_scale not in (1.0, 0.25)
@@ -152,6 +164,8 @@ def train(args):
             identity["guided_gradient_steps"] = 1
         if parent_actor_lr_scale != 1.0:
             identity["guided_actor_lr_scale"] = parent_actor_lr_scale
+        if parent_traffic:
+            identity["traffic_guidance"] = traffic_profile
         return {**identity, "online_behavior": BEHAVIOR}
 
     class ResumedGuidedSAC(GuidedSAC):
@@ -182,6 +196,8 @@ def train(args):
                     raise ValueError("The reduced update profile requires two environments")
                 self.gradient_steps = config.guided_gradient_steps
             self.actor_lr_scale = config.guided_actor_lr_scale or parent_actor_lr_scale
+            self.traffic_guidance = config.traffic_guidance or parent_traffic
+            self.traffic_guided_decisions = 0
             if config.guided_rollout_axis:
                 self.rollout_anchor = runtime.load_policy(config.resume / "model.zip", self.device)
                 self.rollout_axis = ("steering", "throttle_brake").index(config.guided_rollout_axis)
@@ -223,6 +239,10 @@ def train(args):
             manifest["identity"]["guided_actor_lr_scale"] = model.actor_lr_scale
             metrics["guided_actor_lr"] = model.actor.optimizer.param_groups[0]["lr"]
         behavior = dict(BEHAVIOR_CONFIG)
+        if getattr(model, "traffic_guidance", False):
+            manifest["identity"]["traffic_guidance"] = traffic_profile
+            behavior["traffic_guidance"] = traffic_profile
+            metrics["traffic_guided_decisions"] = model.traffic_guided_decisions
         if config.guided_rollout_axis:
             behavior.update(anchored_axis=config.guided_rollout_axis, anchor_model_sha=parent["files"]["model.zip"])
         metrics.update(guided_prefill=evidence, online_progress_bands=dict(online), online_tier_decisions=dict(tiers),

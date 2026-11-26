@@ -65,6 +65,22 @@ def test_guided_behavior_uses_deterministic_actor_and_valid_box2(monkeypatch):
     assert [progress_band(x) for x in (0.0, 0.25, 0.75, 1.0)] == ["early", "middle", "late", "late"]
 
 
+def test_traffic_guidance_uses_forward_relative_velocity_and_preserves_box2():
+    from cloud.kaggle.traffic_guidance import traffic_follow
+
+    obs = np.zeros((3, 409), dtype=np.float32)
+    obs[:, 3] = 37. / 81.  # 36 km/h in the existing encoder
+    obs[1:, 315] = 1.
+    obs[1, 259:266] = [5. / 50., 0., -6. / 30., 0., 0., 4.5 / 5., 2. / 5.]
+    obs[2, 259:266] = [-5. / 50., 0., -6. / 30., 0., 0., 4.5 / 5., 2. / 5.]
+    original = np.array([[.5, .7], [-.4, .7], [.1, .7]], dtype=np.float32)
+    action = traffic_follow(obs, original)
+    np.testing.assert_array_equal(action[:, 0], original[:, 0])
+    np.testing.assert_array_equal(action[0], original[0])
+    assert -1. <= action[1, 1] < action[2, 1] < 0.
+    np.testing.assert_array_equal(original[:, 1], np.full(3, .7, dtype=np.float32))
+
+
 @pytest.mark.parametrize("capacity,accepted", [(None, 1), (2, 2)])
 def test_campaign_admits_within_capacity_and_reports_other_identities(tmp_path, monkeypatch, capacity, accepted):
     from collections import Counter
