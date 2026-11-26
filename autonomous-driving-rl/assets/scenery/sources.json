@@ -1,0 +1,218 @@
+[
+  {
+    "asset": "island_tree_02",
+    "source": "https://polyhaven.com/a/island_tree_02",
+    "license": "CC0-1.0",
+    "resolution": "1k",
+    "files": [
+      {
+        "path": "island_tree_02\\island_tree_02_1k.gltf",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/island_tree_02/island_tree_02_1k.gltf",
+        "md5": "825057164e987894cbfc6c462977fa71"
+      },
+      {
+        "path": "island_tree_02\\textures\\island_tree_02_nor_gl_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/island_tree_02/island_tree_02_nor_gl_1k.jpg",
+        "md5": "d8b8bc86de9934a743fc9b0a5470e695"
+      },
+      {
+        "path": "island_tree_02\\textures\\island_tree_02_diff_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/island_tree_02/island_tree_02_diff_1k.jpg",
+        "md5": "b7435527d9628527ce47d89fc1468e9a"
+      },
+      {
+        "path": "island_tree_02\\textures\\island_tree_02_arm_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/island_tree_02/island_tree_02_arm_1k.jpg",
+        "md5": "e487f91bcb37a2a1109ef6234f1db27e"
+      },
+      {
+        "path": "island_tree_02\\textures\\island_tree_02_leaves_nor_gl_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/island_tree_02/island_tree_02_leaves_nor_gl_1k.jpg",
+        "md5": "a08ffb98b5ffb7dfa682e05a1639c642"
+      },
+      {
+        "path": "island_tree_02\\textures\\island_tree_02_leaves_diff_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/island_tree_02/island_tree_02_leaves_diff_1k.jpg",
+        "md5": "1356cbb5a5dd1318f9f2a01eddbf03e1"
+      },
+      {
+        "path": "island_tree_02\\textures\\island_tree_02_leaves_arm_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/island_tree_02/island_tree_02_leaves_arm_1k.jpg",
+        "md5": "27b06c4a53ff115ed7d51ee94e417257"
+      },
+      {
+        "path": "island_tree_02\\textures\\island_tree_02_branches_nor_gl_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/island_tree_02/island_tree_02_branches_nor_gl_1k.jpg",
+        "md5": "789084affb01f4a22290a848558f5e12"
+      },
+      {
+        "path": "island_tree_02\\textures\\island_tree_02_branches_diff_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/island_tree_02/island_tree_02_branches_diff_1k.jpg",
+        "md5": "7792907fe2b2b748c129a2384192a579"
+      },
+      {
+        "path": "island_tree_02\\textures\\island_tree_02_branches_arm_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/island_tree_02/island_tree_02_branches_arm_1k.jpg",
+        "md5": "5b6f5b3838f4a8f60fea14fa3a3fef9f"
+      },
+      {
+        "path": "island_tree_02\\island_tree_02.bin",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/island_tree_02/island_tree_02.bin",
+        "md5": "7fa9d6ee752b670cabb65053a5c6395b"
+      },
+      {
+        "path": "island_tree_02\\textures\\island_tree_02_leaves_alpha_1k.png",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/island_tree_02/island_tree_02_leaves_alpha_1k.png",
+        "md5": "5ad9fb9a06e70c069bd3d3ba23577375"
+      }
+    ],
+    "processing": "Original leaf diffuse and separately supplied alpha mask packed into RGBA before GLB optimization. Near/far meshes share materials."
+  },
+  {
+    "asset": "modular_urban_apartments_facade",
+    "source": "https://polyhaven.com/a/modular_urban_apartments_facade",
+    "license": "CC0-1.0",
+    "resolution": "1k",
+    "files": [
+      {
+        "path": "modular_urban_apartments_facade\\modular_urban_apartments_facade_1k.gltf",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_1k.gltf",
+        "md5": "81f4252c7816d0e93149c1ca814134ff"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_plaster_arm_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_plaster_arm_1k.jpg",
+        "md5": "4c5089bcf37a8dffce54b08dbbd18277"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_plaster_nor_gl_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_plaster_nor_gl_1k.jpg",
+        "md5": "17cd57b1af85612484e1d5c04f3ae98c"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_objects_nor_gl_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_objects_nor_gl_1k.jpg",
+        "md5": "e946b86448a627db9d7672a6d2cd3430"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_objects_diff_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_objects_diff_1k.jpg",
+        "md5": "f37a2e4d64b5d31e35c95b96f1346472"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_trim_01_diff_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_trim_01_diff_1k.jpg",
+        "md5": "065bcc1f7e4e9bb0cd79573f7cd6b5f3"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_trim_01_arm_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_trim_01_arm_1k.jpg",
+        "md5": "4275d3cc004e0475c2ab0b8fcdac88d6"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_trim_02_nor_gl_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_trim_02_nor_gl_1k.jpg",
+        "md5": "613735836878414de4b3b1a8d07d53b9"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_trim_01_nor_gl_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_trim_01_nor_gl_1k.jpg",
+        "md5": "a9b1ec2e41fa1b3e2c857109ced93963"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_objects_arm_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_objects_arm_1k.jpg",
+        "md5": "0e4c15b0cea8d5ffec1fef80f3398736"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_trim_02_diff_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_trim_02_diff_1k.jpg",
+        "md5": "6541ee4a6a9877338a54e70834ee620e"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\modular_urban_apartments_facade.bin",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/modular_urban_apartments_facade/modular_urban_apartments_facade.bin",
+        "md5": "e54b1de59041da0f44db64efb8bda8f6"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_trim_02_arm_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_trim_02_arm_1k.jpg",
+        "md5": "b99d29cde37713e4cc19d65c7a13cf63"
+      },
+      {
+        "path": "modular_urban_apartments_facade\\textures\\modular_urban_apartments_facade_plaster_diff_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_urban_apartments_facade/modular_urban_apartments_facade_plaster_diff_1k.jpg",
+        "md5": "04dc48f9569357117f07dcd811dffe99"
+      }
+    ]
+  },
+  {
+    "asset": "painted_concrete",
+    "source": "https://polyhaven.com/a/painted_concrete",
+    "license": "CC0-1.0",
+    "resolution": "1k",
+    "files": [
+      {
+        "path": "painted_concrete\\painted_concrete_rough_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/painted_concrete/painted_concrete_rough_1k.jpg",
+        "md5": "81b672f45842b6fa64d4f2e11830a9e8"
+      },
+      {
+        "path": "painted_concrete\\painted_concrete_diff_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/painted_concrete/painted_concrete_diff_1k.jpg",
+        "md5": "57cc093c9a4226186da0149c2d759055"
+      },
+      {
+        "path": "painted_concrete\\painted_concrete_nor_gl_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/painted_concrete/painted_concrete_nor_gl_1k.jpg",
+        "md5": "a77bcb5b3b8bbfca4da665361a5dd97f"
+      }
+    ]
+  },
+  {
+    "asset": "brick_pavement",
+    "source": "https://polyhaven.com/a/brick_pavement",
+    "license": "CC0-1.0",
+    "resolution": "1k",
+    "files": [
+      {
+        "path": "brick_pavement\\brick_pavement_nor_gl_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brick_pavement/brick_pavement_nor_gl_1k.jpg",
+        "md5": "1e1a2ce3aae3e1c06aa25ec27c083265"
+      },
+      {
+        "path": "brick_pavement\\brick_pavement_diff_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brick_pavement/brick_pavement_diff_1k.jpg",
+        "md5": "07b2f4b1c1b74a3acd7d9cf44ee8f84e"
+      },
+      {
+        "path": "brick_pavement\\brick_pavement_arm_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brick_pavement/brick_pavement_arm_1k.jpg",
+        "md5": "2a7dbff017e7c2f9ec559da311260c69"
+      }
+    ]
+  },
+  {
+    "asset": "grey_plaster",
+    "source": "https://polyhaven.com/a/grey_plaster",
+    "license": "CC0-1.0",
+    "resolution": "1k",
+    "files": [
+      {
+        "path": "grey_plaster\\grey_plaster_diff_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grey_plaster/grey_plaster_diff_1k.jpg",
+        "md5": "42d2ffe5338fcc0065e28076cbe15eba"
+      },
+      {
+        "path": "grey_plaster\\grey_plaster_nor_gl_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grey_plaster/grey_plaster_nor_gl_1k.jpg",
+        "md5": "add2064b193d083c892aead5eaf461d2"
+      },
+      {
+        "path": "grey_plaster\\grey_plaster_rough_1k.jpg",
+        "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grey_plaster/grey_plaster_rough_1k.jpg",
+        "md5": "b97159bbbb4817965892ec7ab6efe46f"
+      }
+    ]
+  }
+]
