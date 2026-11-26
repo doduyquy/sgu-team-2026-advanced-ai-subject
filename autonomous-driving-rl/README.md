@@ -2,6 +2,18 @@
 
 This directory is the autonomous-driving research subproject for the SGU Advanced AI course. MetaDrive is used as the simulation engine; the team has built a reproducible **Research Platform V1** on top of it so different agent families can be developed and compared under the same environment, information rights, benchmark cases, episode rules, metrics, and logging pipeline.
 
+## Native Race Mode · mở nhanh
+
+Bấm đúp [`CHAY_DUA_XE.cmd`](../CHAY_DUA_XE.cmd) ở thư mục gốc để chọn A*, BFS,
+Dijkstra, Hybrid A* hoặc MPPI thử nghiệm, rồi xem xe chạy ngay trong cửa sổ MetaDrive.
+Có chế độ Chạy đơn hoặc Đua đồng thời: chọn 2–5 thuật toán, mỗi thuật toán điều
+khiển một xe trong cùng cảnh. Có ba đường tham chiếu, đường Việt Nam và bảng
+chọn 12 bản đồ / 60 kịch bản TEST, cùng giao thông, tạm dừng, chuyển xe theo dõi,
+đổi camera, bảng trạng thái trực tiếp và kết quả riêng từng xe.
+Xem [hướng dẫn tiếng Việt từng bước](docs/RACE_MODE_GUIDE.md). Các lượt đua tương
+tác không phải benchmark chính thức; log giữ đúng split của bản đồ được chọn.
+MPPI dùng `src/agents/MPPI.py` và cùng cấu hình JSON với CLI / Workbench.
+
 ## Current status
 
 **Platform foundation: complete.** The environment, benchmark protocol, agent interface, logging/provenance, launcher/preflight layer, and Research Workbench are implemented and hardened.

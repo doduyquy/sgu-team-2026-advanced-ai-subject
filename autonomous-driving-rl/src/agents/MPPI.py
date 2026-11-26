@@ -18,8 +18,8 @@ KÝ HIỆU DÙNG TRONG CÔNG THỨC
     traj    : trạng thái dự đoán của K chuỗi, shape (K, H, 4).
     lambda  : temperature, quyết định mức tập trung trọng số vào mẫu tốt.
 
-CHỖ CHỈNH THAM SỐ KHI CHẠY CLI / WORKBENCH
-    Sửa configs/experiments/mppi_v1.json, sau đó khởi tạo/chạy lại agent.
+CHỖ CHỈNH THAM SỐ KHI CHẠY CLI / WORKBENCH / RACE MODE
+    Sửa configs/experiments/mppi_v2_h30.json, sau đó khởi tạo/chạy lại agent.
     MPPIAgent() đọc JSON; các giá trị MPPIConfig bên dưới là mặc định của class.
     Ví dụ: target_speed_m_s = 10 nghĩa là mục tiêu 36 km/h (km/h = m/s * 3.6).
 
@@ -715,7 +715,7 @@ class MPPIAgent:
     method_family = "SIMULATION_PLANNING"
 
     def __init__(self, config: Optional[MPPIConfig] = None):
-        # CLI/Workbench gọi MPPIAgent() -> nạp JSON, ghi đè mặc định của class.
+        # CLI/Workbench/Race Mode gọi MPPIAgent() -> nạp JSON, ghi đè mặc định class.
         self.config = load_mppi_config() if config is None else config
         if not isinstance(self.config, MPPIConfig):
             raise TypeError("config must be MPPIConfig")
