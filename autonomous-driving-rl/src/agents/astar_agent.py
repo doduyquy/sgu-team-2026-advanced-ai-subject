@@ -1,7 +1,8 @@
 """Stage 2 A* and Stage 6 A* + learned heuristic share graph and controller."""
 
 from src.agents.heuristic_model import HeuristicMLP
-from src.agents.path_following import MAX_STEERING_RAD, WHEELBASE_M, follow_local_path
+from src.agents.path_following import (MAX_STEERING_RAD, STAGE2_CONTROL, WHEELBASE_M,
+                                       follow_local_path, follow_stage2_path)
 from src.agents.planning_graph import astar_search, build_planning_graph, load_astar_config, planner_fingerprint
 from src.platform.agent import AgentDecision, AgentDescriptor
 from src.platform import canonical_json_sha256
@@ -11,6 +12,8 @@ import math
 
 class AStarAgent:
     agent_id = "stage2_astar"
+    agent_version = "0.2.1"
+    follow_path = staticmethod(follow_stage2_path)
     method_family = "PLANNER"
     heuristic_name = "euclidean"
     search_method = "astar"
@@ -23,6 +26,8 @@ class AStarAgent:
                           state_space="local_route_lattice_v1", objective=cls.objective,
                           heuristic=cls.heuristic_name, shared_planner=load_astar_config()["planner"],
                           controller=dict(wheelbase_m=WHEELBASE_M, max_steering_deg=math.degrees(MAX_STEERING_RAD)))
+        if cls.follow_path is follow_stage2_path:
+            parameters["controller"].update(STAGE2_CONTROL)
         return dict(parameters, config_sha256=canonical_json_sha256(parameters))
 
     def __init__(self):
@@ -32,7 +37,7 @@ class AStarAgent:
 
     @property
     def descriptor(self):
-        return AgentDescriptor(agent_id=self.agent_id, agent_version="0.1.0",
+        return AgentDescriptor(agent_id=self.agent_id, agent_version=self.agent_version,
                                input_profile_id="STATE_DECISION_V1", action_adapter_id="discrete9_lowbranch_v1",
                                inference_stochasticity="deterministic", stateful_within_episode=False,
                                method_family=self.method_family)
@@ -51,7 +56,7 @@ class AStarAgent:
         result = self.search_graph(graph)
         if not result.found:
             return AgentDecision(1, {"planner_status": "NO_PATH", "expansions": result.expansions})
-        return follow_local_path(graph.points[list(result.path)[1:]], agent_input, self.config, {
+        return self.follow_path(graph.points[list(result.path)[1:]], agent_input, self.config, {
             "planner_status": "PATH_FOUND", "expansions": result.expansions,
             "local_path_cost": result.cost, "heuristic": self.heuristic_name,
         })
@@ -66,6 +71,8 @@ class AStarAgent:
 
 class LearnedAStarAgent(AStarAgent):
     agent_id = "stage6_astar_learned"
+    agent_version = "0.1.0"
+    follow_path = staticmethod(follow_local_path)
     method_family = "SEARCH_LEARNING"
     heuristic_name = "learned"
     search_method = "astar_learned"

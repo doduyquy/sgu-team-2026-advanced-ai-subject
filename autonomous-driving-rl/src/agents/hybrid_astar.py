@@ -13,6 +13,7 @@ from pathlib import Path
 import numpy as np
 
 CONFIG_PATH = Path(__file__).resolve().parents[2] / "configs/experiments/search_planners_v1.json"
+LATERAL_COST_PER_M2 = 0.4
 
 
 def validate_hybrid_config(config):
@@ -102,15 +103,14 @@ class PublicPlanningScene:
             raise ValueError("No public route for Hybrid A*")
         self.goal = reference[-1].astype(float)
         self.half_lane = task.current_lane_width / 2 - hybrid_config["lane_margin_m"]
-        centers = np.vstack((np.zeros((1, 2)), reference[:, :2]))
+        centers = reference[:, :2].astype(float)
         keep = np.r_[True, np.linalg.norm(np.diff(centers, axis=0), axis=1) > 1e-8]
         centers = centers[keep]
-        if len(centers) < 2:
-            raise ValueError("Public route has no nonzero segment")
-        first, last = centers[1] - centers[0], centers[-1] - centers[-2]
+        first, last = ([math.cos(h), math.sin(h)] for h in reference[[0, -1], 2])
         extension = hybrid_config["vehicle_length_m"]
-        centers = np.vstack((centers[0] - extension * first / np.linalg.norm(first), centers,
-                              centers[-1] + extension * last / np.linalg.norm(last)))
+        rear_extension = extension + np.linalg.norm(centers[0])
+        centers = np.vstack((centers[0] - rear_extension * np.asarray(first), centers,
+                              centers[-1] + extension * np.asarray(last)))
         self.starts = centers[:-1]
         self.vectors = np.diff(centers, axis=0)
         self.squared_lengths = np.sum(self.vectors ** 2, axis=1)
@@ -125,13 +125,14 @@ class PublicPlanningScene:
         offset = delta - fraction[:, :, None] * self.vectors[None, :, :]
         return np.sqrt(np.min(np.sum(offset ** 2, axis=2), axis=1))
 
-    def is_clear(self, poses):
+    def is_clear(self, poses, *, lane_limit=None):
         poses = np.asarray(poses)
         c, s = np.cos(poses[:, 2]), np.sin(poses[:, 2])
         along = np.column_stack((c, s)) * (self.config["vehicle_length_m"] / 2)
         across = np.column_stack((-s, c)) * (self.config["vehicle_width_m"] / 2)
         corners = np.stack([poses[:, :2] + a * along + b * across for a, b in ((1, 1), (1, -1), (-1, 1), (-1, -1))], axis=1)
-        if np.any(self.distance_to_route(corners.reshape((-1, 2))) > self.half_lane):
+        limit = self.half_lane if lane_limit is None else lane_limit
+        if np.any(self.distance_to_route(corners.reshape((-1, 2))) > limit):
             return False
         if not len(self.actors):
             return True
@@ -154,8 +155,11 @@ class PublicPlanningScene:
                 and abs(wrap_angle(pose[2] - self.goal[2])) <= math.radians(self.config["goal_heading_tolerance_deg"]))
 
     def heuristic(self, pose):
-        # Distance to the goal region is a lower bound on nonnegative forward arc cost.
-        return max(0., float(np.linalg.norm(pose[:2] - self.goal[:2])) - self.config["goal_position_tolerance_m"])
+        # Each primitive has fixed length. Rounding the minimum travel distance
+        # up to a whole primitive still lower-bounds the nonnegative arc cost.
+        distance = max(0., float(np.linalg.norm(pose[:2] - self.goal[:2])) - self.config["goal_position_tolerance_m"])
+        length = self.config["primitive_length_m"]
+        return math.ceil(distance / length - 1e-10) * length
 
 
 def hybrid_astar_search(agent_input, planner_config, hybrid_config=None, max_expansions=256):
@@ -171,7 +175,9 @@ def hybrid_astar_search(agent_input, planner_config, hybrid_config=None, max_exp
         return empty(0)
     scene = PublicPlanningScene(agent_input, planner_config, config)
     start = np.zeros(3)
-    if not scene.is_clear(start[None, :]):
+    recovering = not scene.is_clear(start[None, :])
+    full_lane = task.current_lane_width / 2
+    if recovering and not scene.is_clear(start[None, :], lane_limit=full_lane):
         return empty(0)
     # Retain immutable continuous poses and parent IDs even when a cheaper pose replaces a bin.
     nodes = [(start, 0.0, -1, 0.0)]
@@ -179,8 +185,8 @@ def hybrid_astar_search(agent_input, planner_config, hybrid_config=None, max_exp
     frontier = [(scene.heuristic(start), 0.0, 0)]
     expansions = 0
     while frontier and expansions < max_expansions:
-        _, cost, index = heapq.heappop(frontier)
-        pose, _, parent, _ = nodes[index]
+        _, _, index = heapq.heappop(frontier)
+        pose, cost, _, _ = nodes[index]
         if best.get(pose_key(pose, config), (None, None))[1] != index:
             continue
         expansions += 1
@@ -197,14 +203,22 @@ def hybrid_astar_search(agent_input, planner_config, hybrid_config=None, max_exp
             return HybridSearchResult(np.vstack(samples), cost, expansions, True, tuple(steering_sequence))
         for steering in config["steering_levels"]:
             arc = rollout_primitive(pose, steering, config)
-            if not scene.is_clear(arc[1:]):
+            # A first primitive may leave the reserved margin, but must end
+            # inside the normal corridor. Actor checks apply to every sample.
+            if recovering and index == 0:
+                clear = scene.is_clear(arc[1:], lane_limit=full_lane) and scene.is_clear(arc[-1:])
+            else:
+                clear = scene.is_clear(arc[1:])
+            if not clear:
                 continue
             candidate = arc[-1]
             key = pose_key(candidate, config)
-            next_cost = cost + config["primitive_length_m"] * (1 + config["steering_cost_per_m"] * abs(steering))
+            lateral = float(scene.distance_to_route(candidate[None, :2])[0])
+            next_cost = cost + config["primitive_length_m"] * (
+                1 + config["steering_cost_per_m"] * abs(steering) + LATERAL_COST_PER_M2 * lateral**2)
             if next_cost + 1e-10 < best.get(key, (float("inf"), None))[0]:
                 child = len(nodes)
                 nodes.append((candidate, next_cost, index, steering))
                 best[key] = (next_cost, child)
-                heapq.heappush(frontier, (next_cost + scene.heuristic(candidate), next_cost, child))
+                heapq.heappush(frontier, (next_cost + scene.heuristic(candidate), -next_cost, child))
     return empty(expansions)

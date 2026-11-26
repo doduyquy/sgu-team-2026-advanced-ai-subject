@@ -399,7 +399,7 @@ def build_canonical_agent_registry() -> AgentRegistryV1:
         # Optional pure metadata hook; the executor remains independent of planner types.
         factory.experiment_parameters = policy_class.experiment_parameters
         registry.register(AgentRegistrationV1(
-            agent_id=policy_class.agent_id, agent_version="0.1.0", stage_label=stage,
+            agent_id=policy_class.agent_id, agent_version=policy_class.agent_version, stage_label=stage,
             method_family=policy_class.method_family, purpose="CANDIDATE",
             implementation_ref=f"{policy_class.__module__}:{policy_class.__qualname__}",
             input_profile_id="STATE_DECISION_V1", action_adapter_id="discrete9_lowbranch_v1",

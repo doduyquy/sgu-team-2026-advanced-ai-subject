@@ -16,6 +16,7 @@ from src.agents.graph_search import breadth_first_search, dijkstra_search
 from src.agents.hybrid_astar import (
     PublicPlanningScene, hybrid_astar_search, load_hybrid_config, pose_key, rollout_primitive, wrap_angle,
 )
+from src.agents.path_following import follow_stage2_path
 from src.agents.planning_graph import FEATURE_NAMES, PlanningGraph, astar_search, exact_cost_to_goal, load_astar_config
 from src.launcher.cases import get_default_project_root
 from src.launcher.models import LaunchRequestV1, LauncherMode
@@ -52,6 +53,41 @@ def public_input(radius=None, actors=(), lane_width=3.5):
         traffic = replace(traffic, actors=tuple(actors) + traffic.actors[len(actors):], actors_array=array,
                           active_count=len(actors), validity_mask=np.arange(8) < len(actors))
     return AgentInputV1(InputProfileId.STATE_DECISION_V1, CoreObservationV1(np.zeros(259)), traffic, task, 0)
+
+
+class TestStage2Controller(unittest.TestCase):
+    def test_closing_on_an_actor_caps_speed_without_braking_for_an_adjacent_vehicle(self):
+        config = load_astar_config()["planner"]
+        path = np.array([[2.5, 0.], [5., 0.], [10., 0.]])
+        ego = np.zeros(259)
+        ego[3] = (12. + 1.) / 81.
+        ahead = TrafficActorV1(6., 0., -12. / 3.6, 0., 0., 4.6, 1.9)
+        for actor, expected_brake in ((ahead, True), (replace(ahead, relative_position_y=3.5), False)):
+            inputs = replace(public_input(actors=(actor,)), core_observation=CoreObservationV1(ego))
+            decision = follow_stage2_path(path, inputs, config, {})
+            self.assertEqual(decision.action_payload < 3, expected_brake)
+            self.assertEqual(decision.diagnostics["traffic_speed_limited"], expected_brake)
+
+    def test_hybrid_corridor_retains_the_lateral_offset_of_the_reference_lane(self):
+        inputs = public_input()
+        waypoints = tuple(replace(point, relative_y=.55) for point in inputs.task_context.waypoints)
+        route = inputs.task_context.waypoints_array.copy()
+        route[:, 1] = .55
+        inputs = replace(inputs, task_context=replace(inputs.task_context,
+                         waypoints=waypoints, waypoints_array=route))
+        scene = PublicPlanningScene(inputs, load_astar_config()["planner"], load_hybrid_config())
+        np.testing.assert_allclose(scene.distance_to_route(np.array([[-2., 0.], [0., 0.]])), .55, atol=1e-6)
+
+    def test_crossing_actor_triggers_brake_before_reaching_the_path(self):
+        config = load_astar_config()["planner"]
+        path = np.array([[2.5, 0.], [5., 0.], [10., 0.]])
+        ego = np.zeros(259)
+        ego[3] = (12. + 1.) / 81.
+        actor = TrafficActorV1(7., 4., -12. / 3.6, -4., -math.pi / 2, 4.6, 1.9)
+        inputs = replace(public_input(actors=(actor,)), core_observation=CoreObservationV1(ego))
+        decision = follow_stage2_path(path, inputs, config, {})
+        self.assertLess(decision.action_payload, 3)
+        self.assertTrue(decision.diagnostics["traffic_speed_limited"])
 
 
 class TestGraphSearchAlgorithms(unittest.TestCase):

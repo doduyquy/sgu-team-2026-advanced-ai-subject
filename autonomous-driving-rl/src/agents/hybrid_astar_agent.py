@@ -1,8 +1,7 @@
 """Hybrid A* uses the same public input and discrete path controller as graph A*."""
 
 from src.agents.astar_agent import AStarAgent
-from src.agents.hybrid_astar import hybrid_astar_search, load_hybrid_config
-from src.agents.path_following import follow_local_path
+from src.agents.hybrid_astar import LATERAL_COST_PER_M2, hybrid_astar_search, load_hybrid_config
 from src.platform.agent import AgentDecision
 from src.platform import canonical_json_sha256
 
@@ -10,14 +9,15 @@ from src.platform import canonical_json_sha256
 class HybridAStarAgent(AStarAgent):
     agent_id = "stage2_hybrid_astar"
     search_method = "hybrid_astar"
-    heuristic_name = "hybrid_euclidean_goal_region"
-    objective = "sum_bicycle_arc_cost"
+    heuristic_name = "hybrid_goal_region_minimum_arc_count"
+    objective = "sum_bicycle_arc_cost_with_lane_centering"
 
     @classmethod
     def experiment_parameters(cls):
         parameters = super().experiment_parameters()
         parameters.pop("config_sha256")
-        parameters.update(state_space="continuous_bicycle_poses_v1", hybrid_astar=load_hybrid_config())
+        parameters.update(state_space="continuous_bicycle_poses_v2",
+                          hybrid_astar={**load_hybrid_config(), "lateral_cost_per_m2": LATERAL_COST_PER_M2})
         return dict(parameters, config_sha256=canonical_json_sha256(parameters))
 
     def __init__(self):
@@ -32,7 +32,7 @@ class HybridAStarAgent(AStarAgent):
         result = hybrid_astar_search(agent_input, self.config, self.hybrid_config, self.config["max_expansions"])
         if not result.found:
             return AgentDecision(1, {"planner_status": "NO_PATH", "expansions": result.expansions})
-        return follow_local_path(result.poses[1:, :2], agent_input, self.config, {
+        return self.follow_path(result.poses[1:, :2], agent_input, self.config, {
             "planner_status": "PATH_FOUND", "expansions": result.expansions,
             "local_path_cost": result.cost, "heuristic": self.heuristic_name,
             "motion_primitives": len(result.steering_sequence),
