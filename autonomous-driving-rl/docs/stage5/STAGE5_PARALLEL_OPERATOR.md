@@ -19,7 +19,17 @@ python -B -m cloud.kaggle.campaign report --root PATH_TO_PRIVATE_SHARED_QUEUE
 
 Omit `--watch` for one reconciliation cycle. Watch mode exits once all actionable jobs for that identity are terminal. Agents fetch Kaggle status and harvest versioned artifacts, then refill their queue within verified capacity. Unknown capacity permits at most the existing server-admission path when the identity has no active receipt. The CLI distinguishes a local admission block, an API inventory observation, a capacity rejection, and an unresolved submit. A blocked Mixed session requires a verified multi-tier candidate before a new continuation can be selected. The output includes eligible continuation candidates and the verified parent digest. Artifact handoff to another identity uses the existing private transfer path.
 
-The central package includes Kaggle-native collector and evaluation entry points. The older deployment bundle remains usable for the individual learner workloads below. Collector and evaluator notebooks are harvested by `campaign agent`. `status.json` contains receipt evidence and `status.csv` is the 16-session table.
+The central package includes Kaggle-native collector and evaluation entry points. The older deployment bundle remains usable for the individual learner workloads below. Collector and evaluator notebooks are harvested by `campaign agent`. `status.json` contains receipt evidence and `status.csv` lists the 16 base sessions plus queued continuation rounds.
+
+### Continuation rounds
+
+Queue a new round from a harvested checkpoint on its owning host. Enqueue fingerprints the reviewed plan and uses the verified parity inputs from that parent. The agent reads the round from the same queue and handles submission, status and harvest within its existing capacity limits.
+
+```powershell
+python -B -m cloud.kaggle.campaign enqueue --root PATH_TO_PRIVATE_SHARED_QUEUE --round med-next --parent VERIFIED_PARENT_JOB --device cuda --transitions 25000 --max-seconds 3600
+```
+
+An Easy-to-Medium round can use the `--phase medium --traffic-guidance` recipe. It limits collection throttle from the existing public traffic fields and writes actual executed Box2 actions to replay. Report traffic-guided action counts alongside tier decisions. Standard candidate evaluation continues to use the learned SAC policy without collection guidance.
 
 Each member runs one assigned slot on their own Windows session and Kaggle account. Use a private team channel for the deployment ZIP and its SHA-256. The ZIP contains the frozen J11–5.000 full state, runtime, source model for parity, and historical G2/G3 evidence. Each operator's Kaggle uploads are private and verified at version 1 by the launcher.
 
