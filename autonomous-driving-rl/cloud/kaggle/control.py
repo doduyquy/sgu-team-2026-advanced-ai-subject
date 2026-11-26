@@ -489,7 +489,7 @@ def plan_learning_resume(args, state):
         job["parent_step"] = step
     if policy_hooks:
         job["policy_every"] = 2500
-    for key in ("campaign_deadline", "bounded_guided_replay"):
+    for key in ("campaign_deadline", "bounded_guided_replay", "localization_guard"):
         job.pop(key, None)
     if guided:
         live_rows = checkpoint["external_admitted"] + checkpoint["transitions"]
@@ -552,6 +552,8 @@ def plan_learning_resume(args, state):
                 raise ValueError("Unknown campaign actor update profile")
             if lr is not None:
                 job["guided_actor_lr_scale"] = lr
+            if getattr(args, "localization_guard", False) or checkpoint["identity"].get("localization_guard"):
+                job["localization_guard"] = True
             job.update(campaign_deadline=deadline, bounded_guided_replay=True, policy_every=50000,
                        guided_gradient_steps=1,
                        checkpoint_every=250000, export_reserve=900, production_continuation=True,
@@ -1440,14 +1442,22 @@ def verify_cloud_evidence(path, manifest, entry, state):
                 base_lr = identity["source_recipe"]["sac"]["learning_rate"]
                 if not math.isclose(metrics["guided_actor_lr"], base_lr * actor_lr_scale):
                     raise ValueError("Cloud guided actor learning rate differs from the plan")
-            live_rows = guided_rows + manifest["transitions"]
+            discarded = metrics.get("localization_invalid_rows", 0)
+            if job.get("localization_guard"):
+                identity["localization_guard"] = True
+                added_discards = discarded - parent_metrics.get("localization_invalid_rows", 0)
+                if not 0 <= added_discards < metrics["transitions"] or added_discards % job["workers"]:
+                    raise ValueError("Invalid localization-discard accounting")
+            elif discarded:
+                raise ValueError("Unexpected localization-discard accounting")
+            live_rows = guided_rows + manifest["transitions"] - discarded
             if job.get("bounded_guided_replay"):
                 identity["bounded_guided_replay"] = True
                 live_rows = min(live_rows, job["capacity"])
                 digest = metrics["protected_replay_sha"]
                 if (not re.fullmatch("[0-9a-f]{64}", digest)
                         or parent_metrics.get("protected_replay_sha", digest) != digest
-                        or metrics["online_evicted_rows"] != guided_rows + manifest["transitions"] - live_rows):
+                        or metrics["online_evicted_rows"] != guided_rows + manifest["transitions"] - discarded - live_rows):
                     raise ValueError("Bounded replay did not preserve the guided prefix or reconcile evictions")
             if (manifest["identity"] != identity or manifest["learning_mode"] != parent["learning_mode"]
                     or manifest["ledger"] != parent["ledger"] or manifest["external_admitted"] != guided_rows

@@ -162,6 +162,79 @@ def enqueue_continuation(root, document, args):
     print(job["job"])
 
 
+def repair_window_localization(root, document, session):
+    account = operator_slot()
+    rows = [row for row in document["sessions"] if row["session"] == session and row["account"] == account]
+    if "window" not in document or len(rows) != 1 or not verify_owner(account):
+        raise ValueError("A localization repair requires the matching timeboxed session and identity")
+    row = rows[0]
+    entry = c.registry()["jobs"][row["job"]]
+    if entry["status"] != "FAILED" or not entry.get("version"):
+        raise ValueError("A repair requires a failed versioned submission")
+    code, status = c.cli(account, ["kernels", "status", f"{entry['ref']}/{entry['version']}"], timeout=25)
+    if c.kernel_state(code, status) != "FAILED" or c.current_private_kernel_version(account, entry["ref"]) != entry["version"]:
+        raise ValueError("The original notebook version is not confirmed failed")
+    code, logs = c.cli(account, ["kernels", "logs", f"{entry['ref']}/{entry['version']}"], timeout=25)
+    if code:
+        raise RuntimeError("Versioned localization logs are temporarily unavailable")
+    if "TaskContextLocalizationError" not in logs:
+        raise ValueError("Cloud logs do not establish a route localization failure")
+    plan = entry["planned"]
+    round_id = row["round"] + "g"
+    with c.locked():
+        registry = c.registry()
+        c.package(plan["parent_job"])
+        c.plan_learning_resume(SimpleNamespace(campaign="stage5", account=account, round=round_id,
+            parent=plan["parent_job"], transitions=4_000_000, max_seconds=plan["max_seconds"],
+            campaign_deadline=plan["campaign_deadline"], campaign_actor_lr=plan.get("guided_actor_lr_scale"),
+            device=plan["device"], phase=plan["phase"] if plan.get("guided_curriculum_from") else None,
+            traffic_guidance=bool(plan.get("traffic_guidance")) and not plan.get("traffic_teacher_sha"),
+            traffic_teacher=bool(plan.get("traffic_teacher_sha")), autonomous_traffic=plan.get("autonomous_traffic", False),
+            localization_guard=True), registry)
+        document_plan = read(WORK / f"plan-stage5-{round_id}.json")
+        job = document_plan["jobs"]["j10"]
+        folder = root / "rounds" / account
+        folder.mkdir(parents=True, exist_ok=True)
+        dispatch = {**row, "session": f"R-{round_id}", "round": round_id, "job": job["job"],
+                    "plan_fingerprint": document_plan["fingerprint"], "manifest": document["fingerprint"],
+                    "supersedes": row["job"], "repair": "exclude_unlocalized_vectors_from_replay"}
+        path = folder / f"{round_id}.json"
+        if path.exists() and read(path) != dispatch:
+            raise ValueError("Existing repair dispatch is immutable")
+        write(path, dispatch)
+    print(job["job"], flush=True)
+
+
+def watch_localization_repairs(root, package, document, account):
+    while time.time() < document["window"]["deadline_epoch"] + 3600:
+        registry = c.registry()
+        watched = [row for row in document["sessions"] if row["account"] == account]
+        pending = False
+        for row in watched:
+            entry = registry["jobs"][row["job"]]
+            repair_round = row["round"] + "g"
+            dispatch = root / "rounds" / account / f"{repair_round}.json"
+            if (entry["status"] == "FAILED" and not dispatch.is_file()
+                    and time.time() < document["window"]["deadline_epoch"] - 1800):
+                try:
+                    repair_window_localization(root, document, row["session"])
+                except (ValueError, RuntimeError) as error:
+                    # Retry authentication or status reads. A verified non-F09 error is left terminal.
+                    if not str(error).startswith("Cloud logs do not establish"):
+                        pending = True
+            if dispatch.is_file():
+                try:
+                    pending |= run_once(root, package, document, account, f"R-{repair_round}")
+                except RuntimeError as exc:
+                    if not str(exc).startswith("Registry locked."):
+                        raise
+                    pending = True
+            pending |= entry["status"] not in TERMINAL
+        if not pending:
+            return
+        time.sleep(90 + c.SLOTS.index(account))
+
+
 def job_queue(root, document):
     queue = list(document["sessions"])
     known = {row["job"] for row in queue}
@@ -273,7 +346,7 @@ def training_evidence(account, entry, prior):
             "updates": max(updates, evidence.get("updates", 0))}
 
 
-def run_once(root, package, document, account):
+def run_once(root, package, document, account, session=None):
     verify(package, document["package_sha"])
     _, own = slot(account)
     authorized = bool(own and verify_owner(account))
@@ -282,7 +355,7 @@ def run_once(root, package, document, account):
     folder = root / "receipts" / account
     pending = False
     for item in job_queue(root, document):
-        if item["account"] != account:
+        if item["account"] != account or (session and item["session"] != session):
             continue
         receipt = folder / f"{item['session']}.json"
         status = {**item, "manifest": document["fingerprint"], "status": "PLANNED", "checked_at": c.now(),
@@ -613,11 +686,12 @@ def report(root, document):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("init", "agent", "report", "enqueue", "prepare-window", "admit-window-sibling", "observe-window", "reserve-window-inputs", "stage-window-inputs"))
+    parser.add_argument("command", choices=("init", "agent", "report", "enqueue", "prepare-window", "admit-window-sibling", "observe-window", "reserve-window-inputs", "stage-window-inputs", "repair-localization"))
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--package", type=Path)
     parser.add_argument("--watch", action="store_true")
     parser.add_argument("--parent")
+    parser.add_argument("--session")
     parser.add_argument("--parent-step", type=int)
     parser.add_argument("--round")
     parser.add_argument("--transitions", type=int)
@@ -651,6 +725,16 @@ def main():
             if not args.watch or "window" not in document or time.time() >= document["window"]["deadline_epoch"] + 900:
                 return
             time.sleep(120)
+    if args.command == "repair-localization":
+        if args.watch:
+            if not args.package:
+                parser.error("Repair watch requires the deployment package")
+            account = operator_slot()
+            with agent_lock(args.root / "repairs" / account):
+                watch_localization_repairs(args.root, args.package, document, account)
+        else:
+            repair_window_localization(args.root, document, args.session)
+        return
     if args.command == "reserve-window-inputs":
         reserve_window_inputs(args.root, document)
         return
@@ -672,7 +756,7 @@ def main():
             if "window" in document and time.time() > document["window"]["deadline_epoch"] + 3600:
                 return
             try:
-                pending = run_once(args.root, args.package, document, account)
+                pending = run_once(args.root, args.package, document, account, args.session)
             except RuntimeError as exc:
                 if not args.watch or not str(exc).startswith("Registry locked."):
                     raise

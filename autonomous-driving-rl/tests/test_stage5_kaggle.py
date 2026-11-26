@@ -1083,3 +1083,24 @@ def test_window_active_evidence_excludes_notebook_initialization(monkeypatch):
         "TRAINING_ACTIVE transitions=64 updates=32\nPeriodic checkpoint step-000000250000 index_sha256=0123"))
     learned = campaign.training_evidence("account_01", entry, {})
     assert (learned["transitions"], learned["updates"]) == (220000, 32)
+
+
+
+def test_unlocalized_vector_does_not_write_any_replay_row(monkeypatch):
+    from cloud.kaggle import guided, runtime
+
+    writes = []
+    monkeypatch.setattr(runtime.TimedSAC, "_store_transition", lambda *args: writes.append(args))
+    model = object.__new__(guided.GuidedSAC)
+    model.localization_guard = True
+    model.localization_invalid_rows = 0
+    model._vec_normalize_env = None
+    model.n_envs = 2
+    model._last_obs = np.zeros((2, 409), dtype=np.float32)
+    next_reset_obs = np.ones_like(model._last_obs)
+    model._store_transition(object(), None, next_reset_obs, None, None, [{}, {"localization_discard": True}])
+    assert writes == []
+    assert model.localization_invalid_rows == 2
+    assert model._last_obs is next_reset_obs
+    model._store_transition(object(), None, next_reset_obs, None, None, [{}, {}])
+    assert len(writes) == 1

@@ -144,6 +144,8 @@ if JOB.get("teacher_ref"):
         command.extend(["--teacher-stop-at", str((time.monotonic() + stop) / 2)])
 if JOB.get("campaign_deadline"):
     command.extend(["--timeboxed", "--bounded-guided-replay"])
+if JOB.get("localization_guard"):
+    command.append("--localization-guard")
 if JOB.get("autonomous_traffic"):
     command.append("--autonomous-traffic")
 if JOB.get("policy_every"):

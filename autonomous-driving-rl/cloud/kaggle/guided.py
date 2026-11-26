@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 import hashlib
+from functools import partial
 from pathlib import Path
 import time
 
@@ -12,6 +13,7 @@ import numpy as np
 from cloud.kaggle import learning_hooks, runtime
 from cloud.kaggle.common import read, sha
 from cloud.kaggle.replay import DTYPES, admit, check_snapshot, validate
+from src.platform.task_context_producer import TaskContextLocalizationError
 
 NOISE_STD = 0.04
 BEHAVIOR = "champion_guided_v1"
@@ -65,6 +67,32 @@ def prefill(root, identity):
                   "behavior": "frozen deterministic champion"}
 
 
+class CampaignScheduledEnv(runtime.ScheduledEnv):
+    def reset(self, **kwargs):
+        obs, info = super().reset(**kwargs)
+        self.last_valid_obs, self.last_valid_info = obs, info
+        return obs, info
+
+    def step(self, action):
+        try:
+            outcome = super().step(action)
+        except TaskContextLocalizationError:
+            # SB3 requires a shaped transition to reset this worker. The learner
+            # discards the entire vector batch, including this placeholder.
+            info = {**self.last_valid_info, "primary_reason": "TASK_CONTEXT_LOCALIZATION",
+                    "clean_success": False, "route_completion": self.last_valid_info.get("route_completion", 0.0),
+                    "localization_discard": True}
+            return self.last_valid_obs, 0.0, False, True, info
+        self.last_valid_obs, _, _, _, self.last_valid_info = outcome
+        return outcome
+
+
+def campaign_vec(workers, phase, cursors):
+    factories = [partial(CampaignScheduledEnv, phase, i, cursor) for i, cursor in enumerate(cursors)]
+    return runtime.SubprocVecEnv(factories, start_method="spawn")
+
+
+
 class GuidedSAC(runtime.TimedSAC):
     actor_lr_scale = 1.0
     rollout_axis = None
@@ -75,6 +103,14 @@ class GuidedSAC(runtime.TimedSAC):
             group["lr"] *= self.actor_lr_scale
 
     def _store_transition(self, replay_buffer, *args, **kwargs):
+        if getattr(self, "localization_guard", False):
+            _, new_obs, _, _, infos = args
+            if any(info.get("localization_discard") for info in infos):
+                if self._vec_normalize_env is not None:
+                    raise ValueError("Localization discard requires the unnormalized campaign observation contract")
+                self.localization_invalid_rows += self.n_envs
+                self._last_obs = new_obs
+                return
         protected = getattr(self, "protected_replay_slots", 0)
         if protected and replay_buffer.full and replay_buffer.pos < protected:
             replay_buffer.pos = protected
@@ -160,6 +196,7 @@ def train(args):
     parser.add_argument("--autonomous-traffic", action="store_true")
     parser.add_argument("--bounded-guided-replay", action="store_true")
     parser.add_argument("--timeboxed", action="store_true")
+    parser.add_argument("--localization-guard", action="store_true")
     parser.add_argument("--teacher-stop-at", type=float)
     parser.add_argument("--capacity", type=int, default=runtime.RECIPE["preflight"]["capacity"])
     parser.add_argument("--transitions", required=True, type=int)
@@ -183,6 +220,8 @@ def train(args):
             {"easy": "medium", "medium": "hard", "hard": "extreme"}[config.guided_curriculum_from] != config.phase
             or config.guided_rollout_axis):
         parser.error("Curriculum transition requires the next phase and unassisted collection")
+    if config.localization_guard and not config.timeboxed:
+        parser.error("Localization discard is a timeboxed TRAIN-only behavior")
     if config.timeboxed != config.bounded_guided_replay:
         parser.error("Timeboxed training requires bounded guided replay")
     if config.bounded_guided_replay and not config.resume:
@@ -216,7 +255,7 @@ def train(args):
                     or parent["external_admitted"] + parent["transitions"] + config.transitions > config.capacity))):
             raise ValueError("Resume must retain guided behavior and all prior replay throughout the budget")
     model_for, base_sac, telemetry, save = runtime.model_for, runtime.TimedSAC, runtime.Telemetry, runtime.save_state
-    recipe_identity = runtime.recipe_identity
+    recipe_identity, make_vec = runtime.recipe_identity, runtime.make_vec
     online = Counter()
     tiers = Counter()
     teacher_counts = Counter()
@@ -233,6 +272,8 @@ def train(args):
             identity["traffic_teacher_sha"] = parent_teacher_sha
         if parent["identity"].get("bounded_guided_replay"):
             identity["bounded_guided_replay"] = True
+        if parent["identity"].get("localization_guard"):
+            identity["localization_guard"] = True
         return {**identity, "online_behavior": BEHAVIOR}
 
     class ResumedGuidedSAC(GuidedSAC):
@@ -264,6 +305,10 @@ def train(args):
                     or self.gradient_steps != parent_gradient_steps or evidence["rows"] != parent["external_admitted"]
                     or evidence["ledger"] != parent["ledger"]):
                 raise ValueError("Guided state differs from parent identity, behavior or provenance")
+            self.localization_guard = config.localization_guard
+            if parent["identity"].get("localization_guard") and not self.localization_guard:
+                raise ValueError("Resume must retain the parent's localization handling")
+            self.localization_invalid_rows = read(config.resume / "metrics.json").get("localization_invalid_rows", 0)
             old_bounded = parent["identity"].get("bounded_guided_replay", False)
             if old_bounded:
                 if config.capacity != parent["identity"]["capacity"] or not config.bounded_guided_replay:
@@ -325,13 +370,17 @@ def train(args):
     def save_guided(out, model, manifest, metrics):
         evidence = model.guided_prefill
         live = model.replay_buffer.size() * model.n_envs
-        expected_live = evidence["rows"] + model.num_timesteps
+        dropped = getattr(model, "localization_invalid_rows", 0)
+        expected_live = evidence["rows"] + model.num_timesteps - dropped
         if config.bounded_guided_replay:
+            online_rows = model.num_timesteps - dropped
             expected_live = min(expected_live, config.capacity)
             if prefix_sha(model.replay_buffer, model.protected_replay_slots) != model.protected_replay_sha:
                 raise ValueError("Bounded replay replaced a guided row")
             metrics["protected_replay_sha"] = model.protected_replay_sha
-            metrics["online_evicted_rows"] = evidence["rows"] + model.num_timesteps - live
+            metrics["online_evicted_rows"] = evidence["rows"] + online_rows - live
+            if config.localization_guard:
+                metrics["localization_invalid_rows"] = dropped
         if live != expected_live:
             raise ValueError("Guided replay was overwritten or replay accounting diverged")
         manifest.update(external_admitted=evidence["rows"], ledger=evidence["ledger"], learning_mode=BEHAVIOR)
@@ -339,6 +388,8 @@ def train(args):
         manifest["identity"]["phase"] = config.phase
         if config.bounded_guided_replay:
             manifest["identity"]["bounded_guided_replay"] = True
+        if config.localization_guard:
+            manifest["identity"]["localization_guard"] = True
         if config.autonomous_traffic:
             manifest["identity"].pop("traffic_guidance", None)
             manifest["identity"].pop("traffic_teacher_sha", None)
@@ -369,7 +420,7 @@ def train(args):
         metrics.update(guided_prefill=evidence, online_progress_bands=dict(online), online_tier_decisions=dict(tiers),
                        online_behavior=behavior,
                        guided_live_rows=evidence["rows"], online_live_rows=live - evidence["rows"],
-                       updates_per_total_real_transition=model._n_updates / (evidence["rows"] + model.num_timesteps))
+                       updates_per_total_real_transition=model._n_updates / (evidence["rows"] + model.num_timesteps - dropped))
         save(out, model, manifest, metrics)
 
     try:
@@ -377,10 +428,12 @@ def train(args):
         runtime.model_for, runtime.Telemetry, runtime.save_state = seeded, GuidedTelemetry, save_guided
         if parent:
             runtime.recipe_identity = parent_identity
+        if config.localization_guard:
+            runtime.make_vec = campaign_vec
         learning_hooks.train(learner_args)
     finally:
         runtime.TimedSAC, runtime.model_for, runtime.Telemetry, runtime.save_state = base_sac, model_for, telemetry, save
-        runtime.recipe_identity = recipe_identity
+        runtime.recipe_identity, runtime.make_vec = recipe_identity, make_vec
 
 
 def main(argv=None):
