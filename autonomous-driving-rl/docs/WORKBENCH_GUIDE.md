@@ -1,5 +1,33 @@
 # Research Workbench Guide
 
+## Native AgentInput / AgentDecision inspector
+
+SANDBOX runs with `NATIVE` rendering now show an Agent I/O panel on the right
+of the MetaDrive window. It pairs the public input with the decision and actual
+canonical steering/throttle for that same decision step. The input timestamp is
+before the action; the existing racing HUD displays telemetry after the step.
+
+- **Tab:** cycle summary, ego/navigation, all 240 LiDAR rays (3 pages), traffic,
+  route waypoints, and decision diagnostics.
+- **I:** hide/show the inspector. **P:** MetaDrive pause/resume.
+- The summary includes the most recent four decisions and BFS diagnostics when
+  available. Raw core observations and LiDAR are labelled as normalized values.
+- This is a live screen inspector, not a persisted per-step JSONL trace. It runs
+  outside the `agent.act()` timing bracket and is absent in headless runs.
+
+From `autonomous-driving-rl/`, the lightweight BFS demo uses the production
+executor on TRAIN `Easy/SCS/0/0` and reduces only terrain texture resolution in
+that process to avoid the default ~2 GB semantic image:
+
+```powershell
+& '..\.venv\metadrive\python.exe' -B scripts/demo_bfs_agent_io.py --pause-at-step 30
+```
+
+Press P to continue. For a reproducible visual smoke check, use
+`--capture-dir artifacts/agent_io_overlay --smoke-steps 40` instead of pausing.
+The smoke check intentionally records an interrupted SANDBOX run, not a complete
+driving outcome. No global Git trust settings or installed MetaDrive files change.
+
 Research Workbench V1 is a desktop control/inspection layer over the same launcher, preflight, executor, logging, and result contracts used by the CLI.
 
 The fixed-benchmark prototype now opens on **Bộ đánh giá cố định** inside Experiment

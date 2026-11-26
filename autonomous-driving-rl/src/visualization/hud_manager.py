@@ -22,6 +22,7 @@ import numpy as np
 
 from src.visualization.minimap_overlay import MiniMapOverlay
 from src.visualization.racing_hud import RacingHud
+from src.visualization.agent_io_overlay import AgentIoOverlay
 from src.visualization.telemetry_model import (
     HudTelemetrySnapshotV1,
     create_telemetry_snapshot,
@@ -46,6 +47,7 @@ class RacingHudManager:
         self.env = env
         self.minimap: Optional[MiniMapOverlay] = None
         self.hud: Optional[RacingHud] = None
+        self.agent_io: Optional[AgentIoOverlay] = None
         self._is_destroyed = False
         self._update_latencies_ms: List[float] = []
         self._last_snapshot: Optional[HudTelemetrySnapshotV1] = None
@@ -57,6 +59,7 @@ class RacingHudManager:
             if engine is None:
                 raise RuntimeError("MetaDrive engine is not available on environment.")
             self.hud = RacingHud(engine)
+            self.agent_io = AgentIoOverlay(engine)
         except Exception:
             self.destroy()
             raise
@@ -73,6 +76,10 @@ class RacingHudManager:
         canonical_throttle_brake: Optional[float] = None,
         step_info: Optional[Dict[str, Any]] = None,
         outcome: Optional[Any] = None,
+        agent_input: Optional[Any] = None,
+        agent_decision: Optional[Any] = None,
+        agent_id: str = "",
+        act_latency_ms: Optional[float] = None,
     ) -> HudTelemetrySnapshotV1:
         """
         Extracts authoritative telemetry from simulator state, creates an immutable
@@ -122,6 +129,14 @@ class RacingHudManager:
 
         # 3. Route to visualizers
         self._route_snapshot(snapshot)
+        if self.agent_io is not None and agent_input is not None and agent_decision is not None:
+            from src.platform.action_adapter import CanonicalActionV1
+            self.agent_io.update(
+                agent_input, agent_decision,
+                CanonicalActionV1(canonical_steering, canonical_throttle_brake),
+                agent_id=agent_id, control_dt_s=control_dt_s,
+                act_latency_ms=act_latency_ms,
+            )
 
         t1 = time.perf_counter_ns()
         self._update_latencies_ms.append((t1 - t0) / 1e6)
@@ -161,6 +176,8 @@ class RacingHudManager:
             self.minimap.reset()
         if self.hud is not None:
             self.hud.reset()
+        if self.agent_io is not None:
+            self.agent_io.reset()
         self._last_snapshot = None
 
     def destroy(self) -> None:
@@ -169,6 +186,10 @@ class RacingHudManager:
         Guaranteed to leave zero orphaned nodes or tasks.
         """
         self._is_destroyed = True
+
+        if self.agent_io is not None:
+            self.agent_io.destroy()
+            self.agent_io = None
 
         if self.hud is not None:
             try:

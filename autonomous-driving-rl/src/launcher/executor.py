@@ -522,6 +522,10 @@ class ExperimentExecutor:
                                 canonical_throttle_brake=canonical_act.throttle_brake,
                                 step_info=step_info,
                                 outcome=outcome if (terminated or truncated) else None,
+                                agent_input=agent_input,
+                                agent_decision=decision,
+                                agent_id=reg.agent_id,
+                                act_latency_ms=latencies_ms[-1],
                             )
 
                         # Emit progress event periodically (every 10 steps, preserving 10 Hz control)

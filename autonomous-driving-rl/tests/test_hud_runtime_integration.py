@@ -112,6 +112,32 @@ def _create_mock_metadrive_env(win_w=1200, win_h=900):
 
 
 class TestHudRuntimeIntegration(unittest.TestCase):
+    def test_input_decision_pair_retains_pre_action_step_beside_post_step_hud(self):
+        from src.platform.agent import AgentDecision
+        from src.platform.agent_input import (
+            AgentInputV1, CoreObservationV1, InputProfileId, TaskContextV1, TrafficContextV1,
+        )
+        env = _create_mock_metadrive_env()
+        manager = RacingHudManager(env)
+        inp = AgentInputV1(InputProfileId.STATE_DECISION_V1, CoreObservationV1(np.zeros(259)),
+                           TrafficContextV1.empty(), TaskContextV1.empty(), 17)
+        decision = AgentDecision(7, {"planner_status": "PATH_FOUND", "expansions": 30})
+        try:
+            snapshot = manager.update(
+                step_idx=18, control_dt_s=.1, canonical_steering=0., canonical_throttle_brake=.6,
+                agent_input=inp, agent_decision=decision, agent_id="stage2_bfs", act_latency_ms=.5,
+            )
+            self.assertEqual(snapshot.step_index, 18)
+            self.assertAlmostEqual(snapshot.simulation_time_s, 1.8)
+            self.assertEqual(manager.agent_io.snapshot["step_index"], 17)
+            self.assertAlmostEqual(manager.agent_io.snapshot["input_time_s"], 1.7)
+            self.assertEqual(manager.agent_io.snapshot["agent_decision"], decision.to_dict())
+            manager.reset()
+            self.assertIsNone(manager.agent_io.snapshot)
+        finally:
+            manager.destroy()
+        self.assertIsNone(manager.agent_io)
+
     """10 In-Depth Integration Tests for Gate HUD-3 Runtime Integration & Scientific Isolation."""
 
     def test_01_sandbox_native_initializes_and_updates_hud(self):
