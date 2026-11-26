@@ -152,6 +152,7 @@ def run_once(root, package, document, account):
     age = (datetime.now(timezone.utc) - datetime.fromisoformat(own["observed_at"])).total_seconds() if authorized else None
     capacity = own["concurrency_observed"] if age is not None and 0 <= age <= 86400 else None
     folder = root / "receipts" / account
+    pending = False
     for item in document["sessions"]:
         if item["account"] != account:
             continue
@@ -219,6 +220,9 @@ def run_once(root, package, document, account):
                         status["blocker"] = "ARTIFACT_REVIEW_REQUIRED"
         write(folder / f"{item['session']}.json", status)
         print(item["session"], status["status"], status.get("blocker", ""), flush=True)
+        if authorized and item["job"] and status["status"] not in TERMINAL:
+            pending = True
+    return pending
 
 
 def report(root, document):
@@ -276,8 +280,8 @@ def main():
     account = operator_slot()
     with agent_lock(args.root / "receipts" / account):
         while True:
-            run_once(args.root, args.package, document, account)
-            if not args.watch:
+            pending = run_once(args.root, args.package, document, account)
+            if not args.watch or not pending:
                 break
             time.sleep(60)
 
