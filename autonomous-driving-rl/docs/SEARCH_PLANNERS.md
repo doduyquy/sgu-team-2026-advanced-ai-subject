@@ -4,6 +4,10 @@ Stage 2 hiện có bốn phương pháp chạy qua cùng launcher, metric và Wo
 **Graph search** là nhóm kỹ thuật tìm kiếm trên đồ thị, không phải thuật toán thứ năm.
 Các phương pháp Stage 2 này không cần train; Stage 6 A* học heuristic có trainer riêng.
 
+Để xem trực tiếp các case VALIDATION/TEST, có giải thích quyết định tiếng Việt và
+log từng bước phía dưới cửa sổ, xem [Search Visual Viewer](SEARCH_VISUAL_VIEWER.md).
+Lượt xem này lưu riêng và không thay kết quả benchmark cũ.
+
 ## Chạy cùng điều kiện
 
 Từ `autonomous-driving-rl/`, mở lại Workbench để nạp các agent mới:
