@@ -1,0 +1,972 @@
+{
+  "paired_rule_based_agent4": {
+    "VALIDATION": {
+      "n": 96,
+      "stage1_clean": 59,
+      "stage1_safety": 7,
+      "stage1_route_mean": 0.765602,
+      "stage1_outcomes": {
+        "CRASH_VEHICLE": 6,
+        "TIMEOUT": 30,
+        "SUCCESS": 59,
+        "OUT_OF_ROAD": 1
+      },
+      "both_clean": 57,
+      "only_agent4_clean": 2,
+      "only_agent1_clean": 2,
+      "neither_clean": 35,
+      "both_clean_mean_time_delta_s": 12.528070175438595
+    },
+    "TEST": {
+      "n": 60,
+      "stage1_clean": 37,
+      "stage1_safety": 1,
+      "stage1_route_mean": 0.757388,
+      "stage1_outcomes": {
+        "SUCCESS": 37,
+        "TIMEOUT": 22,
+        "CRASH_VEHICLE": 1
+      },
+      "both_clean": 36,
+      "only_agent4_clean": 1,
+      "only_agent1_clean": 1,
+      "neither_clean": 22,
+      "both_clean_mean_time_delta_s": 13.344444444444447
+    }
+  },
+  "schema": "THREE_AGENT_REPORT_HANDOFF_V1",
+  "prepared_local_date": "2026-11-27",
+  "report_reference_commit": "37b033f721ac0b4e8c551ca7f688e11bc52090dd",
+  "source": "Existing local experiment records and committed Random candidate data. No new driving measurements.",
+  "episode_table": {
+    "name": "paired_episodes.csv",
+    "rows": 312,
+    "digest_format": "UTF-8 with LF line endings. Normalize CRLF to LF when checking the exported CSV hash.",
+    "sha256": "297ce16060dec2a823b4c3ab4b8a2f8e5bb0ac498d00813cf0f4ba636c949709",
+    "scope": "Review export containing selected episode-level columns from both local runs. Raw step traces remain under runs/."
+  },
+  "runs": {
+    "rule_based": {
+      "run_id": "rule_based_full_val_test_20261126T092010190738Z",
+      "original_session_status": "COMPLETE",
+      "kind": "UNCERTIFIED_CANDIDATE_EVALUATION",
+      "canonical_run": false,
+      "agent_id": "stage1_rule_based",
+      "agent_version": "0.6.1",
+      "benchmark_eligible": false,
+      "started_at_utc": "2026-11-26T09:20:10.629760+00:00",
+      "finished_at_utc": "2026-11-26T14:25:07.420159+00:00",
+      "run_git_head": "e86ab9f00dfd0829e4da4c5562387725d2cfc81e",
+      "metadrive_version": "0.4.3",
+      "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+      "python": "3.10.11",
+      "packages": {
+        "numpy": "2.2.6",
+        "panda3d": "1.10.16"
+      },
+      "render": "OFF",
+      "control_dt_s": 0.1,
+      "workers": 6,
+      "agent_seed": null,
+      "source_drift": [],
+      "completed_episodes": 156,
+      "technical_errors": 0,
+      "source_file_sha256": {
+        "episodes.csv": "e6330633f97bc5d57a62d1bdd4e8302a830fa92a6d02e06b75760d14a0ae2d6b",
+        "session.json": "5e54917ee107ae72a494684750ea9c56b67be10215b2386c62b3ec9d6ac57349",
+        "summary.json": "6caf9359db8bec4bf5fb0d2e4d2a8f17bd39662c30f9ac17013d634193824a66"
+      },
+      "manifest_input_sha256": {
+        "results/audits/evaluation_protocol/test_case_manifest.csv": "3e55a55b77887423413f612f50ba213d8329e1aa941364488160ba8b72463370",
+        "results/audits/evaluation_protocol/validation_case_manifest.csv": "dc5d2574f588829be5cf65739739654b72e8754b575e18a6813e82791b937fad"
+      },
+      "decision_steps": {
+        "TEST": 85966,
+        "VALIDATION": 131017
+      },
+      "metrics": {
+        "VALIDATION": {
+          "ALL": {
+            "n": 96,
+            "success": 59,
+            "safety": 7,
+            "outcomes": {
+              "CRASH_VEHICLE": 6,
+              "TIMEOUT": 30,
+              "SUCCESS": 59,
+              "OUT_OF_ROAD": 1
+            },
+            "raw_flags": {
+              "crash_vehicle": 6,
+              "max_step": 30,
+              "arrive_dest": 59,
+              "out_of_road": 1
+            },
+            "boundary": 1,
+            "steps": 131017,
+            "route_mean": 0.765602,
+            "route_median": 0.98587,
+            "max_route_mean": 0.765609,
+            "success_time_mean": 75.332203,
+            "success_time_median": 70.2,
+            "mean_speed": 18.346835,
+            "max_speed": 44.99992348489356,
+            "mean_reward": 1.148484,
+            "mean_seconds": 136.476042,
+            "mean_steps": 1364.760417,
+            "max_lane_offset": 1.7494184970855713,
+            "lat_mean": 104.794557,
+            "lat_p50": 6.0143,
+            "lat_p95": 41.67828,
+            "lat_max": 12102110.4514
+          },
+          "Easy": {
+            "n": 24,
+            "success": 24,
+            "safety": 0,
+            "outcomes": {
+              "SUCCESS": 24
+            },
+            "raw_flags": {
+              "arrive_dest": 24
+            },
+            "boundary": 0,
+            "steps": 9524,
+            "route_mean": 0.986181,
+            "route_median": 0.986667,
+            "max_route_mean": 0.986181,
+            "success_time_mean": 39.683333,
+            "success_time_median": 40.1,
+            "mean_speed": 31.823637,
+            "max_speed": 44.99992348489356,
+            "mean_reward": 1.898848,
+            "mean_seconds": 39.683333,
+            "mean_steps": 396.833333,
+            "max_lane_offset": 0.43066161932312497,
+            "lat_mean": 2.548566,
+            "lat_p50": 1.2696,
+            "lat_p95": 8.41276,
+            "lat_max": 237.1281
+          },
+          "Medium": {
+            "n": 24,
+            "success": 21,
+            "safety": 0,
+            "outcomes": {
+              "TIMEOUT": 3,
+              "SUCCESS": 21
+            },
+            "raw_flags": {
+              "max_step": 3,
+              "arrive_dest": 21
+            },
+            "boundary": 0,
+            "steps": 21735,
+            "route_mean": 0.916511,
+            "route_median": 0.99057,
+            "max_route_mean": 0.916511,
+            "success_time_mean": 76.109524,
+            "success_time_median": 71.9,
+            "mean_speed": 22.658521,
+            "max_speed": 44.998030717634514,
+            "mean_reward": 1.659185,
+            "mean_seconds": 90.5625,
+            "mean_steps": 905.625,
+            "max_lane_offset": 1.746249447669598,
+            "lat_mean": 6.719636,
+            "lat_p50": 4.1577,
+            "lat_p95": 20.69803,
+            "lat_max": 219.7205
+          },
+          "Hard": {
+            "n": 24,
+            "success": 14,
+            "safety": 4,
+            "outcomes": {
+              "TIMEOUT": 6,
+              "SUCCESS": 14,
+              "CRASH_VEHICLE": 3,
+              "OUT_OF_ROAD": 1
+            },
+            "raw_flags": {
+              "max_step": 6,
+              "arrive_dest": 14,
+              "crash_vehicle": 3,
+              "out_of_road": 1
+            },
+            "boundary": 1,
+            "steps": 32983,
+            "route_mean": 0.77721,
+            "route_median": 0.990966,
+            "max_route_mean": 0.777211,
+            "success_time_mean": 135.278571,
+            "success_time_median": 136.4,
+            "mean_speed": 13.598454,
+            "max_speed": 44.92075424194365,
+            "mean_reward": 1.01129,
+            "mean_seconds": 137.429167,
+            "mean_steps": 1374.291667,
+            "max_lane_offset": 1.74904203414917,
+            "lat_mean": 378.506569,
+            "lat_p50": 6.1731,
+            "lat_p95": 39.09146,
+            "lat_max": 12102110.4514
+          },
+          "Extreme": {
+            "n": 24,
+            "success": 0,
+            "safety": 3,
+            "outcomes": {
+              "CRASH_VEHICLE": 3,
+              "TIMEOUT": 21
+            },
+            "raw_flags": {
+              "crash_vehicle": 3,
+              "max_step": 21
+            },
+            "boundary": 0,
+            "steps": 66775,
+            "route_mean": 0.382508,
+            "route_median": 0.382448,
+            "max_route_mean": 0.382532,
+            "success_time_mean": null,
+            "success_time_median": null,
+            "mean_speed": 5.306728,
+            "max_speed": 44.495308685304266,
+            "mean_reward": 0.024612,
+            "mean_seconds": 278.229167,
+            "mean_steps": 2782.291667,
+            "max_lane_offset": 1.7494184970855713,
+            "lat_mean": 16.10277,
+            "lat_p50": 8.7696,
+            "lat_p95": 53.19243,
+            "lat_max": 1016.873
+          }
+        },
+        "TEST": {
+          "ALL": {
+            "n": 60,
+            "success": 37,
+            "safety": 1,
+            "outcomes": {
+              "SUCCESS": 37,
+              "TIMEOUT": 22,
+              "CRASH_VEHICLE": 1
+            },
+            "raw_flags": {
+              "arrive_dest": 37,
+              "max_step": 22,
+              "crash_vehicle": 1
+            },
+            "boundary": 0,
+            "steps": 85966,
+            "route_mean": 0.757388,
+            "route_median": 0.987839,
+            "max_route_mean": 0.757397,
+            "success_time_mean": 74.521622,
+            "success_time_median": 66.9,
+            "mean_speed": 18.512302,
+            "max_speed": 44.99983815349477,
+            "mean_reward": 1.19383,
+            "mean_seconds": 143.276667,
+            "mean_steps": 1432.766667,
+            "max_lane_offset": 1.7457144509578386,
+            "lat_mean": 9.690542,
+            "lat_p50": 5.5105,
+            "lat_p95": 30.980325,
+            "lat_max": 427.7177
+          },
+          "Easy": {
+            "n": 15,
+            "success": 15,
+            "safety": 0,
+            "outcomes": {
+              "SUCCESS": 15
+            },
+            "raw_flags": {
+              "arrive_dest": 15
+            },
+            "boundary": 0,
+            "steps": 6355,
+            "route_mean": 0.987676,
+            "route_median": 0.987948,
+            "max_route_mean": 0.987676,
+            "success_time_mean": 42.366667,
+            "success_time_median": 41.4,
+            "mean_speed": 32.71857,
+            "max_speed": 44.99983815349477,
+            "mean_reward": 1.899354,
+            "mean_seconds": 42.366667,
+            "mean_steps": 423.666667,
+            "max_lane_offset": 0.3767439675743489,
+            "lat_mean": 2.190366,
+            "lat_p50": 1.3374,
+            "lat_p95": 5.31186,
+            "lat_max": 40.7996
+          },
+          "Medium": {
+            "n": 15,
+            "success": 15,
+            "safety": 0,
+            "outcomes": {
+              "SUCCESS": 15
+            },
+            "raw_flags": {
+              "arrive_dest": 15
+            },
+            "boundary": 0,
+            "steps": 11777,
+            "route_mean": 0.99135,
+            "route_median": 0.990792,
+            "max_route_mean": 0.99135,
+            "success_time_mean": 78.513333,
+            "success_time_median": 70.6,
+            "mean_speed": 25.95096,
+            "max_speed": 44.9974765777613,
+            "mean_reward": 1.878843,
+            "mean_seconds": 78.513333,
+            "mean_steps": 785.133333,
+            "max_lane_offset": 0.5798075677605645,
+            "lat_mean": 5.532386,
+            "lat_p50": 2.6557,
+            "lat_p95": 17.79574,
+            "lat_max": 427.7177
+          },
+          "Hard": {
+            "n": 15,
+            "success": 7,
+            "safety": 1,
+            "outcomes": {
+              "CRASH_VEHICLE": 1,
+              "SUCCESS": 7,
+              "TIMEOUT": 7
+            },
+            "raw_flags": {
+              "crash_vehicle": 1,
+              "arrive_dest": 7,
+              "max_step": 7
+            },
+            "boundary": 0,
+            "steps": 22924,
+            "route_mean": 0.618698,
+            "route_median": 0.387853,
+            "max_route_mean": 0.618698,
+            "success_time_mean": 134.871429,
+            "success_time_median": 147.3,
+            "mean_speed": 10.308107,
+            "max_speed": 44.97857666016077,
+            "mean_reward": 0.815294,
+            "mean_seconds": 152.826667,
+            "mean_steps": 1528.266667,
+            "max_lane_offset": 1.7457144509578386,
+            "lat_mean": 7.022256,
+            "lat_p50": 3.6949,
+            "lat_p95": 23.663745,
+            "lat_max": 211.1574
+          },
+          "Extreme": {
+            "n": 15,
+            "success": 0,
+            "safety": 0,
+            "outcomes": {
+              "TIMEOUT": 15
+            },
+            "raw_flags": {
+              "max_step": 15
+            },
+            "boundary": 0,
+            "steps": 44910,
+            "route_mean": 0.431828,
+            "route_median": 0.398095,
+            "max_route_mean": 0.431864,
+            "success_time_mean": null,
+            "success_time_median": null,
+            "mean_speed": 5.071571,
+            "max_speed": 44.827309550370984,
+            "mean_reward": 0.181828,
+            "mean_seconds": 299.4,
+            "mean_steps": 2994.0,
+            "max_lane_offset": 1.7445262112377051,
+            "lat_mean": 13.204281,
+            "lat_p50": 9.1921,
+            "lat_p95": 36.035995,
+            "lat_max": 385.7322
+          }
+        }
+      },
+      "val_interruption_latency": {
+        "case_id": "val/Hard/SCXOCS/geom-13/env-5102",
+        "excluded_samples": 1,
+        "outlier_ms": 12102110.4514,
+        "corrected_act_mean_ms": 12.424115913323577,
+        "raw_metrics_preserved": true
+      }
+    },
+    "agent4_pdd": {
+      "run_id": "agent4_pdd_full_val_test_20261126T151103129299Z",
+      "original_session_status": "FAILED",
+      "kind": "UNCERTIFIED_CANDIDATE_EVALUATION",
+      "canonical_run": false,
+      "agent_id": "stage4_pdd_hybrid",
+      "agent_version": "1.0.0",
+      "benchmark_eligible": false,
+      "started_at_utc": "2026-11-26T15:11:03.226112+00:00",
+      "finished_at_utc": "2026-11-26T17:15:20.927324+00:00",
+      "run_git_head": "e86ab9f00dfd0829e4da4c5562387725d2cfc81e",
+      "metadrive_version": "0.4.3",
+      "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+      "python": "3.10.11",
+      "packages": {
+        "numpy": "2.2.6",
+        "panda3d": "1.10.16",
+        "scikit-learn": "1.7.2",
+        "joblib": "1.5.2",
+        "pandas": "2.3.3"
+      },
+      "render": "OFF",
+      "control_dt_s": 0.1,
+      "workers": 6,
+      "agent_seed": null,
+      "source_drift": [
+        "src/agents/astar_agent.py",
+        "src/agents/hybrid_astar.py",
+        "src/agents/hybrid_astar_agent.py",
+        "src/agents/MPPI.py",
+        "src/agents/path_following.py",
+        "src/launcher/executor.py",
+        "src/launcher/registry.py",
+        "src/visualization/hud_manager.py"
+      ],
+      "completed_episodes": 156,
+      "technical_errors": 0,
+      "source_file_sha256": {
+        "episodes.csv": "d86ad28bcc3280932476446200967c4480363af95fa23077987ed5a82471eb50",
+        "session.json": "8e1b0bbcaaecdaa825dd74d353284d8f2e74224618bfbbeb65c819ec0d5e198c",
+        "summary.json": "a13d395d30994b30b55efb4900d2ff1fca920e341d56c5d83ba7c8fa00d7d70c",
+        "source_drift_review.json": "46649b5216af912a4aff4b5f06a42221f1476484cada743b9d6fbc5a9a19ab1f"
+      },
+      "manifest_input_sha256": {
+        "results/audits/evaluation_protocol/test_case_manifest.csv": "3e55a55b77887423413f612f50ba213d8329e1aa941364488160ba8b72463370",
+        "results/audits/evaluation_protocol/validation_case_manifest.csv": "dc5d2574f588829be5cf65739739654b72e8754b575e18a6813e82791b937fad"
+      },
+      "decision_steps": {
+        "TEST": 89752,
+        "VALIDATION": 140058
+      },
+      "metrics": {
+        "VALIDATION": {
+          "ALL": {
+            "n": 96,
+            "success": 59,
+            "safety": 7,
+            "outcomes": {
+              "TIMEOUT": 30,
+              "SUCCESS": 59,
+              "CRASH_VEHICLE": 6,
+              "OUT_OF_ROAD": 1
+            },
+            "raw_flags": {
+              "max_step": 30,
+              "arrive_dest": 59,
+              "crash_vehicle": 6,
+              "out_of_road": 1
+            },
+            "boundary": 1,
+            "steps": 140058,
+            "route_mean": 0.767453,
+            "route_median": 0.985458,
+            "max_route_mean": 0.767454,
+            "success_time_mean": 88.571186,
+            "success_time_median": 83.6,
+            "mean_speed": 15.139354,
+            "max_speed": 39.910855596835134,
+            "mean_reward": 1.134062,
+            "mean_seconds": 145.89375,
+            "mean_steps": 1458.9375,
+            "max_lane_offset": 1.749448299407959,
+            "lat_mean": 50.083529,
+            "lat_p50": 46.9311,
+            "lat_p95": 91.936345,
+            "lat_max": 498.3666
+          },
+          "Easy": {
+            "n": 24,
+            "success": 24,
+            "safety": 0,
+            "outcomes": {
+              "SUCCESS": 24
+            },
+            "raw_flags": {
+              "arrive_dest": 24
+            },
+            "boundary": 0,
+            "steps": 12876,
+            "route_mean": 0.986088,
+            "route_median": 0.986522,
+            "max_route_mean": 0.986088,
+            "success_time_mean": 53.65,
+            "success_time_median": 54.8,
+            "mean_speed": 23.578612,
+            "max_speed": 39.008986648948884,
+            "mean_reward": 1.868114,
+            "mean_seconds": 53.65,
+            "mean_steps": 536.5,
+            "max_lane_offset": 0.3825109622162408,
+            "lat_mean": 49.540563,
+            "lat_p50": 46.90655,
+            "lat_p95": 80.613,
+            "lat_max": 287.2089
+          },
+          "Medium": {
+            "n": 24,
+            "success": 20,
+            "safety": 0,
+            "outcomes": {
+              "TIMEOUT": 4,
+              "SUCCESS": 20
+            },
+            "raw_flags": {
+              "max_step": 4,
+              "arrive_dest": 20
+            },
+            "boundary": 0,
+            "steps": 24971,
+            "route_mean": 0.891637,
+            "route_median": 0.990499,
+            "max_route_mean": 0.891637,
+            "success_time_mean": 89.11,
+            "success_time_median": 85.8,
+            "mean_speed": 18.784061,
+            "max_speed": 38.9699348632538,
+            "mean_reward": 1.571204,
+            "mean_seconds": 104.045833,
+            "mean_steps": 1040.458333,
+            "max_lane_offset": 0.5763018203069414,
+            "lat_mean": 43.182783,
+            "lat_p50": 41.6316,
+            "lat_p95": 73.6583,
+            "lat_max": 340.2283
+          },
+          "Hard": {
+            "n": 24,
+            "success": 15,
+            "safety": 4,
+            "outcomes": {
+              "TIMEOUT": 5,
+              "SUCCESS": 15,
+              "CRASH_VEHICLE": 3,
+              "OUT_OF_ROAD": 1
+            },
+            "raw_flags": {
+              "max_step": 5,
+              "arrive_dest": 15,
+              "crash_vehicle": 3,
+              "out_of_road": 1
+            },
+            "boundary": 1,
+            "steps": 34169,
+            "route_mean": 0.786097,
+            "route_median": 0.991961,
+            "max_route_mean": 0.786097,
+            "success_time_mean": 143.726667,
+            "success_time_median": 141.9,
+            "mean_speed": 12.977868,
+            "max_speed": 39.910855596835134,
+            "mean_reward": 1.053974,
+            "mean_seconds": 142.370833,
+            "mean_steps": 1423.708333,
+            "max_lane_offset": 1.7451807911414514,
+            "lat_mean": 50.995733,
+            "lat_p50": 48.8485,
+            "lat_p95": 93.78074,
+            "lat_max": 337.9679
+          },
+          "Extreme": {
+            "n": 24,
+            "success": 0,
+            "safety": 3,
+            "outcomes": {
+              "TIMEOUT": 21,
+              "CRASH_VEHICLE": 3
+            },
+            "raw_flags": {
+              "max_step": 21,
+              "crash_vehicle": 3
+            },
+            "boundary": 0,
+            "steps": 68042,
+            "route_mean": 0.405989,
+            "route_median": 0.385733,
+            "max_route_mean": 0.405992,
+            "success_time_mean": null,
+            "success_time_median": null,
+            "mean_speed": 5.216874,
+            "max_speed": 38.55913246389398,
+            "mean_reward": 0.042959,
+            "mean_seconds": 283.508333,
+            "mean_steps": 2835.083333,
+            "max_lane_offset": 1.749448299407959,
+            "lat_mean": 52.260724,
+            "lat_p50": 48.9329,
+            "lat_p95": 96.620375,
+            "lat_max": 498.3666
+          }
+        },
+        "TEST": {
+          "ALL": {
+            "n": 60,
+            "success": 37,
+            "safety": 1,
+            "outcomes": {
+              "SUCCESS": 37,
+              "TIMEOUT": 22,
+              "CRASH_VEHICLE": 1
+            },
+            "raw_flags": {
+              "arrive_dest": 37,
+              "max_step": 22,
+              "crash_vehicle": 1
+            },
+            "boundary": 0,
+            "steps": 89752,
+            "route_mean": 0.759495,
+            "route_median": 0.988045,
+            "max_route_mean": 0.759495,
+            "success_time_mean": 87.405405,
+            "success_time_median": 82.2,
+            "mean_speed": 15.382709,
+            "max_speed": 39.88431757760815,
+            "mean_reward": 1.182278,
+            "mean_seconds": 149.586667,
+            "mean_steps": 1495.866667,
+            "max_lane_offset": 1.7488504128920428,
+            "lat_mean": 33.564248,
+            "lat_p50": 31.18955,
+            "lat_p95": 68.09505,
+            "lat_max": 526.1281
+          },
+          "Easy": {
+            "n": 15,
+            "success": 15,
+            "safety": 0,
+            "outcomes": {
+              "SUCCESS": 15
+            },
+            "raw_flags": {
+              "arrive_dest": 15
+            },
+            "boundary": 0,
+            "steps": 8584,
+            "route_mean": 0.987674,
+            "route_median": 0.988086,
+            "max_route_mean": 0.987674,
+            "success_time_mean": 57.226667,
+            "success_time_median": 56.5,
+            "mean_speed": 24.252912,
+            "max_speed": 39.201771692424316,
+            "mean_reward": 1.86836,
+            "mean_seconds": 57.226667,
+            "mean_steps": 572.266667,
+            "max_lane_offset": 0.3030074275314547,
+            "lat_mean": 30.166308,
+            "lat_p50": 28.7399,
+            "lat_p95": 60.53781,
+            "lat_max": 251.0737
+          },
+          "Medium": {
+            "n": 15,
+            "success": 15,
+            "safety": 0,
+            "outcomes": {
+              "SUCCESS": 15
+            },
+            "raw_flags": {
+              "arrive_dest": 15
+            },
+            "boundary": 0,
+            "steps": 13859,
+            "route_mean": 0.99138,
+            "route_median": 0.990798,
+            "max_route_mean": 0.99138,
+            "success_time_mean": 92.393333,
+            "success_time_median": 87.3,
+            "mean_speed": 21.903326,
+            "max_speed": 39.201771692424316,
+            "mean_reward": 1.858124,
+            "mean_seconds": 92.393333,
+            "mean_steps": 923.933333,
+            "max_lane_offset": 0.5547430212212312,
+            "lat_mean": 48.941321,
+            "lat_p50": 46.5541,
+            "lat_p95": 75.18191,
+            "lat_max": 302.1667
+          },
+          "Hard": {
+            "n": 15,
+            "success": 7,
+            "safety": 0,
+            "outcomes": {
+              "SUCCESS": 7,
+              "TIMEOUT": 8
+            },
+            "raw_flags": {
+              "arrive_dest": 7,
+              "max_step": 8
+            },
+            "boundary": 0,
+            "steps": 24654,
+            "route_mean": 0.628838,
+            "route_median": 0.540387,
+            "max_route_mean": 0.628839,
+            "success_time_mean": 141.385714,
+            "success_time_median": 153.0,
+            "mean_speed": 9.473418,
+            "max_speed": 39.201771692424316,
+            "mean_reward": 0.87672,
+            "mean_seconds": 164.36,
+            "mean_steps": 1643.6,
+            "max_lane_offset": 1.7488504128920428,
+            "lat_mean": 34.037463,
+            "lat_p50": 30.07415,
+            "lat_p95": 66.733015,
+            "lat_max": 526.1281
+          },
+          "Extreme": {
+            "n": 15,
+            "success": 0,
+            "safety": 1,
+            "outcomes": {
+              "TIMEOUT": 14,
+              "CRASH_VEHICLE": 1
+            },
+            "raw_flags": {
+              "max_step": 14,
+              "crash_vehicle": 1
+            },
+            "boundary": 0,
+            "steps": 42655,
+            "route_mean": 0.430088,
+            "route_median": 0.397871,
+            "max_route_mean": 0.430088,
+            "success_time_mean": null,
+            "success_time_median": null,
+            "mean_speed": 5.901179,
+            "max_speed": 39.88431757760815,
+            "mean_reward": 0.125908,
+            "mean_seconds": 284.366667,
+            "mean_steps": 2843.666667,
+            "max_lane_offset": 1.7487675771884297,
+            "lat_mean": 28.978395,
+            "lat_p50": 26.194,
+            "lat_p95": 67.00766,
+            "lat_max": 367.3079
+          }
+        }
+      },
+      "source_drift_review": {
+        "status": "DRIVING_COMPLETE_SOURCE_DRIFT_REVIEWED",
+        "retrospective": true,
+        "canonical_run": false,
+        "original_session_status": "FAILED",
+        "original_source_warning_preserved": true,
+        "started_git_head": "e86ab9f00dfd0829e4da4c5562387725d2cfc81e",
+        "after_pull_git_head": "37b033f721ac0b4e8c551ca7f688e11bc52090dd",
+        "pull_timestamp": "2026-11-26T22:17:05+07:00",
+        "worker_trace_starts_utc": [
+          "2026-11-26T15:11:35.910092+00:00",
+          "2026-11-26T15:11:35.998578+00:00",
+          "2026-11-26T15:11:35.889499+00:00",
+          "2026-11-26T15:11:35.742510+00:00",
+          "2026-11-26T15:11:35.978525+00:00",
+          "2026-11-26T15:11:35.826381+00:00"
+        ],
+        "changed_files": [
+          "src/agents/MPPI.py",
+          "src/agents/astar_agent.py",
+          "src/agents/hybrid_astar.py",
+          "src/agents/hybrid_astar_agent.py",
+          "src/agents/path_following.py",
+          "src/launcher/executor.py",
+          "src/launcher/registry.py",
+          "src/visualization/hud_manager.py"
+        ],
+        "initial_digests_match_started_git_sources": true,
+        "release_files_verified_unchanged": 21,
+        "headless_launch_helpers_and_selected_registration_ast_unchanged": true,
+        "source_review_scope": "Agent 4 checkpoint, policy, supporting Stage 1, public inputs, case/metrics path. Other changes identified in search/MPPI/visualization; they do not supply Agent 4 decisions in this headless run.",
+        "replay_kind": "Recorded input and canonical action. CPU timing excluded. No simulation rerun.",
+        "replayed_cases": [
+          {
+            "case_id": "val/Extreme/SCXOCrTYCS/geom-19/env-5102",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "test/Medium/SCTCS/geom-0/env-9104",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "val/Medium/SCXCS/geom-16/env-5101",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "test/Extreme/CrXROSTR/geom-6/env-9103",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "val/Extreme/SCTXORyCCS/geom-18/env-5102",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "test/Easy/SCSS/geom-9/env-9103",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "val/Hard/XTOCS/geom-14/env-5101",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "test/Easy/SCCS/geom-9/env-9101",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "val/Extreme/CrXROSTR/geom-10/env-5102",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "test/Extreme/SCTXORyCCS/geom-4/env-9104",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "val/Hard/XTOCS/geom-4/env-5102",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "test/Hard/XTOCS/geom-19/env-9101",
+            "steps": 32,
+            "full_episode": false
+          },
+          {
+            "case_id": "val/Easy/SCSS/geom-8/env-5102",
+            "steps": 385,
+            "full_episode": true
+          },
+          {
+            "case_id": "test/Easy/SCS/geom-11/env-9101",
+            "steps": 492,
+            "full_episode": true
+          }
+        ],
+        "replay_steps": 1261
+      },
+      "checkpoint_sha256": "3893f571441d9613031b8388b46e5b9db3cf6e364a2742f28eae9327be5e6b66"
+    }
+  },
+  "random_naive_test": {
+    "agent_version": "0.1.1",
+    "reported_current_version": "0.2.0",
+    "status": "COMPLETE",
+    "kind": "UNCERTIFIED_CANDIDATE_TEST",
+    "canonical_run": false,
+    "run_git_head": "206927e70f2b231c955964ff90b26f41690a11fd",
+    "run_git_worktree_dirty": true,
+    "published_commit": "68ec4ddb617d6cd663ec27455e6288ca4c0603cc",
+    "source_csv": "results/result-21-11-2026/06_Random_Naive/episodes_all_180.csv",
+    "source_csv_sha256": "e5a338851f56b09e02cfc268cccbece742eaee943dc57e8fc6db8e5d47dee7c6",
+    "test_total": {
+      "n": 180,
+      "clean_success": 0,
+      "outcomes": {
+        "CRASH_SIDEWALK": 4,
+        "CRASH_VEHICLE": 25,
+        "OUT_OF_ROAD": 151
+      },
+      "route_mean": 0.17454446455284414,
+      "route_median": 0.16236470836222594
+    },
+    "by_agent_seed": {
+      "101": {
+        "n": 60,
+        "clean_success": 0,
+        "outcomes": {
+          "CRASH_VEHICLE": 10,
+          "OUT_OF_ROAD": 50
+        },
+        "route_mean": 0.15297448258243226,
+        "route_median": 0.1426706231915551
+      },
+      "202": {
+        "n": 60,
+        "clean_success": 0,
+        "outcomes": {
+          "CRASH_VEHICLE": 11,
+          "OUT_OF_ROAD": 49
+        },
+        "route_mean": 0.1584552071261425,
+        "route_median": 0.14425924660541534
+      },
+      "303": {
+        "n": 60,
+        "clean_success": 0,
+        "outcomes": {
+          "CRASH_SIDEWALK": 4,
+          "CRASH_VEHICLE": 4,
+          "OUT_OF_ROAD": 52
+        },
+        "route_mean": 0.21220370394995763,
+        "route_median": 0.18798280169825726
+      }
+    },
+    "by_tier": {
+      "Easy": {
+        "n": 45,
+        "clean_success": 0,
+        "outcomes": {
+          "OUT_OF_ROAD": 45
+        },
+        "route_mean": 0.2734210873250816,
+        "route_median": 0.2618630187836796
+      },
+      "Medium": {
+        "n": 45,
+        "clean_success": 0,
+        "outcomes": {
+          "OUT_OF_ROAD": 45
+        },
+        "route_mean": 0.1912898511720523,
+        "route_median": 0.1809327163550187
+      },
+      "Hard": {
+        "n": 45,
+        "clean_success": 0,
+        "outcomes": {
+          "CRASH_SIDEWALK": 4,
+          "CRASH_VEHICLE": 3,
+          "OUT_OF_ROAD": 38
+        },
+        "route_mean": 0.1480813706831732,
+        "route_median": 0.14348156383516042
+      },
+      "Extreme": {
+        "n": 45,
+        "clean_success": 0,
+        "outcomes": {
+          "CRASH_VEHICLE": 22,
+          "OUT_OF_ROAD": 23
+        },
+        "route_mean": 0.08538554903106944,
+        "route_median": 0.0830673872482339
+      }
+    }
+  }
+}
