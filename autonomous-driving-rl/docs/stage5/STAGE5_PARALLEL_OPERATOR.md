@@ -27,7 +27,7 @@ Window agents use one pinned UTC start time and deadline. Each notebook requests
 The first session on each identity uses normal admission. A second request can use server admission when the only active receipt is a version-reconciled sibling from this window. An unknown submission blocks another submit. Each notebook remains private and its input datasets are checked against version 1 and their hashes. Versioned logs and verified checkpoints provide collection and update counts independently of the notebook's API status.
 
 ```powershell
-python -B -m cloud.kaggle.campaign report --root runs/kaggle/central12
+python -B -m cloud.kaggle.campaign report --root PATH_TO_ACTIVE_WINDOW
 ```
 
 Reports include observed transitions and updates when available. Full-state checkpoints are periodic and final sharded outputs, subject to successful Kaggle publication. The protected replay ring is learner state. The ring lacks the per-transition geometry and behavior lineage required to serve as a consolidated replay batch.

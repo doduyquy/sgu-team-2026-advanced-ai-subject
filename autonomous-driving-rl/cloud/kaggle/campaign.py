@@ -669,6 +669,8 @@ def main():
         return
     with agent_lock(args.root / "receipts" / account):
         while True:
+            if "window" in document and time.time() > document["window"]["deadline_epoch"] + 3600:
+                return
             try:
                 pending = run_once(args.root, args.package, document, account)
             except RuntimeError as exc:
