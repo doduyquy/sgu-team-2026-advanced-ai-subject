@@ -298,8 +298,6 @@ def train(args):
             if next_checkpoint is not None:
                 block = min(block, next_checkpoint - model.num_timesteps)
             model.learn(block, reset_num_timesteps=False, callback=callback, log_interval=None)
-            if model.num_timesteps - before == block and getattr(args, "timeboxed", False):
-                print(f"TRAINING_ACTIVE transitions={model.num_timesteps - before} updates={model._n_updates - updates}", flush=True)
             if model.num_timesteps == next_checkpoint:
                 if model.num_timesteps - before < args.transitions:
                     boundaries = env.env_method("boundary")
@@ -346,14 +344,11 @@ def train(args):
             optimizer_seconds = model.optimizer_seconds - initial_optimizer_time if delta else 0.0
             metrics.update(optimizer_seconds=optimizer_seconds,
                            optimizer_updates_per_second=delta / optimizer_seconds if optimizer_seconds else None)
-        timeboxed = getattr(args, "timeboxed", False)
-        if timeboxed:
-            metrics["termination_budget"] = "transitions" if local == args.transitions else "time"
         manifest = {"identity": identity, "job": args.job, "parent_sha": args.parent_sha,
                     "transitions": model.num_timesteps, "updates": model._n_updates, "workers": boundaries,
                     "ledger": parent.get("ledger", {}) if parent else {},
                     "external_admitted": parent.get("external_admitted", 0) if parent else 0,
-                    "result": "COMPLETE" if (local == args.transitions or timeboxed) and delta else "PARTIAL"}
+                    "result": "COMPLETE" if local == args.transitions and delta else "PARTIAL"}
     finally:
         env.close()
     save_state(args.out, model, manifest, metrics)
@@ -440,7 +435,6 @@ def main():
     for name in ("transitions", "capacity", "learning_starts", "max_seconds"):
         run.add_argument("--" + name.replace("_", "-"), type=int, default=RECIPE["preflight"][name])
     run.add_argument("--stop-at", type=float)
-    run.add_argument("--timeboxed", action="store_true")
     run.add_argument("--checkpoint-every", type=int)
     run.add_argument("--checkpoint-dir", type=Path)
     run.add_argument("--measure-optimizer", action="store_true")

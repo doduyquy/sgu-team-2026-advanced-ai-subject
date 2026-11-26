@@ -21,6 +21,17 @@ Omit `--watch` for one reconciliation cycle. Watch mode exits once all actionabl
 
 The central package includes Kaggle-native collector and evaluation entry points. The older deployment bundle remains usable for the individual learner workloads below. Collector and evaluator notebooks are harvested by `campaign agent`. `status.json` contains receipt evidence and `status.csv` lists the 16 base sessions plus queued continuation rounds.
 
+### Fixed 12-hour window
+Window agents use one pinned UTC start time and deadline. Each notebook requests up to 39,600 seconds, clips runtime to the remaining window on the server, and reserves 900 seconds for final export and evaluation. A notebook that starts with less than 1,800 seconds remaining exits before training. The four-million-transition count is a ceiling for the runtime loop. Guided replay keeps its protected historical prefix and evicts old online transitions from the rest of its 122,880-row buffer.
+
+The first session on each identity uses normal admission. A second request can use server admission when the only active receipt is a version-reconciled sibling from this window. An unknown submission blocks another submit. Each notebook remains private and its input datasets are checked against version 1 and their hashes. Versioned logs and verified checkpoints provide collection and update counts independently of the notebook's API status.
+
+```powershell
+python -B -m cloud.kaggle.campaign report --root runs/kaggle/central12
+```
+
+Reports include observed transitions and updates when available. Full-state checkpoints are periodic and final sharded outputs, subject to successful Kaggle publication. The protected replay ring is learner state. The ring lacks the per-transition geometry and behavior lineage required to serve as a consolidated replay batch.
+
 ### Continuation rounds
 
 Queue a new round from a harvested checkpoint on its owning host. Enqueue fingerprints the reviewed plan and uses the verified parity inputs from that parent. The agent reads the round from the same queue and handles submission, status and harvest within its existing capacity limits.

@@ -842,6 +842,8 @@ def test_probe_checks_pagination_slug_and_recent_run(monkeypatch, run_state):
     if run_state == "RUNNING":
         with pytest.raises(RuntimeError, match="queued or running"):
             control.probe_inventory("account_01", "example", "example/preflight")
+        result = control.probe_inventory("account_01", "example", "example/preflight", ("example/other",))
+        assert result["latest_runs_checked"] == 1
     else:
         assert control.probe_inventory("account_01", "example", "example/preflight") == {
             "notebooks_listed": 1, "unaddressable_or_unowned": 1, "latest_runs_checked": 1,

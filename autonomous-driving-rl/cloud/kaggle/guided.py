@@ -159,6 +159,7 @@ def train(args):
     parser.add_argument("--traffic-teacher-sha")
     parser.add_argument("--autonomous-traffic", action="store_true")
     parser.add_argument("--bounded-guided-replay", action="store_true")
+    parser.add_argument("--timeboxed", action="store_true")
     parser.add_argument("--teacher-stop-at", type=float)
     parser.add_argument("--capacity", type=int, default=runtime.RECIPE["preflight"]["capacity"])
     parser.add_argument("--transitions", required=True, type=int)
@@ -182,6 +183,8 @@ def train(args):
             {"easy": "medium", "medium": "hard", "hard": "extreme"}[config.guided_curriculum_from] != config.phase
             or config.guided_rollout_axis):
         parser.error("Curriculum transition requires the next phase and unassisted collection")
+    if config.timeboxed != config.bounded_guided_replay:
+        parser.error("Timeboxed training requires bounded guided replay")
     if config.bounded_guided_replay and not config.resume:
         parser.error("Bounded replay requires verified GuidedSAC full state")
     parent = None
@@ -235,6 +238,13 @@ def train(args):
     class ResumedGuidedSAC(GuidedSAC):
         def _excluded_save_params(self):
             return [*super()._excluded_save_params(), "rollout_anchor", "traffic_teacher_policy"]
+
+        def train(self, gradient_steps, batch_size=64):
+            super().train(gradient_steps, batch_size)
+            if config.timeboxed:
+                transitions = self.num_timesteps - parent["transitions"]
+                if transitions == self.n_envs or (transitions > 0 and transitions % 50000 == 0):
+                    print(f"TRAINING_ACTIVE transitions={transitions} updates={self._n_updates - parent['updates']}", flush=True)
 
         def load_replay_buffer(self, path, truncate_last_traj=True):
             super().load_replay_buffer(path, truncate_last_traj=truncate_last_traj)
@@ -353,6 +363,9 @@ def train(args):
             metrics["traffic_mixture"] = dict(teacher_counts)
         if config.guided_rollout_axis:
             behavior.update(anchored_axis=config.guided_rollout_axis, anchor_model_sha=parent["files"]["model.zip"])
+        if config.timeboxed and "device" in metrics and metrics["updates"] > 0:
+            metrics["termination_budget"] = "transitions" if metrics["transitions"] == config.transitions else "time"
+            manifest["result"] = "COMPLETE"
         metrics.update(guided_prefill=evidence, online_progress_bands=dict(online), online_tier_decisions=dict(tiers),
                        online_behavior=behavior,
                        guided_live_rows=evidence["rows"], online_live_rows=live - evidence["rows"],

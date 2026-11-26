@@ -473,9 +473,6 @@ def plan_learning_resume(args, state):
         with zipfile.ZipFile(archive) as runtime:
             files = json.loads(runtime.read("source_inventory.json"))["files"]
         inventories.append({name: digest for name, digest in files.items() if name not in allowed})
-    if deadline:
-        for inventory in inventories:
-            inventory.pop("cloud/kaggle/runtime.py", None)
     policy_hooks = "cloud/kaggle/learning_hooks.py" in files
     if inventories[0] != inventories[1] or planned["source_sha"] != bundle["source_sha"]:
         raise RuntimeError("Full-state continuation requires the original learner, dependencies, and TRAIN schedule")
@@ -569,7 +566,7 @@ def plan_learning_resume(args, state):
     require_gate(state, job)
     save_plan(f"{args.campaign}-{args.round}", {"j10": job}, {}, state)
 
-def upload(state, alias, owner, label, name, source, digest):
+def upload(state, alias, owner, label, name, source, digest, *, journal=None):
     verify(source, digest)
     audit_zip(source, label)
     # Kaggle expands archives uploaded with a .zip extension, even in private datasets.
@@ -578,7 +575,9 @@ def upload(state, alias, owner, label, name, source, digest):
     slug = f"s5-{label}-{digest[:20]}-bin"
     ref = f"{owner}/{slug}"
     if state["uploads"].get(ref, {}).get("status") == "ACCEPTED":
-        return dataset_ready(state, alias, ref)
+        return dataset_ready(state, alias, ref, journal=journal)
+    if state["uploads"].get(ref, {}).get("status") == "WINDOW_INPUT_STAGING":
+        raise DatasetPending("Private inputs reserved for window staging")
     if ref in state["uploads"]:
         raise RuntimeError("Prior dataset upload is uncertain. Inspect the private dataset before any recovery.")
     staging = WORK / "uploads" / alias / slug
@@ -598,18 +597,18 @@ def upload(state, alias, owner, label, name, source, digest):
                              "transport_name": transport_name, "at": now()}
     if label == "long-parent":
         state["uploads"][ref]["byte_limit"] = LONG_PARENT_LIMIT + 1_000_000
-    persist(state)
+    persist(state) if journal is None else write(journal, state)
     code, output = cli(alias, ["datasets", "create", "-p", str(staging), "-q", "-t"],
                        timeout=600 if label == "long-parent" else 240)
     accepted = code == 0 and f"/datasets/{ref}" in output
     state["uploads"][ref].update(status="ACCEPTED" if accepted else "UPLOAD_UNKNOWN",
                                  at=now(), cli_exit=code)
-    persist(state)
+    persist(state) if journal is None else write(journal, state)
     if not accepted:
         raise RuntimeError("Dataset creation acceptance is uncertain. See registry; automatic retry is disabled.")
-    return dataset_ready(state, alias, ref)
+    return dataset_ready(state, alias, ref, journal=journal)
 
-def dataset_ready(state, alias, ref):
+def dataset_ready(state, alias, ref, *, journal=None):
     code, output = cli(alias, ["datasets", "status", ref, "--format", "json"])
     response = dataset_status_response(code, output)
     if response.get("status") != "ready" or response.get("current_version_number") != 1:
@@ -624,7 +623,7 @@ def dataset_ready(state, alias, ref):
             verify_remote_input(alias, ref, row["transport_name"], row["sha"])
         row["remote_sha_verified_at"] = now()
     row.update(version=1, private_verified_at=now())
-    persist(state)
+    persist(state) if journal is None else write(journal, state)
     return ref
 
 def verify_remote_input(alias, ref, name, digest, *, byte_limit=120_000_000):
@@ -972,7 +971,8 @@ def launch(args, state):
             sibling = active[0]
             if (sibling["status"] in {"QUEUED", "RUNNING"} and sibling.get("version")
                     and sibling["planned"].get("campaign_deadline") == job["campaign_deadline"]
-                    and sibling["planned"]["round"] != job["round"]):
+                    and sibling["planned"]["round"] != job["round"]
+                    and sibling["planned"]["round"].rsplit("-", 1)[0] == job["round"].rsplit("-", 1)[0]):
                 if current_private_kernel_version(alias, sibling["ref"]) == sibling["version"]:
                     known_active = (sibling["ref"],)
         if (active and not known_active) or any(

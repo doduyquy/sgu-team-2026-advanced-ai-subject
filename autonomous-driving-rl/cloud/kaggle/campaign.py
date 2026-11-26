@@ -78,7 +78,7 @@ def prepare_window(root, package, source):
         for i, (workload, device, parent_kind, phase, teacher, autonomous, lr) in enumerate(WINDOW_PROFILES):
             session = f"S{i + 1:02d}"
             account = c.SLOTS[i // 2]
-            round_id = f"win12-{session.lower()}"
+            round_id = f"{clock.get('round_prefix', 'win12')}-{session.lower()}"
             parent = source if parent_kind == "traffic" else parallel.CHAMPION
             guidance = phase == "medium" and ("guided" in workload or "capped" in workload or "experience" in workload)
             c.plan_learning_resume(SimpleNamespace(campaign="stage5", round=round_id, account=account,
@@ -264,9 +264,9 @@ def training_evidence(account, entry, prior):
     if code:
         return evidence
     transitions, updates = 0, 0
-    for steps, gradients in re.findall(r"^(?:TRAINING_ACTIVE|COMPLETE|PARTIAL) transitions=(\d+) updates=(\d+)", logs, re.M):
+    for steps, gradients in re.findall(r"\b(?:TRAINING_ACTIVE|COMPLETE|PARTIAL) transitions=(\d+) updates=(\d+)", logs, re.M):
         transitions, updates = max(transitions, int(steps)), max(updates, int(gradients))
-    for step in re.findall(r"^Periodic checkpoint step-(\d+) index_sha256=", logs, re.M):
+    for step in re.findall(r"\bPeriodic checkpoint step-(\d+) index_sha256=", logs, re.M):
         transitions = max(transitions, int(step) - entry["planned"]["start_transition"])
     return {"source": "versioned Kaggle log", "observed_at": c.now(),
             "transitions": max(transitions, evidence.get("transitions", 0)),
@@ -323,7 +323,8 @@ def run_once(root, package, document, account):
                             status["blocker"] = "CAMPAIGN_ACCOUNT_TARGET_REACHED"
                         elif capacity is None and active and (
                                 not document.get("window") or active[0]["status"] not in {"QUEUED", "RUNNING"}
-                                or active[0]["planned"].get("campaign_deadline") != document["window"]["deadline_epoch"]):
+                                or active[0]["planned"].get("campaign_deadline") != document["window"]["deadline_epoch"]
+                                or active[0]["planned"]["round"].rsplit("-", 1)[0] != item["round"].rsplit("-", 1)[0]):
                             status["blocker"] = "LAUNCHER_UNKNOWN_CAPACITY_WITH_ACTIVE_RECEIPT"
                         elif capacity is not None and len(active) >= capacity:
                             status["blocker"] = "LAUNCHER_OBSERVED_CAPACITY_OCCUPIED"
@@ -380,16 +381,16 @@ def run_once(root, package, document, account):
 def admit_window_sibling(root, document, account):
     if "window" not in document or not verify_owner(account):
         raise RuntimeError("Window admission requires the matching verified execution identity")
-    first, second = (row for row in document["sessions"] if row["account"] == account)
+    pair = [row for row in document["sessions"] if row["account"] == account]
     while time.time() < document["window"]["deadline_epoch"] - 1800:
         try:
             with c.locked():
                 registry = c.registry()
-                existing = registry["jobs"][second["job"]]
+                first, second = sorted(pair, key=lambda row: registry["jobs"][row["job"]]["status"] == "PLANNED")
+                primary, existing = (registry["jobs"][row["job"]] for row in (first, second))
                 if existing["status"] != "PLANNED":
                     print(second["session"], existing["status"], existing.get("version"), flush=True)
                     return
-                primary = registry["jobs"][first["job"]]
                 if primary.get("version") and primary["status"] in c.ACTIVE:
                     c.status(registry, first["job"])
                 if primary["status"] in {"QUEUED", "RUNNING", "HARVESTED_VERIFIED", "CLOUD_SUCCEEDED"}:
@@ -403,7 +404,7 @@ def admit_window_sibling(root, document, account):
                                               fingerprint=second["plan_fingerprint"], server_admission=capacity is None)
                     c.launch(request, registry)
                     return
-                if primary["status"] in TERMINAL or primary["status"] in {"SUBMIT_UNKNOWN", "STATUS_UNKNOWN"}:
+                if primary["status"] in TERMINAL or primary["status"] == "SUBMIT_UNKNOWN":
                     print(second["session"], "FIRST_SESSION_RECONCILIATION_REQUIRED", flush=True)
                     return
         except c.DatasetPending:
@@ -412,6 +413,144 @@ def admit_window_sibling(root, document, account):
             if not str(exc).startswith("Registry locked."):
                 raise
         time.sleep(31 + c.SLOTS.index(account))
+
+
+def window_assets(document, registry):
+    for row in document["sessions"]:
+        account = row["account"]
+        _, own = slot(account)
+        if not own or not own.get("authorized"):
+            continue
+        job = registry["jobs"][row["job"]]["planned"]
+        base = c.ROOT / job["runtime_path"]
+        parent, _ = c.parent_checkpoint(registry, job["parent_job"])
+        verify(parent / "COMPLETE.json", job["parent_sha"])
+        archive = parent / "parent.zip"
+        if not archive.is_file():
+            raise FileNotFoundError("Parallel staging requires the existing verified parent transport archive")
+        # The same archive will be checked member-by-member again before notebook upload.
+        assets = [
+            ("runtime", "runtime.zip", base / "runtime.zip", job["runtime_sha"]),
+            ("source", "model.zip", base / "model.zip", job["source_sha"]),
+            ("long-parent", "parent.zip", archive, sha(archive)),
+        ]
+        if job.get("traffic_teacher_sha"):
+            teacher, _ = c.parent_checkpoint(registry, job["traffic_teacher_job"])
+            assets.append(("teacher", "teacher.zip", teacher / "model.zip", job["traffic_teacher_sha"]))
+        for label, name, source, digest in assets:
+            ref = f"{own['owner']}/s5-{label}-{digest[:20]}-bin"
+            yield account, ref, label, name, source, digest
+
+
+def reserve_window_inputs(root, document):
+    if "window" not in document:
+        raise ValueError("Parallel input staging requires a timeboxed campaign")
+    jobs = {}
+    with c.locked():
+        registry = c.registry()
+        for account, ref, label, name, source, digest in window_assets(document, registry):
+            existing = registry["uploads"].get(ref)
+            if existing and existing.get("stage_manifest") != document["fingerprint"]:
+                continue
+            jobs.setdefault(account, {})[ref] = dict(label=label, name=name, source=str(source), sha=digest)
+            registry["uploads"].setdefault(ref, {"status": "WINDOW_INPUT_STAGING", "alias": account,
+                "sha": digest, "stage_manifest": document["fingerprint"], "at": c.now()})
+        c.persist(registry)
+        for account, assets in jobs.items():
+            path = root / "input-staging" / account
+            path.mkdir(parents=True, exist_ok=True)
+            write(path / "assets.json", {"manifest": document["fingerprint"], "assets": assets})
+    print({account: len(assets) for account, assets in jobs.items()}, flush=True)
+
+
+def stage_window_inputs(root, document, account):
+    if not verify_owner(account):
+        raise RuntimeError("Parallel input staging requires the matching execution identity")
+    folder = root / "input-staging" / account
+    journal = folder / "journal.json"
+    approved = read(folder / "assets.json")
+    if approved["manifest"] != document["fingerprint"]:
+        raise ValueError("Input staging belongs to a different campaign")
+    receipts = read(journal) if journal.exists() else {"uploads": {}}
+    _, own = slot(account)
+    for ref, asset in approved["assets"].items():
+        row = c.registry()["uploads"][ref]
+        if row["status"] == "ACCEPTED":
+            continue
+        if (row.get("stage_manifest"), row["alias"], row["sha"], ref.split("/")[0]) != (
+                document["fingerprint"], account, asset["sha"], own["owner"]):
+            raise ValueError("Input staging no longer owns the upload reservation")
+        source = Path(asset["source"]).resolve()
+        if not source.is_relative_to(WORK.resolve()):
+            raise ValueError("Input staging file escapes the campaign workspace")
+        while time.time() < document["window"]["deadline_epoch"] - 1800:
+            try:
+                c.upload(receipts, account, own["owner"], asset["label"], asset["name"], source, asset["sha"], journal=journal)
+                break
+            except c.DatasetPending:
+                time.sleep(15)
+            except RuntimeError as exc:
+                if not str(exc).startswith(("Private version 1 could not be retrieved",
+                                            "Dataset API did not verify private ACL for version 1")):
+                    raise
+                if receipts["uploads"].get(ref, {}).get("status") != "ACCEPTED":
+                    raise
+                # Retry the read of the same accepted private version, never its upload.
+                time.sleep(60)
+        completed = receipts["uploads"].get(ref, {})
+        if completed.get("version") != 1 or not completed.get("remote_sha_verified_at"):
+            print(asset["label"], "INPUT_STAGING_INCOMPLETE", flush=True)
+            continue
+        while True:
+            try:
+                with c.locked():
+                    registry = c.registry()
+                    prior = registry["uploads"][ref]
+                    if prior.get("stage_manifest") != document["fingerprint"] or prior["sha"] != completed["sha"]:
+                        raise ValueError("Input reservation changed before verified publication")
+                    registry["uploads"][ref] = completed
+                    c.persist(registry)
+                break
+            except RuntimeError as exc:
+                if not str(exc).startswith("Registry locked."):
+                    raise
+                time.sleep(3 + c.SLOTS.index(account))
+        print(asset["label"], "PRIVATE_VERSION_1_SHA_VERIFIED", flush=True)
+
+
+def observe_window(root, document, account, watch):
+    if "window" not in document or not verify_owner(account):
+        raise RuntimeError("Window observation requires the matching verified execution identity")
+    folder = root / "observations" / account
+    folder.mkdir(parents=True, exist_ok=True)
+    while True:
+        pending = False
+        registry = c.registry()
+        for row in document["sessions"]:
+            if row["account"] != account:
+                continue
+            entry = registry["jobs"][row["job"]]
+            if not entry.get("version"):
+                pending |= entry["status"] == "PLANNED" or entry["status"] in UNCERTAIN
+                continue
+            path = folder / f"{row['session']}.json"
+            prior = read(path) if path.exists() else {}
+            version = entry["version"]
+            status = entry["status"]
+            if status in c.ACTIVE:
+                code, response = c.cli(account, ["kernels", "status", f"{entry['ref']}/{version}"], timeout=20)
+                status = c.kernel_state(code, response)
+            pending |= status in c.ACTIVE
+            record = {"manifest": document["fingerprint"], "session": row["session"], "account": account,
+                      "job": row["job"], "version": version, "checked_at": c.now()}
+            entry = {**entry, "status": status}
+            record.update(api_status="COMPLETE" if status in {"HARVESTED_VERIFIED", "CLOUD_SUCCEEDED", "PARTIAL", "ARTIFACT_INVALID"} else status,
+                          execution_evidence=training_evidence(account, entry, prior))
+            write(path, record)
+            print(row["session"], version, record["api_status"], record["execution_evidence"], flush=True)
+        if not watch or not pending or time.time() > document["window"]["deadline_epoch"] + 900:
+            return
+        time.sleep(120 + c.SLOTS.index(account))
 
 
 def report(root, document):
@@ -424,6 +563,19 @@ def report(root, document):
         if receipt.exists() and (any(status[key] != value for key, value in row.items())
                                  or status["manifest"] != document["fingerprint"]):
             raise ValueError("Receipt does not belong to the pinned session")
+        observation = root / "observations" / row["account"] / f"{row['session']}.json"
+        if observation.is_file():
+            observed = read(observation)
+            if (observed["manifest"] != document["fingerprint"]
+                    or any(observed[k] != row[k] for k in ("job", "account", "session"))
+                    or status.get("version") not in (None, observed["version"])):
+                raise ValueError("Observation does not match the pinned session and version")
+            if observed["checked_at"]["utc"] >= status.get("checked_at", {}).get("utc", ""):
+                status.update(version=observed["version"], api_status=observed["api_status"], api_status_stale=False,
+                              submitted=True, submission_attempted=True, blocker=None,
+                              api_observed_at=observed["checked_at"])
+            if observed["execution_evidence"].get("transitions", 0) >= status.get("execution_evidence", {}).get("transitions", 0):
+                status["execution_evidence"] = observed["execution_evidence"]
         rows.append(status)
     totals = {"submitted": sum(row["submitted"] for row in rows),
               "submission_attempts": sum(row.get("submission_attempted", False) for row in rows),
@@ -445,17 +597,23 @@ def report(root, document):
                                  "continuation": continuation, "checked_at": c.now()})
     stage = root / "status.csv.tmp"
     with stage.open("w", encoding="utf-8", newline="") as f:
-        table = csv.DictWriter(f, fieldnames=("session", "account", "workload", "job", "device", "budget",
-                                             "api_status", "blocker"), extrasaction="ignore")
+        table = csv.DictWriter(f, fieldnames=("session", "account", "workload", "job", "version", "parent",
+                                             "device", "budget", "api_status", "evidence_source", "transitions",
+                                             "updates", "checkpoint", "blocker"), extrasaction="ignore")
         table.writeheader()
-        table.writerows(rows)
+        for row in rows:
+            evidence = row.get("execution_evidence", {})
+            table.writerow({**row, "evidence_source": evidence.get("source"),
+                            "transitions": evidence.get("transitions") or None,
+                            "updates": evidence.get("updates") or None})
     stage.replace(root / "status.csv")
     print(totals)
+    return totals
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("init", "agent", "report", "enqueue", "prepare-window", "admit-window-sibling"))
+    parser.add_argument("command", choices=("init", "agent", "report", "enqueue", "prepare-window", "admit-window-sibling", "observe-window", "reserve-window-inputs", "stage-window-inputs"))
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--package", type=Path)
     parser.add_argument("--watch", action="store_true")
@@ -488,9 +646,23 @@ def main():
         enqueue_continuation(args.root, document, args)
         return
     if args.command == "report":
-        report(args.root, document)
+        while True:
+            report(args.root, document)
+            if not args.watch or "window" not in document or time.time() >= document["window"]["deadline_epoch"] + 900:
+                return
+            time.sleep(120)
+    if args.command == "reserve-window-inputs":
+        reserve_window_inputs(args.root, document)
         return
     account = operator_slot()
+    if args.command == "stage-window-inputs":
+        with agent_lock(args.root / "input-staging" / account):
+            stage_window_inputs(args.root, document, account)
+        return
+    if args.command == "observe-window":
+        with agent_lock(args.root / "observations" / account):
+            observe_window(args.root, document, account, args.watch)
+        return
     if args.command == "admit-window-sibling":
         with agent_lock(args.root / "dispatch" / account):
             admit_window_sibling(args.root, document, account)
