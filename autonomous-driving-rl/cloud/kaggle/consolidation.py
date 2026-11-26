@@ -81,7 +81,9 @@ def attempt(row, entry, observation, logs, archive, window):
         online_evicted=stats.get("online_evicted_rows"), geometry_coverage=stats.get("decisions_by_geometry"),
         tier_decisions=stats.get("online_tier_decisions"), episode_sample_outcomes=dict(outcomes),
         full_state_path=state_path, verified_artifacts=verified, panels=panels,
-        final_model_sha=marker.get("files", {}).get("model.zip"), f09=logs.get("f09"))
+        final_model_sha=marker.get("files", {}).get("model.zip"), f09=logs.get("f09"),
+        learning_curve=[{"event": m[0], "decisions": m[1], "updates": m[2]} for m in marks],
+        log_checkpoint_counts={key: len(logs.get(key, {})) for key in ("screen", "periodic")})
 
 
 def campaign_report(window, guards, archive_root, output):
