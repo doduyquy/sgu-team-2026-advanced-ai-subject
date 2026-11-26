@@ -130,6 +130,12 @@ if JOB.get("guided_rollout_axis"):
     command.extend(["--guided-rollout-axis", JOB["guided_rollout_axis"]])
 if JOB.get("traffic_guidance"):
     command.append("--traffic-guidance")
+if JOB.get("teacher_ref"):
+    teacher = workspace / "teacher.zip"
+    shutil.copyfile(input_file(JOB["teacher_ref"], "teacher.bin", JOB["traffic_teacher_sha"]), teacher)
+    command.extend(["--traffic-teacher", str(teacher), "--traffic-teacher-sha", JOB["traffic_teacher_sha"]])
+if JOB.get("autonomous_traffic"):
+    command.append("--autonomous-traffic")
 if JOB.get("policy_every"):
     command.extend(["--policy-every", str(JOB["policy_every"]),
                     "--policy-dir", str(working / JOB["job"] / "screening")])

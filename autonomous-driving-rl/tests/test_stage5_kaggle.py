@@ -81,6 +81,17 @@ def test_traffic_guidance_uses_forward_relative_velocity_and_preserves_box2():
     np.testing.assert_array_equal(original[:, 1], np.full(3, .7, dtype=np.float32))
 
 
+def test_traffic_teacher_mixture_retires_at_episode_boundary():
+    model = SimpleNamespace(env=SimpleNamespace(reset_infos=[{"episode": 2, "tier": "Medium"},
+                                                            {"episode": 3, "tier": "Easy"}]),
+                            teacher_episodes={}, teacher_cutoff=100, num_timesteps=50, n_envs=2)
+    assert GuidedSAC.teacher_episode_mask(model).tolist() == [True, False]
+    model.num_timesteps = 102
+    assert GuidedSAC.teacher_episode_mask(model).tolist() == [True, False]
+    model.env.reset_infos[0] = {"episode": 4, "tier": "Medium"}
+    assert GuidedSAC.teacher_episode_mask(model).tolist() == [False, False]
+
+
 @pytest.mark.parametrize("capacity,accepted", [(None, 1), (2, 2)])
 def test_campaign_admits_within_capacity_and_reports_other_identities(tmp_path, monkeypatch, capacity, accepted):
     from collections import Counter

@@ -425,8 +425,12 @@ def plan_learning_resume(args, state):
     seconds = getattr(args, "max_seconds", None)
     next_phase = getattr(args, "phase", None)
     traffic_guidance = getattr(args, "traffic_guidance", False)
-    if (device or seconds or next_phase or traffic_guidance) and (not guided or comparison_id):
+    teacher = getattr(args, "traffic_teacher", False)
+    autonomous = getattr(args, "autonomous_traffic", False)
+    if (device or seconds or next_phase or traffic_guidance or teacher or autonomous) and (not guided or comparison_id):
         raise ValueError("Production options require a Guided SAC continuation")
+    if autonomous and (traffic_guidance or teacher):
+        raise ValueError("Autonomous collection and traffic guidance cannot be combined")
     if seconds is not None and not 1800 <= seconds <= 14400:
         raise ValueError("Production time budget must be 1,800–14,400 seconds")
     if comparison_id:
@@ -470,7 +474,8 @@ def plan_learning_resume(args, state):
         raise RuntimeError("Full-state continuation requires the original learner, dependencies, and TRAIN schedule")
     job = {key: value for key, value in planned.items()
            if key not in {"warm_step", "warm_start_cursor", "parent_step", "policy_every", "guided_path", "guided_sha",
-                          "utd_control", "actor_lr_control", "guided_curriculum_from"}}
+                          "utd_control", "actor_lr_control", "guided_curriculum_from", "traffic_guidance",
+                          "traffic_teacher_sha", "traffic_teacher_job", "autonomous_traffic"}}
     job.update(job="s5-" + fingerprint([args.campaign, args.round])[:12] + "-j10-a1",
                round=args.round, role="easy_resume", account=args.account, transitions=args.transitions,
                start_transition=checkpoint["transitions"], parent_job=args.parent, parent_sha=state_sha,
@@ -491,10 +496,27 @@ def plan_learning_resume(args, state):
         job["phase"] = parent_phase
         if traffic_guidance and ((parent_phase, next_phase) not in {("medium", None), ("easy", "medium")} or comparison_id):
             raise ValueError("Traffic guidance requires a verified Medium parent or an Easy-to-Medium transition")
-        if traffic_guidance or checkpoint["identity"].get("traffic_guidance"):
+        prior_traffic = checkpoint["identity"].get("traffic_guidance")
+        if checkpoint["identity"].get("traffic_teacher_sha") and not (teacher or autonomous):
+            raise ValueError("Choose the teacher again or retire traffic guidance explicitly")
+        if autonomous:
+            if not prior_traffic:
+                raise ValueError("Only a traffic-guided parent can retire its guidance")
+            job["autonomous_traffic"] = True
+        elif traffic_guidance or prior_traffic or teacher:
             job["traffic_guidance"] = "traffic_follow_v1"
             if parent_phase == "medium" and next_phase:
                 raise ValueError("A traffic-guided state requires same-phase continuation")
+        if teacher:
+            if parent_phase != "medium" or not prior_traffic or next_phase:
+                raise ValueError("Teacher mixture requires a traffic-guided Medium parent")
+            from cloud.kaggle.parallel import CHAMPION, MODEL, STATE
+            teacher_path, teacher_state = parent_checkpoint(state, CHAMPION)
+            if teacher_state != STATE:
+                raise ValueError("Unexpected frozen teacher state")
+            verify(teacher_path / "model.zip", MODEL)
+            job.update(traffic_teacher_sha=MODEL, traffic_teacher_job=CHAMPION,
+                       parallel_workload="traffic-teacher-medium")
         if traffic_guidance:
             job["parallel_workload"] = "traffic-follow-medium"
             job["guided_gradient_steps"] = 1
@@ -509,7 +531,7 @@ def plan_learning_resume(args, state):
             job["accelerator"] = "NvidiaTeslaT4"
         if policy_hooks and args.transitions >= 25000:
             job["policy_every"] = 5000
-        if not comparison_id and (device or seconds or next_phase or traffic_guidance or args.transitions >= 50000):
+        if not comparison_id and (device or seconds or next_phase or traffic_guidance or teacher or autonomous or args.transitions >= 50000):
             job["production_continuation"] = True
         if comparison_id:
             if execution["capacity"] < capacity:
@@ -965,6 +987,10 @@ def launch(args, state):
         if manifest["files"]["model.zip"] != job["warm_model_sha"]:
             raise ValueError("Warm-start checkpoint differs from the approved plan")
         actual_job["warm_ref"] = upload(state, alias, owner, "warm", "warm.zip", path / "model.zip", job["warm_model_sha"])
+    if job.get("traffic_teacher_sha"):
+        teacher, _ = parent_checkpoint(state, job["traffic_teacher_job"])
+        actual_job["teacher_ref"] = upload(state, alias, owner, "teacher", "teacher.zip",
+                                          teacher / "model.zip", job["traffic_teacher_sha"])
     if job.get("parent_job"):
         parent, _ = parent_checkpoint(state, job["parent_job"], job.get("parent_step"))
         verify(parent / "COMPLETE.json", job["parent_sha"])
@@ -1003,6 +1029,8 @@ def launch(args, state):
         refs.append(actual_job["warm_ref"])
     if actual_job.get("parent_ref"):
         refs.append(actual_job["parent_ref"])
+    if actual_job.get("teacher_ref"):
+        refs.append(actual_job["teacher_ref"])
     actual_job["input_versions"] = {key: state["uploads"].get(key, {}).get("version", 1) for key in refs}
     ref = f"{owner}/{job['job']}"
     (staging / "run.py").write_text(template_text.replace("__JOB__", repr(actual_job)), encoding="utf-8")
@@ -1326,11 +1354,23 @@ def verify_cloud_evidence(path, manifest, entry, state):
             verify(parent_metrics_path, parent["files"]["metrics.json"])
             parent_metrics = read(parent_metrics_path)
             behavior = dict(parent_metrics["online_behavior"])
+            if job.get("autonomous_traffic"):
+                for key in ("traffic_guidance", "traffic_teacher_sha"):
+                    identity.pop(key, None)
+                    behavior.pop(key, None)
             if job.get("traffic_guidance"):
                 if not 0 < metrics["traffic_guided_decisions"] <= metrics["transitions"]:
                     raise ValueError("Traffic guidance did not affect the collected actions")
                 identity["traffic_guidance"] = job["traffic_guidance"]
                 behavior["traffic_guidance"] = job["traffic_guidance"]
+            if job.get("traffic_teacher_sha"):
+                identity["traffic_teacher_sha"] = job["traffic_teacher_sha"]
+                behavior["traffic_teacher_sha"] = job["traffic_teacher_sha"]
+                mix = metrics["traffic_mixture"]
+                guided, free = mix.get("teacher_decisions", 0), mix.get("autonomous_decisions", 0)
+                if (not 0 < metrics["traffic_guided_decisions"] <= guided or free <= 0
+                        or guided + free != metrics["online_tier_decisions"]["Medium"]):
+                    raise ValueError("Teacher and autonomous Medium decisions do not reconcile")
             if job.get("guided_curriculum_from"):
                 tiers = metrics["online_tier_decisions"]
                 if (parent["identity"]["phase"] != job["guided_curriculum_from"]
@@ -1428,6 +1468,8 @@ def main():
     resume.add_argument("--max-seconds", type=int)
     resume.add_argument("--phase", choices=("medium", "hard", "extreme"))
     resume.add_argument("--traffic-guidance", action="store_true")
+    resume.add_argument("--traffic-teacher", action="store_true")
+    resume.add_argument("--autonomous-traffic", action="store_true")
     profile = resume.add_mutually_exclusive_group()
     profile.add_argument("--reduce-guided-utd-after", metavar="HARVESTED_CONTROL_JOB")
     profile.add_argument("--dampen-guided-actor-after", metavar="HARVESTED_UTD_05_JOB")

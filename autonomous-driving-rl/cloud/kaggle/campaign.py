@@ -89,7 +89,8 @@ def enqueue_continuation(root, document, args):
                                                parent=args.parent, parent_step=args.parent_step,
                                                transitions=args.transitions, device=args.device,
                                                max_seconds=args.max_seconds, phase=args.phase,
-                                               traffic_guidance=args.traffic_guidance), registry)
+                                               traffic_guidance=args.traffic_guidance, traffic_teacher=args.traffic_teacher,
+                                               autonomous_traffic=args.autonomous_traffic), registry)
         planned = read(WORK / f"plan-stage5-{args.round}.json")
         job = planned["jobs"]["j10"]
     folder = root / "rounds" / account
@@ -334,6 +335,8 @@ def main():
     parser.add_argument("--max-seconds", type=int)
     parser.add_argument("--phase", choices=("medium", "hard", "extreme"))
     parser.add_argument("--traffic-guidance", action="store_true")
+    parser.add_argument("--traffic-teacher", action="store_true")
+    parser.add_argument("--autonomous-traffic", action="store_true")
     args = parser.parse_args()
     if args.command in {"init", "agent"} and not args.package:
         parser.error("--package is required")
