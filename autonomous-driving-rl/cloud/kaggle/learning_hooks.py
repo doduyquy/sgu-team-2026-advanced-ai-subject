@@ -26,7 +26,7 @@ def save_screening_policy(model, directory, step):
 def train(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--policy-dir", type=Path)
-    parser.add_argument("--policy-every", type=int, choices=(2500, 5000))
+    parser.add_argument("--policy-every", type=int, choices=(2500, 5000, 50000))
     parser.add_argument("--state-every", type=int)
     parser.add_argument("--warm-start-cursor", type=int)
     hooks, learner_args = parser.parse_known_args(args)

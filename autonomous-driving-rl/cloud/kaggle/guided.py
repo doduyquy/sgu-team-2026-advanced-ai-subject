@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+import hashlib
 from pathlib import Path
+import time
 
 import numpy as np
 
@@ -72,6 +74,12 @@ class GuidedSAC(runtime.TimedSAC):
         for group in self.actor.optimizer.param_groups:
             group["lr"] *= self.actor_lr_scale
 
+    def _store_transition(self, replay_buffer, *args, **kwargs):
+        protected = getattr(self, "protected_replay_slots", 0)
+        if protected and replay_buffer.full and replay_buffer.pos < protected:
+            replay_buffer.pos = protected
+        return super()._store_transition(replay_buffer, *args, **kwargs)
+
     def _sample_action(self, learning_starts, action_noise=None, n_envs=1):
         action, _ = self.predict(self._last_obs, deterministic=True)
         scaled = self.policy.scale_action(action)
@@ -102,10 +110,22 @@ class GuidedSAC(runtime.TimedSAC):
             episode = info["episode"]
             previous = self.teacher_episodes.get(worker)
             if previous is None or episode != previous[0]:
-                guided = (info["tier"] == "Medium" and self.num_timesteps < self.teacher_cutoff
+                cutoff = getattr(self, "teacher_stop_at", None)
+                before_cutoff = time.monotonic() < cutoff if cutoff is not None else self.num_timesteps < self.teacher_cutoff
+                guided = (info["tier"] == "Medium" and before_cutoff
                           and (episode + worker) % 2 == 0)
                 self.teacher_episodes[worker] = (episode, guided)
         return np.asarray([self.teacher_episodes[w][1] for w in range(self.n_envs)], dtype=bool)
+
+
+REPLAY_FIELDS = ("observations", "next_observations", "actions", "rewards", "dones", "timeouts")
+
+
+def prefix_sha(buffer, slots):
+    digest = hashlib.sha256()
+    for field in REPLAY_FIELDS:
+        digest.update(memoryview(getattr(buffer, field)[:slots]).cast("B"))
+    return digest.hexdigest()
 
 
 def grow_replay(model, capacity, live_rows):
@@ -118,7 +138,7 @@ def grow_replay(model, capacity, live_rows):
         return
     new = runtime.ReplayBuffer(capacity, old.observation_space, old.action_space, device=model.device,
                                n_envs=old.n_envs, handle_timeout_termination=True)
-    for field in ("observations", "next_observations", "actions", "rewards", "dones", "timeouts"):
+    for field in REPLAY_FIELDS:
         getattr(new, field)[:old.pos] = getattr(old, field)[:old.pos]
     new.pos = old.pos
     model.buffer_size, model.replay_buffer = capacity, new
@@ -138,6 +158,8 @@ def train(args):
     parser.add_argument("--traffic-teacher", type=Path)
     parser.add_argument("--traffic-teacher-sha")
     parser.add_argument("--autonomous-traffic", action="store_true")
+    parser.add_argument("--bounded-guided-replay", action="store_true")
+    parser.add_argument("--teacher-stop-at", type=float)
     parser.add_argument("--capacity", type=int, default=runtime.RECIPE["preflight"]["capacity"])
     parser.add_argument("--transitions", required=True, type=int)
     config, learner_args = parser.parse_known_args(args)
@@ -160,6 +182,8 @@ def train(args):
             {"easy": "medium", "medium": "hard", "hard": "extreme"}[config.guided_curriculum_from] != config.phase
             or config.guided_rollout_axis):
         parser.error("Curriculum transition requires the next phase and unassisted collection")
+    if config.bounded_guided_replay and not config.resume:
+        parser.error("Bounded replay requires verified GuidedSAC full state")
     parent = None
     parent_gradient_steps = -1
     parent_actor_lr_scale = 1.0
@@ -185,7 +209,8 @@ def train(args):
                 or not parent["ledger"] or parent["external_admitted"] <= 0
                 or parent_gradient_steps not in (-1, 1)
                 or parent_actor_lr_scale not in (1.0, 0.25)
-                or parent["external_admitted"] + parent["transitions"] + config.transitions > config.capacity):
+                or (not config.bounded_guided_replay and (parent["identity"].get("bounded_guided_replay")
+                    or parent["external_admitted"] + parent["transitions"] + config.transitions > config.capacity))):
             raise ValueError("Resume must retain guided behavior and all prior replay throughout the budget")
     model_for, base_sac, telemetry, save = runtime.model_for, runtime.TimedSAC, runtime.Telemetry, runtime.save_state
     recipe_identity = runtime.recipe_identity
@@ -227,7 +252,20 @@ def train(args):
                     or self.gradient_steps != parent_gradient_steps or evidence["rows"] != parent["external_admitted"]
                     or evidence["ledger"] != parent["ledger"]):
                 raise ValueError("Guided state differs from parent identity, behavior or provenance")
-            grow_replay(self, config.capacity, evidence["rows"] + parent["transitions"])
+            old_bounded = parent["identity"].get("bounded_guided_replay", False)
+            if old_bounded:
+                if config.capacity != parent["identity"]["capacity"] or not config.bounded_guided_replay:
+                    raise ValueError("A bounded replay must resume with the same capacity and preservation policy")
+            else:
+                grow_replay(self, config.capacity, evidence["rows"] + parent["transitions"])
+            if config.bounded_guided_replay:
+                replay = self.replay_buffer
+                if evidence["rows"] % replay.n_envs or evidence["rows"] >= config.capacity:
+                    raise ValueError("Guided replay and workers are not aligned")
+                self.protected_replay_slots = evidence["rows"] // replay.n_envs
+                self.protected_replay_sha = prefix_sha(replay, self.protected_replay_slots)
+                if old_bounded and read(config.resume / "metrics.json")["protected_replay_sha"] != self.protected_replay_sha:
+                    raise ValueError("Protected replay prefix no longer matches the parent")
             if config.guided_gradient_steps:
                 if self.n_envs != 2:
                     raise ValueError("The reduced update profile requires two environments")
@@ -241,6 +279,7 @@ def train(args):
                 self.traffic_teacher_policy = runtime.load_policy(config.traffic_teacher, device="cpu")
                 self.teacher_cutoff = parent["transitions"] + config.transitions // 2
                 self.teacher_episodes = {}
+                self.teacher_stop_at = config.teacher_stop_at
             if config.guided_rollout_axis:
                 self.rollout_anchor = runtime.load_policy(config.resume / "model.zip", self.device)
                 self.rollout_axis = ("steering", "throttle_brake").index(config.guided_rollout_axis)
@@ -273,11 +312,21 @@ def train(args):
 
     def save_guided(out, model, manifest, metrics):
         evidence = model.guided_prefill
-        if model.replay_buffer.size() * model.n_envs != evidence["rows"] + model.num_timesteps:
+        live = model.replay_buffer.size() * model.n_envs
+        expected_live = evidence["rows"] + model.num_timesteps
+        if config.bounded_guided_replay:
+            expected_live = min(expected_live, config.capacity)
+            if prefix_sha(model.replay_buffer, model.protected_replay_slots) != model.protected_replay_sha:
+                raise ValueError("Bounded replay replaced a guided row")
+            metrics["protected_replay_sha"] = model.protected_replay_sha
+            metrics["online_evicted_rows"] = evidence["rows"] + model.num_timesteps - live
+        if live != expected_live:
             raise ValueError("Guided replay was overwritten or replay accounting diverged")
         manifest.update(external_admitted=evidence["rows"], ledger=evidence["ledger"], learning_mode=BEHAVIOR)
         manifest["identity"] = {**manifest["identity"], "online_behavior": BEHAVIOR, "capacity": config.capacity}
         manifest["identity"]["phase"] = config.phase
+        if config.bounded_guided_replay:
+            manifest["identity"]["bounded_guided_replay"] = True
         if config.autonomous_traffic:
             manifest["identity"].pop("traffic_guidance", None)
             manifest["identity"].pop("traffic_teacher_sha", None)
@@ -304,7 +353,7 @@ def train(args):
             behavior.update(anchored_axis=config.guided_rollout_axis, anchor_model_sha=parent["files"]["model.zip"])
         metrics.update(guided_prefill=evidence, online_progress_bands=dict(online), online_tier_decisions=dict(tiers),
                        online_behavior=behavior,
-                       guided_live_rows=evidence["rows"], online_live_rows=model.num_timesteps,
+                       guided_live_rows=evidence["rows"], online_live_rows=live - evidence["rows"],
                        updates_per_total_real_transition=model._n_updates / (evidence["rows"] + model.num_timesteps))
         save(out, model, manifest, metrics)
 

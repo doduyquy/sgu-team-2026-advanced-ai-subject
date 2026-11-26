@@ -12,6 +12,12 @@ import zipfile
 
 JOB = __JOB__
 started = time.monotonic()
+shutdown = started + JOB["max_seconds"]
+if JOB.get("campaign_deadline"):
+    shutdown = min(shutdown, started + JOB["campaign_deadline"] - time.time())
+    if shutdown - started < 1800:
+        print("CAMPAIGN_WINDOW_TOO_SHORT", flush=True)
+        raise SystemExit(0)
 working = Path("/kaggle/working")
 workspace = Path("/tmp") / JOB["job"]
 child_env = {key: value for key, value in os.environ.items()
@@ -88,7 +94,7 @@ inventory = json.loads((workspace / "source_inventory.json").read_text(encoding=
 for name, expected in inventory["files"].items():
     if digest(workspace / name) != expected:
         raise ValueError(f"Runtime fingerprint mismatch: {name}")
-stop = started + JOB["max_seconds"] - JOB["export_reserve"]
+stop = shutdown - JOB["export_reserve"]
 python, pip = prepare_runtime(stop)
 commit_query = (
     'import json; from importlib.metadata import distribution; '
@@ -134,6 +140,10 @@ if JOB.get("teacher_ref"):
     teacher = workspace / "teacher.zip"
     shutil.copyfile(input_file(JOB["teacher_ref"], "teacher.bin", JOB["traffic_teacher_sha"]), teacher)
     command.extend(["--traffic-teacher", str(teacher), "--traffic-teacher-sha", JOB["traffic_teacher_sha"]])
+    if JOB.get("campaign_deadline"):
+        command.extend(["--teacher-stop-at", str((time.monotonic() + stop) / 2)])
+if JOB.get("campaign_deadline"):
+    command.extend(["--timeboxed", "--bounded-guided-replay"])
 if JOB.get("autonomous_traffic"):
     command.append("--autonomous-traffic")
 if JOB.get("policy_every"):
@@ -159,7 +169,7 @@ if JOB.get("parent_sha"):
             task.extend(["--stream", str(JOB["collector_stream"])])
         if JOB.get("evaluation_tier"):
             task.extend(["--tier", JOB["evaluation_tier"]])
-        run(task, started + JOB["max_seconds"] - 30)
+        run(task, shutdown - 30)
         raise SystemExit(0)
     command.extend(["--resume", str(parent), "--parent-sha", JOB["parent_sha"]])
 elif JOB.get("warm_ref"):
@@ -169,13 +179,13 @@ elif JOB.get("warm_ref"):
 else:
     command.extend(["--source", str(source)])
 training_start = time.monotonic()
-run(command, started + JOB["max_seconds"] - 30)
+run(command, shutdown - 30)
 training_end = time.monotonic()
 if JOB.get("sharded_output"):
     results = working / JOB["job"]
     index_sha = run([*python, "-m", "cloud.kaggle.checkpoint", "export", "--input", str(state),
                      "--sha", digest(state / "COMPLETE.json"), "--out", str(results / "final")],
-                    started + JOB["max_seconds"] - 30, capture=True).strip()
+                    shutdown - 30, capture=True).strip()
     for source_name, target_name in (("runtime_versions.txt", "runtime_versions.txt"), ("observed_parity.json", "parity.json")):
         shutil.copyfile(workspace / source_name, results / target_name)
     with (results / "execution.json").open("x", encoding="utf-8") as output:
@@ -186,14 +196,14 @@ if JOB.get("sharded_output"):
         try:
             run([*python, "-m", "cloud.kaggle.runtime", "evaluate", "--model", str(state / "model.zip"),
                  "--model-sha", digest(state / "model.zip"), "--tier", "Easy", "--out", str(results / "panel.json")],
-                started + JOB["max_seconds"] - 20)
+                shutdown - 20)
             tiers = json.loads((workspace / "cloud/kaggle/recipe.json").read_text(encoding="utf-8"))["phase_weights"]
             for tier in tiers.get(JOB.get("phase"), {}):
                 if tier == "Easy":
                     continue
                 run([*python, "-m", "cloud.kaggle.runtime", "evaluate", "--model", str(state / "model.zip"),
                      "--model-sha", digest(state / "model.zip"), "--tier", tier, "--out", str(results / f"panel-{tier.lower()}.json")],
-                    started + JOB["max_seconds"] - 20)
+                    shutdown - 20)
             evaluation_status = "COMPLETE"
         except (subprocess.TimeoutExpired, TimeoutError):
             evaluation_status = "TIME_BUDGET"

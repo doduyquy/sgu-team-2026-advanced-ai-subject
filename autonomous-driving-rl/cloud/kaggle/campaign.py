@@ -23,7 +23,7 @@ GROUPS = (
     ("throttle", "brake-long"), ("retention", "medium-cpu"), ("guided-a", "guided-b"),
     ("eval-easy", "eval-medium"), ("easy-stable", "mixed"),
 )
-TERMINAL = {"HARVESTED_VERIFIED", "ARTIFACT_INVALID", "PARTIAL", "FAILED", "CAPACITY_REJECTED", "CANCELLED"}
+TERMINAL = {"WINDOW_ENDED", "HARVESTED_VERIFIED", "ARTIFACT_INVALID", "PARTIAL", "FAILED", "CAPACITY_REJECTED", "CANCELLED"}
 UNCERTAIN = {"SUBMITTING", "SUBMIT_UNKNOWN", "STATUS_UNKNOWN"}
 
 
@@ -44,10 +44,65 @@ def sessions():
     return rows
 
 
+WINDOW_PROFILES = (
+    ("Medium teacher to autonomous", "cuda", "traffic", None, True, False, None),
+    ("Medium autonomous retention", "cpu", "traffic", None, False, True, 0.25),
+    ("Easy stability", "cuda", "easy", None, False, False, 0.25),
+    ("Medium longitudinal teacher", "cpu", "traffic", None, True, False, 0.25),
+    ("Medium autonomous, reduced actor LR", "cuda", "traffic", None, False, True, 0.25),
+    ("Easy coverage", "cpu", "easy", None, False, False, None),
+    ("Medium capped car following", "cuda", "easy", "medium", False, False, 0.25),
+    ("Medium teacher replicate", "cpu", "traffic", None, True, False, None),
+    ("Mixed Easy/Medium autonomous", "cuda", "easy", "medium", False, False, None),
+    ("Easy retention, reduced actor LR", "cpu", "easy", None, False, False, 0.25),
+    ("Medium traffic-guided collector?learner", "cuda", "easy", "medium", False, False, None),
+    ("Medium teacher traffic experience", "cpu", "traffic", None, True, False, 0.25),
+    ("Medium traffic teacher, reduced actor LR", "cuda", "traffic", None, True, False, 0.25),
+    ("Mixed Easy/Medium retention", "cpu", "easy", "medium", False, False, 0.25),
+    ("Medium learned traffic behavior", "cuda", "traffic", None, False, True, None),
+    ("Medium traffic experience replicate", "cpu", "easy", "medium", False, False, None),
+)
+
+
+def prepare_window(root, package, source):
+    clock = read(WORK / "window12.json")
+    deadline = clock["deadline_epoch"]
+    if (root / "campaign.json").exists():
+        raise FileExistsError("Campaign dispatch is immutable")
+    root.mkdir(parents=True, exist_ok=True)
+    rows = []
+    with c.locked():
+        registry = c.registry()
+        c.package(source)
+        for i, (workload, device, parent_kind, phase, teacher, autonomous, lr) in enumerate(WINDOW_PROFILES):
+            session = f"S{i + 1:02d}"
+            account = c.SLOTS[i // 2]
+            round_id = f"win12-{session.lower()}"
+            parent = source if parent_kind == "traffic" else parallel.CHAMPION
+            guidance = phase == "medium" and ("guided" in workload or "capped" in workload or "experience" in workload)
+            c.plan_learning_resume(SimpleNamespace(campaign="stage5", round=round_id, account=account,
+                parent=parent, transitions=4_000_000, device=device, max_seconds=39600, phase=phase,
+                traffic_guidance=guidance, traffic_teacher=teacher, autonomous_traffic=autonomous,
+                campaign_deadline=deadline, campaign_actor_lr=lr), registry)
+            doc = read(WORK / f"plan-stage5-{round_id}.json")
+            job = doc["jobs"]["j10"]
+            rows.append(dict(session=session, account=account, workload=workload, job=job["job"], device=device,
+                             budget="39,600 s or campaign deadline", round=round_id,
+                             plan_fingerprint=doc["fingerprint"], parent=parent, parent_sha=job["parent_sha"],
+                             checkpoint="50k policy / 250k full state / final sharded"))
+    data = {"target": 16, "per_account_target": 2, "parent_sha": parallel.STATE,
+            "package_sha": sha(package), "sessions": rows, "window": clock}
+    data["fingerprint"] = fingerprint(data)
+    write(root / "campaign.json", data)
+    print(data["fingerprint"])
+
+
 def manifest(root):
     document = read(root / "campaign.json")
     fields = {k: v for k, v in document.items() if k != "fingerprint"}
-    if (document["fingerprint"] != fingerprint(fields) or document["sessions"] != sessions()
+    if (document["fingerprint"] != fingerprint(fields) or (document["sessions"] != sessions() if "window" not in document else
+                [(row["session"], row["account"]) for row in document["sessions"]] !=
+                [(f"S{i + 1:02d}", c.SLOTS[i // 2]) for i in range(16)])
             or document["target"] != 16 or document["per_account_target"] != 2
             or document["parent_sha"] != parallel.STATE):
         raise ValueError("Campaign definition differs from the pinned workload queue")
@@ -90,7 +145,8 @@ def enqueue_continuation(root, document, args):
                                                transitions=args.transitions, device=args.device,
                                                max_seconds=args.max_seconds, phase=args.phase,
                                                traffic_guidance=args.traffic_guidance, traffic_teacher=args.traffic_teacher,
-                                               autonomous_traffic=args.autonomous_traffic), registry)
+                                               autonomous_traffic=args.autonomous_traffic,
+                                               campaign_deadline=getattr(args, "campaign_deadline", None)), registry)
         planned = read(WORK / f"plan-stage5-{args.round}.json")
         job = planned["jobs"]["j10"]
     folder = root / "rounds" / account
@@ -211,6 +267,8 @@ def run_once(root, package, document, account):
                     status = {**prior, "blocker": "IDENTITY_RECHECK_UNAVAILABLE", "api_status_stale": True,
                               "api_observed_at": prior.get("api_observed_at", prior["checked_at"]),
                               "checked_at": c.now(), "verified_concurrency": None}
+        elif document.get("window") and not receipt.exists() and time.time() >= document["window"]["deadline_epoch"]:
+            status.update(status="WINDOW_ENDED", blocker="CAMPAIGN_DEADLINE")
         elif not item["job"]:
             status["blocker"] = "MIXED_CANDIDATE_REQUIRED"
         else:
@@ -228,7 +286,9 @@ def run_once(root, package, document, account):
                             c.harvest(registry, job)
                     active = [r for r in registry["jobs"].values() if r.get("owner") == own["owner"] and r["status"] in c.ACTIVE]
                     if not row or row.get("status") == "PLANNED":
-                        if any(r["status"] in UNCERTAIN for r in active):
+                        if document.get("window") and time.time() > document["window"]["deadline_epoch"] - 1800:
+                            status.update(status="WINDOW_ENDED", blocker="CAMPAIGN_DEADLINE")
+                        elif any(r["status"] in UNCERTAIN for r in active):
                             status["blocker"] = "LAUNCHER_UNRESOLVED_RECEIPT"
                         elif len(active) >= document["per_account_target"]:
                             status["blocker"] = "CAMPAIGN_ACCOUNT_TARGET_REACHED"
@@ -323,7 +383,7 @@ def report(root, document):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("init", "agent", "report", "enqueue"))
+    parser.add_argument("command", choices=("init", "agent", "report", "enqueue", "prepare-window"))
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--package", type=Path)
     parser.add_argument("--watch", action="store_true")
@@ -337,11 +397,17 @@ def main():
     parser.add_argument("--traffic-guidance", action="store_true")
     parser.add_argument("--traffic-teacher", action="store_true")
     parser.add_argument("--autonomous-traffic", action="store_true")
+    parser.add_argument("--campaign-deadline", type=int)
     args = parser.parse_args()
-    if args.command in {"init", "agent"} and not args.package:
+    if args.command in {"init", "agent", "prepare-window"} and not args.package:
         parser.error("--package is required")
     if args.command == "init":
         init(args.root, args.package)
+        return
+    if args.command == "prepare-window":
+        if not args.parent:
+            parser.error("prepare-window requires a verified Medium parent")
+        prepare_window(args.root, args.package, args.parent)
         return
     document = manifest(args.root)
     if args.command == "enqueue":
@@ -355,7 +421,13 @@ def main():
     account = operator_slot()
     with agent_lock(args.root / "receipts" / account):
         while True:
-            pending = run_once(args.root, args.package, document, account)
+            try:
+                pending = run_once(args.root, args.package, document, account)
+            except RuntimeError as exc:
+                if not args.watch or not str(exc).startswith("Registry locked."):
+                    raise
+                time.sleep(17 + c.SLOTS.index(account))
+                continue
             if not args.watch or not pending:
                 break
             time.sleep(60)

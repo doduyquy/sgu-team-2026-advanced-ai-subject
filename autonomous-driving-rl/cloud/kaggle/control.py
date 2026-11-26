@@ -413,8 +413,12 @@ def plan_learning_resume(args, state):
     compare_utd = getattr(args, "reduce_guided_utd_after", None)
     actor_lr_control = getattr(args, "dampen_guided_actor_after", None)
     comparison_id = compare_utd or actor_lr_control
+    deadline = getattr(args, "campaign_deadline", None)
+    if deadline is not None and (not guided or comparison_id or not
+            1800 <= deadline - datetime.now(timezone.utc).timestamp() <= 43200):
+        raise ValueError("Timeboxed GuidedSAC requires 30 minutes to 12 hours remaining")
     budgets = (5000,) if comparison_id else ((10000, 12500, 25000, 50000, 100000) if guided else (12500, 25000, 50000))
-    if args.transitions not in budgets:
+    if args.transitions not in ((4_000_000,) if deadline else budgets):
         raise ValueError("Unsupported continuation budget for this learner")
     step = getattr(args, "parent_step", None)
     parent, state_sha = parent_checkpoint(state, args.parent, step)
@@ -431,7 +435,7 @@ def plan_learning_resume(args, state):
         raise ValueError("Production options require a Guided SAC continuation")
     if autonomous and (traffic_guidance or teacher):
         raise ValueError("Autonomous collection and traffic guidance cannot be combined")
-    if seconds is not None and not 1800 <= seconds <= 14400:
+    if seconds is not None and not 1800 <= seconds <= (43200 if deadline else 14400):
         raise ValueError("Production time budget must be 1,800–14,400 seconds")
     if comparison_id:
         comparison = state["jobs"][comparison_id]
@@ -469,6 +473,9 @@ def plan_learning_resume(args, state):
         with zipfile.ZipFile(archive) as runtime:
             files = json.loads(runtime.read("source_inventory.json"))["files"]
         inventories.append({name: digest for name, digest in files.items() if name not in allowed})
+    if deadline:
+        for inventory in inventories:
+            inventory.pop("cloud/kaggle/runtime.py", None)
     policy_hooks = "cloud/kaggle/learning_hooks.py" in files
     if inventories[0] != inventories[1] or planned["source_sha"] != bundle["source_sha"]:
         raise RuntimeError("Full-state continuation requires the original learner, dependencies, and TRAIN schedule")
@@ -485,9 +492,16 @@ def plan_learning_resume(args, state):
         job["parent_step"] = step
     if policy_hooks:
         job["policy_every"] = 2500
+    for key in ("campaign_deadline", "bounded_guided_replay"):
+        job.pop(key, None)
     if guided:
         live_rows = checkpoint["external_admitted"] + checkpoint["transitions"]
-        capacity = max(checkpoint["identity"]["capacity"], math.ceil((live_rows + args.transitions) / 4096) * 4096)
+        parent_bounded = checkpoint["identity"].get("bounded_guided_replay", False)
+        if parent_bounded and not deadline:
+            raise ValueError("Bounded replay requires explicit timeboxed continuation")
+        capacity = checkpoint["identity"]["capacity"] if parent_bounded else (
+            max(checkpoint["identity"]["capacity"], 122880) if deadline else
+            max(checkpoint["identity"]["capacity"], math.ceil((live_rows + args.transitions) / 4096) * 4096))
         if capacity * 3300 + 32_000_000 > LONG_PARENT_LIMIT:
             raise ValueError("Projected Guided replay exceeds the verified long-parent transport budget")
         job.update(guided_resume=True, capacity=capacity, max_seconds=seconds or 2400, export_reserve=480,
@@ -533,6 +547,18 @@ def plan_learning_resume(args, state):
             job["policy_every"] = 5000
         if not comparison_id and (device or seconds or next_phase or traffic_guidance or teacher or autonomous or args.transitions >= 50000):
             job["production_continuation"] = True
+        if deadline:
+            if not seconds or not policy_hooks:
+                raise ValueError("Timeboxed training requires an explicit runtime and screening hooks")
+            lr = getattr(args, "campaign_actor_lr", None)
+            if lr not in (None, 0.25):
+                raise ValueError("Unknown campaign actor update profile")
+            if lr is not None:
+                job["guided_actor_lr_scale"] = lr
+            job.update(campaign_deadline=deadline, bounded_guided_replay=True, policy_every=50000,
+                       guided_gradient_steps=1,
+                       checkpoint_every=250000, export_reserve=900, production_continuation=True,
+                       parallel_workload=f"window-{args.round}")
         if comparison_id:
             if execution["capacity"] < capacity:
                 raise ValueError("The matched control capacity cannot retain the experiment replay")
@@ -937,7 +963,7 @@ def launch(args, state):
                  "j09": "easy_long", "j10": "easy_resume", "j11": "easy_guided"}
         budget = 2400 if job["role"] in {"easy_long", "easy_resume"} else RECIPE["preflight"]["max_seconds"]
         production = (job.get("production_continuation") and job.get("guided_resume") and job.get("parent_sha")
-                      and 1800 <= job["max_seconds"] <= 14400)
+                      and 1800 <= job["max_seconds"] <= (43200 if job.get("campaign_deadline") else 14400))
         if (sessions is not None or roles.get(args.job) != job["role"]
                 or (job["max_seconds"] != budget and not production)):
             raise RuntimeError("Server admission requires unknown capacity and a gated Stage 5 follow-up preflight")
@@ -1049,6 +1075,8 @@ def launch(args, state):
         entry["admission_probe"] = {"capacity": "UNKNOWN", **repair, **probe_inventory(alias, owner, ref)}
     if server_admission:
         entry["server_admission"] = {"capacity": "UNKNOWN", **probe_inventory(alias, owner, ref)}
+    if job.get("campaign_deadline") and job["campaign_deadline"] - datetime.now(timezone.utc).timestamp() < 1800:
+        raise RuntimeError("Campaign deadline leaves less than 30 minutes before submission")
     entry.update(status="SUBMITTING", owner=owner, ref=ref, execution=actual_job, submitted=now())
     persist(state)
     try:
@@ -1131,7 +1159,12 @@ def verify_state_artifact(manifest, out, expected):
     metrics = read(out / "metrics.json")
     fingerprint(metrics)
     if manifest["result"] == "COMPLETE":
-        if metrics["transitions"] != expected["transitions"] or metrics["updates"] <= 0:
+        transitions = metrics["transitions"]
+        valid_count = transitions == expected["transitions"]
+        if expected.get("campaign_deadline"):
+            valid_count = (0 < transitions <= expected["transitions"] and transitions % expected["workers"] == 0
+                           and metrics["termination_budget"] == ("transitions" if valid_count else "time"))
+        if not valid_count or metrics["updates"] <= 0:
             raise ValueError("Complete artifact does not show the planned collection and updates")
         if manifest["files"]["model.zip"] == SOURCE_SHA:
             raise ValueError("The historical warm-start model cannot be a resume checkpoint")
@@ -1397,13 +1430,22 @@ def verify_cloud_evidence(path, manifest, entry, state):
                 base_lr = identity["source_recipe"]["sac"]["learning_rate"]
                 if not math.isclose(metrics["guided_actor_lr"], base_lr * actor_lr_scale):
                     raise ValueError("Cloud guided actor learning rate differs from the plan")
+            live_rows = guided_rows + manifest["transitions"]
+            if job.get("bounded_guided_replay"):
+                identity["bounded_guided_replay"] = True
+                live_rows = min(live_rows, job["capacity"])
+                digest = metrics["protected_replay_sha"]
+                if (not re.fullmatch("[0-9a-f]{64}", digest)
+                        or parent_metrics.get("protected_replay_sha", digest) != digest
+                        or metrics["online_evicted_rows"] != guided_rows + manifest["transitions"] - live_rows):
+                    raise ValueError("Bounded replay did not preserve the guided prefix or reconcile evictions")
             if (manifest["identity"] != identity or manifest["learning_mode"] != parent["learning_mode"]
                     or manifest["ledger"] != parent["ledger"] or manifest["external_admitted"] != guided_rows
                     or metrics["online_behavior"] != behavior
                     or metrics["guided_prefill"] != parent_metrics["guided_prefill"]
                     or metrics["guided_prefill"]["ledger"] != parent["ledger"]
-                    or metrics["guided_live_rows"] != guided_rows or metrics["online_live_rows"] != manifest["transitions"]
-                    or metrics["replay_size"] != guided_rows + manifest["transitions"]
+                    or metrics["guided_live_rows"] != guided_rows or metrics["online_live_rows"] != live_rows - guided_rows
+                    or metrics["replay_size"] != live_rows
                     or sum(metrics["online_progress_bands"].values()) != metrics["transitions"]
                     or metrics["updates"] != expected_updates):
                 raise ValueError("Guided continuation did not retain replay provenance, behavior or accounting")
