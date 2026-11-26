@@ -1039,3 +1039,45 @@ def test_followup_server_admission_respects_account_and_receipt(tmp_path, monkey
         assert len(submissions) == 1
         assert entry["status"] == "SUBMIT_UNKNOWN"
 
+
+
+
+def test_bounded_replay_wrap_protects_guided_prefix(monkeypatch):
+    from types import SimpleNamespace
+    from cloud.kaggle import guided, runtime
+
+    writes = []
+
+    def store(model, buffer, value):
+        writes.append(buffer.pos)
+        buffer.observations[buffer.pos, 0] = value
+        buffer.pos += 1
+        if buffer.pos == buffer.buffer_size:
+            buffer.pos, buffer.full = 0, True
+
+    monkeypatch.setattr(runtime.TimedSAC, "_store_transition", store)
+    rows = SimpleNamespace(pos=3, full=False, buffer_size=4)
+    for field in guided.REPLAY_FIELDS:
+        setattr(rows, field, np.arange(4, dtype=np.float32).reshape(4, 1).copy())
+    model = object.__new__(guided.GuidedSAC)
+    model.protected_replay_slots = 2
+    before = guided.prefix_sha(rows, 2)
+    for value in (40, 50, 60, 70):
+        model._store_transition(rows, value)
+    assert writes == [3, 2, 3, 2]
+    assert rows.full and guided.prefix_sha(rows, 2) == before
+
+
+def test_window_active_evidence_excludes_notebook_initialization(monkeypatch):
+    from cloud.kaggle import campaign
+
+    entry = {"status": "RUNNING", "version": 1, "ref": "private/job",
+             "planned": {"start_transition": 30000}}
+    monkeypatch.setattr(campaign.c, "current_private_kernel_version", lambda *args: 1)
+    monkeypatch.setattr(campaign.c, "cli", lambda *args, **kwargs: (0, "Installing dependencies"))
+    initial = campaign.training_evidence("account_01", entry, {})
+    assert (initial["transitions"], initial["updates"]) == (0, 0)
+    monkeypatch.setattr(campaign.c, "cli", lambda *args, **kwargs: (0,
+        "TRAINING_ACTIVE transitions=64 updates=32\nPeriodic checkpoint step-000000250000 index_sha256=0123"))
+    learned = campaign.training_evidence("account_01", entry, {})
+    assert (learned["transitions"], learned["updates"]) == (220000, 32)

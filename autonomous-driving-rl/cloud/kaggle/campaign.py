@@ -7,6 +7,7 @@ import csv
 from datetime import datetime, timezone
 import hashlib
 import json
+import re
 from pathlib import Path
 from tempfile import mkdtemp
 import time
@@ -245,6 +246,33 @@ def candidate(job, entry):
     return result
 
 
+def training_evidence(account, entry, prior):
+    # Preserve earlier evidence when cloud logs are briefly unavailable.
+    evidence = prior.get("execution_evidence", {})
+    if entry["status"] == "HARVESTED_VERIFIED":
+        metrics = read(WORK / "harvest" / entry["planned"]["job"] / "metrics.json")
+        return {"source": "verified artifact", "observed_at": c.now(),
+                "transitions": metrics["transitions"], "updates": metrics["updates"]}
+    if entry["status"] != "RUNNING" or not entry.get("version"):
+        return evidence
+    checked = evidence.get("observed_at", {}).get("utc")
+    if checked and (datetime.now(timezone.utc) - datetime.fromisoformat(checked)).total_seconds() < 240:
+        return evidence
+    if c.current_private_kernel_version(account, entry["ref"]) != entry["version"]:
+        return evidence
+    code, logs = c.cli(account, ["kernels", "logs", f"{entry['ref']}/{entry['version']}"], timeout=20)
+    if code:
+        return evidence
+    transitions, updates = 0, 0
+    for steps, gradients in re.findall(r"^(?:TRAINING_ACTIVE|COMPLETE|PARTIAL) transitions=(\d+) updates=(\d+)", logs, re.M):
+        transitions, updates = max(transitions, int(steps)), max(updates, int(gradients))
+    for step in re.findall(r"^Periodic checkpoint step-(\d+) index_sha256=", logs, re.M):
+        transitions = max(transitions, int(step) - entry["planned"]["start_transition"])
+    return {"source": "versioned Kaggle log", "observed_at": c.now(),
+            "transitions": max(transitions, evidence.get("transitions", 0)),
+            "updates": max(updates, evidence.get("updates", 0))}
+
+
 def run_once(root, package, document, account):
     verify(package, document["package_sha"])
     _, own = slot(account)
@@ -273,6 +301,7 @@ def run_once(root, package, document, account):
             status["blocker"] = "MIXED_CANDIDATE_REQUIRED"
         else:
             job = item["job"]
+            prior = read(receipt) if receipt.exists() else {}
             with c.locked():
                 registry = c.registry()
                 row = registry["jobs"].get(job, {})
@@ -292,7 +321,9 @@ def run_once(root, package, document, account):
                             status["blocker"] = "LAUNCHER_UNRESOLVED_RECEIPT"
                         elif len(active) >= document["per_account_target"]:
                             status["blocker"] = "CAMPAIGN_ACCOUNT_TARGET_REACHED"
-                        elif capacity is None and active:
+                        elif capacity is None and active and (
+                                not document.get("window") or active[0]["status"] not in {"QUEUED", "RUNNING"}
+                                or active[0]["planned"].get("campaign_deadline") != document["window"]["deadline_epoch"]):
                             status["blocker"] = "LAUNCHER_UNKNOWN_CAPACITY_WITH_ACTIVE_RECEIPT"
                         elif capacity is not None and len(active) >= capacity:
                             status["blocker"] = "LAUNCHER_OBSERVED_CAPACITY_OCCUPIED"
@@ -337,11 +368,50 @@ def run_once(root, package, document, account):
                             status["candidate"] = result
                     except (ValueError, OSError, KeyError):
                         status["blocker"] = "ARTIFACT_REVIEW_REQUIRED"
+            if document.get("window") and row.get("version"):
+                status["execution_evidence"] = training_evidence(account, row, prior)
         write(receipt, status)
         print(item["session"], status["status"], status.get("blocker", ""), flush=True)
         if authorized and item["job"] and status["status"] not in TERMINAL:
             pending = True
     return pending
+
+
+def admit_window_sibling(root, document, account):
+    if "window" not in document or not verify_owner(account):
+        raise RuntimeError("Window admission requires the matching verified execution identity")
+    first, second = (row for row in document["sessions"] if row["account"] == account)
+    while time.time() < document["window"]["deadline_epoch"] - 1800:
+        try:
+            with c.locked():
+                registry = c.registry()
+                existing = registry["jobs"][second["job"]]
+                if existing["status"] != "PLANNED":
+                    print(second["session"], existing["status"], existing.get("version"), flush=True)
+                    return
+                primary = registry["jobs"][first["job"]]
+                if primary.get("version") and primary["status"] in c.ACTIVE:
+                    c.status(registry, first["job"])
+                if primary["status"] in {"QUEUED", "RUNNING", "HARVESTED_VERIFIED", "CLOUD_SUCCEEDED"}:
+                    _, record = slot(account)
+                    age = (datetime.now(timezone.utc) - datetime.fromisoformat(record["observed_at"])).total_seconds()
+                    capacity = record["concurrency_observed"] if 0 <= age <= 86400 else None
+                    if capacity is not None and capacity < 2 and primary["status"] in c.ACTIVE:
+                        print(second["session"], "LAUNCHER_OBSERVED_CAPACITY_OCCUPIED", flush=True)
+                        return
+                    request = SimpleNamespace(job="j10", campaign="stage5", round=second["round"],
+                                              fingerprint=second["plan_fingerprint"], server_admission=capacity is None)
+                    c.launch(request, registry)
+                    return
+                if primary["status"] in TERMINAL or primary["status"] in {"SUBMIT_UNKNOWN", "STATUS_UNKNOWN"}:
+                    print(second["session"], "FIRST_SESSION_RECONCILIATION_REQUIRED", flush=True)
+                    return
+        except c.DatasetPending:
+            print(second["session"], "API_PRIVATE_INPUT_PROCESSING", flush=True)
+        except RuntimeError as exc:
+            if not str(exc).startswith("Registry locked."):
+                raise
+        time.sleep(31 + c.SLOTS.index(account))
 
 
 def report(root, document):
@@ -361,6 +431,8 @@ def report(root, document):
               "running": sum(row["api_status"] == "RUNNING" and not row.get("api_status_stale") for row in rows),
               "stale_active": sum(row["api_status"] in c.ACTIVE and row.get("api_status_stale", False) for row in rows),
               "complete": sum(row["api_status"] == "COMPLETE" for row in rows),
+              "collection_started": sum(row.get("execution_evidence", {}).get("transitions", 0) > 0 for row in rows),
+              "updates_started": sum(row.get("execution_evidence", {}).get("updates", 0) > 0 for row in rows),
               "not_deployed": sum(not row["submitted"] for row in rows)}
     candidates = [{**r["candidate"], "account": r["account"], "job": r["job"]} for r in rows if r.get("candidate")]
     eligible = [r for r in candidates if r["panels"].get("Medium", {}).get("clean_successes", 0) > 0
@@ -383,7 +455,7 @@ def report(root, document):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("init", "agent", "report", "enqueue", "prepare-window"))
+    parser.add_argument("command", choices=("init", "agent", "report", "enqueue", "prepare-window", "admit-window-sibling"))
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--package", type=Path)
     parser.add_argument("--watch", action="store_true")
@@ -419,6 +491,10 @@ def main():
         report(args.root, document)
         return
     account = operator_slot()
+    if args.command == "admit-window-sibling":
+        with agent_lock(args.root / "dispatch" / account):
+            admit_window_sibling(args.root, document, account)
+        return
     with agent_lock(args.root / "receipts" / account):
         while True:
             try:

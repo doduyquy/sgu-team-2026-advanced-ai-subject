@@ -228,6 +228,8 @@ def train(args):
             identity["traffic_guidance"] = traffic_profile
         if parent_teacher_sha:
             identity["traffic_teacher_sha"] = parent_teacher_sha
+        if parent["identity"].get("bounded_guided_replay"):
+            identity["bounded_guided_replay"] = True
         return {**identity, "online_behavior": BEHAVIOR}
 
     class ResumedGuidedSAC(GuidedSAC):

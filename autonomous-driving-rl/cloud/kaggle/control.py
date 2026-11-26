@@ -812,7 +812,7 @@ def kernel_state(code, output):
         return "CAPACITY_REJECTED"
     return label
 
-def probe_inventory(alias, owner, target):
+def probe_inventory(alias, owner, target, known_active=()):
     # Kaggle lists saved notebooks, and its status endpoint describes their latest run.
     # Interactive sessions and available CPU slots are not exposed by these calls.
     arguments = ["kernels", "list", "--mine", "--page-size", "100", "--sort-by", "dateRun", "--format", "json"]
@@ -854,7 +854,7 @@ def probe_inventory(alias, owner, target):
     for ref in recent:
         code, output = cli(alias, ["kernels", "status", ref], timeout=25, include_stderr=True)
         label = kernel_state(code, output)
-        if label in {"QUEUED", "RUNNING"}:
+        if label in {"QUEUED", "RUNNING"} and ref not in known_active:
             raise RuntimeError("A recent Kaggle notebook is queued or running")
         no_visible_session += label == "STATUS_UNKNOWN"
     return {"notebooks_listed": len(refs), "unaddressable_or_unowned": len(rows) - len(owned),
@@ -967,7 +967,15 @@ def launch(args, state):
         if (sessions is not None or roles.get(args.job) != job["role"]
                 or (job["max_seconds"] != budget and not production)):
             raise RuntimeError("Server admission requires unknown capacity and a gated Stage 5 follow-up preflight")
-        if active or any(
+        known_active = ()
+        if job.get("campaign_deadline") and len(active) == 1:
+            sibling = active[0]
+            if (sibling["status"] in {"QUEUED", "RUNNING"} and sibling.get("version")
+                    and sibling["planned"].get("campaign_deadline") == job["campaign_deadline"]
+                    and sibling["planned"]["round"] != job["round"]):
+                if current_private_kernel_version(alias, sibling["ref"]) == sibling["version"]:
+                    known_active = (sibling["ref"],)
+        if (active and not known_active) or any(
             row["planned"]["campaign"] == job["campaign"]
             and ((row.get("submitted") and row["planned"]["role"] == job["role"]
                   and row["planned"]["account"] == job["account"]
@@ -1074,7 +1082,9 @@ def launch(args, state):
     if admission_probe:
         entry["admission_probe"] = {"capacity": "UNKNOWN", **repair, **probe_inventory(alias, owner, ref)}
     if server_admission:
-        entry["server_admission"] = {"capacity": "UNKNOWN", **probe_inventory(alias, owner, ref)}
+        entry["server_admission"] = {"capacity": "UNKNOWN", "reconciled_active": len(known_active),
+                                     **(probe_inventory(alias, owner, ref, known_active) if known_active
+                                        else probe_inventory(alias, owner, ref))}
     if job.get("campaign_deadline") and job["campaign_deadline"] - datetime.now(timezone.utc).timestamp() < 1800:
         raise RuntimeError("Campaign deadline leaves less than 30 minutes before submission")
     entry.update(status="SUBMITTING", owner=owner, ref=ref, execution=actual_job, submitted=now())
