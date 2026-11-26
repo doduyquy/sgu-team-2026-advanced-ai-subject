@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
+import time
 from types import SimpleNamespace
 import zipfile
 
@@ -19,6 +20,10 @@ STATE = "253fe755507ca860f93a0a881e09d795d9c4d8920d5bd621e69f08947b9de591"
 MODEL = "f82ca94d27ebd9fc3468081e20631536c959990a708398f5474bebee986e6d07"
 WORKLOADS = {
     "medium": ("account_01", 10000, {"phase": "medium", "guided_curriculum_from": "easy"}),
+    "easy-t4": ("account_01", 25000, {"device": "cuda", "accelerator": "NvidiaTeslaT4",
+                                    "guided_actor_lr_scale": 0.25, "capacity": 36864,
+                                    "max_seconds": 3600, "production_continuation": True,
+                                    "policy_every": 5000}),
     "main": ("account_02", 10000, {}),
     "steering": ("account_03", 5000, {"guided_rollout_axis": "steering"}),
     "throttle": ("account_04", 5000, {"guided_rollout_axis": "throttle_brake"}),
@@ -211,6 +216,24 @@ def run_companion(args, registry):
     print(sha(marker))
 
 
+def launch_workload(args):
+    for attempt in range(5):
+        try:
+            with c.locked():
+                registry = c.registry()
+                job = plan(args.package, args.sha, args.workload, registry)
+                args.job, args.campaign, args.round = "j10", job["campaign"], job["round"]
+                args.fingerprint = read(WORK / f"plan-stage5-{job['round']}.json")["fingerprint"]
+                c.launch(args, registry)
+                print(job["job"])
+                return
+        except c.DatasetPending:
+            if attempt == 4:
+                raise
+            print("Waiting on private dataset readiness", flush=True)
+            time.sleep(12)
+
+
 def main():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest="command", required=True)
@@ -234,6 +257,9 @@ def main():
         else:
             command.add_argument("--publish", action="store_true")
     args = parser.parse_args()
+    if args.command == "launch":
+        launch_workload(args)
+        return
     with c.locked():
         registry = c.registry()
         if args.command == "export":
@@ -242,10 +268,6 @@ def main():
             run_companion(args, registry)
         else:
             job = plan(args.package, args.sha, args.workload, registry)
-            if args.command == "launch":
-                args.job, args.campaign, args.round = "j10", job["campaign"], job["round"]
-                args.fingerprint = read(WORK / f"plan-stage5-{job['round']}.json")["fingerprint"]
-                c.launch(args, registry)
             print(job["job"])
 
 

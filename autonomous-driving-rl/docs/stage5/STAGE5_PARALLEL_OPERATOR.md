@@ -5,6 +5,7 @@ Each member runs one assigned slot on their own Windows session and Kaggle accou
 | Slot | Workload | Execution |
 | --- | --- | --- |
 | 01 | `medium` | CPU, two environments, 10k new decisions, Easy 35% and Medium 65% episode scheduling |
+| 01 | `easy-t4` | T4, two environments, 25k new decisions, UTD 0.5 and quarter actor learning rate |
 | 02 | `main` | CPU, two environments, Guided SAC with UTD 0.5, 10k new decisions |
 | 03 | `steering` | CPU, two environments, champion steering during collection, 5k new decisions |
 | 04 | `throttle` | CPU, two environments, champion throttle/brake during collection, 5k new decisions |
@@ -28,7 +29,7 @@ $digest = 'SHA256_RECEIVED_FROM_THE_PACKAGE_OWNER'
 python -B -m cloud.kaggle.parallel launch --package $parcel --sha $digest --workload main --server-admission
 ```
 
-Use your assigned slot and workload. Omit `--server-admission` when a fresh owner observation is already registered. With unknown capacity the flag checks the operator's notebook inventory, then performs a single server-admitted submit. If the launcher reports that a private input is still processing, run the same command to check its readiness. A submission receipt prevents another push. Preserve receipts for `SUBMIT_UNKNOWN` or capacity rejection for reconciliation.
+Use your assigned slot and workload. Slot 01 runs one of its workloads at a time while concurrency remains unknown. Omit `--server-admission` when a fresh owner observation is already registered. With unknown capacity the flag checks the operator's notebook inventory, then performs a single server-admitted submit. The launcher automatically rechecks private dataset readiness. A submission receipt prevents another push. Preserve receipts for `SUBMIT_UNKNOWN` or capacity rejection for reconciliation.
 
 ```powershell
 python -B -m cloud.kaggle.control status --job JOB_PRINTED_BY_LAUNCHER
