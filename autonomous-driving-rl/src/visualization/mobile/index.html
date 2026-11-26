@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#071116">
+<title>XETUHANH · Tay lái</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#ecf5f8;background:#071116;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{position:fixed;inset:0;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
+#app{position:fixed;left:var(--app-left,0px);top:var(--app-top,0px);width:100%;width:var(--app-width,100vw);height:100vh;height:var(--app-height,100dvh);overflow:hidden;isolation:isolate;--edge-left:max(12px,env(safe-area-inset-left,0px));--edge-right:max(12px,env(safe-area-inset-right,0px));--edge-top:max(6px,env(safe-area-inset-top,0px));--edge-bottom:max(12px,env(safe-area-inset-bottom,0px));--control-height:clamp(60px,calc(var(--app-height,100vh) * .22),88px);--control-width:clamp(56px,8vw,76px)}
+button,select{font:inherit;color:inherit;background:#152932;border:1px solid #42616b;border-radius:12px;padding:12px;min-height:44px;touch-action:manipulation}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:active,.held{background:#3adbb0!important;color:#05251f!important}
+button:disabled{opacity:.45}
+[hidden]{display:none!important}
+#view{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#060d12;pointer-events:none}
+#shade{position:absolute;inset:0;background:linear-gradient(#061016a0,transparent 20%,transparent 88%,#06101675);pointer-events:none}
+.top{position:absolute;top:var(--edge-top);left:var(--edge-left);right:var(--edge-right);display:grid;grid-template-columns:minmax(48px,1fr) auto minmax(70px,1fr) auto;gap:10px;align-items:center;min-height:44px;text-shadow:0 1px 3px #000}
+.brand{font-weight:800;letter-spacing:.1em;font-size:12px;color:#54e5bc}
+.top>.brand{display:none}
+#connection{font-size:10px;color:#c4d8df;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.speedometer{white-space:nowrap}
+#speed{font-size:28px;font-weight:800}
+small{font-size:11px;color:#a6bdc6}
+.toolbar{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;min-width:0}
+.toolbar{grid-auto-columns:auto}
+.toolbar button{padding:8px 10px;font-size:11px;background:#10242bf2;white-space:nowrap;min-width:44px}
+#more{font-size:18px;letter-spacing:1px}
+#wheel{position:absolute;left:var(--edge-left);bottom:var(--edge-bottom);height:var(--control-height);display:grid;grid-template-columns:repeat(2,var(--control-width));gap:8px;touch-action:none}
+#wheel button{padding:0;border:1px solid #779ca9;background:#112b37e6;font-size:23px;font-weight:800;touch-action:none;min-width:0}
+#wheel small{display:block;font-size:9px;letter-spacing:.08em;color:inherit;margin-top:2px}
+#steerHint{display:none}
+.pedals{position:absolute;right:var(--edge-right);bottom:var(--edge-bottom);display:flex;gap:8px;align-items:flex-end}
+.pedals button{font-weight:800;font-size:11px;padding:0 3px;letter-spacing:.03em;border:1px solid #77949f;background:#152f3be6;width:var(--control-width);height:calc(var(--control-height) * .8);touch-action:none}
+.pedals #gas{height:var(--control-height);border-color:#52e8b8;background:#0b5242e6}
+#brake{color:#ffb9b9}
+#banner{position:absolute;top:28%;left:20%;right:20%;text-align:center;text-shadow:0 2px 5px #000;font-weight:bold;font-size:clamp(18px,3vw,24px);pointer-events:none}
+#lobby{position:absolute;inset:0;background:radial-gradient(ellipse at 70% 20%,#173e4a,#071116 65%);overflow-x:hidden;overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:max(20px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;align-items:center;z-index:10}
+#card{width:min(660px,100%);min-width:0;flex:none;margin-block:auto}
+h1{font-size:clamp(24px,4vw,38px);line-height:1.15;margin:12px 0}
+p{color:#b4cbd4;line-height:1.55;font-size:14px}
+.choices{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.choices label{display:grid;gap:7px;flex:1;min-width:0;font-size:12px;color:#a3bec9}
+.choices select{width:100%;min-width:0;font-size:16px}
+#connect,#start{background:#4de3b5;color:#062b22;font-weight:800;border:0;padding:16px 24px}
+#start{display:none}
+#lobbyDisconnect{margin-top:10px;font-size:12px}
+#error{color:#ffb59d;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+#error:empty{display:none}
+.hint{font-size:12px;color:#83a6b5}
+#cockpit{position:absolute;bottom:-20px;left:22%;right:22%;height:75px;background:linear-gradient(#182d36,#03090d);border-radius:60% 60% 0 0;border-top:4px solid #647b83;display:none;pointer-events:none}
+#raceInfo{text-align:center;font-size:12px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;pointer-events:none}
+#driveMenu{position:absolute;z-index:6;right:var(--edge-right);top:calc(var(--edge-top) + 50px);width:min(310px,calc(100% - var(--edge-left) - var(--edge-right)));max-height:calc(100% - var(--edge-top) - var(--edge-bottom) - 50px);overflow-y:auto;touch-action:pan-y;background:#0c1b23fa;border:1px solid #42616b;border-radius:14px;padding:14px;box-shadow:0 8px 28px #0009}
+#driveMenu header{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:700}
+#menuClose{min-width:44px;padding:6px;font-size:20px}
+#driveMenu label{display:block;margin:12px 0 6px;font-size:12px;color:#b4cbd4}
+#driveQuality{width:100%;font-size:16px;padding:9px}
+.menu-actions{display:flex;gap:8px;margin-top:12px}
+.menu-actions button{flex:1;font-size:12px;padding:8px}
+#carName{font-size:12px;color:#e8f0f3;margin:8px 0}
+#ruleStatus{color:#b4cbd4;font-size:11px;line-height:1.5;margin-top:10px}
+#ruleSummary{border-left:3px solid #54e5bc;padding:8px 12px;background:#0d252e;border-radius:6px;font-size:12px}
+#lastResult{color:#ffcf98;font-weight:700}
+#lastResult:empty{display:none}
+#portrait{display:none;position:absolute;bottom:max(4px,env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;color:#80a6b6;font-size:11px;pointer-events:none}
+#resumeVideo{position:absolute;top:42%;left:50%;transform:translateX(-50%);z-index:5;background:#17483c;max-width:80%}
+#resumeVideo[hidden]{display:none}
+#app.portrait{--control-width:clamp(56px,16vw,70px);--control-height:84px;--edge-bottom:max(38px,calc(env(safe-area-inset-bottom,0px) + 22px))}
+.portrait .top{grid-template-columns:minmax(0,1fr) auto auto;gap:6px}
+.portrait #connection{grid-column:1/-1;font-size:10px}
+.portrait #raceInfo{grid-column:1;grid-row:2;text-align:left;font-size:11px}
+.portrait .speedometer{grid-column:2;grid-row:2}
+.portrait .toolbar{grid-column:3;grid-row:2}
+.portrait .toolbar button{font-size:10px;padding:6px}
+.portrait #speed{font-size:23px}
+.portrait #driveMenu{top:calc(var(--edge-top) + 72px);max-height:calc(100% - var(--edge-top) - var(--edge-bottom) - 72px)}
+.portrait #portrait{display:block}
+.compact-landscape #lobby{padding-top:max(12px,env(safe-area-inset-top,0px));padding-bottom:max(12px,env(safe-area-inset-bottom,0px))}
+.compact-landscape #card{width:min(1000px,100%);display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,1fr);column-gap:24px;align-items:center}
+.compact-landscape h1{font-size:clamp(24px,4vw,34px);margin:10px 0}
+.compact-landscape .lobby-intro p{font-size:13px;margin:8px 0;line-height:1.45}
+.compact-landscape .choices{margin:0 0 12px}
+.compact-landscape #connect,.compact-landscape #start{width:100%;padding:13px 12px}
+.compact-landscape #error{margin:8px 0;font-size:12px}
+.compact-landscape #help{margin:8px 0;font-size:11px}
+.tiny-landscape #help{display:none}
+.tiny-landscape .top{gap:8px}
+.tiny-landscape #speed{font-size:24px}
+.tiny-landscape .toolbar button{padding:7px;font-size:10px}
+.tiny-landscape #steerHint{display:none}
+
+#streamStats{display:block;width:100%;margin-top:12px;padding:8px;border:1px solid #294a4d;border-radius:8px;background:#071a20;color:#8eeacb;font-size:10px;line-height:1.5;min-height:44px;white-space:normal;text-align:left}
+#streamStats.degraded{color:#ffd589;border-color:#80613b}
+.stream-options{display:flex;gap:10px;align-items:center;font-size:12px;color:#a3bec9;margin:0 0 12px}
+.stream-options select{flex:1;min-width:0;font-size:16px}
+.tiny-landscape #error{font-size:11px;line-height:1.25;margin:4px 0;max-height:2.5em;overflow:auto}
+</style>
+<body>
+<div id="app">
+<video id="view" autoplay playsinline webkit-playsinline muted disablepictureinpicture></video><div id="shade"></div>
+<div class="top"><span id="connection">Chưa kết nối</span><div class="speedometer"><span id="speed">0</span> <small>km/h</small></div><div id="raceInfo"></div><div class="toolbar"><button id="camera">Bám sau</button><button id="pause">Dừng</button><button id="more" aria-label="Mở tùy chọn" aria-expanded="false" aria-controls="driveMenu">···</button></div></div>
+<button id="resumeVideo" hidden>Chạm để hiện lại hình</button>
+<section id="driveMenu" aria-label="Tùy chọn lái" hidden><header>Tùy chọn <button id="menuClose" aria-label="Đóng tùy chọn">×</button></header><div id="carName"></div><label for="driveQuality">Chất lượng hình</label><select id="driveQuality"><option value="auto">Auto · tự nâng đến 720p</option><option value="smooth">Mượt · 360p</option><option value="balanced">Cân bằng · 540p</option><option value="hd">Rõ nét · 720p</option></select><button id="streamStats" aria-live="off" title="Chạm để đổi chất lượng" aria-label="Đổi chất lượng hình">Đang chuẩn bị hình…</button><div id="ruleStatus">Đua công bằng · Vạch liền / va chạm: bị loại</div><div class="menu-actions"><button id="recover">Về đường</button><button id="leave">Thoát tay lái</button></div></section>
+<div id="banner"></div><div id="cockpit"></div>
+<div id="wheel" role="group" aria-label="Đánh lái"><button id="steerLeft" aria-label="Đánh lái trái" aria-pressed="false">◀<small>TRÁI</small></button><button id="steerRight" aria-label="Đánh lái phải" aria-pressed="false">▶<small>PHẢI</small></button></div><div id="steerHint">Giữ để rẽ · Thả để trả lái</div>
+<div class="pedals"><button id="brake">PHANH</button><button id="gas">GA</button></div>
+<div id="lobby"><main id="card"><div class="lobby-intro"><div class="brand">XETUHANH / PHONE RACING</div><h1>Cầm lái. Đua cùng AI.</h1><p>Laptop chạy cuộc đua. Điện thoại là màn hình và tay lái của bạn.<br>Giữ nút ◀ / ▶ bên trái để rẽ, thả để trả lái. Giữ GA bên phải để tăng tốc.</p><p id="ruleSummary">Cùng luật với AI: đè vạch liền, ra khỏi đường hoặc va chạm thì bị loại. Vạch đứt được đổi làn. Không đưa xe về đường trong cuộc đua.</p><p id="lastResult" role="status"></p></div><div class="lobby-actions"><div class="choices"><label>Xe của bạn<select id="model"><option value="lamborghini">Lamborghini Aventador</option><option value="tesla">Tesla Cybertruck</option><option value="vf3">VinFast VF3</option></select></label><label>Chế độ<select id="mode"><option value="human">Bạn đua với AI</option><option value="practice">Tập lái · không xếp hạng</option></select></label></div><div class="stream-options"><label for="quality">Chất lượng hình</label><select id="quality"><option value="auto">Auto · đến 720p</option><option value="smooth">Mượt · 360p</option><option value="balanced">Cân bằng · 540p</option><option value="hd">Rõ nét · 720p</option></select></div><button id="connect">KẾT NỐI TAY LÁI</button><button id="start">SẴN SÀNG · XUẤT PHÁT →</button><button id="lobbyDisconnect" hidden>Ngắt kết nối tay lái</button><p id="error"></p><p class="hint" id="help">Chọn đối thủ AI và đường trên laptop. Hai máy cần cùng Wi-Fi.<br>Chưa có mã ghép nối? Quét QR trong mục Điện thoại trên laptop.</p></div></main></div><div id="portrait">Xoay ngang điện thoại để lái thoải mái hơn</div>
+</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),token=new URLSearchParams(location.hash.slice(1)).get('token');
+let pc,drive,commands,seq=0,steering=0,gas=false,brake=false,connected=false,raceState='garage',viewMode='chase',keyboard=new Set(),lastTelemetry=0,rotationBrakeUntil=0,playerFinished=false;
+let connectionEpoch=0,connectionAbort=null,handshakeTimer=0,syncConnection=()=>{},needsDriverJoin=false;
+const activePointers=new Map();
+const names={chase:'Bám sau',hood:'Nắp capo',driver:'Ghế lái'};
+let qualityChoice='auto',networkRTT=null,decodedFps=null,lastDecoderStats=null,lastStream={},poorSamples=0,goodSamples=0,lastAdapt=-10000,statsPending=false;
+function renderStreamStats(){const encoder=lastStream.encoder==='h264_qsv'?'GPU Intel':lastStream.encoder==='h264_nvenc'?'GPU NVIDIA':lastStream.encoder==='libx264'?'CPU':'Đang mở hình';const height=lastStream.resolution?.[1];$('streamStats').textContent=`${{auto:'Auto',smooth:'Mượt',balanced:'Cân bằng',hd:'Rõ nét'}[qualityChoice]} · ${decodedFps==null?'—':Math.round(decodedFps)} FPS · mạng ${networkRTT==null?'—':Math.round(networkRTT)} ms · ${encoder}${height?' · '+height+'p':''}`;$('streamStats').classList.toggle('degraded',(decodedFps!=null&&decodedFps<20)||(networkRTT!=null&&networkRTT>120));}
+function adaptStreamQuality(){
+  if(qualityChoice!=='auto'||raceState!=='running'||performance.now()-lastAdapt<8000)return;
+  const height=lastStream.resolution?.[1];if(!height||decodedFps==null)return;
+  const encode=lastStream.encode_p95_ms??lastStream.encode_ms??0;
+  const poor=decodedFps<20||(networkRTT!=null&&networkRTT>120)||encode>28;
+  const good=!poor&&decodedFps>=26&&networkRTT!=null&&networkRTT<80&&encode<22;
+  poorSamples=poor?poorSamples+1:0;goodSamples=good?goodSamples+1:0;
+  let next=null;
+  if(poorSamples>=3&&height>360)next=height>540?'balanced':'smooth';
+  else if(goodSamples>=6&&height<720)next=height<=360?'balanced':'hd';
+  if(next){command('quality',next);lastAdapt=performance.now();poorSamples=goodSamples=0;}
+}
+async function inspectStream(){if(!connected||!pc||statsPending||document.hidden)return;statsPending=true;try{if(commands?.readyState==='open')commands.send(JSON.stringify({type:'ping',t:performance.now()}));const report=await pc.getStats();let sample=null;for(const row of report.values()){if(row.type==='inbound-rtp'&&(row.kind==='video'||row.mediaType==='video'))sample=row;}if(sample&&typeof sample.framesDecoded==='number'){if(lastDecoderStats&&sample.timestamp>lastDecoderStats.time){decodedFps=Math.max(0,(sample.framesDecoded-lastDecoderStats.frames)*1000/(sample.timestamp-lastDecoderStats.time));}lastDecoderStats={frames:sample.framesDecoded,time:sample.timestamp};}else{const video=$('view'),count=video.getVideoPlaybackQuality?.().totalVideoFrames??video.webkitDecodedFrameCount;if(typeof count==='number'){const now=performance.now();if(lastDecoderStats)decodedFps=Math.max(0,(count-lastDecoderStats.frames)*1000/(now-lastDecoderStats.time));lastDecoderStats={frames:count,time:now};}}renderStreamStats();adaptStreamQuality();}catch(error){console.debug('Stream stats unavailable',error);}finally{statsPending=false;}}
+function setQuality(value){qualityChoice=value;$('quality').value=$('driveQuality').value=value;poorSamples=goodSamples=0;lastAdapt=performance.now();command('quality',qualityChoice);renderStreamStats();}
+$('streamStats').onclick=()=>{const choices=['auto','smooth','balanced','hd'];setQuality(choices[(choices.indexOf(qualityChoice)+1)%choices.length]);};
+$('quality').onchange=()=>setQuality($('quality').value);
+$('driveQuality').onchange=()=>setQuality($('driveQuality').value);
+setInterval(inspectStream,1000);
+
+function syncControls(){const has=(id,...keys)=>activePointers.has(id)||keys.some(key=>keyboard.has(key));steering=(has('steerRight','ArrowRight','d')?1:0)-(has('steerLeft','ArrowLeft','a')?1:0);gas=has('gas','ArrowUp','w');brake=has('brake','ArrowDown','s');for(const id of ['steerLeft','steerRight','gas','brake']){const held=has(id,...({steerLeft:['ArrowLeft','a'],steerRight:['ArrowRight','d'],gas:['ArrowUp','w'],brake:['ArrowDown','s']}[id]));$(id).classList.toggle('held',held);$(id).setAttribute('aria-pressed',String(held));}}
+function resetInputs(){const previous=[...activePointers];activePointers.clear();keyboard.clear();syncControls();for(const [id,pointer] of previous){const element=$(id);if(element.hasPointerCapture(pointer))element.releasePointerCapture(pointer);}sendInput();}
+function sendInput(){if(drive?.readyState==='open'&&drive.bufferedAmount<8192){const active=raceState==='running'&&!playerFinished&&!document.hidden&&$('driveMenu').hidden&&performance.now()>=rotationBrakeUntil;drive.send(JSON.stringify({type:'input',seq:++seq,steering:active?steering:0,throttle:active?(brake?-1:gas?1:0):-1}));}}
+function showDriveMenu(show){$('driveMenu').hidden=!show;$('more').setAttribute('aria-expanded',String(show));resetInputs();}
+$('more').onclick=()=>showDriveMenu($('driveMenu').hidden);
+$('menuClose').onclick=()=>showDriveMenu(false);
+// Safari's address bar and rotation change the visual viewport independently
+// of the layout viewport. All HUD elements share this one measured surface.
+let viewportFrame=0,settleTimer=0,lastWidth=0,lastHeight=0;
+function resumeVideo(){const video=$('view');if(!video.srcObject||document.hidden)return;video.playsInline=true;video.muted=true;const attempt=video.play();attempt?.then(()=>{$('resumeVideo').hidden=true;}).catch(()=>{$('resumeVideo').hidden=false;});}
+function syncViewport(){viewportFrame=0;const viewport=window.visualViewport;const width=Math.round(viewport?.width||window.innerWidth);const height=Math.round(viewport?.height||window.innerHeight);const root=$('app');root.style.setProperty('--app-width',width+'px');root.style.setProperty('--app-height',height+'px');root.style.setProperty('--app-left',(viewport?.offsetLeft||0)+'px');root.style.setProperty('--app-top',(viewport?.offsetTop||0)+'px');root.classList.toggle('portrait',height>=width);root.classList.toggle('compact-landscape',width>height&&height<=480);root.classList.toggle('tiny-landscape',width>height&&height<=340);if(lastWidth&&((width>height)!==(lastWidth>lastHeight)||Math.abs(width-lastWidth)>80)){rotationBrakeUntil=performance.now()+350;resetInputs();resumeVideo();}lastWidth=width;lastHeight=height;}
+function scheduleViewport(){if(!viewportFrame)viewportFrame=requestAnimationFrame(syncViewport);}
+function rotated(){rotationBrakeUntil=performance.now()+350;resetInputs();scheduleViewport();clearTimeout(settleTimer);settleTimer=setTimeout(()=>{scheduleViewport();resumeVideo();},350);}
+window.addEventListener('resize',scheduleViewport);window.visualViewport?.addEventListener('resize',scheduleViewport);window.visualViewport?.addEventListener('scroll',scheduleViewport);window.addEventListener('orientationchange',rotated);screen.orientation?.addEventListener('change',rotated);document.addEventListener('fullscreenchange',rotated);document.addEventListener('webkitfullscreenchange',rotated);window.addEventListener('pageshow',()=>{scheduleViewport();resumeVideo();});document.addEventListener('visibilitychange',()=>{if(!document.hidden){scheduleViewport();resumeVideo();}});$('view').addEventListener('loadedmetadata',resumeVideo);$('view').addEventListener('playing',()=>{$('resumeVideo').hidden=true;});$('resumeVideo').onclick=resumeVideo;syncViewport();
+function command(command,value){if(commands?.readyState==='open')commands.send(JSON.stringify({type:'command',command,value}));}
+function fail(message){$('error').textContent=message;$('connect').disabled=false;$('connect').style.display='inline-block';$('start').style.display='none';$('lobby').style.display='flex';}
+async function disconnect(){
+  connectionEpoch++;clearTimeout(handshakeTimer);connectionAbort?.abort();connectionAbort=null;syncConnection=()=>{};
+  lastDecoderStats=null;decodedFps=null;networkRTT=null;resetInputs();connected=false;
+  const previous=pc;pc=null;const oldDrive=drive,oldCommands=commands;drive=commands=null;
+  oldDrive?.close();oldCommands?.close();await previous?.close();
+  $('view').srcObject=null;$('connection').textContent='Đã ngắt kết nối';
+  $('lobbyDisconnect').hidden=true;
+  showDriveMenu(false);
+}
+function renderRules(mode){const practice=mode==='practice';$('ruleSummary').textContent=practice?'Tập lái, không xếp hạng. Được dùng Về đường để luyện tiếp sau va chạm.':'Cùng luật với AI: đè vạch liền, ra khỏi đường hoặc va chạm thì bị loại. Vạch đứt được đổi làn. Không đưa xe về đường trong cuộc đua.';$('ruleStatus').textContent=practice?'Tập lái · Không xếp hạng':'Đua công bằng · Vạch liền / va chạm: bị loại';}
+function telemetry(s){
+  lastStream=s.stream||{};renderStreamStats();lastTelemetry=performance.now();
+  if(raceState!==s.state||playerFinished!==!!s.finished)resetInputs();
+  raceState=s.state;playerFinished=!!s.finished;viewMode=s.camera||'chase';
+  if(!['running','paused'].includes(s.state))showDriveMenu(false);
+  $('camera').textContent=names[viewMode];$('cockpit').style.display=viewMode==='driver'?'block':'none';
+  $('speed').textContent=Math.round(s.speed_kmh||0);
+  const limit=s.speed_limit_kmh;
+  $('speed').title=limit?`Giới hạn chung ${limit} km/h`:'';
+  const rank=s.mode==='practice'?'Tập lái':s.finished&&!s.clean_success?'Không xếp hạng':`Hạng ${s.position||'—'}/${s.total||1}`;
+  $('raceInfo').textContent=`${rank} · ${s.progress==null?'—':Math.round(s.progress*100)+'%'}`;
+  $('raceInfo').title=s.model_name||'';$('carName').textContent=s.model_name||'';
+  if(connected){$('connection').textContent='Đã kết nối tay lái';$('error').textContent='Đã kết nối. Chọn xe và sẵn sàng xuất phát.';}
+  needsDriverJoin=!['human','practice'].includes(s.mode)&&s.state!=='garage';
+  const result=s.finished?(s.clean_success?'Về đích hợp lệ':s.result_label||'Đã kết thúc lượt đua'):'';
+  $('banner').textContent=result||(s.state==='countdown'?'Chuẩn bị xuất phát…':s.state==='paused'?'Đã tạm dừng':s.state==='garage'?'Chờ xuất phát':'');
+  $('lastResult').textContent=result;renderRules(s.mode);
+  if(limit)$('ruleStatus').textContent+=` · Tối đa ${limit} km/h`;
+  $('recover').hidden=!s.recover_allowed;$('recover').disabled=!s.recover_allowed||playerFinished;
+  for(const id of ['steerLeft','steerRight','gas','brake'])$(id).disabled=s.state!=='running'||playerFinished;
+  $('pause').textContent=s.state==='paused'?'Tiếp tục':'Dừng';
+  if(needsDriverJoin){$('lobby').style.display='flex';$('start').style.display=connected?'inline-block':'none';$('start').textContent='VỀ GARAGE ĐỂ CẦM LÁI →';$('start').disabled=!connected;$('error').textContent='Laptop đang đua AI. Về Garage để bắt đầu lượt bạn cầm lái.';}
+  else if(s.state==='garage'){$('lobby').style.display='flex';$('start').style.display=connected?'inline-block':'none';$('start').textContent='SẴN SÀNG · XUẤT PHÁT →';$('start').disabled=!connected;}
+  else if(['running','countdown','paused'].includes(s.state))$('lobby').style.display='none';
+  else if(['comparison','results'].includes(s.state)){$('lobby').style.display='flex';$('start').textContent='ĐUA LẠI →';$('start').disabled=false;}
+  $('model').disabled=s.state!=='garage';$('mode').disabled=s.state!=='garage';
+  if(s.state==='garage'&&s.model){$('model').value=s.model;$('mode').value=['human','practice'].includes(s.mode)?s.mode:'human';}
+}
+async function connect(){
+  if(!token)return fail('Thiếu mã ghép nối. Hãy quét lại QR trên laptop.');
+  await disconnect();
+  const epoch=connectionEpoch;
+  let current;
+  const alive=()=>epoch===connectionEpoch&&pc===current;
+  const stop=async message=>{if(!alive())return;await disconnect();fail(message);};
+  const stage=message=>{if(alive()&&!connected){$('connection').textContent=message;$('error').textContent=message;}};
+  try{
+    $('connect').disabled=true;$('start').style.display='none';
+    current=new RTCPeerConnection({iceServers:[]});pc=current;
+    const input=current.createDataChannel('drive',{ordered:false,maxRetransmits:0});
+    const control=current.createDataChannel('commands');drive=input;commands=control;
+    current.addTransceiver('video',{direction:'recvonly'});
+    connectionAbort=new AbortController();
+    handshakeTimer=setTimeout(()=>stop('Chưa mở được tay lái sau 15 giây. Kiểm tra cùng Wi-Fi rồi bấm Kết nối lại.'),15000);
+    syncConnection=()=>{
+      if(!alive()||connected||current.connectionState!=='connected'||input.readyState!=='open'||control.readyState!=='open')return;
+      connected=true;clearTimeout(handshakeTimer);lastTelemetry=performance.now();
+      $('lobbyDisconnect').hidden=false;
+      $('lobbyDisconnect').textContent='Ngắt kết nối tay lái';
+      $('connect').style.display='none';$('start').style.display='inline-block';$('start').disabled=false;
+      $('connection').textContent='Đã kết nối tay lái';$('error').textContent='Đã kết nối. Chọn xe và sẵn sàng xuất phát.';
+      // The first garage telemetry owns the selected car/mode. Connecting
+      // must not replace the desktop's Cybertruck with the HTML's default.
+      command('quality',qualityChoice);sendInput();
+    };
+    input.onopen=control.onopen=()=>{if(alive())syncConnection();};
+    input.onclose=control.onclose=()=>stop('Kênh tay lái đã ngắt. Xe tự phanh; bấm Kết nối lại.');
+    control.onmessage=e=>{
+      if(!alive())return;
+      syncConnection();
+      try{const message=JSON.parse(e.data);if(message.type==='pong'){networkRTT=performance.now()-message.t;renderStreamStats();}else telemetry(message);}catch(err){console.error(err);}
+    };
+    current.ontrack=e=>{if(alive()){$('view').srcObject=new MediaStream([e.track]);resumeVideo();}};
+    current.onconnectionstatechange=()=>{
+      if(!alive())return;syncConnection();
+      if(['failed','closed','disconnected'].includes(current.connectionState))stop('Kết nối bị ngắt. Xe tự phanh; bấm Kết nối lại.');
+    };
+    stage('Đang lấy địa chỉ mạng…');
+    await current.setLocalDescription(await current.createOffer());if(!alive())return;
+    if(current.iceGatheringState!=='complete')await new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(Error('Không lấy được địa chỉ mạng. Kiểm tra Wi-Fi rồi thử lại.')),8000);
+      const changed=()=>{if(current.iceGatheringState==='complete'){clearTimeout(timer);current.removeEventListener('icegatheringstatechange',changed);resolve();}};
+      current.addEventListener('icegatheringstatechange',changed);changed();
+    });
+    if(!alive())return;stage('Đang ghép nối với laptop…');
+    const response=await fetch('/offer',{method:'POST',signal:connectionAbort.signal,headers:{'Content-Type':'application/json','X-Race-Token':token},body:JSON.stringify(current.localDescription)});
+    if(!alive())return;if(!response.ok)throw Error(await response.text());
+    await current.setRemoteDescription(await response.json());if(!alive())return;
+    stage('Đang mở kênh tay lái…');syncConnection();
+  }catch(error){if(alive())await stop(error.name==='AbortError'?'Kết nối quá hạn. Bấm Kết nối lại.':error.message);}
+}
+$('connect').onclick=connect;
+$('start').onclick=()=>{resetInputs();resumeVideo();if(needsDriverJoin){command('join_driver',$('mode').value);$('start').disabled=true;return;}command('mode',$('mode').value);command('car_model',$('model').value);command('start');$('start').disabled=true;navigator.wakeLock?.request('screen').catch(()=>{});};
+$('model').onchange=()=>command('car_model',$('model').value);$('mode').onchange=()=>{renderRules($('mode').value);command('mode',$('mode').value);};
+$('camera').onclick=()=>command('phone_camera');$('recover').onclick=()=>{resetInputs();command('recover');};$('pause').onclick=()=>{resetInputs();command('pause');};$('leave').onclick=async()=>{await disconnect();fail('Đã ngắt tay lái. Xe đã ngừng nhận ga.');};
+$('lobbyDisconnect').onclick=$('leave').onclick;
+for(const id of ['steerLeft','steerRight','gas','brake']){
+  const b=$(id);
+  b.onpointerdown=e=>{e.preventDefault();if(b.disabled||activePointers.has(id))return;activePointers.set(id,e.pointerId);b.setPointerCapture(e.pointerId);syncControls();sendInput();};
+  const release=e=>{e.preventDefault();if(activePointers.get(id)!==e.pointerId)return;activePointers.delete(id);syncControls();sendInput();if(b.hasPointerCapture(e.pointerId))b.releasePointerCapture(e.pointerId);};
+  b.onpointerup=release;b.onpointercancel=release;b.onlostpointercapture=release;
+}
+window.addEventListener('keydown',e=>{if(!connected||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key))return;e.preventDefault();keyboard.add(e.key);syncControls();sendInput();});window.addEventListener('keyup',e=>{keyboard.delete(e.key);syncControls();sendInput();});
+window.addEventListener('blur',resetInputs);document.addEventListener('visibilitychange',resetInputs);window.addEventListener('pagehide',()=>{resetInputs();pc?.close();});
+setInterval(()=>{syncConnection();if(connected&&performance.now()-lastTelemetry>2000){resetInputs();$('connection').textContent='Mất tín hiệu laptop · tự phanh';}else sendInput();},20);
+</script>
+</body>
+</html>
