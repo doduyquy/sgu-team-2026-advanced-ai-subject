@@ -353,6 +353,7 @@ def run_once(root, package, document, account, session=None):
     age = (datetime.now(timezone.utc) - datetime.fromisoformat(own["observed_at"])).total_seconds() if authorized else None
     capacity = own["concurrency_observed"] if age is not None and 0 <= age <= 86400 else None
     folder = root / "receipts" / account
+    folder.mkdir(parents=True, exist_ok=True)
     pending = False
     for item in job_queue(root, document):
         if item["account"] != account or (session and item["session"] != session):
