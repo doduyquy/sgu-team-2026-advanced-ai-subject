@@ -156,10 +156,17 @@ def run_once(root, package, document, account):
     for item in document["sessions"]:
         if item["account"] != account:
             continue
+        receipt = folder / f"{item['session']}.json"
         status = {**item, "manifest": document["fingerprint"], "status": "PLANNED", "checked_at": c.now(),
                   "verified_concurrency": capacity, "api_status": None, "version": None, "submitted": False}
         if not authorized:
             status["blocker"] = "IDENTITY_UNVERIFIED"
+            if receipt.exists():
+                prior = read(receipt)
+                if prior.get("manifest") == document["fingerprint"] and prior.get("submitted"):
+                    status = {**prior, "blocker": "IDENTITY_RECHECK_UNAVAILABLE", "api_status_stale": True,
+                              "api_observed_at": prior.get("api_observed_at", prior["checked_at"]),
+                              "checked_at": c.now(), "verified_concurrency": None}
         elif not item["job"]:
             status["blocker"] = "MIXED_CANDIDATE_REQUIRED"
         else:
@@ -218,7 +225,7 @@ def run_once(root, package, document, account):
                             status["candidate"] = result
                     except (ValueError, OSError, KeyError):
                         status["blocker"] = "ARTIFACT_REVIEW_REQUIRED"
-        write(folder / f"{item['session']}.json", status)
+        write(receipt, status)
         print(item["session"], status["status"], status.get("blocker", ""), flush=True)
         if authorized and item["job"] and status["status"] not in TERMINAL:
             pending = True
@@ -238,8 +245,9 @@ def report(root, document):
         rows.append(status)
     totals = {"submitted": sum(row["submitted"] for row in rows),
               "submission_attempts": sum(row.get("submission_attempted", False) for row in rows),
-              "queued": sum(row["api_status"] == "QUEUED" for row in rows),
-              "running": sum(row["api_status"] == "RUNNING" for row in rows),
+              "queued": sum(row["api_status"] == "QUEUED" and not row.get("api_status_stale") for row in rows),
+              "running": sum(row["api_status"] == "RUNNING" and not row.get("api_status_stale") for row in rows),
+              "stale_active": sum(row["api_status"] in c.ACTIVE and row.get("api_status_stale", False) for row in rows),
               "complete": sum(row["api_status"] == "COMPLETE" for row in rows),
               "not_deployed": sum(not row["submitted"] for row in rows)}
     candidates = [{**r["candidate"], "account": r["account"], "job": r["job"]} for r in rows if r.get("candidate")]

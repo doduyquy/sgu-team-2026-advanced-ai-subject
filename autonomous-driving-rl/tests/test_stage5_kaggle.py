@@ -112,6 +112,12 @@ def test_campaign_admits_within_capacity_and_reports_other_identities(tmp_path, 
     if capacity is None:
         assert r["sessions"][1]["blocker"] == "LAUNCHER_UNKNOWN_CAPACITY_WITH_ACTIVE_RECEIPT"
     assert r["sessions"][2]["blocker"] == "OPERATOR_RECEIPT_MISSING"
+    monkeypatch.setattr(campaign, "verify_owner", lambda _: False)
+    with campaign.agent_lock(root / "receipts/account_01"):
+        assert not campaign.run_once(root, bundle, doc, "account_01")
+    campaign.report(root, doc)
+    totals = control.read(root / "status.json")["totals"]
+    assert totals["submitted"] == accepted and totals["queued"] == 0 and totals["stale_active"] == accepted
 
 
 def test_guided_actor_learning_rate_does_not_change_critic_or_alpha():
