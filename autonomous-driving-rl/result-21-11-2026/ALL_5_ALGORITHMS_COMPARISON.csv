@@ -1,0 +1,9 @@
+Algorithm,Test Episodes,Clean Success Rate,Safety Failure Rate,Mean Route Completion (%),Median Route Completion (%)
+Dijkstra,60,0.00%,100.00%,22.87%,17.09%
+A*,60,0.00%,100.00%,22.87%,17.09%
+BFS,60,0.00%,6.67%,78.67%,94.31%
+Hybrid A*,60,0.00%,25.00%,32.30%,19.32%
+MPPI (Seed 101),60,33.33%,63.33%,44.70%,32.01%
+MPPI (All 3 Seeds),180,48.33%,48.33%,62.96%,73.88%
+Random / Naive (Seed 101),60,0.00%,100.00%,15.30%,14.27%
+Random / Naive (All 3 Seeds),180,0.00%,100.00%,17.45%,16.24%

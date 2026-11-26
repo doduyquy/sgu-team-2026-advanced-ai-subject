@@ -1,0 +1,117 @@
+{
+  "config": {
+    "action_adapter_id": "discrete9_lowbranch_v1",
+    "agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+    "agent_id": "stage2_hybrid_astar",
+    "agent_seed": null,
+    "agent_version": "0.1.0",
+    "algorithm_hyperparameters": {
+      "launcher": {
+        "launcher_contract_sha256": "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
+        "launcher_mode": "TEST",
+        "platform_execution_contract_sha256": "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
+        "protocol_scope": "TEST_SUITE_60",
+        "resolved_plan_sha256": "7658fab6482d07de71f51ec97ac81ef2419aac4293a017456e041307776e3651"
+      },
+      "planner": {
+        "config_sha256": "1b1bbdd5e1f7d4fb7228ead745b9adb2950f07e1d86534f167ab3dc7c4d37fdd",
+        "controller": {
+          "max_steering_deg": 59.99999999999999,
+          "wheelbase_m": 2.5
+        },
+        "heuristic": "hybrid_euclidean_goal_region",
+        "hybrid_astar": {
+          "collision_sample_spacing_m": 0.25,
+          "goal_heading_tolerance_deg": 20.0,
+          "goal_position_tolerance_m": 1.2,
+          "heading_bins": 72,
+          "lane_margin_m": 0.1,
+          "max_steering_deg": 60.0,
+          "obstacle_margin_m": 0.25,
+          "primitive_length_m": 1.5,
+          "steering_cost_per_m": 0.1,
+          "steering_levels": [
+            0.0,
+            -0.3,
+            0.3,
+            -0.6,
+            0.6
+          ],
+          "vehicle_length_m": 4.6,
+          "vehicle_width_m": 1.9,
+          "wheelbase_m": 2.5,
+          "xy_resolution_m": 0.5
+        },
+        "objective": "sum_bicycle_arc_cost",
+        "schema_version": "search_planner_parameters_v1",
+        "search_method": "hybrid_astar",
+        "shared_planner": {
+          "clearance_cost": 0.2,
+          "control_lookahead_m": 6.0,
+          "feature_scale_m": 50.0,
+          "lateral_change_cost": 0.5,
+          "lateral_samples": [
+            -0.8,
+            0.0,
+            0.8
+          ],
+          "lookahead_points": 10,
+          "max_expansions": 256,
+          "obstacle_margin_m": 0.5,
+          "steering_deadband": 0.12,
+          "target_normalized_speed": 0.15
+        },
+        "state_space": "continuous_bicycle_poses_v1"
+      }
+    },
+    "allow_dirty_worktree_override": false,
+    "allow_unverified_env_override": false,
+    "benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+    "expected_episode_count": 60,
+    "experiment_config_sha256": "30887f178cff9cbe19b930c3fe3afefb45c69659f7b55c541688ec98f1fa6572",
+    "inference_stochasticity": "deterministic",
+    "input_profile_id": "STATE_DECISION_V1",
+    "logging_contract_sha256": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+    "manifest_name": "test_case_manifest.csv",
+    "platform_observability_contract_sha256": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+    "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
+    "protocol_order_seed": 424242,
+    "run_kind": "TEST_EVALUATION",
+    "stateful_within_episode": false,
+    "tags": [],
+    "training_run_seed": null,
+    "wandb_entity": null,
+    "wandb_mode": "DISABLED",
+    "wandb_project": "sgu-autonomous-driving-rl"
+  },
+  "created_at_utc": "2026-10-31T19:19:18.853083+00:00",
+  "environment_provenance": {
+    "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "metadrive_pinned_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "metadrive_pinned_version": "0.4.3",
+    "metadrive_verification_reason": "MetaDrive exact pin verified: version 0.4.3, commit 85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "metadrive_verification_status": "VERIFIED",
+    "metadrive_version": "0.4.3",
+    "numpy_version": "2.2.6",
+    "os_family": "Windows",
+    "os_platform": "Windows-10-10.0.26200-SP0",
+    "python_version": "3.10.22",
+    "wandb_version": "0.30.0"
+  },
+  "experiment_config_sha256": "30887f178cff9cbe19b930c3fe3afefb45c69659f7b55c541688ec98f1fa6572",
+  "git_provenance": {
+    "git_branch": "run/search-full-20261101",
+    "git_commit_sha": "63b36c851f7a4bb2c246705573ba5268c61fa8b1",
+    "git_diff_sha256": null,
+    "git_worktree_dirty": false
+  },
+  "platform_contracts": {
+    "agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+    "benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+    "logging_contract_sha256": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+    "platform_observability_contract_sha256": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+    "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad"
+  },
+  "run_id": "fullsearch_test_stage2_hybrid_astar_20261101",
+  "run_kind": "TEST_EVALUATION"
+}

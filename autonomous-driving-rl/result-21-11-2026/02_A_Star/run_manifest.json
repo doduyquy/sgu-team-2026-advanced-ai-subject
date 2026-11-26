@@ -1,0 +1,95 @@
+{
+  "config": {
+    "action_adapter_id": "discrete9_lowbranch_v1",
+    "agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+    "agent_id": "stage2_astar",
+    "agent_seed": null,
+    "agent_version": "0.1.0",
+    "algorithm_hyperparameters": {
+      "launcher": {
+        "launcher_contract_sha256": "5e6269b6e32349bd3ee34ca52583c00f832bd0a737330c894e9a8d314653db04",
+        "launcher_mode": "TEST",
+        "platform_execution_contract_sha256": "442beafd86212419dc7b3edfa60e53715bf33877d3dd72e61c54091520b0563d",
+        "protocol_scope": "TEST_SUITE_60",
+        "resolved_plan_sha256": "c82634e1a8d2666a97bfd80e3faee3360302a38935e4c7011ca414373854e9c6"
+      },
+      "planner": {
+        "config_sha256": "7a5865c1b55dcc7249829982fb398213c58948c5018fe8de3a09282185b65778",
+        "controller": {
+          "max_steering_deg": 59.99999999999999,
+          "wheelbase_m": 2.5
+        },
+        "heuristic": "euclidean",
+        "objective": "sum_edge_cost",
+        "schema_version": "search_planner_parameters_v1",
+        "search_method": "astar",
+        "shared_planner": {
+          "clearance_cost": 0.2,
+          "control_lookahead_m": 6.0,
+          "feature_scale_m": 50.0,
+          "lateral_change_cost": 0.5,
+          "lateral_samples": [
+            -0.8,
+            0.0,
+            0.8
+          ],
+          "lookahead_points": 10,
+          "max_expansions": 256,
+          "obstacle_margin_m": 0.5,
+          "steering_deadband": 0.12,
+          "target_normalized_speed": 0.15
+        },
+        "state_space": "local_route_lattice_v1"
+      }
+    },
+    "allow_dirty_worktree_override": false,
+    "allow_unverified_env_override": false,
+    "benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+    "expected_episode_count": 60,
+    "experiment_config_sha256": "31eab372e5ea35f3420fbc54c39e71909094a53c9356b23940886f9b1b2c60ad",
+    "inference_stochasticity": "deterministic",
+    "input_profile_id": "STATE_DECISION_V1",
+    "logging_contract_sha256": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+    "manifest_name": "test_case_manifest.csv",
+    "platform_observability_contract_sha256": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+    "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad",
+    "protocol_order_seed": 424242,
+    "run_kind": "TEST_EVALUATION",
+    "stateful_within_episode": false,
+    "tags": [],
+    "training_run_seed": null,
+    "wandb_entity": null,
+    "wandb_mode": "DISABLED",
+    "wandb_project": "sgu-autonomous-driving-rl"
+  },
+  "created_at_utc": "2026-10-31T18:42:33.863326+00:00",
+  "environment_provenance": {
+    "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "metadrive_pinned_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "metadrive_pinned_version": "0.4.3",
+    "metadrive_verification_reason": "MetaDrive exact pin verified: version 0.4.3, commit 85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+    "metadrive_verification_status": "VERIFIED",
+    "metadrive_version": "0.4.3",
+    "numpy_version": "2.2.6",
+    "os_family": "Windows",
+    "os_platform": "Windows-10-10.0.26200-SP0",
+    "python_version": "3.10.22",
+    "wandb_version": "0.30.0"
+  },
+  "experiment_config_sha256": "31eab372e5ea35f3420fbc54c39e71909094a53c9356b23940886f9b1b2c60ad",
+  "git_provenance": {
+    "git_branch": "run/search-full-20261101",
+    "git_commit_sha": "63b36c851f7a4bb2c246705573ba5268c61fa8b1",
+    "git_diff_sha256": null,
+    "git_worktree_dirty": false
+  },
+  "platform_contracts": {
+    "agent_contract_sha256": "53aa37079ff44afa75d9a3f921b0c1f98c4600d882fced51fc8d9197795058eb",
+    "benchmark_contract_sha256": "9ddd889b84d8705fae618879e5035556c80d0276a3dc2a58a7963937ebb59f77",
+    "logging_contract_sha256": "0d17915556d83f49d9519576e95920c0853700f33a91593ef85b3aeef6cbb9f2",
+    "platform_observability_contract_sha256": "f00c27fca8abf8145596576cd0dd2540181ff8ae7eccf7806c864921933d3581",
+    "platform_runtime_contract_sha256": "c7698768539a769c7b2bc6b90771ff234276a974b6e0353bbb03119faf2f79ad"
+  },
+  "run_id": "fullsearch_test_stage2_astar_20261101",
+  "run_kind": "TEST_EVALUATION"
+}

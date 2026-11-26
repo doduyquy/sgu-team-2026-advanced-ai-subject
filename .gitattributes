@@ -29,3 +29,7 @@ autonomous-driving-rl/src/agents/rule_based_*.py text eol=crlf
 autonomous-driving-rl/src/platform/action_adapter.py text eol=crlf
 autonomous-driving-rl/src/platform/agent.py text eol=crlf
 autonomous-driving-rl/src/platform/agent_input.py text eol=crlf
+
+# Preserve the exported November 21 episode records and provenance bytes.
+autonomous-driving-rl/result-21-11-2026/** -text whitespace=cr-at-eol
+autonomous-driving-rl/results/result-21-11-2026/** -text whitespace=cr-at-eol
