@@ -31,6 +31,8 @@ python -B -m cloud.kaggle.campaign enqueue --root PATH_TO_PRIVATE_SHARED_QUEUE -
 
 An Easy-to-Medium round can use the `--phase medium --traffic-guidance` recipe. It limits collection throttle from the existing public traffic fields and writes actual executed Box2 actions to replay. Report traffic-guided action counts alongside tier decisions. Standard candidate evaluation continues to use the learned SAC policy without collection guidance.
 
+A verified traffic-guided Medium parent can use `--traffic-teacher` to mix in complete episodes from the frozen J11 policy with both traffic throttle limits. The agent assigns a subset of Medium episodes to the teacher before the midpoint, lets those episodes finish, then collects with the learner alone. The checkpoint records the teacher model SHA and separates Medium decisions and terminal outcomes by behavior. `--autonomous-traffic` explicitly retires the guidance in a subsequent continuation while preserving replay and optimizer state.
+
 Each member runs one assigned slot on their own Windows session and Kaggle account. Use a private team channel for the deployment ZIP and its SHA-256. The ZIP contains the frozen J11–5.000 full state, runtime, source model for parity, and historical G2/G3 evidence. Each operator's Kaggle uploads are private and verified at version 1 by the launcher.
 
 | Slot | Workload | Execution |
