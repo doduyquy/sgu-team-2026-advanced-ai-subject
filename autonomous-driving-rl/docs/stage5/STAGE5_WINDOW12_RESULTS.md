@@ -44,3 +44,19 @@ python -B -m src.launcher.cli run --mode SANDBOX --agent stage5_sac_terminal_pre
 ```
 
 The launcher completed the recorded Medium demo cleanly with 99.1% route progress in 68.8 simulator seconds. The inference bundle documents the 409D observation contract, Box2 actions, adapter fingerprints and training lineage. [The original J11 fallback and its demo](STAGE5_DELIVERY.md) remain available.
+
+## Hard continuation and Extreme admission
+
+The one-hour Hard continuation `s5-584e7f67a0fe-j10-a1` version 1 starts from the verified S01 full state. S01 and J11 remain frozen. The confirmation compares the final state and available shortlisted milestones against the exact same 12 cases per tier. Technical localization failures are reported separately.
+
+For this continuation, an Extreme branch is supported when a verified resumable Hard checkpoint gains at least two clean Hard completions and reduces Hard safety failures by at least two. Easy and Medium may each lose at most one clean completion and gain at most one safety failure. The three candidate panels must also complete without a technical failure. A matching policy-only checkpoint remains eligible for inference analysis, with resume assessed separately.
+
+## Checkpoint binding review
+
+The following command checks the delivered model against the frozen model lock and prepares a content-based review record. The record carries model and training-state hashes, encoder and adapter identities, simulator and dependency versions, TRAIN split hash and training-recipe hash.
+
+```powershell
+python -B -m cloud.kaggle.binding_review --model-lock runs/kaggle/central12-recovery/post-campaign/model-lock.json --bundle runs/kaggle/delivery/s01-window-final --out runs/kaggle/central12-recovery/post-campaign/s01-binding-review.json
+```
+
+The record remains pending governance review. The [checkpoint binding proposal](STAGE5_CHECKPOINT_BINDING_PROPOSAL.md) describes the separate versioned launcher contract and approval conditions. The launcher stays in SANDBOX for S01 while those conditions are pending.

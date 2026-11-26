@@ -55,12 +55,57 @@ def summarize(document):
         "cases": len(cases), "clean_successes": sum(row["clean"] for row in cases),
         "safety_failures": sum(row["outcome"] == "OUT_OF_ROAD" or row["outcome"].startswith("CRASH_") for row in cases),
         "timeouts": sum(row["outcome"] == "TIMEOUT" for row in cases),
-        "technical_failures": sum(row["technical_failure"] for row in cases),
+        "technical_failures": sum(row.get("technical_failure", False) for row in cases),
     }
     for field in ("progress", "speed_km_h", "success_seconds"):
         sample = [row[field] for row in cases if row[field] is not None]
         summary[f"mean_{field}"] = mean(sample) if sample else None
     return summary
+
+
+def compare_panels(reference, candidate):
+    if reference["tier"] != candidate["tier"]:
+        raise ValueError("The confirmation tiers differ")
+    def cases(document):
+        result = {(row["geometry"], row["family"], row["seed"]): row for row in document["cases"]}
+        if len(result) != 12 or len(document["cases"]) != 12:
+            raise ValueError("Paired confirmation requires 12 distinct cases")
+        return result
+
+    baseline = cases(reference)
+    challenger = cases(candidate)
+    if baseline.keys() != challenger.keys():
+        raise ValueError("The pinned geometry and seed identities differ")
+    common = [(baseline[key]["success_seconds"], row["success_seconds"]) for key, row in challenger.items()
+              if row["clean"] and baseline[key]["clean"]]
+    return {
+        "tier": reference["tier"],
+        "reference_sha": reference["model_sha"],
+        "candidate_sha": candidate["model_sha"],
+        "reference": summarize(reference),
+        "candidate": summarize(candidate),
+        "improved_cases": sum(row["clean"] and not baseline[key]["clean"] for key, row in challenger.items()),
+        "regressed_cases": sum(baseline[key]["clean"] and not row["clean"] for key, row in challenger.items()),
+        "common_clean_cases": len(common),
+        "mean_time_delta_seconds": mean(after - before for before, after in common) if common else None,
+    }
+
+
+def curriculum_signal(paired):
+    """Check this campaign's replay-free advance criterion against the frozen S01 panels."""
+    if set(paired) != {"Easy", "Medium", "Hard"}:
+        raise ValueError("Check Easy and Medium retention before advancing Hard")
+    retention = all(
+        paired[tier]["candidate"]["clean_successes"] >= paired[tier]["reference"]["clean_successes"] - 1
+        and paired[tier]["candidate"]["safety_failures"] <= paired[tier]["reference"]["safety_failures"] + 1
+        for tier in ("Easy", "Medium")
+    )
+    hard, old = (paired["Hard"][key] for key in ("candidate", "reference"))
+    improvement = (hard["clean_successes"] >= old["clean_successes"] + 2
+                   and hard["safety_failures"] <= old["safety_failures"] - 2)
+    integrity = all(panel["candidate"]["technical_failures"] == 0 for panel in paired.values())
+    return {"retention": retention, "hard_improvement": improvement, "complete_without_technical_failure": integrity,
+            "supports_extreme_branch": retention and improvement and integrity}
 
 
 def main():
