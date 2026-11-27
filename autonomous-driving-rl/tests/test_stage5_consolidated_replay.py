@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
 torch = pytest.importorskip("torch")
@@ -33,6 +34,33 @@ def test_mixed_replay_passes_parent_and_balanced_source_samples_to_same_batch():
 def test_consolidation_rejects_updates_outside_kaggle(tmp_path):
     with pytest.raises(RuntimeError, match="only in the Kaggle"):
         cloud_update(SimpleNamespace(out=tmp_path / "state"))
+
+
+def test_local_consolidation_rechecks_all_batches_against_one_anchor(tmp_path, monkeypatch):
+    from cloud.kaggle import consolidated_replay as consolidation
+    from cloud.kaggle.common import write
+
+    datasets = [(tmp_path / name, name) for name in ("first", "second")]
+    for path, _ in datasets:
+        path.mkdir()
+        write(path / "CONSOLIDATED.json", {"sources": [{"label": "S01", "model_sha": "pinned"}]})
+
+    def validate(path, digest, parent, anchor, *, seen, previous_ledger, row_limit):
+        assert anchor == "frozen-s01" and row_limit == 75000
+        if digest == "second":
+            assert seen == {"first"} and previous_ledger["first"] == "accepted"
+        seen.add(digest)
+        return {"S01": {"Hard": {"reward": np.array([1.0], dtype=np.float32)}}}, [digest], {
+            **previous_ledger, digest: "accepted"}
+
+    monkeypatch.setattr(consolidation, "validate_dataset", validate)
+    replay, audit, ledger = consolidation.training_replay(
+        datasets, {"ledger": {}}, "frozen-s01", row_limit=75000)
+    assert replay["S01"]["Hard"]["reward"].tolist() == [1.0, 1.0]
+    assert audit == ["first", "second"]
+    assert ledger == {"first": "accepted", "second": "accepted"}
+    with pytest.raises(ValueError, match="included twice"):
+        consolidation.training_replay([datasets[0], datasets[0]], {"ledger": {}}, "frozen-s01", row_limit=75000)
 
 
 def test_private_launch_stops_before_kaggle_when_operator_has_an_active_receipt(tmp_path, monkeypatch):

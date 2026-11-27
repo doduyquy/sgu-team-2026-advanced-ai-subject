@@ -27,7 +27,7 @@ Hai chính sách S01 và S09 được chạy lại trên cùng năm cặp geomet
 | S09 | 2.250 | 2.250 |
 | Tổng | 5.586 | 5.586 |
 
-Đã kiểm tra bộ lấy mẫu với tám minibatch, lấy 1.536 lượt mẫu từ ring nền và 512 lượt mẫu từ dữ liệu bổ sung. Phần bổ sung chia đều theo nguồn và theo tier hiện có trong từng nguồn. Đây là phép kiểm tra bộ lấy mẫu với 0 lượt cập nhật gradient. Tại thời điểm triển khai, các tài nguyên cloud đã được cấp đều đang bận. Số SAC update của lượt tổng hợp là **0** và kết quả so sánh model trước/sau còn thiếu. [Bảng thu thập theo episode](consolidation_episodes.csv)
+Từ bộ dữ liệu ban đầu, pilot trên máy local đã thực hiện 128 SAC updates. Sau đó, thêm S13 vào nhóm thu thập và thu tiếp 53.724 transition. Learner đạt tổng cộng 10.000 SAC updates, với 640.000 lượt mẫu bổ sung thực sự tham gia minibatch. [Kết quả thực nghiệm tổng hợp replay](LOCAL_CONSOLIDATION.md) · [Bảng thu thập theo episode của lượt đầu](consolidation_episodes.csv)
 
 ```mermaid
 flowchart LR
@@ -89,4 +89,4 @@ flowchart LR
 
 ## Lựa chọn bàn giao
 
-Chọn **S01 với steering nguyên bản** cho bản bàn giao đa tier. Hai bộ lọc vẫn là cấu hình SANDBOX có nhãn riêng. Demo hiển thị với bộ lọc cố định trên một ca Medium hoàn thành an toàn trong 72,6 giây mô phỏng và đạt 99,18% tiến độ. Các kết quả trên là bằng chứng mô phỏng phát triển. Phần hợp nhất kinh nghiệm đã có bộ dữ liệu và bằng chứng lấy mẫu, còn kết quả huấn luyện và đánh giá của learner tổng hợp cần được bổ sung khi có phiên cloud khả dụng.
+Chọn **S01 với steering nguyên bản** cho bản bàn giao đa tier. Hai bộ lọc vẫn là cấu hình SANDBOX có nhãn riêng. Demo hiển thị với bộ lọc cố định trên một ca Medium hoàn thành an toàn trong 72,6 giây mô phỏng và đạt 99,18% tiến độ. Các kết quả trên là bằng chứng mô phỏng phát triển. [Đánh giá S01 và các checkpoint học từ replay tổng hợp](LOCAL_CONSOLIDATION.md)

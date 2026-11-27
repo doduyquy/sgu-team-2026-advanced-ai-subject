@@ -33,6 +33,48 @@ python -B -m cloud.kaggle.consolidation_job harvest --folder $plan --plan-sha $p
 
 The four planned inputs are the pinned runtime, parity model, S01 full state and verified TRAIN dataset. They use private version-one transfer payloads `runtime.bin`, `model.bin`, `parent.bin` and `dataset.bin`. The launcher resolves each input under `/kaggle/input/<dataset-slug>/` or `/kaggle/input/datasets/<owner>/<dataset-slug>/` after provisioning. The notebook installs pinned dependencies and MetaDrive assets with Internet access. Verified outputs use shards under `/kaggle/working/<job>/final/` and paired panels beside that directory. The archive and minibatch accounting remain separate from the protected S01 ring.
 
+## Local consolidation
+
+The local runs are under `runs/kaggle/first-window-local` on D. Use the
+original `collection-0*.json` plans and the verified `CONSOLIDATED.json`
+manifests to reproduce the added TRAIN replay. Each plan fixes the
+geometry and environment seed, donor model digest, and collector stream.
+The previously verified 5,586 rows are under
+`runs/kaggle/first-window-product/recollected-train-01`.
+
+The local experiment used CPU because the installed PyTorch build did
+not support CUDA. The update process used two Torch threads. Collection
+and evaluation ran headless with one Torch thread per process and
+below-normal Windows priority.
+
+Use a fresh output directory and the frozen S01 state copy for the pilot.
+Pass each additional dataset with its recorded manifest digest as
+`--extra-dataset PATH MANIFEST_SHA`. To continue from an offline milestone,
+use its full state and pass the cumulative replay manifests required by
+that milestone and any new batches for the next stage.
+
+```powershell
+$root = 'runs/kaggle/first-window-local'
+$dataset = 'runs/kaggle/first-window-product/recollected-train-01'
+$parentSha = '5fb35ed4a744d45000e2d3ce4eb120bc88f90032898bed5ca35f3787566e07fd'
+$datasetSha = 'b2454b19afd436d6b1c1b1fabb7f84d2895d4734c0137e6d984aa83635b156cf'
+python -B -m cloud.kaggle.consolidated_replay update --local --parent "$root/parent-copy" --parent-sha $parentSha --dataset $dataset --dataset-sha $datasetSha --out "$root/pilot-reproduction" --device cpu --torch-threads 2 --updates 128
+$stateSha = (Get-FileHash "$root/pilot-reproduction/COMPLETE.json" -Algorithm SHA256).Hash.ToLowerInvariant()
+python -B -m cloud.kaggle.local_consolidation --state "$root/pilot-reproduction" --state-sha $stateSha --out "$root/pilot-reproduction-evaluation"
+```
+
+The full-state directory preserves the optimizer and S01 replay ring.
+Keep the pinned TRAIN datasets beside the state to reproduce mixed-replay
+updates. `metrics.json` records the optimizer steps, replay draws and
+dataset digests. The inference export is smaller and can be passed as
+`--checkpoint` to the standard SANDBOX launcher. The full-state and
+inference-only artifacts serve different entry points.
+
+The four measured full states are `pilot-00128`, `stage-02000`,
+`stage-05000` and `stage-10000`. Each has a matching evaluation directory
+with the original 48 panel cases. `selection/SELECTION.json` binds the
+inference export to its matching original full-state digest.
+
 ## Checkpoint navigation and storage
 
 The focused Gate audit is in `runs/kaggle/postwindow-product/checkpoint-gate-audit.json`. It records the actual runtime option, F09 lookahead changes and the native navigation index transitions. The pinned native navigation and reward code are available in the corresponding MetaDrive source. [Navigation implementation](https://github.com/metadriverse/metadrive/blob/85e5dadc6c7436d324348f6e3d8f8e680c06b4db/metadrive/component/navigation_module/node_network_navigation.py) · [Reward and destination implementation](https://github.com/metadriverse/metadrive/blob/85e5dadc6c7436d324348f6e3d8f8e680c06b4db/metadrive/envs/metadrive_env.py)

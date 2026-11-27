@@ -16,6 +16,7 @@ from cloud.kaggle.common import fingerprint, read, sha, verify, write
 from src.platform.task_context_producer import TaskContextLocalizationError
 
 MAX_EXTERNAL_ROWS = 12_000
+LOCAL_EXTERNAL_ROWS = 75_000
 
 
 def assert_contract(identity, parent):
@@ -33,8 +34,13 @@ def collect(plan, out):
     parent = runtime.check_state(Path(plan["parent"]), plan["parent_sha"])
     if not 2 <= len(plan["sources"]) <= 4 or not 1 <= len(plan["cases"]) <= 12:
         raise ValueError("Use two to four first-window sources and at most 12 cases each")
+    stream_base = plan.get("stream_base", 801)
+    if not isinstance(stream_base, int) or not 100 <= stream_base <= 996:
+        raise ValueError("Collector namespace is outside the reserved stream range")
     out.mkdir(parents=True)
     manifest = {"schema": 1, "parent_sha": plan["parent_sha"], "sources": [], "discarded": []}
+    if stream_base != 801:
+        manifest["stream_base"] = stream_base
     rows = runtime.pool("mixed")
     families = defaultdict(list)
     for row in rows:
@@ -63,7 +69,7 @@ def collect(plan, out):
             chunk = folder / f"chunk-{i:02d}"
             try:
                 replay.collect(SimpleNamespace(snapshot=snap, snapshot_sha=snapshot_sha, rows=replay.MAX_ROWS,
-                                               stream=801 + source_index, sequence=i, geometry=geometry,
+                                               stream=stream_base + source_index, sequence=i, geometry=geometry,
                                                collection_phase="mixed", seed=seed, out=chunk))
             except TaskContextLocalizationError:
                 manifest["discarded"].append({"source": source["label"], "geometry": geometry, "seed": seed,
@@ -75,7 +81,7 @@ def collect(plan, out):
     print(sha(out / "CONSOLIDATED.json"), flush=True)
 
 
-def validate_dataset(dataset, digest, parent, parent_sha):
+def validate_dataset(dataset, digest, parent, parent_sha, *, seen=None, previous_ledger=None, row_limit=MAX_EXTERNAL_ROWS):
     verify(dataset / "CONSOLIDATED.json", digest)
     manifest = read(dataset / "CONSOLIDATED.json")
     if manifest["schema"] != 1 or manifest["parent_sha"] != parent_sha:
@@ -91,7 +97,11 @@ def validate_dataset(dataset, digest, parent, parent_sha):
         native_reward = env.env.reward_mode_identity["fingerprint"]
     finally:
         env.close()
-    seen, ledger = set(), dict(parent["ledger"])
+    stream_base = manifest.get("stream_base", 801)
+    if not isinstance(stream_base, int) or not 100 <= stream_base <= 996:
+        raise ValueError("Dataset uses an invalid collector namespace")
+    seen = set() if seen is None else seen
+    ledger = dict(parent["ledger"] if previous_ledger is None else previous_ledger)
     admitted = {}
     audit = []
     geometry_tiers = {r["geometry_id"]: r["tier"] for r in runtime.pool("mixed")}
@@ -125,7 +135,7 @@ def validate_dataset(dataset, digest, parent, parent_sha):
             episode, = meta["episodes"]
             tier = geometry_tiers[episode["geometry_id"]]
             if (episode["training_reward_mode_fingerprint"] != native_reward or tier != spec["tier"]
-                    or key != f"{801 + i}:{spec['sequence']}"):
+                    or key != f"{stream_base + i}:{spec['sequence']}"):
                 raise ValueError("Wrong native reward, tier or collector namespace")
             episode_key = fingerprint((episode["geometry_sha256"], episode["environment_seed"])).encode()
             ids = []
@@ -137,7 +147,7 @@ def validate_dataset(dataset, digest, parent, parent_sha):
                 if identity not in seen:
                     seen.add(identity)
                     ids.append(j)
-            if len(seen) > MAX_EXTERNAL_ROWS:
+            if len(seen) > row_limit:
                 raise ValueError("Unique external rows exceed the consolidation pilot budget")
             if ids:
                 pieces[tier].append({name: values[ids] for name, values in data.items()})
@@ -202,6 +212,36 @@ def build_mixed_replay(model, data):
     return MixedReplay(model.replay_buffer, external)
 
 
+def training_replay(datasets, parent, anchor, *, row_limit):
+    if len({digest for _, digest in datasets}) != len(datasets):
+        raise ValueError("A replay dataset cannot be included twice")
+    if len(datasets) == 1:
+        return validate_dataset(*datasets[0], parent, anchor, row_limit=row_limit)
+    seen, ledger = set(), dict(parent["ledger"])
+    grouped = defaultdict(lambda: defaultdict(list))
+    audit = []
+    model_by_source = {}
+    for dataset, digest in datasets:
+        parts, records, ledger = validate_dataset(
+            dataset, digest, parent, anchor, seen=seen, previous_ledger=ledger, row_limit=row_limit)
+        manifest = read(dataset / "CONSOLIDATED.json")
+        for source in manifest["sources"]:
+            label, model = source["label"], source["model_sha"]
+            if model_by_source.setdefault(label, model) != model:
+                raise ValueError("One source label identifies different models across datasets")
+        audit.extend(records)
+        for source, tiers in parts.items():
+            for tier, rows in tiers.items():
+                grouped[source][tier].append(rows)
+    if len(set(model_by_source.values())) != len(model_by_source):
+        raise ValueError("A model cannot receive separate weights under different source labels")
+    return {
+        source: {tier: {field: np.concatenate([part[field] for part in split]) for field in split[0]}
+                 for tier, split in tiers.items()}
+        for source, tiers in grouped.items()
+    }, audit, ledger
+
+
 def cloud_update(args):
     import torch
     from stable_baselines3.common.buffers import ReplayBuffer
@@ -209,18 +249,31 @@ def cloud_update(args):
     from cloud.kaggle.guided import GuidedSAC, prefix_sha
 
     working = Path("/kaggle/working")
-    if sys.platform != "linux" or not working.is_dir() or not args.out.resolve().is_relative_to(working):
-        raise RuntimeError("SAC consolidation updates run only in the Kaggle working directory")
-    if not 1 <= args.updates <= 512:
-        raise ValueError("Use a bounded one-to-512 update consolidation pilot")
+    local = getattr(args, "local", False)
+    if local:
+        from cloud.kaggle.common import WORK
+        if not args.out.resolve().is_relative_to(WORK.resolve()):
+            raise ValueError("Local consolidation output must stay in the project runs workspace")
+    elif sys.platform != "linux" or not working.is_dir() or not args.out.resolve().is_relative_to(working):
+        raise RuntimeError("Updates run only in the Kaggle working directory unless local mode is explicitly enabled")
+    if not 1 <= args.updates <= (10000 if local else 512):
+        raise ValueError("Update budget is outside the consolidation limit")
     if args.out.exists():
         raise FileExistsError(args.out)
-    torch.set_num_threads(1)
+    torch.set_num_threads(getattr(args, "torch_threads", 1))
     parent = runtime.check_state(args.parent, args.parent_sha)
     identity = parent["identity"]
     if not identity["bounded_guided_replay"] or not identity["localization_guard"]:
         raise ValueError("Consolidation requires the verified bounded S01 parent recipe")
-    data, audit, ledger = validate_dataset(args.dataset, args.dataset_sha, parent, args.parent_sha)
+    extras = getattr(args, "extra_dataset", ())
+    if extras and not local:
+        raise ValueError("Multiple replay batches require an explicitly local update")
+    datasets = [(args.dataset, args.dataset_sha), *[(Path(path), digest) for path, digest in extras]]
+    anchor = args.parent_sha
+    if local and parent.get("update_mode") == "offline_consolidated_v1":
+        anchor = parent.get("consolidation_anchor_sha256", parent["parent_sha"])
+    data, audit, ledger = training_replay(
+        datasets, parent, anchor, row_limit=LOCAL_EXTERNAL_ROWS if local else MAX_EXTERNAL_ROWS)
     model = GuidedSAC.load(args.parent / "model.zip", device=args.device, custom_objects={
         "replay_buffer_class": ReplayBuffer, "replay_buffer_kwargs": {},
     })
@@ -268,6 +321,9 @@ def cloud_update(args):
                 "steps_before": {name: next(iter(steps)) for name, steps in before.items()},
                 "steps_after": {name: next(iter(steps)) for name, steps in after.items()},
                 "sources": audit, "ledger": ledger, "seconds": time.monotonic() - started}
+    if local:
+        evidence["datasets"] = [{"path": str(path), "sha256": digest} for path, digest in datasets]
+        evidence["device"] = args.device
     # Preserve the original replay and ledger for normal GuidedSAC full-state resume.
     # The pinned external dataset remains separately reusable through this update mode.
     manifest = {**parent, "job": "first-window-consolidation", "parent_sha": args.parent_sha,
@@ -276,6 +332,9 @@ def cloud_update(args):
     retained_fields = ("replay_size", "protected_replay_sha", "guided_prefill", "online_behavior",
                        "guided_live_rows", "online_live_rows", "online_evicted_rows", "localization_invalid_rows")
     metrics = {key: parent_metrics[key] for key in retained_fields if key in parent_metrics}
+    if local:
+        manifest["consolidation_anchor_sha256"] = anchor
+        manifest["consolidation_datasets"] = [digest for _, digest in datasets]
     metrics.update(transitions=0, updates=updates, consolidation=evidence)
     runtime.save_state(args.out, model, manifest, metrics)
     print(sha(args.out / "COMPLETE.json"), flush=True)
@@ -297,6 +356,9 @@ def main():
     update.add_argument("--out", type=Path, required=True)
     update.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     update.add_argument("--updates", type=int, default=128)
+    update.add_argument("--local", action="store_true")
+    update.add_argument("--torch-threads", type=int, choices=(1, 2, 3, 4), default=1)
+    update.add_argument("--extra-dataset", nargs=2, action="append", metavar=("PATH", "MANIFEST_SHA"), default=[])
     args = parser.parse_args()
     if args.command == "collect":
         collect(read(args.plan), args.out)
