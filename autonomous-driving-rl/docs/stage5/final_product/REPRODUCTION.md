@@ -75,6 +75,40 @@ The four measured full states are `pilot-00128`, `stage-02000`,
 with the original 48 panel cases. `selection/SELECTION.json` binds the
 inference export to its matching original full-state digest.
 
+## Local hybrid consolidation V2
+
+The artifacts are under `runs/kaggle/first-window-v2`. The donor inventory,
+locked case schedule and parity evidence are at the root. Each
+`external-*` or `online-*` folder contains independent, checksummed
+trajectory chunks and its `CONSOLIDATED.json`. The online manifests refer
+to the exact frozen snapshot that generated the episode.
+
+Run the first command with a new output directory. Pass the actual fixed
+campaign deadline to the second. Each command uses four spawned simulation
+workers with one Torch thread per worker.
+
+```powershell
+$root = 'runs/kaggle/first-window-v2-reproduction'
+$archive = Join-Path $env:LOCALAPPDATA 'XeTuHanh/Stage5CampaignHarvest/1795719157/consolidation-ready.json'
+$deadline = '2026-11-27T19:30:00+07:00' # Set the fixed deadline for the replication.
+python -B -m cloud.kaggle.local_donors --out $root --archive $archive
+python -B -m cloud.kaggle.local_campaign --root $root --deadline $deadline --target-rows 200000
+```
+
+For the delivered model, use `best-v2-extension-10000-bundle` with the
+SANDBOX launcher. `extension-10000-result.json` selects `stage-05000`
+after evaluating the later checkpoints. The V2 full state
+contains its model, optimizers, RNG and original S01 replay. Its manifest
+also pins the external and online dataset sidecars used at that checkpoint.
+Keep those sidecars and snapshots at their recorded locations. V2 resume
+reconstructs the online ring and validates the exact next minibatch hash.
+The simulator resumes at an episode boundary. See `resume-proof.json` and
+the `extension-*-resume-proof.json` receipts for the tested states.
+
+```powershell
+python -B -m src.launcher.cli run --mode SANDBOX --agent stage5_sac_terminal_preview --checkpoint runs/kaggle/first-window-v2/best-v2-extension-10000-bundle --task-context-producer reference_route_station_proposal_v1 --tier Medium --sequence SCTCS --geom-seed 11 --env-seed 33701 --render OFF --wandb DISABLED --runs-root runs/kaggle/demo-v2-reproduction
+```
+
 ## Checkpoint navigation and storage
 
 The focused Gate audit is in `runs/kaggle/postwindow-product/checkpoint-gate-audit.json`. It records the actual runtime option, F09 lookahead changes and the native navigation index transitions. The pinned native navigation and reward code are available in the corresponding MetaDrive source. [Navigation implementation](https://github.com/metadriverse/metadrive/blob/85e5dadc6c7436d324348f6e3d8f8e680c06b4db/metadrive/component/navigation_module/node_network_navigation.py) · [Reward and destination implementation](https://github.com/metadriverse/metadrive/blob/85e5dadc6c7436d324348f6e3d8f8e680c06b4db/metadrive/envs/metadrive_env.py)

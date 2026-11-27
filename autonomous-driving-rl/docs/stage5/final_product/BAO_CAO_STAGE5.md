@@ -89,4 +89,10 @@ flowchart LR
 
 ## Lựa chọn bàn giao
 
-Chọn **S01 với steering nguyên bản** cho bản bàn giao đa tier. Hai bộ lọc vẫn là cấu hình SANDBOX có nhãn riêng. Demo hiển thị với bộ lọc cố định trên một ca Medium hoàn thành an toàn trong 72,6 giây mô phỏng và đạt 99,18% tiến độ. Các kết quả trên là bằng chứng mô phỏng phát triển. [Đánh giá S01 và các checkpoint học từ replay tổng hợp](LOCAL_CONSOLIDATION.md)
+Lượt V1 giữ **S01 với steering nguyên bản** làm mô hình tham chiếu đa tier. Hai bộ lọc vẫn là cấu hình SANDBOX có nhãn riêng. Demo hiển thị với bộ lọc cố định trên một ca Medium hoàn thành an toàn trong 72,6 giây mô phỏng và đạt 99,18% tiến độ. Các kết quả trên là bằng chứng mô phỏng phát triển. [Đánh giá S01 và các checkpoint V1](LOCAL_CONSOLIDATION.md)
+
+## Tổng hợp kinh nghiệm V2
+
+V2 thu thêm 208.296 transition từ 14 learner của chiến dịch đầu tiên, phủ 39 geometry Easy và 39 geometry Medium trong TRAIN. Một learner SAC tiếp tục từ S01 với replay nền, replay từ policy nguồn và replay online của policy hiện tại. Bốn tiến trình MetaDrive giữ thông lượng 577,7 decisions/s trong 10 đợt thu liên tiếp sau giai đoạn đầu. [Thiết kế, dữ liệu và kết quả V2](LOCAL_CONSOLIDATION_V2.md)
+
+**Chọn checkpoint V2 tại 5.000 updates**. Trên cùng panel xác nhận nội bộ, V2 đạt 12/12 Easy, 12/12 Medium, 3/12 Hard và 0/12 Extreme. So với S01, số lỗi an toàn giảm từ 2 xuống 0 ở Medium và giảm từ 10 xuống 7 ở từng tier Hard và Extreme. Hard có hai timeout, còn Extreme có năm. S01 và J11 được giữ làm checkpoint đối chứng và dự phòng. [Số liệu ghép cặp theo tier](v2_comparison.csv)

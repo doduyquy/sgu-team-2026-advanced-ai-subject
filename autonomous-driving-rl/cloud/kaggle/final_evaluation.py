@@ -26,27 +26,36 @@ def evaluate(plan, model_path, tier):
     cases = []
     for row in rows:
         for seed in seeds:
-            env = runtime.ScheduledEnv("eval", 0, 0, fixed=(row["geometry_id"], seed))
-            info, step, technical_failure = {}, 0, False
-            try:
-                obs, reset = env.reset()
-                for step in range(1, reset["horizon_steps"] + 1):
-                    action, _ = model.predict(obs, deterministic=True)
-                    obs, _, terminated, truncated, info = env.step(action)
-                    if terminated or truncated:
-                        break
-                else:
-                    raise RuntimeError("The locked diagnostic horizon did not emit a terminal or timeout")
-            except TaskContextLocalizationError:
-                technical_failure = True
-            finally:
-                env.close()
-            clean = not technical_failure and bool(info.get("clean_success"))
-            cases.append({"geometry": row["geometry_id"], "family": row["sequence"], "seed": seed,
-                "clean": clean, "outcome": "TASK_CONTEXT_LOCALIZATION" if technical_failure else info["primary_reason"],
-                "technical_failure": technical_failure, "progress": info.get("route_completion"),
-                "speed_km_h": info.get("episode_mean_speed_km_h"), "success_seconds": step / 10 if clean else None})
+            cases.append(evaluate_case(model, row, seed))
     return {"model_sha": plan["model_sha"], "scope": plan["scope"], "tier": tier, "cases": cases}
+
+
+def evaluate_case(model, row, seed, env=None, measurement=None):
+    if env is None:
+        from cloud.kaggle.runtime import ScheduledEnv
+        env = ScheduledEnv("eval", 0, 0)
+    env.fixed = (row["geometry_id"], seed)
+    info, step, technical_failure = {}, 0, False
+    try:
+        obs, reset = env.reset()
+        for step in range(1, reset["horizon_steps"] + 1):
+            action, _ = model.predict(obs, deterministic=True)
+            obs, _, terminated, truncated, info = env.step(action)
+            if terminated or truncated:
+                break
+        else:
+            raise RuntimeError("The locked diagnostic horizon did not emit a terminal or timeout")
+    except TaskContextLocalizationError:
+        technical_failure = True
+    finally:
+        env.close()
+    if measurement is not None:
+        measurement["decisions"] = step
+    clean = not technical_failure and bool(info.get("clean_success"))
+    return {"geometry": row["geometry_id"], "family": row["sequence"], "seed": seed,
+        "clean": clean, "outcome": "TASK_CONTEXT_LOCALIZATION" if technical_failure else info["primary_reason"],
+        "technical_failure": technical_failure, "progress": info.get("route_completion"),
+        "speed_km_h": info.get("episode_mean_speed_km_h"), "success_seconds": step / 10 if clean else None}
 
 
 def summarize(document):

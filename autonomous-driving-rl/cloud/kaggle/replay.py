@@ -36,14 +36,15 @@ def publish(model_path, expected, identity, version, out):
     write(out / "SNAPSHOT.json", snapshot)
     return sha(out / "SNAPSHOT.json")
 
-def collect(args):
+def collect(args, *, model=None, env=None, quiet=False):
     torch.set_num_threads(1)
     verify(args.snapshot / "SNAPSHOT.json", args.snapshot_sha)
     snapshot = read(args.snapshot / "SNAPSHOT.json")
     verify(args.snapshot / "policy.zip", snapshot["policy_sha"])
     if snapshot["lineage"] != RECIPE["lineage"] or snapshot["schema"] != 1:
         raise ValueError("Unexpected snapshot lineage or schema")
-    model = load_policy(args.snapshot / "policy.zip")
+    if model is None:
+        model = load_policy(args.snapshot / "policy.zip")
     torch.manual_seed(int(fingerprint((args.stream, args.sequence))[:8], 16))
     geometry = getattr(args, "geometry", None)
     collection_phase = getattr(args, "collection_phase", None)
@@ -59,7 +60,11 @@ def collect(args):
     data = {key: [] for key in dtypes}
     episodes = []
     fixed = (geometry, args.seed) if geometry else None
-    env = ScheduledEnv(phase, args.stream, args.sequence * MAX_ROWS, fixed=fixed)
+    if env is None:
+        env = ScheduledEnv(phase, args.stream, args.sequence * MAX_ROWS, fixed=fixed)
+    elif env.phase != phase:
+        raise ValueError("Reused collector environment phase differs")
+    env.worker, env.cursor, env.fixed = args.stream, args.sequence * MAX_ROWS, fixed
     outcome = None
     try:
         obs, info = env.reset()
@@ -103,7 +108,10 @@ def collect(args):
     if collection_phase is not None:
         meta["collection_phase"] = collection_phase
     write(args.out / "CHUNK.json", meta)
-    print(sha(args.out / "CHUNK.json"))
+    digest = sha(args.out / "CHUNK.json")
+    if not quiet:
+        print(digest)
+    return digest
 
 def check_snapshot(path, digest, identity):
     verify(path / "SNAPSHOT.json", digest)
