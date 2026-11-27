@@ -41,7 +41,11 @@ def attempt(row, entry, observation, logs, archive, window):
     stats, marker = verified_metrics(job, candidates)
     complete = [m for m in logs.get("markers", ()) if m[0] == "COMPLETE"]
     marks = logs.get("markers", ())
-    parent = read(WORK / "harvest" / plan["parent_job"] / "COMPLETE.json")
+    parent_dir = WORK / "harvest" / plan["parent_job"]
+    if plan.get("parent_step") is not None:
+        parent_dir = WORK / "periodic" / plan["parent_job"] / f"step-{plan['parent_step']:012d}"
+    verify(parent_dir / "COMPLETE.json", plan["parent_sha"])
+    parent = read(parent_dir / "COMPLETE.json")
     baselines = parent["transitions"], parent["updates"]
     checkpoint_bounds = [
         (a["transitions"] - baselines[0], a["updates"] - baselines[1])
@@ -50,9 +54,11 @@ def attempt(row, entry, observation, logs, archive, window):
     lower = [tuple(m[1:]) for m in marks] + checkpoint_bounds
     decisions = stats.get("transitions", max((m[0] for m in lower), default=None))
     updates = stats.get("updates", max((m[1] for m in lower), default=None))
-    discards = stats.get("localization_invalid_rows", 0) if stats else None
-    # Window jobs begin from verified non-guarded J11/MT30 state; discarded rows
-    # in final metrics belong to this attempt. Historic guided rows stay separate.
+    discards = None
+    if stats:
+        verify(parent_dir / "metrics.json", parent["files"]["metrics.json"])
+        inherited = read(parent_dir / "metrics.json").get("localization_invalid_rows", 0)
+        discards = stats.get("localization_invalid_rows", 0) - inherited
     if discards is not None and (not 0 <= discards <= decisions or discards % plan["workers"]):
         raise ValueError("Invalid final localization-discard count")
     outcomes = Counter(x["primary_reason"] for x in stats.get("episodes", ()) if x.get("primary_reason"))
@@ -61,7 +67,8 @@ def attempt(row, entry, observation, logs, archive, window):
         state_path = str(WORK/"harvest"/job)
     panels = {}
     for directory in candidates:
-        for tier, name in (("Easy", "panel.json"), ("Medium", "panel-medium.json")):
+        for tier, name in (("Easy", "panel.json"), ("Medium", "panel-medium.json"),
+                           ("Hard", "panel-hard.json"), ("Extreme", "panel-extreme.json")):
             path = directory / name
             if path.is_file() and marker:
                 report = read(path)

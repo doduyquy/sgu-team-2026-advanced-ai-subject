@@ -1130,3 +1130,24 @@ def test_unlocalized_vector_does_not_write_any_replay_row(monkeypatch):
     assert model._last_obs is next_reset_obs
     model._store_transition(object(), None, next_reset_obs, None, None, [{}, {}])
     assert len(writes) == 1
+
+def test_campaign_totals_only_count_new_localization_discards(tmp_path, monkeypatch):
+    from cloud.kaggle import consolidation
+
+    monkeypatch.setattr(consolidation, "WORK", tmp_path)
+    parent = tmp_path / "periodic" / "parent" / "step-000000000100"
+    final = tmp_path / "harvest" / "child"
+    for folder, job, stats, total in (
+        (parent, "parent", {"localization_invalid_rows": 24}, 100),
+        (final, "child", {"transitions": 20, "updates": 10, "localization_invalid_rows": 28}, 120),
+    ):
+        folder.mkdir(parents=True)
+        write(folder / "metrics.json", stats)
+        write(folder / "COMPLETE.json", {"job": job, "transitions": total, "updates": total // 2,
+              "files": {"metrics.json": sha(folder / "metrics.json")}})
+    plan = {"parent_job": "parent", "parent_step": 100, "parent_sha": sha(parent / "COMPLETE.json"),
+            "workers": 2, "phase": "hard", "device": "cuda"}
+    result = consolidation.attempt({"job": "child", "session": "S01", "account": "account_01"},
+                                   {"planned": plan, "version": 1, "status": "CLOUD_SUCCEEDED"},
+                                   {}, {}, {}, tmp_path)
+    assert (result["decisions"], result["localization_discard"], result["valid_rows"]) == (20, 4, 16)
