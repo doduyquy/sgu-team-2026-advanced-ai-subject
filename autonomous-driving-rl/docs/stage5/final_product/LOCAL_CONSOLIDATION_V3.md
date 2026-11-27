@@ -6,6 +6,8 @@
 
 Manifest cloud của cả 22 learner đều ghi `COMPLETE`. `learners22.csv` ghi riêng policy, full state cuối đã xác minh, periodic full state, dấu vết screening và version. Listing API giới hạn 200 file mỗi trang; số marker từ trang đầu chỉ là cận dưới khi danh sách còn phân trang.
 
+Khi chốt kiểm tra, **22/22 full state cuối** đã có local và xác minh đủ checksum cho model, replay, RNG và metrics. Mỗi model archive chứa ba mục optimizer actor, critic và entropy coefficient. Có periodic full state đã xác minh ở 11 learner. Các thư mục archive đợt hai chiếm 14,18 GB, dữ liệu phân tích và học V3 mới chiếm 0,78 GB. Tại thời điểm lập manifest, ổ C còn 30,25 GB và ổ dự án còn 7,60 GB.
+
 Từng policy chạy một ca cố định ở mỗi tier, tổng cộng 88 episode sàng lọc ghép cặp. Easy có 20/22 policy hoàn thành, Medium 19/22. Ca Hard và ca Extreme được chọn không có policy nào hoàn thành sạch; tiến tuyến cao nhất lần lượt là 68,76% và 28,42%. Đây là một ca trên mỗi tier cho mỗi policy. Kết quả không đại diện cho tỷ lệ hoàn thành toàn tier, cũng không phủ nhận hai episode Hard thành công khi thu trên geometry TRAIN khác.
 
 Toàn bộ 22 policy được chạy lại trên các observation đã lưu để đo nhảy ga ở 50 m, phản ứng với xe rời xa, xe thu hẹp, xe cắt ngang và ca Medium cua. Một số policy có bước nhảy dưới 0,001 nhưng vẫn phát gần hết ga trên các probe nguy cơ. Chỉ số liên tục không được dùng một mình để chọn nguồn hoặc model.
