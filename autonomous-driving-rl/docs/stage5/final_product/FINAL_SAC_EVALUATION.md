@@ -82,3 +82,20 @@ Còn 16 ca thiếu. Lỗi đã ghi nhận ở các ca còn thiếu gồm TaskCon
 | --- | --- | --- | --- | --- |
 | VALIDATION OFF | 86/96 | 56 | 20 | 10 |
 | TEST OFF | 54/60 | 35 | 11 | 8 |
+
+## Recovery F09
+
+Đã chạy lại 16 ca thiếu theo thứ tự TEST rồi VALIDATION. Log ban đầu chỉ có exception và stack trace, nên phục hồi trực tiếp từ log được 0 ca. Recovery có thêm 0 outcome hợp lệ. Tổng cuối **296/312**.
+
+Runner gốc phân loại outcome ngay sau `env.step` và dừng vòng lặp trước lần tạo observation kế tiếp nếu đã terminal. Instrumentation chỉ đọc flags và trạng thái khi F09 báo lỗi. Outcome vẫn do evaluator chung quyết định.
+
+| Split | Điều kiện F09 thất bại | Outcome tại bước lỗi | Số ca |
+| --- | --- | --- | --- |
+| TEST | CURRENT_LANE_NOT_ON_ROUTE | UNDETERMINED | 6 |
+| VALIDATION | CURRENT_LANE_NOT_ON_ROUTE | UNDETERMINED | 10 |
+
+Ở bước 195–296, `navigation.current_lane` không trùng object lane nào trong chuỗi edge từ checkpoint của route. F09 yêu cầu đúng một lane làm điểm neo quanh checkpoint đích. Cả 16 ca có zero điểm neo, route station chưa xác định và không tạo được waypoint hợp lệ. Lane được MetaDrive chọn có prefix `-3X` ở 14 ca, `-3T` ở 2 ca. Ví dụ, 5 seed của TEST Medium `SCXCS` được nhận diện trên edge `-3X1_0_ → 3X0_0_` trong khi reference vẫn là `2C0_1_ → 3X0_0_`. Tất cả native termination, truncation và safety flags đều false. Đây là lỗi localization trong episode, chưa đủ bằng chứng để phân loại `OUT_OF_ROAD` hay outcome khác. Sửa quy tắc chọn lane làm điểm neo sẽ đổi điều kiện sinh observation, nên bộ kết quả giữ riêng 16 ca này.
+
+Đối chứng TRAIN Medium ON/OFF cho cùng SHA-256 chuỗi action Box2, primary reason, final route completion và simulation time. Đã đối chiếu SHA-256 của manifest gốc, 296 receipt gốc và model. Không đổi producer hay evaluator. 0 SAC updates và 0 hàng nạp replay.
+
+Chạy lại chẩn đoán bằng `python -m cloud.kaggle.final_sac_recovery`. [Manifest đánh giá gốc](../../../runs/kaggle/final-sac-evaluation/manifest.json) · [Log lỗi gốc](../../../runs/kaggle/final-sac-evaluation/infrastructure.jsonl) · [Trace localization](../../../runs/kaggle/final-sac-evaluation-recovery/localization-diagnostics.csv) · [Receipt recovery](../../../runs/kaggle/final-sac-evaluation-recovery/recovery-receipts.jsonl) · [Bảng poster sau recovery](../../../runs/kaggle/final-sac-evaluation-recovery/poster-table.csv)
