@@ -111,7 +111,8 @@ class TestBenchmarkCampaign(unittest.TestCase):
         window = MainWindow()
         self.addCleanup(window.close)
         widget = window.benchmark_widget
-        self.assertEqual(window.tab_widget.count(), 6)
+        self.assertEqual(window.tab_widget.count(), 7)
+        self.assertEqual(window.tab_widget.tabText(6), "7. SAC Training")
         self.assertEqual(window.setup_pages.currentIndex(), 0)
         self.assertEqual(widget.preview.profile.mode.value, "VALIDATION")
         self.assertEqual(len(widget.preview.jobs), 1)

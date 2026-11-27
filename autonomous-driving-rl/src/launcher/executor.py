@@ -14,6 +14,8 @@ This module implements the execution engine that runs a ResolvedExperimentPlanV1
 from dataclasses import asdict, dataclass
 import json
 import logging
+import csv
+import math
 import os
 from pathlib import Path
 import time
@@ -44,6 +46,7 @@ from src.launcher.models import (
 )
 from src.launcher.preflight import run_preflight
 from src.launcher.telemetry import read_vehicle_speed_kmh
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, task_producer_identity
 from src.platform import (
     AgentPolicy,
     AgentPublicEpisodeContext,
@@ -174,6 +177,16 @@ def build_metadrive_case_config(
     return cfg
 
 
+def build_launcher_agent_input(env, raw_obs, step_idx, profile_id, producer_id=LEGACY_TASK_PRODUCER):
+    tm = env.engine.traffic_manager
+    traffic = list(getattr(tm, "traffic_vehicles", []))
+    return build_agent_input(
+        raw_obs=raw_obs, ego_vehicle=env.agent, traffic_vehicles=traffic,
+        navigation=env.agent.navigation, road_network=env.current_map.road_network,
+        step_index=step_idx, profile_id=InputProfileId(profile_id), task_context_producer_id=producer_id,
+    )
+
+
 @dataclass(frozen=True)
 class ExecutionReportV1:
     """Summary record returned upon completion or interruption of an experiment execution."""
@@ -203,13 +216,21 @@ class ExperimentExecutor:
         runs_root: Optional[Path] = None,
         custom_run_id: Optional[str] = None,
         event_callback: Optional[EventCallback] = None,
-        project_root: Optional[Path] = None
+        project_root: Optional[Path] = None,
+        steering_profile: Optional[str] = None,
     ):
         self.plan = plan
         self.project_root = project_root or get_default_project_root()
         self.runs_root = runs_root or (self.project_root / "runs")
         self.custom_run_id = validate_custom_run_id(custom_run_id, self.runs_root)
         self.event_callback = event_callback
+        if steering_profile is not None and (
+            steering_profile not in {"off", "fixed", "adaptive"}
+            or plan.canonical_run or plan.launcher_mode != LauncherMode.SANDBOX
+            or plan.agent_registration.agent_id != "stage5_sac_terminal_preview"
+        ):
+            raise ValueError("Steering telemetry and smoothing require Terminal Preview SAC in SANDBOX")
+        self.steering_profile = steering_profile
 
         from src.launcher.registry import build_canonical_agent_registry
         canonical_reg = build_canonical_agent_registry()
@@ -262,13 +283,28 @@ class ExperimentExecutor:
         }
 
         checkpoint = getattr(self.plan, "checkpoint_binding", None)
+        is_stage5 = self.plan.agent_registration.agent_id in {"stage5_sac", "stage5_sac_terminal_preview"}
         algorithm_parameters = {"launcher": launcher_prov}
+        if self.steering_profile is not None:
+            from src.launcher.steering import SteeringFilter, steering_sample, vehicle_motion
+            algorithm_parameters["steering"] = {"profile": self.steering_profile, "recipe": "steering_sandbox_v1"}
         parameter_provider = getattr(self.agent_factory, "experiment_parameters", None)
         if parameter_provider is not None:
-            param_key = "sac_checkpoint" if self.plan.agent_registration.method_family == "MODEL_FREE_RL" else "planner"
+            param_key = "sac_checkpoint" if is_stage5 or self.plan.agent_registration.method_family == "MODEL_FREE_RL" else "planner"
             algorithm_parameters[param_key] = parameter_provider()
         if checkpoint is not None:
             algorithm_parameters["checkpoint"] = checkpoint.semantic_identity()
+
+        producer_id = LEGACY_TASK_PRODUCER
+        if is_stage5:
+            recorded = algorithm_parameters.get("sac_checkpoint", {}).get("task_context_producer")
+            if recorded is not None:
+                producer_id = recorded["id"]
+                if recorded != task_producer_identity(producer_id):
+                    raise ValueError("Launcher TaskContext producer identity mismatch")
+            if self.plan.canonical_run and producer_id != LEGACY_TASK_PRODUCER:
+                raise ValueError("Corrected TaskContext is development-only")
+            algorithm_parameters["task_context_producer"] = task_producer_identity(producer_id)
 
         # 2. Build Gate-7 ExperimentRunConfig
         run_config = ExperimentRunConfig(
@@ -333,6 +369,8 @@ class ExperimentExecutor:
 
             # 4. Instantiate agent policy ONCE per ExperimentRun (Section 9)
             agent = self.agent_factory()
+            if is_stage5 and getattr(agent, "task_context_producer_id", None) != producer_id:
+                raise ValueError("Launcher/agent TaskContext producer mismatch")
             if checkpoint is not None:
                 from src.launcher.checkpoints import validate_checkpoint_binding
                 checkpoint_path = validate_checkpoint_binding(checkpoint, self.project_root)
@@ -437,6 +475,8 @@ class ExperimentExecutor:
                         mode="INFERENCE"
                     )
                     agent.reset(public_context, agent_seed=self.plan.agent_seed)
+                    steering_filter = SteeringFilter(self.steering_profile) if self.steering_profile else None
+                    steering_samples = []
 
                     # D. Step loop (10 Hz decision cycle)
                     latencies_ms: List[float] = []
@@ -452,26 +492,25 @@ class ExperimentExecutor:
 
                     while not (terminated or truncated) and step_idx < case.horizon_steps:
                         # 1. Assemble clean AgentInputV1 (no evaluator metadata)
-                        tm = env.engine.traffic_manager
-                        traffic_v = list(getattr(tm, "traffic_vehicles", [])) if hasattr(tm, "traffic_vehicles") else []
-                        agent_input = build_agent_input(
-                            raw_obs=raw_obs,
-                            ego_vehicle=env.agent,
-                            traffic_vehicles=traffic_v,
-                            navigation=env.agent.navigation,
-                            road_network=env.current_map.road_network,
-                            step_index=step_idx,
-                            profile_id=InputProfileId(self.plan.agent_registration.input_profile_id)
+                        agent_input = build_launcher_agent_input(
+                            env, raw_obs, step_idx, self.plan.agent_registration.input_profile_id, producer_id
                         )
 
                         # 2. High-resolution decision latency timer wrapping agent.act() strictly
                         t0 = time.perf_counter_ns()
-                        decision = agent.act(agent_input)
+                        decision = (agent.act(agent_input, task_context_producer_id=producer_id)
+                                    if is_stage5 else agent.act(agent_input))
                         t1 = time.perf_counter_ns()
                         latencies_ms.append((t1 - t0) / 1e6)
 
                         # 3. Action adaptation to physical actuator Box(2)
                         canonical_act = action_adapter.to_canonical(decision.action_payload)
+                        raw_action = canonical_act
+                        if steering_filter is not None:
+                            before = vehicle_motion(env.agent)
+                            canonical_act, alpha, bend = steering_filter.apply(
+                                raw_action, read_vehicle_speed_kmh(env.agent), agent_input.task_context
+                            )
                         if decision_trace is not None:
                             decision_trace.write(case.case_id, agent_input, decision,
                                                  canonical_act.to_numpy(), (t1 - t0) / 1e6)
@@ -481,6 +520,12 @@ class ExperimentExecutor:
                         if finish_visual is not None:
                             finish_visual.update()
                         step_idx += 1
+                        if steering_filter is not None:
+                            previous_accel = steering_samples[-1]["lateral_accel_m_s2"] if steering_samples else None
+                            sample = steering_sample(env.agent, before, vehicle_motion(env.agent),
+                                                     float(self.plan.control_dt_s), raw_action, canonical_act,
+                                                     alpha, bend, previous_accel)
+                            steering_samples.append({"step": step_idx, **sample})
 
                         # Update raw safety and task flags from step_info
                         for k in ("arrive_dest", "out_of_road", "crash_vehicle", "crash_object", "crash_building", "crash_human", "crash_sidewalk", "max_step"):
@@ -613,6 +658,11 @@ class ExperimentExecutor:
                 )
 
                 backend.log_episode(log_row, timing=timing)
+                if steering_samples:
+                    with (logger.run_dir / f"steering-{case_idx:03d}.csv").open("x", encoding="utf-8", newline="") as stream:
+                        writer = csv.DictWriter(stream, fieldnames=list(steering_samples[0]))
+                        writer.writeheader()
+                        writer.writerows(steering_samples)
                 completed_count += 1
 
                 self._emit(LauncherEventV1.create(

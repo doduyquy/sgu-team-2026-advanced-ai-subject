@@ -1,0 +1,5 @@
+﻿Split,Traffic,Episodes,Clean Success,Safety Failure,Timeout,Mean Final Route,Median Final Route,Mean Time to Clean Success (s)
+VALIDATION,ON,96/96,46/96 (47.92%),32.29%,19.79%,66.97%,70.09%,60.41
+VALIDATION,OFF,86/96,Chưa đủ ca,N/A,N/A,N/A,N/A,N/A
+TEST,ON,60/60,19/60 (31.67%),58.33%,10.00%,55.33%,43.61%,51.75
+TEST,OFF,54/60,Chưa đủ ca,N/A,N/A,N/A,N/A,N/A

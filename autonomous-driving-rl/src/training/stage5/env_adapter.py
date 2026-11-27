@@ -41,6 +41,7 @@ from src.platform import (
     get_action_adapter,
 )
 from src.platform.agent_input import build_agent_input
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, task_producer_identity
 from src.training.stage5.observation_encoder import (
     Stage5ObservationEncoder,
 )
@@ -55,7 +56,7 @@ class Stage5TrainingEnv(gym.Env):
     Standard Gymnasium RL training environment wrapping MetaDrive under Platform V1 contracts.
     """
 
-    metadata = {"render_modes": ["none"], "render_fps": 10}
+    metadata = {"render_modes": ["none", "human"], "render_fps": 10}
 
     def __init__(
         self,
@@ -69,6 +70,8 @@ class Stage5TrainingEnv(gym.Env):
         fixed_geometry_seed: Optional[int] = None,
         core_only: bool = False,
         project_root: Optional[Path] = None,
+        simulator_render_mode: str = "OFF",
+        task_context_producer_id: str = LEGACY_TASK_PRODUCER,
     ) -> None:
         """
         Initializes the Stage 5 Training Environment.
@@ -78,7 +81,8 @@ class Stage5TrainingEnv(gym.Env):
             encoder: Optional pre-configured Stage5ObservationEncoder.
             reward_spec: Optional RewardSpecV1 contract (default: standard Platform V1 spec).
             training_root_seed: Master root seed for sampler reproducibility.
-            sampler_strategy: Case selection strategy (ROUND_ROBIN, UNIFORM_RANDOM, TIER_BALANCED, FIXED).
+            sampler_strategy: Case selection strategy; TIER_ROUND_ROBIN guarantees tier coverage over
+                successive episode resets when each tier is present in the allowed pool.
             tier_filter: Optional filter ("Easy", "Medium", "Hard", "Extreme").
             sequence_filter: Optional sequence filter.
             fixed_geometry_seed: Geometry seed if using FIXED strategy.
@@ -87,6 +91,10 @@ class Stage5TrainingEnv(gym.Env):
         """
         super().__init__()
         self.project_root = project_root or get_default_project_root()
+        simulator_render_mode = str(simulator_render_mode).upper()
+        if simulator_render_mode not in {"OFF", "NATIVE"}:
+            raise ValueError("simulator_render_mode must be 'OFF' or 'NATIVE'")
+        self.simulator_render_mode = simulator_render_mode
 
         # 1. Sampler (strictly TRAIN split)
         self.sampler = sampler or TrainCaseSampler(
@@ -101,6 +109,9 @@ class Stage5TrainingEnv(gym.Env):
         # 2. Observation Encoder
         self.encoder = encoder or Stage5ObservationEncoder(core_only=core_only)
         self.observation_space = self.encoder.observation_space
+        self._task_context_producer_id = task_producer_identity(task_context_producer_id)["id"]
+        if self.encoder.is_core_only and task_context_producer_id != LEGACY_TASK_PRODUCER:
+            raise ValueError("Corrected TaskContext requires the full 409D encoder")
 
         # 3. Action Space: Box(2) continuous in [-1.0, 1.0]
         self.action_adapter = get_action_adapter("continuous_box2_v1")
@@ -117,18 +128,21 @@ class Stage5TrainingEnv(gym.Env):
         # 5. Internal Simulator State
         self._env: Optional[MetaDriveEnv] = None
         self._current_case: Optional[ResolvedCaseV1] = None
+        self._current_geometry_id: Optional[str] = None
         self._current_sim_key: Optional[Tuple[str, str, int, int]] = None
         self._blocks_cache: Dict[Tuple[str, int], List[Any]] = {}
 
         # Episode state variables
         self._step_idx = 0
         self._last_route_completion = 0.0
+        self._episode_initial_route_completion = 0.0
         self._max_route_completion = 0.0
         self._cumulative_reward = 0.0
         self._terminated = False
         self._truncated = False
         self._env_flags: Dict[str, Any] = {}
         self._last_outcome: Optional[EpisodeOutcome] = None
+        self._current_agent_input: Optional[AgentInputV1] = None
 
     # ==========================================================================
     # Gymnasium API: reset()
@@ -169,6 +183,7 @@ class Stage5TrainingEnv(gym.Env):
             case = self.sampler.sample_case()
 
         self._current_case = case
+        self._current_geometry_id = self.sampler.geometry_id_for_case(case)
         geom_key = (case.tier, case.sequence, case.geometry_generation_seed)
 
         # 2. Acquire locked block sequence (using cache to avoid repeated file extraction)
@@ -194,7 +209,7 @@ class Stage5TrainingEnv(gym.Env):
                     self._env = None
 
                 from metadrive.envs.metadrive_env import MetaDriveEnv
-                env_config = build_metadrive_case_config(case, blocks, render_mode="OFF")
+                env_config = build_metadrive_case_config(case, blocks, render_mode=self.simulator_render_mode)
                 self._env = MetaDriveEnv(env_config)
                 self._current_sim_key = sim_key
 
@@ -202,8 +217,10 @@ class Stage5TrainingEnv(gym.Env):
 
             # 4. Reset episodic tracking variables
             self._step_idx = 0
-            self._last_route_completion = 0.0
-            self._max_route_completion = 0.0
+            initial_route_completion = float(info.get("route_completion", 0.0))
+            self._last_route_completion = initial_route_completion
+            self._episode_initial_route_completion = initial_route_completion
+            self._max_route_completion = initial_route_completion
             self._cumulative_reward = 0.0
             self._terminated = False
             self._truncated = False
@@ -212,18 +229,23 @@ class Stage5TrainingEnv(gym.Env):
 
             # 5. Build public AgentInputV1 and encode observation
             agent_input = self._build_agent_input(raw_obs, step_idx=0)
+            self._current_agent_input = agent_input
             obs = self.encoder.encode(agent_input)
 
             # 6. Diagnostic info (strictly for training instrumentation, not passed to policy)
             info_dict: Dict[str, Any] = {
+                "task_context_producer_id": self.task_context_producer_id,
+                "valid_task_waypoints": int(agent_input.task_context.validity_mask.sum()),
                 "step_index": 0,
                 "case_id": case.case_id,
+                "geometry_id": self._current_geometry_id,
                 "tier": case.tier,
                 "sequence": case.sequence,
                 "geometry_seed": case.geometry_generation_seed,
                 "environment_seed": case.environment_seed,
                 "horizon_steps": case.horizon_steps,
                 "traffic_density": case.traffic_density,
+                "initial_route_completion": initial_route_completion,
             }
 
             return obs, info_dict
@@ -298,20 +320,29 @@ class Stage5TrainingEnv(gym.Env):
 
             # 6. Build authoritative AgentInputV1 and encode observation
             agent_input = self._build_agent_input(raw_obs, step_idx=self._step_idx)
+            self._current_agent_input = agent_input
             obs = self.encoder.encode(agent_input)
 
             # 7. Construct info dictionary
             speed_kmh = read_vehicle_speed_kmh(self._env.agent)
             info_dict: Dict[str, Any] = {
+                "task_context_producer_id": self.task_context_producer_id,
+                "valid_task_waypoints": int(agent_input.task_context.validity_mask.sum()),
                 "step_index": self._step_idx,
                 "case_id": self._current_case.case_id,
+                "geometry_id": self._current_geometry_id,
                 "tier": self._current_case.tier,
                 "geometry_generation_seed": int(self._current_case.geometry_generation_seed),
                 "environment_seed": int(self._current_case.environment_seed),
                 "speed_km_h": speed_kmh,
+                "action_steering": float(canonical_act.steering),
+                "action_throttle_brake": float(canonical_act.throttle_brake),
                 "route_completion": curr_route,
+                "initial_route_completion": self._episode_initial_route_completion,
                 "delta_route": delta_route,
                 "reward_breakdown": breakdown.to_dict(),
+                "native_metadrive_reward": float(r_env),
+                "reward_spec_v1_total": step_reward,
             }
 
             if self._terminated or self._truncated:
@@ -336,6 +367,15 @@ class Stage5TrainingEnv(gym.Env):
     # Private Simulator Helpers
     # ==========================================================================
 
+    @property
+    def task_context_producer_id(self) -> str:
+        return self._task_context_producer_id
+
+    @property
+    def current_agent_input(self) -> Optional[AgentInputV1]:
+        """Latest public AgentInputV1 for frozen inference and parity checks."""
+        return self._current_agent_input
+
     def _build_agent_input(self, raw_obs: np.ndarray, step_idx: int) -> AgentInputV1:
         """Constructs an authoritative AgentInputV1 from current simulator state."""
         tm = getattr(self._env.engine, "traffic_manager", None)
@@ -351,6 +391,7 @@ class Stage5TrainingEnv(gym.Env):
             road_network=self._env.current_map.road_network,
             step_index=step_idx,
             profile_id=profile_id,
+            task_context_producer_id=self.task_context_producer_id,
         )
 
     # ==========================================================================
@@ -368,8 +409,12 @@ class Stage5TrainingEnv(gym.Env):
         self._current_sim_key = None
 
     def render(self) -> None:
-        """Render is disabled in training environment (strictly headless)."""
-        pass
+        """Render only when explicitly constructed with the native simulator window."""
+        if self._env is None or self.simulator_render_mode != "NATIVE":
+            return
+        graphics = getattr(getattr(self._env, "engine", None), "graphicsEngine", None)
+        if graphics is not None:
+            graphics.renderFrame()
 
     # ==========================================================================
     # Properties
@@ -389,6 +434,11 @@ class Stage5TrainingEnv(gym.Env):
     def cumulative_reward(self) -> float:
         """Returns total accumulated reward for the current episode."""
         return self._cumulative_reward
+
+    @property
+    def max_route_completion(self) -> float:
+        """Returns the maximum authoritative route_completion observed this episode."""
+        return self._max_route_completion
 
     @property
     def last_outcome(self) -> Optional[EpisodeOutcome]:

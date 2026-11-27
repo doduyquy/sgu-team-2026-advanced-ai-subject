@@ -47,6 +47,7 @@ from src.workbench.results_repository import (
     RunArtifactRepository,
     RunArtifactSnapshotV1,
 )
+from src.workbench.widgets.comparison_widget import ComparisonWidget
 
 
 class ResultsWidget(QWidget):
@@ -56,6 +57,7 @@ class ResultsWidget(QWidget):
         super().__init__(parent)
         project_root = get_default_project_root()
         self._runs_root = Path(runs_root).resolve() if runs_root else (project_root / "runs").resolve()
+        self._project_root = self._runs_root.parent if runs_root else project_root
         self._repo = RunArtifactRepository(self._runs_root)
         self._current_snapshot: Optional[RunArtifactSnapshotV1] = None
         self._init_ui()
@@ -68,9 +70,12 @@ class ResultsWidget(QWidget):
     def set_runs_root(self, runs_root: Path) -> None:
         """Sets a new runs_root and refreshes the run list."""
         self._runs_root = Path(runs_root).resolve()
+        self._project_root = self._runs_root.parent
         self._repo = RunArtifactRepository(self._runs_root)
         self.lbl_current_root.setText(f"Root: {self._runs_root.name}")
         self.refresh_runs_list()
+        self.tab_comparison.project_root = self._project_root
+        self.tab_comparison.refresh_data()
 
     def _init_ui(self) -> None:
         main_layout = QHBoxLayout(self)
@@ -156,6 +161,11 @@ class ResultsWidget(QWidget):
         self.tab_wandb = QWidget()
         self._init_wandb_tab()
         self.subtabs.addTab(self.tab_wandb, "W&B / Diagnostics")
+
+        # Additive comparison presentation. It consumes verified artifacts and does
+        # not alter WorkbenchResultsContractV1 or canonical metric authority.
+        self.tab_comparison = ComparisonWidget(self._project_root)
+        self.subtabs.addTab(self.tab_comparison, "Comparison")
 
         right_layout.addWidget(self.subtabs)
         splitter.addWidget(right_group)

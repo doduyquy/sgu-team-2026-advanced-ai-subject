@@ -1,0 +1,497 @@
+{
+  "checkpoints": {
+    "0": {
+      "clean_success": 0.0,
+      "discounted_episode_return": -0.014611774303739302,
+      "episode_return": -0.24992602143611836,
+      "episodes_completed": 24,
+      "episodes_interrupted": 0,
+      "final_route_completion": 0.008896373145601977,
+      "mean_brake": 0.13851925396750922,
+      "mean_moving_speed_km_h": null,
+      "mean_speed_km_h": 0.013319556164324795,
+      "mean_steering": -0.3390374704014054,
+      "mean_throttle": 0.0,
+      "median_route_completion": 0.00835177950057594,
+      "safety_failure": 0.0,
+      "stationary_fraction": 1.0,
+      "steering_saturation_fraction": 0.0,
+      "steering_std": 0.0004999579077570131,
+      "timeout": 1.0
+    },
+    "10000": {
+      "clean_success": 0.0,
+      "discounted_episode_return": -0.014612445141304447,
+      "episode_return": -0.2499341084520495,
+      "episodes_completed": 24,
+      "episodes_interrupted": 0,
+      "final_route_completion": 0.008888286129672273,
+      "mean_brake": 0.0382473647267854,
+      "mean_moving_speed_km_h": null,
+      "mean_speed_km_h": 0.013293590588769617,
+      "mean_steering": -0.04089407513117674,
+      "mean_throttle": 0.0,
+      "median_route_completion": 0.008340336281123056,
+      "safety_failure": 0.0,
+      "stationary_fraction": 1.0,
+      "steering_saturation_fraction": 0.0,
+      "steering_std": 6.677838813673201e-07,
+      "timeout": 1.0
+    },
+    "5000": {
+      "clean_success": 0.0,
+      "discounted_episode_return": -0.014589977349721114,
+      "episode_return": -0.24984552613898206,
+      "episodes_completed": 24,
+      "episodes_interrupted": 0,
+      "final_route_completion": 0.008976868442738503,
+      "mean_brake": 0.005539763806420575,
+      "mean_moving_speed_km_h": null,
+      "mean_speed_km_h": 0.013378227146778663,
+      "mean_steering": -0.030637351344690488,
+      "mean_throttle": 0.0,
+      "median_route_completion": 0.008480270353876895,
+      "safety_failure": 0.0,
+      "stationary_fraction": 1.0,
+      "steering_saturation_fraction": 0.0,
+      "steering_std": 6.470325721502957e-06,
+      "timeout": 1.0
+    }
+  },
+  "classification": "internal PILOT_DIAGNOSTIC development data; not official VALIDATION or TEST",
+  "paired_differences_vs_untrained": {
+    "10000": {
+      "clean_success": {
+        "mean": 0.0,
+        "n": 24
+      },
+      "discounted_episode_return": {
+        "mean": -6.708375651462139e-07,
+        "n": 24
+      },
+      "episode_return": {
+        "mean": -8.087015931141037e-06,
+        "n": 24
+      },
+      "final_route_completion": {
+        "mean": -8.087015929703314e-06,
+        "n": 24
+      },
+      "mean_brake": {
+        "mean": -0.1002718892407238,
+        "n": 24
+      },
+      "mean_moving_speed_km_h": {
+        "mean": null,
+        "n": 0
+      },
+      "mean_speed_km_h": {
+        "mean": -2.596557555517713e-05,
+        "n": 24
+      },
+      "mean_steering": {
+        "mean": 0.29814339527022865,
+        "n": 24
+      },
+      "mean_throttle": {
+        "mean": 0.0,
+        "n": 24
+      },
+      "safety_failure": {
+        "mean": 0.0,
+        "n": 24
+      },
+      "stationary_fraction": {
+        "mean": 0.0,
+        "n": 24
+      },
+      "steering_saturation_fraction": {
+        "mean": 0.0,
+        "n": 24
+      },
+      "steering_std": {
+        "mean": -0.0004992901238756457,
+        "n": 24
+      },
+      "timeout": {
+        "mean": 0.0,
+        "n": 24
+      }
+    },
+    "5000": {
+      "clean_success": {
+        "mean": 0.0,
+        "n": 24
+      },
+      "discounted_episode_return": {
+        "mean": 2.1796954018187328e-05,
+        "n": 24
+      },
+      "episode_return": {
+        "mean": 8.049529713629346e-05,
+        "n": 24
+      },
+      "final_route_completion": {
+        "mean": 8.049529713652602e-05,
+        "n": 24
+      },
+      "mean_brake": {
+        "mean": -0.13297949016108865,
+        "n": 24
+      },
+      "mean_moving_speed_km_h": {
+        "mean": null,
+        "n": 0
+      },
+      "mean_speed_km_h": {
+        "mean": 5.8670982453869085e-05,
+        "n": 24
+      },
+      "mean_steering": {
+        "mean": 0.3084001190567149,
+        "n": 24
+      },
+      "mean_throttle": {
+        "mean": 0.0,
+        "n": 24
+      },
+      "safety_failure": {
+        "mean": 0.0,
+        "n": 24
+      },
+      "stationary_fraction": {
+        "mean": 0.0,
+        "n": 24
+      },
+      "steering_saturation_fraction": {
+        "mean": 0.0,
+        "n": 24
+      },
+      "steering_std": {
+        "mean": -0.0004934875820355101,
+        "n": 24
+      },
+      "timeout": {
+        "mean": 0.0,
+        "n": 24
+      }
+    }
+  },
+  "per_tier": {
+    "Easy": {
+      "0": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.020035205239094172,
+        "episode_return": -0.24993121251596567,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.012284952895994903,
+        "mean_brake": 0.14705383748150658,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.01345656770473025,
+        "mean_steering": -0.34443214667267535,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.012679222574564115,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 0.000358133830849741,
+        "timeout": 1.0
+      },
+      "10000": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.02003219677276119,
+        "episode_return": -0.24990369758598155,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.01231246782597958,
+        "mean_brake": 0.03825336451820958,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013362881425689551,
+        "mean_steering": -0.04086486607277506,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.012682171826573253,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 8.668260243333939e-07,
+        "timeout": 1.0
+      },
+      "5000": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.0200026720278879,
+        "episode_return": -0.24979041013246184,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.012425755279499509,
+        "mean_brake": 0.006225110952411777,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013466351990232795,
+        "mean_steering": -0.030814042656439534,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.012817580796592582,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 7.575346343742852e-06,
+        "timeout": 1.0
+      }
+    },
+    "Extreme": {
+      "0": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.00786487108630432,
+        "episode_return": -0.24993248868255485,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.004791251332154571,
+        "mean_brake": 0.13166778661986198,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013185200426655417,
+        "mean_steering": -0.33405220352972653,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.004795510583801558,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 0.0006640676328340908,
+        "timeout": 1.0
+      },
+      "10000": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.00786571692648163,
+        "episode_return": -0.24993567227542662,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.004788067739284821,
+        "mean_brake": 0.03824354293429012,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013200167163642586,
+        "mean_steering": -0.04092554419782302,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.004804839140562123,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 2.900024335243259e-07,
+        "timeout": 1.0
+      },
+      "5000": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.007855200247273552,
+        "episode_return": -0.24993153662998777,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.004792203384725936,
+        "mean_brake": 0.004823564903528861,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013249473078135829,
+        "mean_steering": -0.03045839401153766,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.004872611108244846,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 4.536827295446792e-06,
+        "timeout": 1.0
+      }
+    },
+    "Hard": {
+      "0": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.013786920927981266,
+        "episode_return": -0.2499210720466796,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.008360908823413607,
+        "mean_brake": 0.12312624715612877,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013307044435719645,
+        "mean_steering": -0.3343328202667849,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.008193654925080108,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 0.000474023463097947,
+        "timeout": 1.0
+      },
+      "10000": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.01379005167934074,
+        "episode_return": -0.2499686255169469,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.008313355353149117,
+        "mean_brake": 0.03823412727837083,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013281840577523362,
+        "mean_steering": -0.04091637091531233,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.008153335410040447,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 6.24174820392065e-07,
+        "timeout": 1.0
+      },
+      "5000": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.013764141531183825,
+        "episode_return": -0.2498392712031917,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.008442709666898026,
+        "mean_brake": 0.005652338754363703,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013402113586321773,
+        "mean_steering": -0.030144955702362575,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.008198749893185586,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 5.651165749798216e-06,
+        "timeout": 1.0
+      }
+    },
+    "Medium": {
+      "0": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.01676009996157745,
+        "episode_return": -0.2499193124992733,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.010148379530844829,
+        "mean_brake": 0.15222914461253953,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013329412090193863,
+        "mean_steering": -0.3433327111364348,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.009988711305980493,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 0.0005036067042462735,
+        "timeout": 1.0
+      },
+      "10000": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.01676181518663423,
+        "episode_return": -0.24992843842984291,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.010139253600275577,
+        "mean_brake": 0.038258424176271066,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013329473188222968,
+        "mean_steering": -0.04086951933879653,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.009989370367793581,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 8.901322472194958e-07,
+        "timeout": 1.0
+      },
+      "5000": {
+        "clean_success": 0.0,
+        "discounted_episode_return": -0.01673789559253918,
+        "episode_return": -0.24982088659028695,
+        "episodes_completed": 6,
+        "episodes_interrupted": 0,
+        "final_route_completion": 0.010246805439830543,
+        "mean_brake": 0.005458040615377956,
+        "mean_moving_speed_km_h": null,
+        "mean_speed_km_h": 0.013394969932424257,
+        "mean_steering": -0.03113201300842218,
+        "mean_throttle": 0.0,
+        "median_route_completion": 0.010162982871287638,
+        "safety_failure": 0.0,
+        "stationary_fraction": 1.0,
+        "steering_saturation_fraction": 0.0,
+        "steering_std": 8.117963497023968e-06,
+        "timeout": 1.0
+      }
+    }
+  },
+  "training": {
+    "actor_loss_at_end": -15.20359992980957,
+    "actual_steps": 10000,
+    "baseline_config_sha256": "7100195a8719f88fab5e6f19a9a4ca750e54ae6e28671a806f0866c615dd5443",
+    "checkpoint_model_sha256": {
+      "0": "9aebfde7fdc0d77f88d3e2308bc101a4f1f74307ba36f1ceca8db4a95f7e6c9d",
+      "10000": "c52793eda0b75afb27c0934d1a0c1eae14c3c5399fd233c0a1989876cdb28140",
+      "5000": "47e6262fa803db974c9c74272f16d9947d5ceb547e32da981c818278acfc4a3d"
+    },
+    "code_commit": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+    "completed_episodes": 6,
+    "critic_loss_at_end": 0.0003893774701282382,
+    "discount_weight_at_horizon_1000": 4.317124741065786e-05,
+    "discount_weight_at_horizon_1500": 2.8365594903161287e-07,
+    "discount_weight_at_horizon_1860": 7.611354529766885e-09,
+    "encoder_fingerprint": "5bf7c890b5f1098594b985a62c01b598d0c62bd41d7da7f70afbf8d3e3717c2a",
+    "entropy_coefficient_at_end": 0.06717360019683838,
+    "gymnasium_version": "1.3.0",
+    "historical_s5_2_smoke_checkpoint_used": false,
+    "metadrive_version": "0.4.3 (commit 85e5dadc)",
+    "optimizer_updates": 9000,
+    "python_version": "3.10.21",
+    "ram_first_mb": 354.88671875,
+    "ram_last_mb": 420.33984375,
+    "ram_max_mb": 420.33984375,
+    "ram_min_mb": 354.88671875,
+    "ram_samples": 100,
+    "requested_steps": 10000,
+    "sac_gamma": 0.99,
+    "split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+    "stable_baselines3_version": "2.9.2",
+    "steps_per_second": 12.692147506276067,
+    "torch_version": "2.14.1+cpu",
+    "training_geometry_coverage": {
+      "geometry_step_counts": {
+        "geom_easy_SCCS_seed0": 1758,
+        "geom_easy_SCCS_seed2": 1049,
+        "geom_extreme_CrXROSTR_seed2": 2616,
+        "geom_hard_SCTXrCS_seed2": 973,
+        "geom_hard_SCTXrCS_seed3": 105,
+        "geom_medium_SCTCS_seed2": 1642,
+        "geom_medium_SCTCS_seed3": 1857
+      },
+      "geometry_tiers": {
+        "geom_easy_SCCS_seed0": "Easy",
+        "geom_easy_SCCS_seed2": "Easy",
+        "geom_extreme_CrXROSTR_seed2": "Extreme",
+        "geom_hard_SCTXrCS_seed2": "Hard",
+        "geom_hard_SCTXrCS_seed3": "Hard",
+        "geom_medium_SCTCS_seed2": "Medium",
+        "geom_medium_SCTCS_seed3": "Medium"
+      },
+      "tier_step_counts": {
+        "Easy": 2807,
+        "Extreme": 2616,
+        "Hard": 1078,
+        "Medium": 3499
+      },
+      "tier_unique_geometry_counts": {
+        "Easy": 2,
+        "Extreme": 1,
+        "Hard": 2,
+        "Medium": 2
+      },
+      "unique_geometry_count": 7
+    },
+    "training_geometry_ids": [
+      "geom_easy_SCCS_seed0",
+      "geom_easy_SCCS_seed2",
+      "geom_extreme_CrXROSTR_seed2",
+      "geom_hard_SCTXrCS_seed2",
+      "geom_medium_SCTCS_seed2",
+      "geom_medium_SCTCS_seed3"
+    ],
+    "training_root_seed": 101,
+    "training_sampler_strategy": "TIER_ROUND_ROBIN",
+    "unique_training_geometries": 6,
+    "wall_time_s": 787.8887316000037
+  }
+}

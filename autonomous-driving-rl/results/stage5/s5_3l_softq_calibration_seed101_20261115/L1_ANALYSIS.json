@@ -1,0 +1,496 @@
+{
+  "cells": [
+    {
+      "condition": "brake_q15",
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "mean_min_q": 15.233990669250488,
+      "mean_q_minus_return": 6.169748322406499,
+      "mean_soft_return": 9.06424234684399,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.086313441596838,
+        6.25318320321616
+      ],
+      "q_minus_return_sd": 0.09979999144989331,
+      "soft_return_ci95_t_df7": [
+        8.98080746603433,
+        9.14767722765365
+      ],
+      "soft_return_sd": 0.09979999144989331,
+      "tier": "Easy"
+    },
+    {
+      "condition": "near_neutral_q50",
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "mean_min_q": 15.225610733032227,
+      "mean_q_minus_return": 6.161395759849922,
+      "mean_soft_return": 9.064214973182304,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.077986052036904,
+        6.244805467662941
+      ],
+      "q_minus_return_sd": 0.09976988096342453,
+      "soft_return_ci95_t_df7": [
+        8.980805265369286,
+        9.147624680995323
+      ],
+      "soft_return_sd": 0.09976988096342453,
+      "tier": "Easy"
+    },
+    {
+      "condition": "throttle_q85",
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "mean_min_q": 15.216191291809082,
+      "mean_q_minus_return": 6.151697285855125,
+      "mean_soft_return": 9.064494005953957,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.068657679277269,
+        6.234736892432981
+      ],
+      "q_minus_return_sd": 0.09932718721536081,
+      "soft_return_ci95_t_df7": [
+        8.981454399376101,
+        9.147533612531813
+      ],
+      "soft_return_sd": 0.09932718721536081,
+      "tier": "Easy"
+    },
+    {
+      "condition": "brake_q15",
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "mean_min_q": 15.22587776184082,
+      "mean_q_minus_return": 6.112489496451752,
+      "mean_soft_return": 9.113388265389068,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.013752941332982,
+        6.211226051570521
+      ],
+      "q_minus_return_sd": 0.11810297157521808,
+      "soft_return_ci95_t_df7": [
+        9.014651710270298,
+        9.212124820507837
+      ],
+      "soft_return_sd": 0.11810297157521808,
+      "tier": "Extreme"
+    },
+    {
+      "condition": "near_neutral_q50",
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "mean_min_q": 15.217170715332031,
+      "mean_q_minus_return": 6.103795481891846,
+      "mean_soft_return": 9.113375233440184,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.005052834985007,
+        6.202538128798685
+      ],
+      "q_minus_return_sd": 0.11811025822069963,
+      "soft_return_ci95_t_df7": [
+        9.014632586533345,
+        9.212117880347023
+      ],
+      "soft_return_sd": 0.11811025822069963,
+      "tier": "Extreme"
+    },
+    {
+      "condition": "throttle_q85",
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "mean_min_q": 15.208362579345703,
+      "mean_q_minus_return": 6.095004434520682,
+      "mean_soft_return": 9.113358144825021,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        5.995855170035276,
+        6.194153699006088
+      ],
+      "q_minus_return_sd": 0.11859663071228334,
+      "soft_return_ci95_t_df7": [
+        9.014208880339615,
+        9.212507409310428
+      ],
+      "soft_return_sd": 0.11859663071228334,
+      "tier": "Extreme"
+    },
+    {
+      "condition": "brake_q15",
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "mean_min_q": 15.272022247314453,
+      "mean_q_minus_return": 6.199825025929296,
+      "mean_soft_return": 9.072197221385158,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.121781314529299,
+        6.2778687373292925
+      ],
+      "q_minus_return_sd": 0.09335138559382689,
+      "soft_return_ci95_t_df7": [
+        8.99415350998516,
+        9.150240932785156
+      ],
+      "soft_return_sd": 0.09335138559382689,
+      "tier": "Hard"
+    },
+    {
+      "condition": "near_neutral_q50",
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "mean_min_q": 15.26112174987793,
+      "mean_q_minus_return": 6.18893472169302,
+      "mean_soft_return": 9.07218702818491,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.11092393269244,
+        6.266945510693599
+      ],
+      "q_minus_return_sd": 0.09331200571878522,
+      "soft_return_ci95_t_df7": [
+        8.99417623918433,
+        9.15019781718549
+      ],
+      "soft_return_sd": 0.09331200571878522,
+      "tier": "Hard"
+    },
+    {
+      "condition": "throttle_q85",
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "mean_min_q": 15.250621795654297,
+      "mean_q_minus_return": 6.176721775822989,
+      "mean_soft_return": 9.073900019831308,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.099953956573646,
+        6.253489595072331
+      ],
+      "q_minus_return_sd": 0.0918252370035657,
+      "soft_return_ci95_t_df7": [
+        8.997132200581966,
+        9.15066783908065
+      ],
+      "soft_return_sd": 0.0918252370035657,
+      "tier": "Hard"
+    },
+    {
+      "condition": "brake_q15",
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "mean_min_q": 15.233694076538086,
+      "mean_q_minus_return": 6.0945255191409275,
+      "mean_soft_return": 9.13916855739716,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.020419326128719,
+        6.168631712153136
+      ],
+      "q_minus_return_sd": 0.08864155323568455,
+      "soft_return_ci95_t_df7": [
+        9.06506236438495,
+        9.213274750409369
+      ],
+      "soft_return_sd": 0.08864155323568455,
+      "tier": "Medium"
+    },
+    {
+      "condition": "near_neutral_q50",
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "mean_min_q": 15.224838256835938,
+      "mean_q_minus_return": 6.085683311355892,
+      "mean_soft_return": 9.139154945480046,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.011571185856671,
+        6.159795436855112
+      ],
+      "q_minus_return_sd": 0.08864864933442969,
+      "soft_return_ci95_t_df7": [
+        9.065042819980826,
+        9.213267070979265
+      ],
+      "soft_return_sd": 0.08864864933442969,
+      "tier": "Medium"
+    },
+    {
+      "condition": "throttle_q85",
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "mean_min_q": 15.216072082519531,
+      "mean_q_minus_return": 6.076613121278031,
+      "mean_soft_return": 9.1394589612415,
+      "n": 8,
+      "outcomes": {
+        "TIMEOUT": 8
+      },
+      "q_minus_return_ci95_t_df7": [
+        6.0026331736706435,
+        6.150593068885419
+      ],
+      "q_minus_return_sd": 0.08849054576495446,
+      "soft_return_ci95_t_df7": [
+        9.065479013634112,
+        9.213438908848888
+      ],
+      "soft_return_sd": 0.08849054576495446,
+      "tier": "Medium"
+    }
+  ],
+  "censored": 0,
+  "checkpoint_sha256": "6347ae4d82958bba89147ec39507ce3cb6abaa7e04d82f97101d1c09c2dea073",
+  "entropy_coefficient": 0.06771416962146759,
+  "episodes": 96,
+  "gamma": 0.99,
+  "geometry_count": 4,
+  "gymnasium_version": "1.3.0",
+  "limitations": [
+    "Four fixed internal TRAIN geometries and one environment seed per geometry; inference is conditional on those reset states.",
+    "Eight independent stochastic continuations estimate policy-sampling variability; action conditions use common random numbers within geometry and replicate.",
+    "TIMEOUT return adds gamma^T times target-critic soft bootstrap; L0 measured this tail as negligible at these episode lengths.",
+    "The checkpoint critics and actor co-adapted with an automatic entropy coefficient during training; L1 uses the frozen final alpha.",
+    "Per-cell t intervals describe stochastic continuation variation, not uncertainty across geometries or training roots."
+  ],
+  "mean_online_min_q": 15.232131163279215,
+  "mean_q_minus_return": 6.134702854682998,
+  "mean_soft_return": 9.097428308596218,
+  "mean_throttle_minus_brake_min_q_over_four_geometries": -0.018584251403808594,
+  "median_q_minus_return": 6.120893765917962,
+  "outcomes": {
+    "TIMEOUT": 96
+  },
+  "paired_intervention_differences": {
+    "discounted_reward_return_observed": {
+      "near_neutral_q50_minus_brake_q15": {
+        "ci95_t_df31": [
+          -5.254491817819291e-08,
+          1.1678808889719159e-07
+        ],
+        "mean": 3.212158535949934e-08,
+        "median": -6.134307645178083e-10,
+        "n": 32,
+        "negative": 16,
+        "positive": 16,
+        "sd": 2.3483349485446642e-07,
+        "ties": 0
+      },
+      "throttle_q85_minus_brake_q15": {
+        "ci95_t_df31": [
+          -2.2820264801065185e-05,
+          5.597791694993348e-05
+        ],
+        "mean": 1.6578826074434147e-05,
+        "median": 1.8897549933688355e-05,
+        "n": 32,
+        "negative": 12,
+        "positive": 20,
+        "sd": 0.00010927847280552073,
+        "ties": 0
+      },
+      "throttle_q85_minus_near_neutral_q50": {
+        "ci95_t_df31": [
+          -2.2831663063724185e-05,
+          5.592507204187348e-05
+        ],
+        "mean": 1.6546704489074648e-05,
+        "median": 1.889999716939931e-05,
+        "n": 32,
+        "negative": 12,
+        "positive": 20,
+        "sd": 0.00010922099399050637,
+        "ties": 0
+      }
+    },
+    "route_progress_delta": {
+      "near_neutral_q50_minus_brake_q15": {
+        "ci95_t_df31": [
+          -7.892130657775285e-05,
+          5.728482738379294e-05
+        ],
+        "mean": -1.0818239596979955e-05,
+        "median": -6.628819948610587e-07,
+        "n": 32,
+        "negative": 20,
+        "positive": 12,
+        "sd": 0.0001888926619283732,
+        "ties": 0
+      },
+      "throttle_q85_minus_brake_q15": {
+        "ci95_t_df31": [
+          -1.1464002571408673e-05,
+          0.00021945868610179589
+        ],
+        "mean": 0.0001039973417651936,
+        "median": 6.15368288483277e-05,
+        "n": 32,
+        "negative": 10,
+        "positive": 22,
+        "sd": 0.00032024696755179503,
+        "ties": 0
+      },
+      "throttle_q85_minus_near_neutral_q50": {
+        "ci95_t_df31": [
+          -1.6452955719127994e-05,
+          0.0002460841184434751
+        ],
+        "mean": 0.00011481558136217356,
+        "median": 5.8894148139782e-05,
+        "n": 32,
+        "negative": 11,
+        "positive": 21,
+        "sd": 0.0003640902604831412,
+        "ties": 0
+      }
+    },
+    "soft_return_for_analysis": {
+      "near_neutral_q50_minus_brake_q15": {
+        "ci95_t_df31": [
+          -3.080439581951938e-05,
+          -1.3009681445106994e-06
+        ],
+        "mean": -1.6052681982015038e-05,
+        "median": -1.6454970017676374e-05,
+        "n": 32,
+        "negative": 21,
+        "positive": 11,
+        "sd": 4.091578570989327e-05,
+        "ties": 0
+      },
+      "throttle_q85_minus_brake_q15": {
+        "ci95_t_df31": [
+          -9.999838058346699e-05,
+          0.0012073687987899885
+        ],
+        "mean": 0.0005536852091032607,
+        "median": 0.0002074217588088345,
+        "n": 32,
+        "negative": 9,
+        "positive": 23,
+        "sd": 0.0018130759566185274,
+        "ties": 0
+      },
+      "throttle_q85_minus_near_neutral_q50": {
+        "ci95_t_df31": [
+          -8.042110776345583e-05,
+          0.0012198968899340074
+        ],
+        "mean": 0.0005697378910852757,
+        "median": 0.0002178189225130467,
+        "n": 32,
+        "negative": 10,
+        "positive": 22,
+        "sd": 0.0018033000482033394,
+        "ties": 0
+      }
+    }
+  },
+  "pilot_split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+  "protocol": "S5.3L-L1 repeated frozen stochastic rollouts; fixed diagnostic state calibration",
+  "q_action_value_contrast_by_geometry": [
+    {
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "neutral_minus_brake_min_q": -0.008379936218261719,
+      "throttle_minus_brake_min_q": -0.01779937744140625
+    },
+    {
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "neutral_minus_brake_min_q": -0.008707046508789062,
+      "throttle_minus_brake_min_q": -0.017515182495117188
+    },
+    {
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "neutral_minus_brake_min_q": -0.010900497436523438,
+      "throttle_minus_brake_min_q": -0.02140045166015625
+    },
+    {
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "neutral_minus_brake_min_q": -0.008855819702148438,
+      "throttle_minus_brake_min_q": -0.017621994018554688
+    }
+  ],
+  "q_minus_return_range": [
+    5.956979636960323,
+    6.33576400779423
+  ],
+  "raw_trace_bytes": 753867555,
+  "raw_trace_hashes": {
+    "replicate_01": {
+      "bytes": 94133344,
+      "sha256": "68ee662c040cff1fa900b5eb09e978c1b4313926e9f1b914cc4a9141ccde6a67"
+    },
+    "replicate_02": {
+      "bytes": 94369479,
+      "sha256": "dd197497501f9be3210d11db96fe2f70fad2975cc3cec2773a5a0ce07f7b2462"
+    },
+    "replicate_03": {
+      "bytes": 94387166,
+      "sha256": "9fed418a00e5cf42f1f0d4ee639520b5d29902e1ffdf2dc4d48458175b3dc3db"
+    },
+    "replicate_04": {
+      "bytes": 94185846,
+      "sha256": "cfc8a1d28db71135c7c6d2fd060b829adfb4b2403ede49336e27cb8d7de08d09"
+    },
+    "replicate_05": {
+      "bytes": 94344913,
+      "sha256": "1c4c0f9150a8fb2c7811d93cb29e670341f2703e6458338eb7f22f7e57251b93"
+    },
+    "replicate_06": {
+      "bytes": 94225593,
+      "sha256": "5e98fca186386786f010c2e76f76c31c4a036a96cded1c5dd192420e4ca597f4"
+    },
+    "replicate_07": {
+      "bytes": 94101124,
+      "sha256": "2c5dc1254046d0734efc93ccf4c98c84fc7e0ba6f370d97ef3f30a74866ced2b"
+    },
+    "replicate_08": {
+      "bytes": 94120090,
+      "sha256": "5cd56670a5a317440536ec83166730c71994d4837bb20d897734f5462a3c9718"
+    }
+  },
+  "read_only_all_replicates": true,
+  "replicate_summary_hashes": {
+    "replicate_01": "9b8ebccf00b3fa23b498f6c62cc3abaae8c913953bfac7d1573b403fce011bd6",
+    "replicate_02": "3d8351103a3b7a0773e452b82aecc8084136fe1bb4b228d532860c581964c79a",
+    "replicate_03": "012166fdf84c03f81e3365ba889196841c09aa0364babf597e5f990096acf9c6",
+    "replicate_04": "2c3065ab7592c8981ee4c11d7fd661aa92d4738e246d37f6d9537d43b0931b63",
+    "replicate_05": "0223f0b0953b752a193fa3df76bb32be21bd6d5615f187957fd550bdc341e9c2",
+    "replicate_06": "7c1b6261025089b196b4e418daf2d6bee494ad4e3b3a6e0ac75506ee382dde5d",
+    "replicate_07": "d82522cead68e6f91ae6d60bc722de4a7fa189814f3f30a8017402cc63ba8c42",
+    "replicate_08": "4c6f2a0d573fe5b816ca1f790d97a9fa316e0ecec88b5008db1a1a4aae113853"
+  },
+  "replicates": 8,
+  "reset_parity_all_replicates": true,
+  "sd_q_minus_return_pooled": 0.10365684608638545,
+  "stable_baselines3_version": "2.9.2",
+  "status": "COMPLETE",
+  "sum_replicate_wall_time_hours": 3.010401407666666,
+  "sum_replicate_wall_time_s": 10837.445067599998
+}

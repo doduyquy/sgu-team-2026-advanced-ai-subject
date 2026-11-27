@@ -33,3 +33,9 @@ autonomous-driving-rl/src/platform/agent_input.py text eol=crlf
 # Preserve the exported November 21 episode records and provenance bytes.
 autonomous-driving-rl/result-21-11-2026/** -text whitespace=cr-at-eol
 autonomous-driving-rl/results/result-21-11-2026/** -text whitespace=cr-at-eol
+
+# Preserve the exact bytes recorded by the Stage 5 artifact manifests.
+autonomous-driving-rl/checkpoints/stage5/sac-v2-5000/** -text -filter
+autonomous-driving-rl/results/stage5/final-sac-evaluation*/** -text
+autonomous-driving-rl/results/stage5/consolidation-v3/** -text
+autonomous-driving-rl/results/stage5/parallel-training/** -text

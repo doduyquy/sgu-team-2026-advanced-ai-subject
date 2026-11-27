@@ -1,0 +1,99 @@
+{
+  "case_schedule": [
+    {
+      "environment_seed": 259818,
+      "geometry_generation_seed": 19,
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "geometry_sha256": "e30180e8f3da10c3ed43501326293d6efac353a3c618cd22893ee204a6b42032",
+      "sequence": "SCCS",
+      "tier": "Easy"
+    },
+    {
+      "environment_seed": 737407,
+      "geometry_generation_seed": 12,
+      "geometry_id": "geom_easy_SCS_seed12",
+      "geometry_sha256": "364f2324c41c740e3b02d71e161847ad86fb170d531db49491e0643abf462240",
+      "sequence": "SCS",
+      "tier": "Easy"
+    },
+    {
+      "environment_seed": 968985,
+      "geometry_generation_seed": 0,
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "geometry_sha256": "7c392abe573ca9823069ef1f88680be6222a9f6b6b6a9d8a065e270cc560db93",
+      "sequence": "CrXROSTR",
+      "tier": "Extreme"
+    },
+    {
+      "environment_seed": 897070,
+      "geometry_generation_seed": 0,
+      "geometry_id": "geom_extreme_SCTXORyCCS_seed0",
+      "geometry_sha256": "886a6ddc9850cb56b8d27ee1b17704e02add3e40f6040708cdbf492b470e35b2",
+      "sequence": "SCTXORyCCS",
+      "tier": "Extreme"
+    },
+    {
+      "environment_seed": 732559,
+      "geometry_generation_seed": 13,
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "geometry_sha256": "6a10dceecff6119d87ee158263659b159de595ff862eac738877b2424f555ccc",
+      "sequence": "SCTXrCS",
+      "tier": "Hard"
+    },
+    {
+      "environment_seed": 867627,
+      "geometry_generation_seed": 0,
+      "geometry_id": "geom_hard_SCXOCS_seed0",
+      "geometry_sha256": "8d90dee7d34fb2f6e90572ec32897400af5f40ebac98f867bafec4bfc383680f",
+      "sequence": "SCXOCS",
+      "tier": "Hard"
+    },
+    {
+      "environment_seed": 747022,
+      "geometry_generation_seed": 11,
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "geometry_sha256": "6c16b289525e50691cc0414d100e028b490281ee1a797c4f3fc3498c1f38bf09",
+      "sequence": "SCTCS",
+      "tier": "Medium"
+    },
+    {
+      "environment_seed": 37174,
+      "geometry_generation_seed": 17,
+      "geometry_id": "geom_medium_SCXCCS_seed17",
+      "geometry_sha256": "cdbe6998006b897903be0fb2060ab08ff4ad87131c873008ef8f708856ce11e6",
+      "sequence": "SCXCCS",
+      "tier": "Medium"
+    }
+  ],
+  "censoring_rule": "A probe reaching the step cap without simulator terminal outcome is PROBE_CENSORED, never TIMEOUT.",
+  "checkpoint_model_sha256": "6347ae4d82958bba89147ec39507ce3cb6abaa7e04d82f97101d1c09c2dea073",
+  "checkpoint_source_commit": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+  "code_commit": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+  "conditions": {
+    "A_actor_stochastic_steering": "SAC stochastic steering sampled every step; throttle overridden to +0.5",
+    "B_rate_limited_actor_steering": "same SAC stochastic steering with slew limit 0.15/step; throttle +0.5",
+    "C_waypoint_pure_pursuit": "public-observation waypoint pure pursuit, 8.0m lookahead; throttle +0.5"
+  },
+  "episode_records_sha256": "5b53be7d6e5be81f6ce1bbce5f60e2562b2507478c179bb9a75ca92b619456dd",
+  "evaluation_isolation": "No optimizer, weight update, normalization update, replay insertion, VALIDATION, or TEST access.",
+  "limitations": [
+    "Eight cases total, two per tier; screening probe only, not an inferential estimate.",
+    "Throttle was overridden to fixed +0.5 in every arm to isolate steering; this is not SAC policy performance.",
+    "Condition C is a simple pure-pursuit steering diagnostic without a speed governor; its high speed and crashes do not assess a complete lane-following controller.",
+    "Condition A episodes censored at 300 steps are not timeouts and cannot be counted as safe completions.",
+    "No weights, optimizer, normalization, or replay buffer were updated; no VALIDATION/TEST cases were accessed."
+  ],
+  "max_steps_per_case": 300,
+  "pilot_split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "protocol": "S5.3G steering isolation diagnostic v1",
+  "python": "3.10.21 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:35:39) [MSC v.1942 64 bit (AMD64)]",
+  "schedule_seed": 5302,
+  "source_file_sha256": {
+    "scripts/diagnose_stage5_steering_isolation.py": "0c472a0605712eeeebfd644c57510d1267479677a3697d7315394c68c7d04adf",
+    "scripts/report_stage5_steering_isolation.py": "e23fb61fda0f64f809c657698eb82a2e3d046d295d9609f7e2893871a8fcca7f"
+  },
+  "status": "COMPLETE",
+  "training_step": 10000,
+  "worktree_dirty_during_run": true
+}

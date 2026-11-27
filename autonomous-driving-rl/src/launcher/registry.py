@@ -20,6 +20,7 @@ from src.agents.graph_search_agents import BFSAgent, DijkstraAgent
 from src.agents.hybrid_astar_agent import HybridAStarAgent
 from src.agents.MCTS_agent import MCTSAgent
 from src.agents.MPPI import MPPIAgent
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, task_producer_identity
 from src.platform import (
     AgentPolicy,
     DeterministicConstantFixtureAgent,
@@ -156,7 +157,8 @@ def _factory_stage5_sac():
     return Stage5SacAgent()
 
 
-def make_sac_agent_factory(checkpoint_path: Union[Path, str]):
+def make_sac_agent_factory(checkpoint_path: Union[Path, str], *,
+                           task_context_producer_id: str = LEGACY_TASK_PRODUCER, terminal_preview: bool = False):
     """
     Creates a configured runtime factory for Stage5SacAgent with verified checkpoint provenance.
 
@@ -175,13 +177,28 @@ def make_sac_agent_factory(checkpoint_path: Union[Path, str]):
 
     ckpt_path = Path(checkpoint_path).resolve()
     encoder = Stage5ObservationEncoder(core_only=False)
-    meta = verify_checkpoint_integrity(ckpt_path, expected_encoder_fingerprint=encoder.get_schema_fingerprint())
+    meta = verify_checkpoint_integrity(ckpt_path, expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
+                                       task_context_producer_id=task_context_producer_id)
     bound_model_sha = str(meta["model_sha256"])
+    agent_class = Stage5SacAgent
+    adapter = meta.get("policy_input_adapter")
+    if terminal_preview != (adapter is not None):
+        raise ValueError("The launcher agent must match the checkpoint's policy input adapter")
+    if adapter is not None:
+        from src.agents.stage5_terminal_preview_v1 import Stage5TerminalPreviewAdapterV1, Stage5TerminalPreviewSacAgent
+        from src.platform.task_context_producer import REFERENCE_TASK_PRODUCER
+        expected = Stage5TerminalPreviewAdapterV1()
+        if (adapter != {"id": expected.adapter_id, "fingerprint": expected.fingerprint}
+                or task_context_producer_id != REFERENCE_TASK_PRODUCER):
+            raise ValueError("Unsupported Stage 5 policy input adapter or TaskContext pairing")
+        agent_class = Stage5TerminalPreviewSacAgent
 
     def _factory() -> Stage5SacAgent:
-        return Stage5SacAgent(checkpoint_path=ckpt_path, expected_sha256=bound_model_sha)
+        return agent_class(checkpoint_path=ckpt_path, expected_sha256=bound_model_sha,
+                              task_context_producer_id=task_context_producer_id)
 
     _factory.experiment_parameters = lambda: {
+        "task_context_producer": task_producer_identity(task_context_producer_id),
         "model_name": meta.get("model_name", "stage5_sac"),
         "algorithm": meta.get("algorithm", "SAC"),
         "checkpoint_path": str(ckpt_path),
@@ -190,8 +207,26 @@ def make_sac_agent_factory(checkpoint_path: Union[Path, str]):
         "encoder_id": meta.get("encoder_id"),
         "total_timesteps": meta.get("total_timesteps"),
         "training_root_seed": meta.get("training_root_seed"),
+        **({"policy_input_adapter": adapter, "training_state_sha256": meta.get("training_state_sha256")} if adapter else {}),
     }
     return _factory
+
+
+def build_terminal_preview_sandbox_registry(factory=None):
+    from src.agents.stage5_terminal_preview_v1 import Stage5TerminalPreviewSacAgent
+
+    registry = build_canonical_agent_registry()
+    policy = Stage5TerminalPreviewSacAgent
+    registry.register(AgentRegistrationV1(
+        agent_id=policy.agent_id, agent_version=policy.agent_version, stage_label="STAGE_5",
+        method_family="MODEL_FREE_RL_WITH_POLICY_INPUT_ADAPTER", purpose="CANDIDATE",
+        implementation_ref=f"{policy.__module__}:{policy.__qualname__}",
+        input_profile_id="STATE_DECISION_V1", action_adapter_id="continuous_box2_v1",
+        inference_stochasticity="deterministic", stateful_within_episode=False,
+        benchmark_eligible=False, sandbox_eligible=True, audit_eligible=False, requires_checkpoint=False,
+        description="Stage 5 Guided SAC with Terminal Preview V1 for development runs.",
+    ), factory=factory or policy)
+    return registry
 
 
 HISTORICAL_FIXTURE_REGISTRY_SHA256 = "9fac42d07949796d00b6dc869b98c945eae7a59355d7928f429e457f1ee7f26f"

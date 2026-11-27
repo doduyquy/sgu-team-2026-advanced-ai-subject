@@ -1,0 +1,56 @@
+{
+  "checks": [
+    {
+      "environment_equals_replay": true,
+      "executed_action": [
+        0.8870649337768555,
+        0.9876539707183838
+      ],
+      "held_throttle": 0.987654,
+      "phase": "warmup",
+      "replay_action": [
+        0.8870649337768555,
+        0.9876539707183838
+      ],
+      "replay_throttle_equals_executed": true,
+      "requested_action": [
+        0.8870649337768555,
+        -0.2811579704284668
+      ],
+      "requested_buffer_action": [
+        0.8870649337768555,
+        -0.2811579704284668
+      ],
+      "requested_differs_from_executed_throttle": true,
+      "steering_preserved": true
+    },
+    {
+      "environment_equals_replay": true,
+      "executed_action": [
+        0.8190093040466309,
+        0.8765430450439453
+      ],
+      "held_throttle": 0.876543,
+      "phase": "post_warmup",
+      "replay_action": [
+        0.8190093040466309,
+        0.8765429854393005
+      ],
+      "replay_throttle_equals_executed": true,
+      "requested_action": [
+        0.8190093040466309,
+        0.42244720458984375
+      ],
+      "requested_buffer_action": [
+        0.8190093040466309,
+        0.42244720458984375
+      ],
+      "requested_differs_from_executed_throttle": true,
+      "steering_preserved": true
+    }
+  ],
+  "environment": "synthetic Gymnasium Box(2), no MetaDrive process",
+  "result": "PASS",
+  "sb3_version": "2.9.2",
+  "scope_note": "One actual SB3 collect_rollouts transition was captured during uniform warm-up and one after learning_starts; replay-buffer action exactly matched the action delivered to env.step."
+}

@@ -1,0 +1,44 @@
+{
+  "protocol": "stage5_tau_ab_v1",
+  "status": "pre-registered-development-experiment",
+  "purpose": "Compare SAC target-network Polyak update coefficient tau while holding other protocol factors fixed.",
+  "training_root_seed": 101,
+  "training_steps_per_arm": 10000,
+  "checkpoint_steps": [0, 5000, 10000],
+  "initialization": "one shared fresh SAC initialization saved once and loaded by both arms; no historical checkpoint or replay buffer",
+  "sampler_strategy": "TIER_ROUND_ROBIN",
+  "sampler_allowed_pool": "156 geometry IDs in results/stage5/pilot_split_v1.json pilot_train",
+  "diagnostic_schedule_seed": 5302,
+  "diagnostic_environment_seed_policy": "sha256(stage5-diagnostic:{schedule_seed}:{geometry_id}) mod 1000000",
+  "diagnostic_cases_per_tier": 2,
+  "diagnostic_max_steps_per_case": 300,
+  "diagnostic_outcome_for_nonterminal_limit": "PROBE_CENSORED",
+  "diagnostic_geometry_ids": [
+    "geom_easy_SCCS_seed19",
+    "geom_easy_SCCS_seed4",
+    "geom_medium_SCTCS_seed11",
+    "geom_medium_SCTCS_seed13",
+    "geom_hard_SCTXrCS_seed13",
+    "geom_hard_SCTXrCS_seed15",
+    "geom_extreme_CrXROSTR_seed0",
+    "geom_extreme_CrXROSTR_seed1"
+  ],
+  "common_parameters": {
+    "algorithm": "SAC",
+    "gamma": 0.99,
+    "learning_rate": 0.0003,
+    "observation_encoder": "Stage5ObservationEncoder full 409D",
+    "actor_critic": "S5.2 MlpPolicy ReLU",
+    "reward": "RewardSpecV1 unchanged; configs/experiments/stage5_rl_baseline_v1.json",
+    "normalization": "none",
+    "device": "cpu"
+  },
+  "arms": {
+    "A": {"tau": 0.005},
+    "B": {"tau": 0.001}
+  },
+  "only_arm_difference": "tau",
+  "holdouts_accessed": false,
+  "benchmark_eligible": false,
+  "reproducibility_note": "A single root seed is exploratory evidence, not a statistical superiority claim; runtime and simulator nondeterminism preclude a bitwise reproducibility guarantee."
+}

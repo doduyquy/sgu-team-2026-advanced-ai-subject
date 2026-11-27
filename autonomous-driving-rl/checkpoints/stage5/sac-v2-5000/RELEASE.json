@@ -1,0 +1,9 @@
+{
+  "checkpoint": "SAC Consolidation V2-5000",
+  "model_sha256": "512677009e3c1e96dd39f9f1a4dd2dcd65a04cd0d084eaeaeec9554dde8a22b9",
+  "replay_included": false,
+  "selection": "stage-05000",
+  "selection_record_sha256": "fd6e9c6520a8843e22642a98e445cadd84a4bb9efd5ceb2fab39ccd776b28737",
+  "source_branch_tip": "66afd9ba294f76bfdca77e18ea0cab25a04aa7cc",
+  "training_state_sha256": "ec52eb3ff6ad791abebfe19436b6e683228b03333cc2e505b898bf51ebacb181"
+}

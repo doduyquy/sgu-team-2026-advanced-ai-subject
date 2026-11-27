@@ -1,0 +1,15 @@
+recipe,pool,tier,episodes,collected,admitted,success,timeout,safety,localization_discard,closing_risk,crossing_risk,safe_following,curvature,lidar_obstacle,clear_crawl
+Risk 50/25/25,online,Easy,2,554,22,2,0,0,0,0,0,0,0,0,0
+Risk 50/25/25,online,Extreme,1,2505,94,0,0,1,0,0,0,0,0,0,0
+Risk 50/25/25,online,Hard,2,2344,88,2,0,0,0,0,0,0,0,0,0
+Risk 50/25/25,online,Medium,3,1352,52,1,0,2,0,0,0,0,0,0,0
+Risk 50/25/25,risk,Extreme,4,8912,8912,0,1,3,0,110,5,1,34,1,132
+Risk 50/25/25,risk,Hard,4,4639,4639,1,1,2,0,138,2,0,47,5,97
+Risk 50/25/25,risk,Medium,4,2484,2484,2,0,2,0,467,0,0,40,22,9
+Retention 75/12.5/12.5,online,Easy,2,554,22,2,0,0,0,0,0,0,0,0,0
+Retention 75/12.5/12.5,online,Extreme,1,2505,94,0,0,1,0,0,0,0,0,0,0
+Retention 75/12.5/12.5,online,Hard,2,2344,88,2,0,0,0,0,0,0,0,0,0
+Retention 75/12.5/12.5,online,Medium,3,1352,52,1,0,2,0,0,0,0,0,0,0
+Retention 75/12.5/12.5,risk,Extreme,4,8912,8912,0,1,3,0,110,5,1,34,1,132
+Retention 75/12.5/12.5,risk,Hard,4,4639,4639,1,1,2,0,138,2,0,47,5,97
+Retention 75/12.5/12.5,risk,Medium,4,2484,2484,2,0,2,0,467,0,0,40,22,9

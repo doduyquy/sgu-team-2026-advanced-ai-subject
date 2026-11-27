@@ -1,0 +1,84 @@
+{
+  "analysis": "L1_ANALYSIS.json",
+  "baseline_k1_raw_sha256": "2c46be1f2350aa01062232b76ea81841bc763f452f1ba7a95c05b75372ebb9a9",
+  "baseline_k1_summary_sha256": "79f7693749da08e47526943f45638c24fb33ea6dd2f735f5b8f95ba84a87e05d",
+  "budget_basis": "linear extrapolation from complete K1: 942.5 s for 12 rollouts, 93,472,992 raw trace bytes",
+  "checkpoint_sha256": "6347ae4d82958bba89147ec39507ce3cb6abaa7e04d82f97101d1c09c2dea073",
+  "estimated_raw_trace_bytes": 747783936,
+  "estimated_wall_time_s": 7540.119363999926,
+  "holdouts_accessed": false,
+  "pilot_split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+  "planned_rollouts": 96,
+  "prohibited_changes": [
+    "weights",
+    "optimizer",
+    "replay buffer",
+    "normalization",
+    "reward",
+    "gamma"
+  ],
+  "protocol": "S5.3L-L1 soft-Q calibration repeated frozen rollouts v1",
+  "replicate_states": [
+    {
+      "exit_code": 0,
+      "replicate_id": 1,
+      "status": "COMPLETE",
+      "summary_sha256": "9b8ebccf00b3fa23b498f6c62cc3abaae8c913953bfac7d1573b403fce011bd6",
+      "wall_time_s": 932.722846699995
+    },
+    {
+      "exit_code": 0,
+      "replicate_id": 2,
+      "status": "COMPLETE",
+      "summary_sha256": "3d8351103a3b7a0773e452b82aecc8084136fe1bb4b228d532860c581964c79a",
+      "wall_time_s": 942.5440056999796
+    },
+    {
+      "exit_code": 0,
+      "replicate_id": 3,
+      "status": "COMPLETE",
+      "summary_sha256": "012166fdf84c03f81e3365ba889196841c09aa0364babf597e5f990096acf9c6",
+      "wall_time_s": 923.5856553000049
+    },
+    {
+      "exit_code": 0,
+      "replicate_id": 4,
+      "status": "COMPLETE",
+      "summary_sha256": "2c3065ab7592c8981ee4c11d7fd661aa92d4738e246d37f6d9537d43b0931b63",
+      "wall_time_s": 942.7425744000066
+    },
+    {
+      "exit_code": 0,
+      "replicate_id": 5,
+      "status": "COMPLETE",
+      "summary_sha256": "0223f0b0953b752a193fa3df76bb32be21bd6d5615f187957fd550bdc341e9c2",
+      "wall_time_s": 950.3448675000109
+    },
+    {
+      "exit_code": 0,
+      "replicate_id": 6,
+      "status": "COMPLETE",
+      "summary_sha256": "7c1b6261025089b196b4e418daf2d6bee494ad4e3b3a6e0ac75506ee382dde5d",
+      "wall_time_s": 4516.995878799993
+    },
+    {
+      "exit_code": 0,
+      "replicate_id": 7,
+      "status": "COMPLETE",
+      "summary_sha256": "d82522cead68e6f91ae6d60bc722de4a7fa189814f3f30a8017402cc63ba8c42",
+      "wall_time_s": 852.5825626000005
+    },
+    {
+      "exit_code": 0,
+      "replicate_id": 8,
+      "status": "COMPLETE",
+      "summary_sha256": "4c6f2a0d573fe5b816ca1f790d97a9fa316e0ecec88b5008db1a1a4aae113853",
+      "wall_time_s": 837.8450684999989
+    }
+  ],
+  "replicates_planned": 8,
+  "status": "COMPLETE",
+  "sum_replicate_wall_time_s": 10837.445067599998,
+  "total_raw_trace_bytes": 753867555,
+  "wall_time_s": 10899.510975599987
+}

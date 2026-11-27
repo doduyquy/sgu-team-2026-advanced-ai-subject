@@ -1,0 +1,5 @@
+﻿split,traffic,expected,episodes,complete,observed_clean,observed_safety_failures,observed_timeouts,clean,safety_failures,timeouts,clean_success_rate,safety_failure_rate,timeout_rate,mean_route,median_route,mean_time_to_clean_success_s,mean_speed_kmh,mean_episode_steps,mean_simulation_time_s,mean_local_inference_ms,primary_reason_counts
+VALIDATION,ON,96,96,True,46,31,19,46,31,19,0.4791666666666667,0.3229166666666667,0.19791666666666666,0.6696832019099287,0.7009477735475942,60.40652173913043,22.808468992053157,932.59375,93.259375,1.1928910144057754,CRASH_SIDEWALK=1; CRASH_VEHICLE=8; OUT_OF_ROAD=22; SUCCESS=46; TIMEOUT=19
+VALIDATION,OFF,96,86,False,56,20,10,,,,,,,,,,,,,,
+TEST,ON,60,60,True,19,35,6,19,35,6,0.31666666666666665,0.5833333333333334,0.1,0.5533064858804123,0.4360899595784271,51.747368421052634,25.632778235555318,682.4833333333333,68.24833333333333,1.220202043711159,CRASH_VEHICLE=7; OUT_OF_ROAD=28; SUCCESS=19; TIMEOUT=6
+TEST,OFF,60,54,False,35,11,8,,,,,,,,,,,,,,

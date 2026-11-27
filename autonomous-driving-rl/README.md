@@ -38,6 +38,39 @@ zero clean-success rate on TEST.
 
 The repository currently contains several fixture agents used to test the platform. They are intentionally **not benchmark agents** and are blocked from canonical VALIDATION/TEST runs. The old `CourseEnvV1` + `src/evaluation/evaluate_random.py` path is retained only as a legacy prototype/compatibility path; it is not the current scientific benchmark.
 
+## Stage 5 SAC demo
+
+Download or clone `main`, extract it if needed, and open PowerShell in its
+`autonomous-driving-rl/` folder. The inference bundle is
+[`checkpoints/stage5/sac-v2-5000/`](checkpoints/stage5/sac-v2-5000/).
+It contains the original `model.zip`, metadata, and checksums for `stage-05000`.
+The launcher verifies the checksum and observation profile at load time.
+
+With Python 3.10 and Git installed, set up the dependencies once. This step
+needs internet access for the pinned MetaDrive source and simulator assets.
+
+```powershell
+conda create -n sac-stage5 python=3.10 pip -y
+conda activate sac-stage5
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements-stage5-demo.txt
+python -m metadrive.pull_asset
+```
+
+Run the Medium case using the native simulator window. Use `--render OFF`
+for a headless run. A CPU is sufficient.
+
+```powershell
+python -m src.launcher.cli run --mode SANDBOX --agent stage5_sac_terminal_preview --checkpoint checkpoints/stage5/sac-v2-5000 --task-context-producer reference_route_station_proposal_v1 --tier Medium --sequence SCTCS --geom-seed 11 --env-seed 33701 --render NATIVE --wandb DISABLED
+```
+
+The demo uses the frozen 409D F09 and Terminal Preview V1 input path and raw
+Box2 actions. Results are saved to the local `runs/` folder. The
+[experiment evidence](results/stage5/README.md) includes paired VALIDATION
+and TEST results with F09 recovery receipts. TEST Traffic ON achieved
+19/60 clean successes. TEST Traffic OFF yielded 54/60 valid outcomes,
+with 35 clean successes observed.
+
 ## What Platform V1 provides
 
 - **MetaDrive pin:** version `0.4.3`, commit `85e5dadc6c7436d324348f6e3d8f8e680c06b4db`.

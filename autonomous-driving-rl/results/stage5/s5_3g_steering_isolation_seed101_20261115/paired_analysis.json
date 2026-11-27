@@ -1,0 +1,137 @@
+{
+  "paired_route_progress": {
+    "B_rate_limited_actor_steering_minus_A_actor_stochastic_steering_route_progress": {
+      "mean_difference": -0.0038625764973948262,
+      "median_difference": -0.018071378295869307,
+      "n": 8,
+      "negative_cases": 6,
+      "positive_cases": 2,
+      "ties": 0
+    },
+    "C_waypoint_pure_pursuit_minus_A_actor_stochastic_steering_route_progress": {
+      "mean_difference": 0.2722115571913784,
+      "median_difference": 0.18166926914381237,
+      "n": 8,
+      "negative_cases": 0,
+      "positive_cases": 8,
+      "ties": 0
+    },
+    "C_waypoint_pure_pursuit_minus_B_rate_limited_actor_steering_route_progress": {
+      "mean_difference": 0.2760741336887732,
+      "median_difference": 0.18701600057885748,
+      "n": 8,
+      "negative_cases": 0,
+      "positive_cases": 8,
+      "ties": 0
+    }
+  },
+  "per_tier": {
+    "Easy": {
+      "A_actor_stochastic_steering": {
+        "mean_speed_km_h": 6.571525065692423,
+        "n": 2,
+        "outcomes": {
+          "PROBE_CENSORED": 2
+        },
+        "route_progress_delta_mean": 0.12334067273308846
+      },
+      "B_rate_limited_actor_steering": {
+        "mean_speed_km_h": 15.823190407034232,
+        "n": 2,
+        "outcomes": {
+          "OUT_OF_ROAD": 2
+        },
+        "route_progress_delta_mean": 0.06515727331536927
+      },
+      "C_waypoint_pure_pursuit": {
+        "mean_speed_km_h": 46.81352391652001,
+        "n": 2,
+        "outcomes": {
+          "OUT_OF_ROAD": 1,
+          "SUCCESS": 1
+        },
+        "route_progress_delta_mean": 0.6412611833239692
+      }
+    },
+    "Extreme": {
+      "A_actor_stochastic_steering": {
+        "mean_speed_km_h": 7.0259194597044115,
+        "n": 2,
+        "outcomes": {
+          "PROBE_CENSORED": 2
+        },
+        "route_progress_delta_mean": 0.05163343766054501
+      },
+      "B_rate_limited_actor_steering": {
+        "mean_speed_km_h": 17.06477377085193,
+        "n": 2,
+        "outcomes": {
+          "OUT_OF_ROAD": 2
+        },
+        "route_progress_delta_mean": 0.02858791015365602
+      },
+      "C_waypoint_pure_pursuit": {
+        "mean_speed_km_h": 30.049774231741146,
+        "n": 2,
+        "outcomes": {
+          "CRASH_VEHICLE": 2
+        },
+        "route_progress_delta_mean": 0.0849287908249254
+      }
+    },
+    "Hard": {
+      "A_actor_stochastic_steering": {
+        "mean_speed_km_h": 6.1776452502867585,
+        "n": 2,
+        "outcomes": {
+          "OUT_OF_ROAD": 1,
+          "PROBE_CENSORED": 1
+        },
+        "route_progress_delta_mean": 0.05590523962785571
+      },
+      "B_rate_limited_actor_steering": {
+        "mean_speed_km_h": 17.887918550232833,
+        "n": 2,
+        "outcomes": {
+          "CRASH_VEHICLE": 1,
+          "OUT_OF_ROAD": 1
+        },
+        "route_progress_delta_mean": 0.09483744377595639
+      },
+      "C_waypoint_pure_pursuit": {
+        "mean_speed_km_h": 49.764296185667334,
+        "n": 2,
+        "outcomes": {
+          "CRASH_VEHICLE": 2
+        },
+        "route_progress_delta_mean": 0.43270025503020126
+      }
+    },
+    "Medium": {
+      "A_actor_stochastic_steering": {
+        "mean_speed_km_h": 7.363554808871439,
+        "n": 2,
+        "outcomes": {
+          "PROBE_CENSORED": 2
+        },
+        "route_progress_delta_mean": 0.10357004582349941
+      },
+      "B_rate_limited_actor_steering": {
+        "mean_speed_km_h": 23.235604836393865,
+        "n": 2,
+        "outcomes": {
+          "OUT_OF_ROAD": 2
+        },
+        "route_progress_delta_mean": 0.1304164626104276
+      },
+      "C_waypoint_pure_pursuit": {
+        "mean_speed_km_h": 36.954098138103035,
+        "n": 2,
+        "outcomes": {
+          "CRASH_VEHICLE": 2
+        },
+        "route_progress_delta_mean": 0.26440539543140634
+      }
+    }
+  }
+}

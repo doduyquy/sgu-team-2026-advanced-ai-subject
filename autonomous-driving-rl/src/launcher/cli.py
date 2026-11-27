@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, TASK_PRODUCERS
 from src.launcher.cases import (
     LOCKED_GEOMETRY_SPLIT_MANIFEST_SHA256,
     LOCKED_TEST_CASE_MANIFEST_SHA256,
@@ -60,6 +61,8 @@ def create_parser() -> argparse.ArgumentParser:
     # Command: run
     p_run = subparsers.add_parser("run", help="Resolve plan, run preflight, and execute experiment suite")
     _add_plan_arguments(p_run)
+    p_run.add_argument("--steering-profile", choices=("off", "fixed", "adaptive"),
+                       help="Explicit Stage 5 SANDBOX profile with per-step steering telemetry")
 
     return parser
 
@@ -80,6 +83,7 @@ def _add_plan_arguments(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--runs-root", default=None, help="Custom runs storage directory override")
     subparser.add_argument("--run-id", "--custom-run-id", default=None, dest="custom_run_id", help="Custom run_id identifier")
     subparser.add_argument("--finish-visual", choices=["hologram", "none"], default="hologram", help="3D finish visual in NATIVE render mode: 'hologram' (enabled) or 'none' (disabled)")
+    subparser.add_argument("--task-context-producer", choices=TASK_PRODUCERS, default=LEGACY_TASK_PRODUCER)
     subparser.add_argument("--checkpoint", default=None, help="Explicit checkpoint bundle directory for candidate RL agents (e.g. stage5_sac)")
     subparser.add_argument("--json", action="store_true", help="Output structured JSON")
 
@@ -149,6 +153,11 @@ def handle_cases(args: argparse.Namespace) -> int:
 
 
 def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
+    if args.agent == "stage5_sac_terminal_preview" and args.mode != "SANDBOX":
+        raise ValueError("Terminal Preview SAC is available in SANDBOX only")
+    if getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER) != LEGACY_TASK_PRODUCER:
+        if args.agent not in {"stage5_sac", "stage5_sac_terminal_preview"} or args.mode != "SANDBOX":
+            raise ValueError("Corrected TaskContext producer is only available for Stage 5 SANDBOX")
     """Builds LaunchRequestV1 from parsed CLI arguments."""
     mode = LauncherMode(args.mode.upper())
     wandb_arg = args.wandb.upper()
@@ -187,7 +196,7 @@ def build_launch_request_from_args(args: argparse.Namespace) -> LaunchRequestV1:
 
 
 def handle_plan(args: argparse.Namespace) -> int:
-    if args.agent == "stage5_sac":
+    if args.agent in {"stage5_sac", "stage5_sac_terminal_preview"}:
         if not getattr(args, "checkpoint", None):
             print("[ERROR] Agent 'stage5_sac' requires an explicit checkpoint bundle directory via --checkpoint <path>.", file=sys.stderr)
             return 1
@@ -196,7 +205,11 @@ def handle_plan(args: argparse.Namespace) -> int:
         ckpt_dir = Path(args.checkpoint).resolve()
         encoder = Stage5ObservationEncoder(core_only=False)
         try:
-            meta = verify_checkpoint_integrity(ckpt_dir, expected_encoder_fingerprint=encoder.get_schema_fingerprint())
+            meta = verify_checkpoint_integrity(ckpt_dir, expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
+                                               task_context_producer_id=getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER))
+            if args.agent == "stage5_sac_terminal_preview":
+                from src.launcher.registry import make_sac_agent_factory
+                make_sac_agent_factory(ckpt_dir, task_context_producer_id=args.task_context_producer, terminal_preview=True)
             if not args.json:
                 print(f"[OK] Verified SAC checkpoint bundle: {ckpt_dir} (SHA256: {meta.get('model_sha256')[:16]}...)")
         except (CheckpointIntegrityError, ValueError, FileNotFoundError) as exc:
@@ -205,6 +218,9 @@ def handle_plan(args: argparse.Namespace) -> int:
 
     request = build_launch_request_from_args(args)
     registry = None if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST) else build_default_agent_registry()
+    if args.agent == "stage5_sac_terminal_preview":
+        from src.launcher.registry import build_terminal_preview_sandbox_registry
+        registry = build_terminal_preview_sandbox_registry()
 
     try:
         plan = resolve_experiment_plan(request, registry=registry)
@@ -236,8 +252,12 @@ def handle_plan(args: argparse.Namespace) -> int:
 
 
 def handle_run(args: argparse.Namespace) -> int:
+    profile = getattr(args, "steering_profile", None)
+    if profile and (args.mode != "SANDBOX" or args.agent != "stage5_sac_terminal_preview"):
+        print("[ERROR] Steering profiles require the Terminal Preview SAC SANDBOX launcher", file=sys.stderr)
+        return 1
     agent_factory = None
-    if args.agent == "stage5_sac":
+    if args.agent in {"stage5_sac", "stage5_sac_terminal_preview"}:
         if not getattr(args, "checkpoint", None):
             print("[ERROR] Agent 'stage5_sac' requires an explicit checkpoint bundle directory via --checkpoint <path>.", file=sys.stderr)
             return 1
@@ -247,14 +267,19 @@ def handle_run(args: argparse.Namespace) -> int:
         ckpt_dir = Path(args.checkpoint).resolve()
         encoder = Stage5ObservationEncoder(core_only=False)
         try:
-            meta = verify_checkpoint_integrity(ckpt_dir, expected_encoder_fingerprint=encoder.get_schema_fingerprint())
-            agent_factory = make_sac_agent_factory(ckpt_dir)
+            meta = verify_checkpoint_integrity(ckpt_dir, expected_encoder_fingerprint=encoder.get_schema_fingerprint(),
+                                               task_context_producer_id=getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER))
+            agent_factory = make_sac_agent_factory(ckpt_dir, task_context_producer_id=getattr(args, "task_context_producer", LEGACY_TASK_PRODUCER),
+                                                   terminal_preview=args.agent == "stage5_sac_terminal_preview")
         except (CheckpointIntegrityError, ValueError, FileNotFoundError) as exc:
             print(f"[ERROR] SAC checkpoint verification failed: {exc}", file=sys.stderr)
             return 1
 
     request = build_launch_request_from_args(args)
     registry = None if request.mode in (LauncherMode.VALIDATION, LauncherMode.TEST) else build_default_agent_registry()
+    if args.agent == "stage5_sac_terminal_preview":
+        from src.launcher.registry import build_terminal_preview_sandbox_registry
+        registry = build_terminal_preview_sandbox_registry(agent_factory)
 
     try:
         plan = resolve_experiment_plan(request, registry=registry)
@@ -275,7 +300,8 @@ def handle_run(args: argparse.Namespace) -> int:
         registry=registry,
         agent_factory=agent_factory,
         runs_root=request.runs_root,
-        custom_run_id=request.custom_run_id
+        custom_run_id=request.custom_run_id,
+        steering_profile=profile,
     )
 
     try:

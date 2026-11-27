@@ -1,0 +1,158 @@
+{
+  "actual_metadrive_runtime_probe": {
+    "case_id": "train/Easy/SCCS/geom-19/env-259818",
+    "decision_dt_s": 0.1,
+    "decision_repeat_config": 5,
+    "effective_decision_frequency_hz": 10.0,
+    "engine_step_calls": 3,
+    "engine_step_repeat_arguments": [
+      5,
+      5,
+      5
+    ],
+    "environment_seed": 259818,
+    "expected_physics_world_step_calls": 15,
+    "geometry_id": "geom_easy_SCCS_seed19",
+    "gym_to_metadrive_action_parity": true,
+    "gym_to_platform_info_parity": true,
+    "meta_drive_received_actions": [
+      [
+        -0.3499999940395355,
+        -0.6000000238418579
+      ],
+      [
+        0.11999999731779099,
+        0.0
+      ],
+      [
+        0.3100000023841858,
+        0.550000011920929
+      ]
+    ],
+    "metadrive_env_step_calls": 3,
+    "pass": true,
+    "physics_world_step_calls": 15,
+    "physics_world_step_size_s": 0.02,
+    "platform_info_actions": [
+      [
+        -0.35,
+        -0.6
+      ],
+      [
+        0.12,
+        0.0
+      ],
+      [
+        0.31,
+        0.55
+      ]
+    ],
+    "stage5_gymnasium_step_calls": 3
+  },
+  "checkpoint_sha256": "6347ae4d82958bba89147ec39507ce3cb6abaa7e04d82f97101d1c09c2dea073",
+  "checkpoint_source_commit": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+  "current_git_head": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+  "known_limitations": [
+    "S5.3G telemetry logs executed throttle after persistence; actor-requested pre-hold throttle was not recorded historically.",
+    "Historical replay arrays were not saved; this audit cannot compare every historical replay row to actual simulator input.",
+    "Runtime probe executes three actual Stage5TrainingEnv actions directly. SB3 collector-to-env order is additionally verified from installed SB3 source and prior synthetic collect_rollouts audit; this is not a new optimizer/training run."
+  ],
+  "protocol": "S5.3K-K0 action temporal fidelity v1",
+  "sb3_version": "2.9.2",
+  "source_file_sha256": {
+    "src/launcher/executor.py": "907f443b6819f13261c95c8eecd2e505c1026168da57ec360e424b3716357bf3",
+    "src/platform/action_adapter.py": "637e442cb1e36097380eeee45e15dce9cabedc28d2f56bbfe4e5cb572e625be4",
+    "src/training/stage5/env_adapter.py": "c34f6fd9c579b6164a850747c7e5b4287ba8b7e8ba8ec3ba2b8d4221e2a64290",
+    "src/training/stage5/pilot_action_persistence.py": "14e4daf4809ff579dce27743efc1a916724c678d2f3a494a89dc2c0ff2b1f066",
+    "src/training/stage5/pilot_callbacks.py": "cad3275b8fb281b4a36bcf0ec365978eab76ff35a2e191524c0297ca07eaee1e"
+  },
+  "source_trace": {
+    "metadrive_engine_step": {
+      "first_line": 431,
+      "one_env_step_call_in_collector": null,
+      "required_operations_found": [
+        "for i in range(step_num)",
+        "self.step_physics_world()"
+      ],
+      "source_file": "D:\\SGU\\CNTT\\TTNTNC\\metadrive-src\\metadrive\\engine\\base_engine.py"
+    },
+    "metadrive_step_simulator": {
+      "first_line": 462,
+      "one_env_step_call_in_collector": null,
+      "required_operations_found": [
+        "self.engine.step(self.config[\"decision_repeat\"])"
+      ],
+      "source_file": "D:\\SGU\\CNTT\\TTNTNC\\metadrive-src\\metadrive\\envs\\base_env.py"
+    },
+    "sb3_collect_rollouts": {
+      "first_line": 526,
+      "one_env_step_call_in_collector": true,
+      "required_operations_found": [
+        "_sample_action(",
+        "env.step(actions)",
+        "_store_transition("
+      ],
+      "source_file": "C:\\Users\\ADMIN\\anaconda3\\envs\\metadrive_sb3\\lib\\site-packages\\stable_baselines3\\common\\off_policy_algorithm.py"
+    },
+    "stage5_env_step": {
+      "first_line": 249,
+      "one_env_step_call_in_collector": null,
+      "required_operations_found": [
+        "to_canonical(action)",
+        "self._env.step(canonical_act.to_numpy())"
+      ],
+      "source_file": "D:\\SGU\\CNTT\\TTNTNC\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\training\\stage5\\env_adapter.py"
+    },
+    "throttle_persistence_sample": {
+      "first_line": 36,
+      "one_env_step_call_in_collector": null,
+      "required_operations_found": [
+        "super()._sample_action(",
+        "hold_block = int(self.num_timesteps)",
+        "buffer_actions[:, 1] = self._held_throttle",
+        "actions = self.policy.unscale_action(buffer_actions)"
+      ],
+      "source_file": "D:\\SGU\\CNTT\\TTNTNC\\sgu-team-2026-advanced-ai-subject\\autonomous-driving-rl\\src\\training\\stage5\\pilot_action_persistence.py"
+    }
+  },
+  "status": "PASS",
+  "telemetry_audit": {
+    "adjacent_pairs_same_episode_and_global_hold_block": 7993,
+    "checkpoint_replay_saved": false,
+    "checkpoint_sha256": "6347ae4d82958bba89147ec39507ce3cb6abaa7e04d82f97101d1c09c2dea073",
+    "episode_boundaries_between_adjacent_logged_rows": 10,
+    "hold_parameter_steps": 5,
+    "interpretation": "These are Gymnasium decision-step log rows, not physics substeps. Exact multiples are not required because the hold resets at episode boundaries and the 10k run ends at a fixed budget.",
+    "n_training_decision_steps": 10000,
+    "source_log_sha256": "582f0271c36adce05f4d73d0c55b4364ce2ee12cf3ae6bfb2e89a6f8dc9d3810",
+    "steering_changed_in_same_episode_and_global_hold_block_pairs": 7993,
+    "throttle_only_run_lengths_ignoring_episode_boundaries": {
+      "max_run_length": 5,
+      "run_count": 2007,
+      "run_length_histogram": {
+        "1": 4,
+        "2": 3,
+        "3": 3,
+        "4": 4,
+        "5": 1993
+      },
+      "sum_of_run_lengths": 10000
+    },
+    "throttle_only_run_lengths_split_at_episode_boundaries": {
+      "run_count": 2007,
+      "run_length_histogram": {
+        "1": 4,
+        "2": 3,
+        "3": 3,
+        "4": 4,
+        "5": 1993
+      },
+      "run_lengths_exactly_five": 1993,
+      "run_lengths_longer_than_five": 0,
+      "run_lengths_shorter_than_five": 14,
+      "sum_of_run_lengths": 10000
+    },
+    "training_step_is_contiguous": true,
+    "unexpected_throttle_changes_within_same_episode_and_global_hold_block": []
+  }
+}

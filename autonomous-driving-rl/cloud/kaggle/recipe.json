@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "lineage": "stage5-native-preview-101",
+  "seed": 101,
+  "smoke_geometries": [
+    "geom_easy_SCS_seed0",
+    "geom_easy_SCS_seed1"
+  ],
+  "evaluation_seeds": [
+    30101,
+    30102
+  ],
+  "phase_weights": {
+    "easy": {
+      "Easy": 100
+    },
+    "medium": {
+      "Easy": 35,
+      "Medium": 65
+    },
+    "hard": {
+      "Easy": 20,
+      "Medium": 30,
+      "Hard": 50
+    },
+    "extreme": {
+      "Easy": 15,
+      "Medium": 20,
+      "Hard": 25,
+      "Extreme": 40
+    },
+    "mixed": {
+      "Easy": 25,
+      "Medium": 25,
+      "Hard": 25,
+      "Extreme": 25
+    }
+  },
+  "preflight": {
+    "transitions": 1280,
+    "learning_starts": 1024,
+    "capacity": 8192,
+    "max_seconds": 1200,
+    "export_reserve": 180
+  }
+}

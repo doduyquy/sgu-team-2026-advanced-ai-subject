@@ -1,0 +1,470 @@
+{
+  "decision": "F09_FIXED_INTEGRATED",
+  "scope": "TRAIN development only",
+  "source_revision": "976404853f2196aa2fe3e7b1cc1ed00f623aab62",
+  "metadrive_source": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+  "geometry_parity": {
+    "source_head": "976404853f2196aa2fe3e7b1cc1ed00f623aab62",
+    "producer": {
+      "id": "reference_route_station_proposal_v1",
+      "fingerprint": "a7df3942bb874b40ea16474be43c7b7a48796646c9d59cf61da5d71ba5291725",
+      "configuration": {
+        "lookahead_count": 20,
+        "spacing_m": 2.5,
+        "reference_lane": "first_on_each_route_edge",
+        "checkpoint_window": 1,
+        "seam_tolerance_m": 0.001,
+        "unlocalized_policy": "abort_on_first_sample",
+        "implementation_sha256": "948d6f7ae2e33b4052544220e85ea4ff90fc9d054f0567df96da6345946c972f"
+      }
+    },
+    "traces": [
+      {
+        "geometry": "geom_easy_SCS_seed0",
+        "case": "train/Easy/SCS/geom-0/env-0",
+        "parity_rows": 419,
+        "all_masked_rows": 0,
+        "invalid_waypoint_fraction": 0.08448687350835322,
+        "near_end_rows": 59,
+        "junction_t_rows": 0,
+        "circular_rows": 140,
+        "checkpoint_transitions": 5,
+        "alternate_lane_rows": 0,
+        "last": {
+          "step": 418,
+          "valid": 1,
+          "near_end": true,
+          "lane": [
+            "2C0_1_",
+            "3S0_0_",
+            0
+          ],
+          "lane_type": "StraightLane",
+          "checkpoints": [
+            5,
+            5
+          ],
+          "first_waypoint": [
+            2.5,
+            0.0,
+            0.0
+          ],
+          "legacy_first_waypoint": [
+            2.5,
+            0.0,
+            0.0
+          ],
+          "action": [
+            7.458105756086297e-06,
+            0.0007581004174426198
+          ],
+          "reward": 1.000363375155862,
+          "progress": 0.9877456768627388,
+          "outcome": {
+            "terminated": true,
+            "truncated": false,
+            "primary_reason": "SUCCESS",
+            "clean_success": true,
+            "raw_flags": {
+              "arrive_dest": true
+            }
+          },
+          "terminated": true,
+          "truncated": false
+        },
+        "witness_614": null,
+        "config": {
+          "decision_repeat": 5,
+          "physics_dt": 0.02
+        }
+      },
+      {
+        "geometry": "geom_easy_SCS_seed0",
+        "case": "train/Easy/SCS/geom-0/env-0",
+        "parity_rows": 900,
+        "all_masked_rows": 0,
+        "invalid_waypoint_fraction": 0.007,
+        "near_end_rows": 37,
+        "junction_t_rows": 0,
+        "circular_rows": 315,
+        "checkpoint_transitions": 5,
+        "alternate_lane_rows": 900,
+        "last": {
+          "step": 900,
+          "valid": 14,
+          "near_end": true,
+          "lane": [
+            "2C0_1_",
+            "3S0_0_",
+            1
+          ],
+          "lane_type": "StraightLane",
+          "checkpoints": [
+            5,
+            5
+          ],
+          "first_waypoint": [
+            2.77239990234375,
+            5.065899848937988,
+            -0.05299999937415123
+          ],
+          "legacy_first_waypoint": [
+            2.7724,
+            5.0659,
+            -0.053
+          ],
+          "action": [
+            -0.2925387007179062,
+            0.13541761511796616
+          ],
+          "reward": 0.0007809796612959766,
+          "progress": 0.9129176719166008,
+          "outcome": null,
+          "terminated": false,
+          "truncated": false
+        },
+        "witness_614": {
+          "step": 614,
+          "valid": 20,
+          "near_end": false,
+          "lane": [
+            "1S0_0_",
+            "2C0_0_",
+            1
+          ],
+          "lane_type": "CircularLane",
+          "checkpoints": [
+            3,
+            4
+          ],
+          "first_waypoint": [
+            3.0085999965667725,
+            4.922100067138672,
+            -0.07029999792575836
+          ],
+          "legacy_first_waypoint": [
+            -4.6615,
+            5.3766,
+            -0.0181
+          ],
+          "action": [
+            -0.32156625597178595,
+            0.16070737291036288
+          ],
+          "reward": 0.0008583501601973068,
+          "progress": 0.635016510452066,
+          "outcome": null,
+          "terminated": false,
+          "truncated": false
+        },
+        "config": {
+          "decision_repeat": 5,
+          "physics_dt": 0.02
+        }
+      },
+      {
+        "geometry": "geom_easy_SCCS_seed0",
+        "case": "train/Easy/SCCS/geom-0/env-0",
+        "parity_rows": 901,
+        "all_masked_rows": 0,
+        "invalid_waypoint_fraction": 0.0,
+        "near_end_rows": 0,
+        "junction_t_rows": 0,
+        "circular_rows": 432,
+        "checkpoint_transitions": 5,
+        "alternate_lane_rows": 283,
+        "last": {
+          "step": 900,
+          "valid": 20,
+          "near_end": false,
+          "lane": [
+            "2C0_1_",
+            "3C0_0_",
+            1
+          ],
+          "lane_type": "CircularLane",
+          "checkpoints": [
+            5,
+            6
+          ],
+          "first_waypoint": [
+            2.511399984359741,
+            1.7077000141143799,
+            -0.04659999907016754
+          ],
+          "legacy_first_waypoint": [
+            0.1191,
+            1.7738,
+            -0.0087
+          ],
+          "action": [
+            0.22172702877816147,
+            0.18076198804438182
+          ],
+          "reward": 0.0005499541123010138,
+          "progress": 0.6409409796267628,
+          "outcome": null,
+          "terminated": false,
+          "truncated": false
+        },
+        "witness_614": {
+          "step": 614,
+          "valid": 20,
+          "near_end": false,
+          "lane": [
+            "2C0_0_",
+            "2C0_1_",
+            0
+          ],
+          "lane_type": "StraightLane",
+          "checkpoints": [
+            4,
+            5
+          ],
+          "first_waypoint": [
+            2.4900999069213867,
+            1.7624000310897827,
+            0.00559999980032444
+          ],
+          "legacy_first_waypoint": [
+            2.4901,
+            1.7624,
+            0.0056
+          ],
+          "action": [
+            -0.27518473143218747,
+            0.20337933160245678
+          ],
+          "reward": 0.0005188206324742634,
+          "progress": 0.44475817493926156,
+          "outcome": null,
+          "terminated": false,
+          "truncated": false
+        },
+        "config": {
+          "decision_repeat": 5,
+          "physics_dt": 0.02
+        }
+      },
+      {
+        "geometry": "geom_medium_SCTCS_seed11",
+        "case": "train/Medium/SCTCS/geom-11/env-0",
+        "parity_rows": 1201,
+        "all_masked_rows": 0,
+        "invalid_waypoint_fraction": 0.0012073272273105745,
+        "near_end_rows": 16,
+        "junction_t_rows": 272,
+        "circular_rows": 350,
+        "checkpoint_transitions": 9,
+        "alternate_lane_rows": 423,
+        "last": {
+          "step": 1200,
+          "valid": 17,
+          "near_end": true,
+          "lane": [
+            "4C0_1_",
+            "5S0_0_",
+            0
+          ],
+          "lane_type": "StraightLane",
+          "checkpoints": [
+            9,
+            9
+          ],
+          "first_waypoint": [
+            2.577199935913086,
+            1.57669997215271,
+            -0.0471000000834465
+          ],
+          "legacy_first_waypoint": [
+            2.5772,
+            1.5767,
+            -0.0471
+          ],
+          "action": [
+            -0.3087723786461823,
+            0.16530223134556934
+          ],
+          "reward": 0.000587814510633941,
+          "progress": 0.917953644265712,
+          "outcome": null,
+          "terminated": false,
+          "truncated": false
+        },
+        "witness_614": {
+          "step": 614,
+          "valid": 20,
+          "near_end": false,
+          "lane": [
+            "2C0_0_",
+            "2C0_1_",
+            0
+          ],
+          "lane_type": "StraightLane",
+          "checkpoints": [
+            4,
+            5
+          ],
+          "first_waypoint": [
+            2.5495998859405518,
+            1.6237000226974487,
+            -0.029899999499320984
+          ],
+          "legacy_first_waypoint": [
+            2.5496,
+            1.6237,
+            -0.0299
+          ],
+          "action": [
+            -0.28923951264103104,
+            0.17222124038825248
+          ],
+          "reward": 0.0005844707391193221,
+          "progress": 0.48735953590223513,
+          "outcome": null,
+          "terminated": false,
+          "truncated": false
+        },
+        "config": {
+          "decision_repeat": 5,
+          "physics_dt": 0.02
+        }
+      },
+      {
+        "geometry": "geom_medium_SCTCS_seed8",
+        "case": "train/Medium/SCTCS/geom-8/env-0",
+        "parity_rows": 298,
+        "all_masked_rows": 0,
+        "invalid_waypoint_fraction": 0.0,
+        "near_end_rows": 0,
+        "junction_t_rows": 0,
+        "circular_rows": 34,
+        "checkpoint_transitions": 4,
+        "alternate_lane_rows": 0,
+        "last": {
+          "step": 297,
+          "valid": 20,
+          "near_end": false,
+          "lane": [
+            "2C0_0_",
+            "2C0_1_",
+            0
+          ],
+          "lane_type": "StraightLane",
+          "checkpoints": [
+            4,
+            5
+          ],
+          "first_waypoint": [
+            2.4518001079559326,
+            -0.8205999732017517,
+            -0.06520000100135803
+          ],
+          "legacy_first_waypoint": [
+            2.4518,
+            -0.8206,
+            -0.0652
+          ],
+          "action": [
+            0.03276167982437529,
+            6.212460762871075e-05
+          ],
+          "reward": -0.9989617077935865,
+          "progress": 0.37026404572596516,
+          "outcome": {
+            "terminated": true,
+            "truncated": false,
+            "primary_reason": "OUT_OF_ROAD",
+            "clean_success": false,
+            "raw_flags": {
+              "out_of_road": true
+            }
+          },
+          "terminated": true,
+          "truncated": false
+        },
+        "witness_614": null,
+        "config": {
+          "decision_repeat": 5,
+          "physics_dt": 0.02
+        }
+      }
+    ]
+  },
+  "checkpoint_and_launcher": [
+    {
+      "producer": {
+        "configuration": {
+          "implementation_sha256": "790174ae8d17d197430e65fbf671b2ea495cb44702b6f6ef18f20866c4d4b91d",
+          "lookahead_count": 20,
+          "reference_lane": "first_on_each_route_edge",
+          "spacing_m": 2.5
+        },
+        "fingerprint": "c67e6bf80ec1156dcc63cb313938e2755d6570c58670aa242bc0d63638c56a26",
+        "id": "legacy_v1"
+      },
+      "model_sha256": "807ac7357f480af461624486994991ae975635f2cb49faa81692560a46805501",
+      "diagnostic_cases": 1,
+      "diagnostic_state_unchanged": true,
+      "launcher_status": "COMPLETE",
+      "launcher_completed_episodes": 1,
+      "launcher_preflight": "stubbed in audit to avoid reading official holdout manifests"
+    },
+    {
+      "producer": {
+        "configuration": {
+          "checkpoint_window": 1,
+          "implementation_sha256": "948d6f7ae2e33b4052544220e85ea4ff90fc9d054f0567df96da6345946c972f",
+          "lookahead_count": 20,
+          "reference_lane": "first_on_each_route_edge",
+          "seam_tolerance_m": 0.001,
+          "spacing_m": 2.5,
+          "unlocalized_policy": "abort_on_first_sample"
+        },
+        "fingerprint": "a7df3942bb874b40ea16474be43c7b7a48796646c9d59cf61da5d71ba5291725",
+        "id": "reference_route_station_proposal_v1"
+      },
+      "model_sha256": "0a4224b288885308269a97ef7fceeea61de67d32f3913fc86a019ceed0551a3d",
+      "diagnostic_cases": 1,
+      "diagnostic_state_unchanged": true,
+      "launcher_status": "COMPLETE",
+      "launcher_completed_episodes": 1,
+      "launcher_preflight": "stubbed in audit to avoid reading official holdout manifests"
+    }
+  ],
+  "localization_fault": {
+    "geometry": "geom_medium_SCTCS_seed11",
+    "seed": 0,
+    "injected_fault": "current lane unset at reset",
+    "errors": {
+      "train": "reference_route_station_proposal_v1: no localized route at decision 0; aborting before an invalid observation reaches the policy or replay",
+      "launcher": "reference_route_station_proposal_v1: no localized route at decision 0; aborting before an invalid observation reaches the policy or replay"
+    }
+  },
+  "regression": {
+    "passed": 164,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "scientific_training": false,
+  "official_holdout_manifests_accessed": false,
+  "local_artifacts": [
+    {
+      "path": "runs/stage5_f09_integration/geometry_release.json",
+      "sha256": "88bc333a9f0375eda188caf2d6bc7a019326ae3e354f0d235593be14f3923c3c"
+    },
+    {
+      "path": "runs/stage5_f09_integration/runtime_release/checkpoint_runtime.json",
+      "sha256": "1b5e1436910c43cceff0dee061405bb48f0262ab176eb599a729cab3dcba73b7"
+    },
+    {
+      "path": "runs/stage5_f09_integration/runtime_release/localization_abort.json",
+      "sha256": "576842b8ecd80d086b0dfc33a4190cd4b90de9cd4f5eaf4048125ce59bb6500c"
+    },
+    {
+      "path": "runs/stage5_f09_integration/tests_release.log",
+      "sha256": "c355a0d22fdaf2cf3fb0fbd19c8cc0a0e429b8556d0cc8796f3065433691f48c"
+    }
+  ]
+}

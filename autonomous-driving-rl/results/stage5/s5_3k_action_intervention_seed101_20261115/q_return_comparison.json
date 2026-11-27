@@ -1,0 +1,175 @@
+{
+  "by_condition": {
+    "brake_q15": {
+      "mean_min_q": 15.241396188735962,
+      "mean_q_minus_soft_return_estimate": 6.14667928668146,
+      "mean_soft_return_plus_timeout_bootstrap_estimate": 9.094716902054502,
+      "mean_target_min_q": 15.288362264633179,
+      "n": 4
+    },
+    "near_neutral_q50": {
+      "mean_min_q": 15.232185363769531,
+      "mean_q_minus_soft_return_estimate": 6.137448905909645,
+      "mean_soft_return_plus_timeout_bootstrap_estimate": 9.094736457859886,
+      "mean_target_min_q": 15.280170202255249,
+      "n": 4
+    },
+    "throttle_q85": {
+      "mean_min_q": 15.222811937332153,
+      "mean_q_minus_soft_return_estimate": 6.127300280184471,
+      "mean_soft_return_plus_timeout_bootstrap_estimate": 9.095511657147682,
+      "mean_target_min_q": 15.273029327392578,
+      "n": 4
+    }
+  },
+  "episodes": [
+    {
+      "condition": "brake_q15",
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "min_q_prediction": 15.233990669250488,
+      "observed_soft_return": 9.011115782722868,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.222871477093269,
+      "soft_return_plus_timeout_bootstrap_estimate": 9.011119192157219,
+      "target_min_q_prediction": 15.279899597167969,
+      "timeout_target_critic_bootstrap": 9.011119192157219
+    },
+    {
+      "condition": "near_neutral_q50",
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "min_q_prediction": 15.225610733032227,
+      "observed_soft_return": 9.01114879382034,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.214458529777998,
+      "soft_return_plus_timeout_bootstrap_estimate": 9.011152203254229,
+      "target_min_q_prediction": 15.271984100341797,
+      "timeout_target_critic_bootstrap": 9.011152203254229
+    },
+    {
+      "condition": "throttle_q85",
+      "geometry_id": "geom_easy_SCCS_seed19",
+      "min_q_prediction": 15.216191291809082,
+      "observed_soft_return": 9.012943806196882,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.20324407928921,
+      "soft_return_plus_timeout_bootstrap_estimate": 9.012947212519872,
+      "target_min_q_prediction": 15.265326499938965,
+      "timeout_target_critic_bootstrap": 9.012947212519872
+    },
+    {
+      "condition": "brake_q15",
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "min_q_prediction": 15.233694076538086,
+      "observed_soft_return": 8.97495240559533,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.258740147347844,
+      "soft_return_plus_timeout_bootstrap_estimate": 8.974953929190242,
+      "target_min_q_prediction": 15.279611587524414,
+      "timeout_target_critic_bootstrap": 8.974953929190242
+    },
+    {
+      "condition": "near_neutral_q50",
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "min_q_prediction": 15.224838256835938,
+      "observed_soft_return": 8.974952780598768,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.2498839526272185,
+      "soft_return_plus_timeout_bootstrap_estimate": 8.974954304208719,
+      "target_min_q_prediction": 15.27143669128418,
+      "timeout_target_critic_bootstrap": 8.974954304208719
+    },
+    {
+      "condition": "throttle_q85",
+      "geometry_id": "geom_medium_SCTCS_seed11",
+      "min_q_prediction": 15.216072082519531,
+      "observed_soft_return": 8.976244119691028,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.239826441714095,
+      "soft_return_plus_timeout_bootstrap_estimate": 8.976245640805436,
+      "target_min_q_prediction": 15.265242576599121,
+      "timeout_target_critic_bootstrap": 8.976245640805436
+    },
+    {
+      "condition": "brake_q15",
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "min_q_prediction": 15.272022247314453,
+      "observed_soft_return": 9.228389646075987,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.043632595023606,
+      "soft_return_plus_timeout_bootstrap_estimate": 9.228389652290847,
+      "target_min_q_prediction": 15.32357120513916,
+      "timeout_target_critic_bootstrap": 9.228389652290847
+    },
+    {
+      "condition": "near_neutral_q50",
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "min_q_prediction": 15.26112174987793,
+      "observed_soft_return": 9.228404518275136,
+      "outcome": "OUT_OF_ROAD",
+      "q_minus_soft_return_estimate": 6.032717231602794,
+      "soft_return_plus_timeout_bootstrap_estimate": 9.228404518275136,
+      "target_min_q_prediction": 15.314982414245605,
+      "timeout_target_critic_bootstrap": null
+    },
+    {
+      "condition": "throttle_q85",
+      "geometry_id": "geom_hard_SCTXrCS_seed13",
+      "min_q_prediction": 15.250621795654297,
+      "observed_soft_return": 9.228401899738998,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.02221988758043,
+      "soft_return_plus_timeout_bootstrap_estimate": 9.228401908073867,
+      "target_min_q_prediction": 15.30549430847168,
+      "timeout_target_critic_bootstrap": 9.228401908073867
+    },
+    {
+      "condition": "brake_q15",
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "min_q_prediction": 15.22587776184082,
+      "observed_soft_return": 9.164404834579518,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.061472927261121,
+      "soft_return_plus_timeout_bootstrap_estimate": 9.164404834579699,
+      "target_min_q_prediction": 15.270366668701172,
+      "timeout_target_critic_bootstrap": 9.164404834579699
+    },
+    {
+      "condition": "near_neutral_q50",
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "min_q_prediction": 15.217170715332031,
+      "observed_soft_return": 9.16443480570128,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.05273590963057,
+      "soft_return_plus_timeout_bootstrap_estimate": 9.164434805701461,
+      "target_min_q_prediction": 15.262277603149414,
+      "timeout_target_critic_bootstrap": 9.164434805701461
+    },
+    {
+      "condition": "throttle_q85",
+      "geometry_id": "geom_extreme_CrXROSTR_seed0",
+      "min_q_prediction": 15.208362579345703,
+      "observed_soft_return": 9.16445186719137,
+      "outcome": "TIMEOUT",
+      "q_minus_soft_return_estimate": 6.043910712154151,
+      "soft_return_plus_timeout_bootstrap_estimate": 9.164451867191552,
+      "target_min_q_prediction": 15.256053924560547,
+      "timeout_target_critic_bootstrap": 9.164451867191552
+    }
+  ],
+  "label": "diagnostic screen, not critic calibration verdict",
+  "limitations": [
+    "One stochastic rollout per geometry-condition; no Monte Carlo uncertainty estimate.",
+    "TIMEOUT bootstrap uses the same checkpoint target critic and is not independent empirical evidence.",
+    "This comparison is a screening signal only; it cannot establish critic miscalibration."
+  ],
+  "mean_min_q": 15.232131163279215,
+  "mean_q_minus_soft_return_estimate": 6.137142824258525,
+  "mean_soft_return_plus_timeout_bootstrap_estimate": 9.09498833902069,
+  "mean_target_min_q": 15.280520598093668,
+  "mean_target_q_minus_soft_return_estimate": 6.185532259072978,
+  "n": 12,
+  "q_minus_return_range": [
+    6.02221988758043,
+    6.258740147347844
+  ]
+}

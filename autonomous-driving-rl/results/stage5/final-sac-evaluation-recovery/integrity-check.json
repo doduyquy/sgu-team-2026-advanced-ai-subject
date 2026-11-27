@@ -1,0 +1,357 @@
+{
+  "expected": 312,
+  "gradient_updates": 0,
+  "identities_match_locked_manifest": true,
+  "infrastructure_attempt_failures": 32,
+  "missing": [
+    {
+      "case_id": "val/Hard/SCTXrCS/geom-9/env-5102",
+      "case_index": 54,
+      "effective_density": 0.0,
+      "environment_seed": 5102,
+      "geometry_generation_seed": 9,
+      "geometry_sha256": "22ccedac6775b6616b283de096242feb4483e6778e2684d2611df1179bad13fb",
+      "horizon_steps": 2152,
+      "protocol_order_index": 11,
+      "sequence": "SCTXrCS",
+      "split": "VALIDATION",
+      "tier": "Hard",
+      "traffic": "OFF",
+      "traffic_density": 0.15
+    },
+    {
+      "case_id": "val/Extreme/SCXOCrTYCS/geom-11/env-5101",
+      "case_index": 41,
+      "effective_density": 0.0,
+      "environment_seed": 5101,
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "80a9b4e06e8b90d989ec0ecd97912129b62d39869338d2d156caa35fc7120672",
+      "horizon_steps": 3461,
+      "protocol_order_index": 41,
+      "sequence": "SCXOCrTYCS",
+      "split": "VALIDATION",
+      "tier": "Extreme",
+      "traffic": "OFF",
+      "traffic_density": 0.25
+    },
+    {
+      "case_id": "val/Hard/SCXOCS/geom-7/env-5102",
+      "case_index": 58,
+      "effective_density": 0.0,
+      "environment_seed": 5102,
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "6caec951e71c32b2a7408129b33dfcc556091b06d2c276e3ca5aa7119296ce6d",
+      "horizon_steps": 1958,
+      "protocol_order_index": 52,
+      "sequence": "SCXOCS",
+      "split": "VALIDATION",
+      "tier": "Hard",
+      "traffic": "OFF",
+      "traffic_density": 0.15
+    },
+    {
+      "case_id": "val/Medium/SCXCS/geom-6/env-5101",
+      "case_index": 91,
+      "effective_density": 0.0,
+      "environment_seed": 5101,
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "a4037732e582dda260820606fbf4795f77eb168d5da430bfd748d6e059751aca",
+      "horizon_steps": 1526,
+      "protocol_order_index": 53,
+      "sequence": "SCXCS",
+      "split": "VALIDATION",
+      "tier": "Medium",
+      "traffic": "OFF",
+      "traffic_density": 0.08
+    },
+    {
+      "case_id": "val/Medium/SCXCS/geom-6/env-5102",
+      "case_index": 92,
+      "effective_density": 0.0,
+      "environment_seed": 5102,
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "a4037732e582dda260820606fbf4795f77eb168d5da430bfd748d6e059751aca",
+      "horizon_steps": 1526,
+      "protocol_order_index": 55,
+      "sequence": "SCXCS",
+      "split": "VALIDATION",
+      "tier": "Medium",
+      "traffic": "OFF",
+      "traffic_density": 0.08
+    },
+    {
+      "case_id": "val/Medium/SCXCCS/geom-11/env-5102",
+      "case_index": 82,
+      "effective_density": 0.0,
+      "environment_seed": 5102,
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "d7ca21945f42441c2b4fe01133905b163df14b418d19e91cba5c4d35f51f40d4",
+      "horizon_steps": 2196,
+      "protocol_order_index": 63,
+      "sequence": "SCXCCS",
+      "split": "VALIDATION",
+      "tier": "Medium",
+      "traffic": "OFF",
+      "traffic_density": 0.08
+    },
+    {
+      "case_id": "val/Hard/SCXOCS/geom-7/env-5101",
+      "case_index": 57,
+      "effective_density": 0.0,
+      "environment_seed": 5101,
+      "geometry_generation_seed": 7,
+      "geometry_sha256": "6caec951e71c32b2a7408129b33dfcc556091b06d2c276e3ca5aa7119296ce6d",
+      "horizon_steps": 1958,
+      "protocol_order_index": 64,
+      "sequence": "SCXOCS",
+      "split": "VALIDATION",
+      "tier": "Hard",
+      "traffic": "OFF",
+      "traffic_density": 0.15
+    },
+    {
+      "case_id": "val/Hard/SCTXrCS/geom-9/env-5101",
+      "case_index": 53,
+      "effective_density": 0.0,
+      "environment_seed": 5101,
+      "geometry_generation_seed": 9,
+      "geometry_sha256": "22ccedac6775b6616b283de096242feb4483e6778e2684d2611df1179bad13fb",
+      "horizon_steps": 2152,
+      "protocol_order_index": 85,
+      "sequence": "SCTXrCS",
+      "split": "VALIDATION",
+      "tier": "Hard",
+      "traffic": "OFF",
+      "traffic_density": 0.15
+    },
+    {
+      "case_id": "val/Extreme/SCXOCrTYCS/geom-11/env-5102",
+      "case_index": 42,
+      "effective_density": 0.0,
+      "environment_seed": 5102,
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "80a9b4e06e8b90d989ec0ecd97912129b62d39869338d2d156caa35fc7120672",
+      "horizon_steps": 3461,
+      "protocol_order_index": 92,
+      "sequence": "SCXOCrTYCS",
+      "split": "VALIDATION",
+      "tier": "Extreme",
+      "traffic": "OFF",
+      "traffic_density": 0.25
+    },
+    {
+      "case_id": "val/Medium/SCXCCS/geom-11/env-5101",
+      "case_index": 81,
+      "effective_density": 0.0,
+      "environment_seed": 5101,
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "d7ca21945f42441c2b4fe01133905b163df14b418d19e91cba5c4d35f51f40d4",
+      "horizon_steps": 2196,
+      "protocol_order_index": 94,
+      "sequence": "SCXCCS",
+      "split": "VALIDATION",
+      "tier": "Medium",
+      "traffic": "OFF",
+      "traffic_density": 0.08
+    },
+    {
+      "case_id": "test/Medium/SCXCS/geom-11/env-9101",
+      "case_index": 56,
+      "effective_density": 0.0,
+      "environment_seed": 9101,
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "de2fc9345ad693dfbb08b2f3b4eacd1c334855e7c83cc41dde0f1468864e8be9",
+      "horizon_steps": 1572,
+      "protocol_order_index": 2,
+      "sequence": "SCXCS",
+      "split": "TEST",
+      "tier": "Medium",
+      "traffic": "OFF",
+      "traffic_density": 0.08
+    },
+    {
+      "case_id": "test/Extreme/CrXROSTR/geom-6/env-9103",
+      "case_index": 18,
+      "effective_density": 0.0,
+      "environment_seed": 9103,
+      "geometry_generation_seed": 6,
+      "geometry_sha256": "0fdbe28c4b378fa3a6a9c7b9221fdb6d44c517a961b361dc56020c0f9a6672f9",
+      "horizon_steps": 2816,
+      "protocol_order_index": 19,
+      "sequence": "CrXROSTR",
+      "split": "TEST",
+      "tier": "Extreme",
+      "traffic": "OFF",
+      "traffic_density": 0.25
+    },
+    {
+      "case_id": "test/Medium/SCXCS/geom-11/env-9104",
+      "case_index": 59,
+      "effective_density": 0.0,
+      "environment_seed": 9104,
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "de2fc9345ad693dfbb08b2f3b4eacd1c334855e7c83cc41dde0f1468864e8be9",
+      "horizon_steps": 1572,
+      "protocol_order_index": 26,
+      "sequence": "SCXCS",
+      "split": "TEST",
+      "tier": "Medium",
+      "traffic": "OFF",
+      "traffic_density": 0.08
+    },
+    {
+      "case_id": "test/Medium/SCXCS/geom-11/env-9105",
+      "case_index": 60,
+      "effective_density": 0.0,
+      "environment_seed": 9105,
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "de2fc9345ad693dfbb08b2f3b4eacd1c334855e7c83cc41dde0f1468864e8be9",
+      "horizon_steps": 1572,
+      "protocol_order_index": 35,
+      "sequence": "SCXCS",
+      "split": "TEST",
+      "tier": "Medium",
+      "traffic": "OFF",
+      "traffic_density": 0.08
+    },
+    {
+      "case_id": "test/Medium/SCXCS/geom-11/env-9102",
+      "case_index": 57,
+      "effective_density": 0.0,
+      "environment_seed": 9102,
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "de2fc9345ad693dfbb08b2f3b4eacd1c334855e7c83cc41dde0f1468864e8be9",
+      "horizon_steps": 1572,
+      "protocol_order_index": 41,
+      "sequence": "SCXCS",
+      "split": "TEST",
+      "tier": "Medium",
+      "traffic": "OFF",
+      "traffic_density": 0.08
+    },
+    {
+      "case_id": "test/Medium/SCXCS/geom-11/env-9103",
+      "case_index": 58,
+      "effective_density": 0.0,
+      "environment_seed": 9103,
+      "geometry_generation_seed": 11,
+      "geometry_sha256": "de2fc9345ad693dfbb08b2f3b4eacd1c334855e7c83cc41dde0f1468864e8be9",
+      "horizon_steps": 1572,
+      "protocol_order_index": 56,
+      "sequence": "SCXCS",
+      "split": "TEST",
+      "tier": "Medium",
+      "traffic": "OFF",
+      "traffic_density": 0.08
+    }
+  ],
+  "model_sha256_after": "512677009e3c1e96dd39f9f1a4dd2dcd65a04cd0d084eaeaeec9554dde8a22b9",
+  "model_sha256_before": "512677009e3c1e96dd39f9f1a4dd2dcd65a04cd0d084eaeaeec9554dde8a22b9",
+  "original_manifest_sha256": "4e8e844d8c2d3cbf05067c2eae8b1049a005d3975d7d3026f5ccc81b699d71bb",
+  "original_outcomes_preserved": 296,
+  "recovered_outcomes": 0,
+  "recovery_attempts": 16,
+  "regression": "PASS",
+  "remaining_errors": [
+    {
+      "case_id": "test/Extreme/CrXROSTR/geom-6/env-9103",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "test/Medium/SCXCS/geom-11/env-9101",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "test/Medium/SCXCS/geom-11/env-9102",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "test/Medium/SCXCS/geom-11/env-9103",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "test/Medium/SCXCS/geom-11/env-9104",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "test/Medium/SCXCS/geom-11/env-9105",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "val/Extreme/SCXOCrTYCS/geom-11/env-5101",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "val/Extreme/SCXOCrTYCS/geom-11/env-5102",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "val/Hard/SCTXrCS/geom-9/env-5101",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "val/Hard/SCTXrCS/geom-9/env-5102",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "val/Hard/SCXOCS/geom-7/env-5101",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "val/Hard/SCXOCS/geom-7/env-5102",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "val/Medium/SCXCCS/geom-11/env-5101",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "val/Medium/SCXCCS/geom-11/env-5102",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "val/Medium/SCXCS/geom-6/env-5101",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    },
+    {
+      "case_id": "val/Medium/SCXCS/geom-6/env-5102",
+      "error": "TaskContextLocalizationError",
+      "failed_attempts": 2,
+      "traffic": "OFF"
+    }
+  ],
+  "replay_rows_admitted": 0,
+  "status": "INCOMPLETE",
+  "unique_case_condition": true,
+  "valid": 296
+}

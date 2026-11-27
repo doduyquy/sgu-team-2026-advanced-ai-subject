@@ -1,0 +1,8 @@
+## Phạm vi so sánh
+
+- Runner candidate sử dụng manifest Gate 5 đã khóa, gồm 48 geometry VALIDATION với seed 5101–5102 và 12 geometry TEST với seed 9101–9105. Mỗi điều kiện có cùng case ID, block sequence đã đối chiếu SHA-256, route, horizon và thứ tự protocol.
+- Traffic ON dùng `max(0.08, manifest_density)` và OFF dùng `0.0`, theo quy tắc Search locked được nêu cho đợt đối chiếu này. Mật độ ON lần lượt là 0,08 / 0,08 / 0,15 / 0,25 cho Easy / Medium / Hard / Extreme. Cả hai dùng TrafficMode.Trigger, timestep 0,02 s, decision repeat 5 và điều khiển 10 Hz.
+- Hai script đối chiếu Search/candidate và receipt gốc của các agent trong bảng nhóm chưa có trong checkout và các ref đã kiểm tra. Vì vậy reviewer có thể dùng cùng mẫu số 60 và điều kiện traffic nêu trên, với giới hạn là chưa xác minh độc lập rằng từng hàng của nhóm được tạo bởi cùng manifest, seed, traffic và outcome semantics. Giữ nguyên các hàng do nhóm cung cấp.
+- Đây là `SAC_V2_PAIRED_TRAFFIC_EVALUATION`, `canonical_run=false`, `training_replicates=1`. SAC dùng observation 409D, F09, Terminal Preview V1 và Box2 theo bundle đã bàn giao. Một checkpoint deterministic được chạy trên nhiều environment seed. Điều đó không cung cấp phương sai giữa các lượt huấn luyện độc lập hoặc chứng nhận Gate 5.
+- Loader inference hiện hành không mở full state hay replay nguồn. SB3 đọc các tensor optimizer có sẵn trong `model.zip` khi nạp bundle. Không có optimizer step.
+- Báo cáo tính route completion tại bước kết thúc, không dùng tiến độ cực đại. Lỗi an toàn được ưu tiên hơn đến đích và timeout. Thời gian thành công chỉ lấy từ episode clean. Inference latency là số đo local của `agent.act`, không dùng để xếp hạng với agent khác.

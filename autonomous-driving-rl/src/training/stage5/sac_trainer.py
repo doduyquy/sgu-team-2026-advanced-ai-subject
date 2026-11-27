@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 import psutil
@@ -25,10 +25,16 @@ from stable_baselines3.common.callbacks import BaseCallback
 from src.launcher.cases import get_default_project_root
 from src.platform.reward import RewardSpecV1
 from src.training.stage5.checkpoint import save_sac_checkpoint
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, task_producer_identity
 from src.training.stage5.env_adapter import Stage5TrainingEnv
 from src.training.stage5.observation_encoder import (
     STAGE5_FULL_OBSERVATION_DIM,
     Stage5ObservationEncoder,
+)
+from src.training.stage5.pilot_action_persistence import ThrottlePersistenceSAC
+from src.training.stage5.pilot_observation_transform import (
+    GROUPWISE_PHYSICAL_V1, WAYPOINT_XY50_V1, GroupwisePhysicalObservation,
+    WaypointXY50Observation,
 )
 from src.training.stage5.train_sampler import (
     SamplerStrategy,
@@ -67,6 +73,7 @@ class SacDiagnosticsCallback(BaseCallback):
                     "total_timesteps": int(self.num_timesteps),
                     "step_index": int(info.get("step_index", 0)),
                     "case_id": str(info.get("case_id", "unknown")),
+                    "geometry_id": str(info.get("geometry_id", "unknown")),
                     "tier": str(info.get("tier", "unknown")),
                     "geometry_generation_seed": info.get("geometry_generation_seed"),
                     "environment_seed": info.get("environment_seed"),
@@ -107,6 +114,7 @@ class SacDiagnosticsCallback(BaseCallback):
 
         episode_returns = [ep["cumulative_reward"] for ep in self.episode_records]
         mean_return = float(np.mean(episode_returns)) if episode_returns else 0.0
+        unique_geometry_ids = sorted({ep["geometry_id"] for ep in self.episode_records if ep.get("geometry_id") not in (None, "unknown")})
 
         # Retrieve training losses from SB3 logger if available
         model = getattr(self, "model", None)
@@ -119,6 +127,8 @@ class SacDiagnosticsCallback(BaseCallback):
         return {
             "total_timesteps": int(total_steps),
             "completed_episodes": completed_episodes,
+            "unique_training_geometries": len(unique_geometry_ids),
+            "training_geometry_ids": unique_geometry_ids,
             "clean_success_count": clean_success_count,
             "clean_success_rate": clean_success_rate,
             "mean_route_completion": mean_route_comp,
@@ -144,6 +154,10 @@ class SacBaselineTrainer:
         training_root_seed: int = 101,
         project_root: Optional[Path] = None,
         device: str = "cpu",
+        allowed_geometry_ids: Optional[Sequence[str]] = None,
+        pilot_observation_transform: Optional[str] = None,
+        pilot_actor_activation: str = "relu",
+        pilot_throttle_persistence_steps: int = 0,
     ) -> None:
         """
         Initializes the SAC Baseline Trainer.
@@ -181,12 +195,24 @@ class SacBaselineTrainer:
 
         # 3. Instantiate components
         self.encoder = Stage5ObservationEncoder(core_only=False)
+        if pilot_observation_transform not in (
+            None, "waypoint_xy_div50m_v1", GROUPWISE_PHYSICAL_V1["transform_id"]
+        ):
+            raise ValueError(f"Unsupported pilot observation transform: {pilot_observation_transform}")
+        self.observation_transform = pilot_observation_transform
+        if pilot_actor_activation not in ("relu", "leaky_relu_0.01"):
+            raise ValueError(f"Unsupported pilot actor activation: {pilot_actor_activation}")
+        self.actor_activation = pilot_actor_activation
+        self.pilot_throttle_persistence_steps = int(pilot_throttle_persistence_steps)
+        if self.pilot_throttle_persistence_steps not in (0,) and self.pilot_throttle_persistence_steps < 2:
+            raise ValueError("pilot_throttle_persistence_steps must be 0 (disabled) or >= 2")
         sampler_cfg = self.config.get("dataset_sampler", {})
         strategy = sampler_cfg.get("default_strategy", "ROUND_ROBIN")
 
         self.sampler = TrainCaseSampler(
             training_root_seed=self.training_root_seed,
             strategy=SamplerStrategy(strategy),
+            allowed_geometry_ids=allowed_geometry_ids,
             project_root=self.project_root,
         )
 
@@ -200,18 +226,34 @@ class SacBaselineTrainer:
             timeout_penalty=float(reward_cfg.get("timeout_penalty", 0.0)),
         )
 
+        self.task_context_producer_id = self.config.get("task_context_producer_id", LEGACY_TASK_PRODUCER)
+        self.config["task_context_producer_id"] = self.task_context_producer_id
+        self.config["task_context_producer"] = task_producer_identity(self.task_context_producer_id)
+
         # 4. Instantiate Gymnasium training environment
         self.env = Stage5TrainingEnv(
             sampler=self.sampler,
             encoder=self.encoder,
             reward_spec=self.reward_spec,
+            task_context_producer_id=self.task_context_producer_id,
             project_root=self.project_root,
         )
+        if pilot_observation_transform == "waypoint_xy_div50m_v1":
+            model_env = WaypointXY50Observation(self.env)
+        elif pilot_observation_transform == GROUPWISE_PHYSICAL_V1["transform_id"]:
+            model_env = GroupwisePhysicalObservation(self.env)
+        else:
+            model_env = self.env
 
         # 5. Instantiate Stable-Baselines3 SAC
-        self.model = SAC(
+        policy_kwargs = ({"activation_fn": torch.nn.LeakyReLU}
+                         if pilot_actor_activation == "leaky_relu_0.01" else None)
+        model_class = ThrottlePersistenceSAC if self.pilot_throttle_persistence_steps else SAC
+        model_kwargs = ({"throttle_hold_steps": self.pilot_throttle_persistence_steps}
+                        if self.pilot_throttle_persistence_steps else {})
+        self.model = model_class(
             policy="MlpPolicy",
-            env=self.env,
+            env=model_env,
             learning_rate=self.learning_rate,
             buffer_size=self.buffer_size,
             batch_size=self.batch_size,
@@ -221,9 +263,11 @@ class SacBaselineTrainer:
             ent_coef=self.ent_coef,
             train_freq=self.train_freq,
             gradient_steps=self.gradient_steps,
+            policy_kwargs=policy_kwargs,
             seed=self.training_root_seed,
             device=self.device,
             verbose=0,
+            **model_kwargs,
         )
 
         self.callback = SacDiagnosticsCallback(verbose=1)
@@ -256,6 +300,7 @@ class SacBaselineTrainer:
         print(f"  Device:          {self.device}")
         print(f"  Root Seed:       {self.training_root_seed}")
 
+        print(f"TaskContext producer: {self.config['task_context_producer']}")
         self.model.learn(total_timesteps=total_timesteps, callback=self.callback)
 
         summary = self.callback.get_summary_metrics()
@@ -268,6 +313,7 @@ class SacBaselineTrainer:
         print(f"  Throughput:        {summary['throughput_steps_per_sec']} steps/sec")
         print(f"  Wall Time:         {summary['wall_time_s']} s")
         print(f"==================================================================")
+        summary["task_context_producer"] = self.config["task_context_producer"]
         return summary
 
     def save_checkpoint(
@@ -277,10 +323,18 @@ class SacBaselineTrainer:
     ) -> Path:
         """Persists the trained model and metadata."""
         summary = self.callback.get_summary_metrics()
+        summary["optimizer_updates"] = int(getattr(self.model, "_n_updates", 0))
+        log_ent_coef = getattr(self.model, "log_ent_coef", None)
+        summary["entropy_coefficient"] = (
+            float(log_ent_coef.detach().exp().cpu().item()) if log_ent_coef is not None
+            else float(self.model.ent_coef) if isinstance(self.model.ent_coef, (int, float)) else None
+        )
         return save_sac_checkpoint(
             model=self.model,
             checkpoint_dir=checkpoint_dir,
             encoder=self.encoder,
+            observation_transform=self.observation_transform,
+            task_context_producer_id=self.task_context_producer_id,
             total_timesteps=int(self.model.num_timesteps),
             training_root_seed=self.training_root_seed,
             training_config=self.config,

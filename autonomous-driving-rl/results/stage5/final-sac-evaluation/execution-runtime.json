@@ -1,0 +1,35 @@
+{
+  "end_memory": {
+    "available_bytes": 5801697280,
+    "commit_available_bytes": 16183410688,
+    "commit_limit_bytes": 35585609728,
+    "cpu_percent": 28.2,
+    "paging": {
+      "free": 18400362496,
+      "percent": 1.2,
+      "sin": 0,
+      "sout": 0,
+      "total": 18623328256,
+      "used": 222965760
+    },
+    "physical_total_bytes": 16962281472
+  },
+  "model_sha256_after": "512677009e3c1e96dd39f9f1a4dd2dcd65a04cd0d084eaeaeec9554dde8a22b9",
+  "seconds": 1654.9379999999946,
+  "start_memory": {
+    "available_bytes": 4059828224,
+    "commit_available_bytes": 13170515968,
+    "commit_limit_bytes": 35585609728,
+    "cpu_percent": 22.9,
+    "paging": {
+      "free": 18391248896,
+      "percent": 1.2,
+      "sin": 0,
+      "sout": 0,
+      "total": 18623328256,
+      "used": 232079360
+    },
+    "physical_total_bytes": 16962281472
+  },
+  "workers": 4
+}

@@ -1,0 +1,410 @@
+index,name,physical_units,encoder_normalization,source_expression,mask_index
+0,road_border_left,m,"clip [0,1]",dist_to_left_side / ((MAX_LANE_NUM+1)*MAX_LANE_WIDTH),
+1,road_border_right,m,"clip [0,1]",dist_to_right_side / ((MAX_LANE_NUM+1)*MAX_LANE_WIDTH),
+2,heading_relative_to_lane,cosine,"clip [-1,1], /2+.5","vehicle.heading_diff(current_ref_lanes[-1]); dot(vehicle forward,lane lateral)",
+3,speed,km/h,"clip [0,1]",(vehicle.speed_km_h+1)/(vehicle.max_speed_km_h+1),
+4,current_steering,native vehicle steering,"clip [0,1]",(vehicle.steering/vehicle.MAX_STEERING+1)/2,
+5,latest_steering,Box2,"clip [0,1]",(vehicle.last_current_action[1][0]+1)/2,
+6,latest_throttle_brake,Box2,"clip [0,1]",(vehicle.last_current_action[1][1]+1)/2,
+7,yaw_rate_magnitude,rad/s,"clip [0,1]","acos(clip(dot(heading,last_heading)/(norms),0,1))/.1",
+8,lane_lateral_offset,m,"clip [0,1]",vehicle.lane.local_coordinates(position)[1]/MAX_LANE_WIDTH+.5,
+9,nav.current.forward,m,"clip [0,1]",(ckpt_in_heading/NAVI_POINT_DIST+1)/2,
+10,nav.current.lateral,m,"clip [0,1]",(ckpt_in_rhs/NAVI_POINT_DIST+1)/2; native frame,
+11,nav.current.bend_radius,m,"clip [0,1]",radius/(max_curve_radius+lane_count*lane_width); straight zero,
+12,nav.current.bend_direction,direction,"clip [0,1]",(-CircularLane.direction+1)/2; straight .5,
+13,nav.current.bend_angle,degree,"clip [0,1]",(rad2deg(angle)/max_curve_angle+1)/2; straight .5,
+14,nav.next.forward,m,"clip [0,1]",(ckpt_in_heading/NAVI_POINT_DIST+1)/2,
+15,nav.next.lateral,m,"clip [0,1]",(ckpt_in_rhs/NAVI_POINT_DIST+1)/2; native frame,
+16,nav.next.bend_radius,m,"clip [0,1]",radius/(max_curve_radius+lane_count*lane_width); straight zero,
+17,nav.next.bend_direction,direction,"clip [0,1]",(-CircularLane.direction+1)/2; straight .5,
+18,nav.next.bend_angle,degree,"clip [0,1]",(rad2deg(angle)/max_curve_angle+1)/2; straight .5,
+19,lidar.0,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[0]; 1=no return,
+20,lidar.1,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[1]; 1=no return,
+21,lidar.2,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[2]; 1=no return,
+22,lidar.3,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[3]; 1=no return,
+23,lidar.4,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[4]; 1=no return,
+24,lidar.5,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[5]; 1=no return,
+25,lidar.6,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[6]; 1=no return,
+26,lidar.7,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[7]; 1=no return,
+27,lidar.8,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[8]; 1=no return,
+28,lidar.9,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[9]; 1=no return,
+29,lidar.10,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[10]; 1=no return,
+30,lidar.11,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[11]; 1=no return,
+31,lidar.12,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[12]; 1=no return,
+32,lidar.13,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[13]; 1=no return,
+33,lidar.14,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[14]; 1=no return,
+34,lidar.15,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[15]; 1=no return,
+35,lidar.16,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[16]; 1=no return,
+36,lidar.17,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[17]; 1=no return,
+37,lidar.18,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[18]; 1=no return,
+38,lidar.19,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[19]; 1=no return,
+39,lidar.20,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[20]; 1=no return,
+40,lidar.21,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[21]; 1=no return,
+41,lidar.22,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[22]; 1=no return,
+42,lidar.23,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[23]; 1=no return,
+43,lidar.24,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[24]; 1=no return,
+44,lidar.25,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[25]; 1=no return,
+45,lidar.26,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[26]; 1=no return,
+46,lidar.27,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[27]; 1=no return,
+47,lidar.28,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[28]; 1=no return,
+48,lidar.29,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[29]; 1=no return,
+49,lidar.30,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[30]; 1=no return,
+50,lidar.31,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[31]; 1=no return,
+51,lidar.32,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[32]; 1=no return,
+52,lidar.33,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[33]; 1=no return,
+53,lidar.34,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[34]; 1=no return,
+54,lidar.35,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[35]; 1=no return,
+55,lidar.36,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[36]; 1=no return,
+56,lidar.37,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[37]; 1=no return,
+57,lidar.38,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[38]; 1=no return,
+58,lidar.39,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[39]; 1=no return,
+59,lidar.40,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[40]; 1=no return,
+60,lidar.41,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[41]; 1=no return,
+61,lidar.42,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[42]; 1=no return,
+62,lidar.43,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[43]; 1=no return,
+63,lidar.44,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[44]; 1=no return,
+64,lidar.45,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[45]; 1=no return,
+65,lidar.46,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[46]; 1=no return,
+66,lidar.47,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[47]; 1=no return,
+67,lidar.48,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[48]; 1=no return,
+68,lidar.49,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[49]; 1=no return,
+69,lidar.50,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[50]; 1=no return,
+70,lidar.51,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[51]; 1=no return,
+71,lidar.52,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[52]; 1=no return,
+72,lidar.53,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[53]; 1=no return,
+73,lidar.54,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[54]; 1=no return,
+74,lidar.55,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[55]; 1=no return,
+75,lidar.56,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[56]; 1=no return,
+76,lidar.57,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[57]; 1=no return,
+77,lidar.58,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[58]; 1=no return,
+78,lidar.59,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[59]; 1=no return,
+79,lidar.60,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[60]; 1=no return,
+80,lidar.61,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[61]; 1=no return,
+81,lidar.62,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[62]; 1=no return,
+82,lidar.63,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[63]; 1=no return,
+83,lidar.64,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[64]; 1=no return,
+84,lidar.65,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[65]; 1=no return,
+85,lidar.66,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[66]; 1=no return,
+86,lidar.67,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[67]; 1=no return,
+87,lidar.68,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[68]; 1=no return,
+88,lidar.69,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[69]; 1=no return,
+89,lidar.70,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[70]; 1=no return,
+90,lidar.71,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[71]; 1=no return,
+91,lidar.72,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[72]; 1=no return,
+92,lidar.73,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[73]; 1=no return,
+93,lidar.74,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[74]; 1=no return,
+94,lidar.75,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[75]; 1=no return,
+95,lidar.76,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[76]; 1=no return,
+96,lidar.77,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[77]; 1=no return,
+97,lidar.78,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[78]; 1=no return,
+98,lidar.79,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[79]; 1=no return,
+99,lidar.80,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[80]; 1=no return,
+100,lidar.81,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[81]; 1=no return,
+101,lidar.82,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[82]; 1=no return,
+102,lidar.83,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[83]; 1=no return,
+103,lidar.84,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[84]; 1=no return,
+104,lidar.85,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[85]; 1=no return,
+105,lidar.86,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[86]; 1=no return,
+106,lidar.87,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[87]; 1=no return,
+107,lidar.88,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[88]; 1=no return,
+108,lidar.89,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[89]; 1=no return,
+109,lidar.90,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[90]; 1=no return,
+110,lidar.91,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[91]; 1=no return,
+111,lidar.92,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[92]; 1=no return,
+112,lidar.93,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[93]; 1=no return,
+113,lidar.94,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[94]; 1=no return,
+114,lidar.95,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[95]; 1=no return,
+115,lidar.96,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[96]; 1=no return,
+116,lidar.97,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[97]; 1=no return,
+117,lidar.98,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[98]; 1=no return,
+118,lidar.99,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[99]; 1=no return,
+119,lidar.100,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[100]; 1=no return,
+120,lidar.101,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[101]; 1=no return,
+121,lidar.102,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[102]; 1=no return,
+122,lidar.103,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[103]; 1=no return,
+123,lidar.104,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[104]; 1=no return,
+124,lidar.105,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[105]; 1=no return,
+125,lidar.106,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[106]; 1=no return,
+126,lidar.107,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[107]; 1=no return,
+127,lidar.108,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[108]; 1=no return,
+128,lidar.109,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[109]; 1=no return,
+129,lidar.110,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[110]; 1=no return,
+130,lidar.111,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[111]; 1=no return,
+131,lidar.112,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[112]; 1=no return,
+132,lidar.113,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[113]; 1=no return,
+133,lidar.114,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[114]; 1=no return,
+134,lidar.115,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[115]; 1=no return,
+135,lidar.116,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[116]; 1=no return,
+136,lidar.117,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[117]; 1=no return,
+137,lidar.118,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[118]; 1=no return,
+138,lidar.119,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[119]; 1=no return,
+139,lidar.120,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[120]; 1=no return,
+140,lidar.121,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[121]; 1=no return,
+141,lidar.122,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[122]; 1=no return,
+142,lidar.123,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[123]; 1=no return,
+143,lidar.124,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[124]; 1=no return,
+144,lidar.125,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[125]; 1=no return,
+145,lidar.126,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[126]; 1=no return,
+146,lidar.127,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[127]; 1=no return,
+147,lidar.128,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[128]; 1=no return,
+148,lidar.129,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[129]; 1=no return,
+149,lidar.130,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[130]; 1=no return,
+150,lidar.131,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[131]; 1=no return,
+151,lidar.132,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[132]; 1=no return,
+152,lidar.133,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[133]; 1=no return,
+153,lidar.134,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[134]; 1=no return,
+154,lidar.135,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[135]; 1=no return,
+155,lidar.136,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[136]; 1=no return,
+156,lidar.137,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[137]; 1=no return,
+157,lidar.138,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[138]; 1=no return,
+158,lidar.139,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[139]; 1=no return,
+159,lidar.140,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[140]; 1=no return,
+160,lidar.141,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[141]; 1=no return,
+161,lidar.142,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[142]; 1=no return,
+162,lidar.143,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[143]; 1=no return,
+163,lidar.144,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[144]; 1=no return,
+164,lidar.145,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[145]; 1=no return,
+165,lidar.146,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[146]; 1=no return,
+166,lidar.147,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[147]; 1=no return,
+167,lidar.148,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[148]; 1=no return,
+168,lidar.149,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[149]; 1=no return,
+169,lidar.150,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[150]; 1=no return,
+170,lidar.151,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[151]; 1=no return,
+171,lidar.152,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[152]; 1=no return,
+172,lidar.153,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[153]; 1=no return,
+173,lidar.154,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[154]; 1=no return,
+174,lidar.155,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[155]; 1=no return,
+175,lidar.156,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[156]; 1=no return,
+176,lidar.157,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[157]; 1=no return,
+177,lidar.158,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[158]; 1=no return,
+178,lidar.159,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[159]; 1=no return,
+179,lidar.160,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[160]; 1=no return,
+180,lidar.161,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[161]; 1=no return,
+181,lidar.162,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[162]; 1=no return,
+182,lidar.163,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[163]; 1=no return,
+183,lidar.164,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[164]; 1=no return,
+184,lidar.165,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[165]; 1=no return,
+185,lidar.166,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[166]; 1=no return,
+186,lidar.167,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[167]; 1=no return,
+187,lidar.168,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[168]; 1=no return,
+188,lidar.169,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[169]; 1=no return,
+189,lidar.170,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[170]; 1=no return,
+190,lidar.171,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[171]; 1=no return,
+191,lidar.172,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[172]; 1=no return,
+192,lidar.173,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[173]; 1=no return,
+193,lidar.174,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[174]; 1=no return,
+194,lidar.175,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[175]; 1=no return,
+195,lidar.176,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[176]; 1=no return,
+196,lidar.177,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[177]; 1=no return,
+197,lidar.178,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[178]; 1=no return,
+198,lidar.179,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[179]; 1=no return,
+199,lidar.180,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[180]; 1=no return,
+200,lidar.181,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[181]; 1=no return,
+201,lidar.182,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[182]; 1=no return,
+202,lidar.183,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[183]; 1=no return,
+203,lidar.184,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[184]; 1=no return,
+204,lidar.185,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[185]; 1=no return,
+205,lidar.186,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[186]; 1=no return,
+206,lidar.187,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[187]; 1=no return,
+207,lidar.188,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[188]; 1=no return,
+208,lidar.189,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[189]; 1=no return,
+209,lidar.190,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[190]; 1=no return,
+210,lidar.191,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[191]; 1=no return,
+211,lidar.192,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[192]; 1=no return,
+212,lidar.193,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[193]; 1=no return,
+213,lidar.194,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[194]; 1=no return,
+214,lidar.195,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[195]; 1=no return,
+215,lidar.196,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[196]; 1=no return,
+216,lidar.197,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[197]; 1=no return,
+217,lidar.198,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[198]; 1=no return,
+218,lidar.199,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[199]; 1=no return,
+219,lidar.200,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[200]; 1=no return,
+220,lidar.201,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[201]; 1=no return,
+221,lidar.202,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[202]; 1=no return,
+222,lidar.203,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[203]; 1=no return,
+223,lidar.204,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[204]; 1=no return,
+224,lidar.205,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[205]; 1=no return,
+225,lidar.206,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[206]; 1=no return,
+226,lidar.207,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[207]; 1=no return,
+227,lidar.208,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[208]; 1=no return,
+228,lidar.209,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[209]; 1=no return,
+229,lidar.210,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[210]; 1=no return,
+230,lidar.211,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[211]; 1=no return,
+231,lidar.212,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[212]; 1=no return,
+232,lidar.213,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[213]; 1=no return,
+233,lidar.214,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[214]; 1=no return,
+234,lidar.215,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[215]; 1=no return,
+235,lidar.216,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[216]; 1=no return,
+236,lidar.217,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[217]; 1=no return,
+237,lidar.218,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[218]; 1=no return,
+238,lidar.219,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[219]; 1=no return,
+239,lidar.220,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[220]; 1=no return,
+240,lidar.221,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[221]; 1=no return,
+241,lidar.222,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[222]; 1=no return,
+242,lidar.223,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[223]; 1=no return,
+243,lidar.224,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[224]; 1=no return,
+244,lidar.225,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[225]; 1=no return,
+245,lidar.226,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[226]; 1=no return,
+246,lidar.227,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[227]; 1=no return,
+247,lidar.228,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[228]; 1=no return,
+248,lidar.229,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[229]; 1=no return,
+249,lidar.230,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[230]; 1=no return,
+250,lidar.231,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[231]; 1=no return,
+251,lidar.232,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[232]; 1=no return,
+252,lidar.233,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[233]; 1=no return,
+253,lidar.234,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[234]; 1=no return,
+254,lidar.235,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[235]; 1=no return,
+255,lidar.236,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[236]; 1=no return,
+256,lidar.237,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[237]; 1=no return,
+257,lidar.238,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[238]; 1=no return,
+258,lidar.239,range fraction,"native ray fraction [0,1]",Lidar.perceive.cloud_points[239]; 1=no return,
+259,traffic.0.relative_position_x,m,raw,TrafficActorV1[0].relative_position_x,315
+260,traffic.0.relative_position_y,m,raw,TrafficActorV1[0].relative_position_y,315
+261,traffic.0.relative_velocity_x,m/s,raw,TrafficActorV1[0].relative_velocity_x,315
+262,traffic.0.relative_velocity_y,m/s,raw,TrafficActorV1[0].relative_velocity_y,315
+263,traffic.0.relative_heading,rad,raw,TrafficActorV1[0].relative_heading,315
+264,traffic.0.length,m,raw,TrafficActorV1[0].length,315
+265,traffic.0.width,m,raw,TrafficActorV1[0].width,315
+266,traffic.1.relative_position_x,m,raw,TrafficActorV1[1].relative_position_x,316
+267,traffic.1.relative_position_y,m,raw,TrafficActorV1[1].relative_position_y,316
+268,traffic.1.relative_velocity_x,m/s,raw,TrafficActorV1[1].relative_velocity_x,316
+269,traffic.1.relative_velocity_y,m/s,raw,TrafficActorV1[1].relative_velocity_y,316
+270,traffic.1.relative_heading,rad,raw,TrafficActorV1[1].relative_heading,316
+271,traffic.1.length,m,raw,TrafficActorV1[1].length,316
+272,traffic.1.width,m,raw,TrafficActorV1[1].width,316
+273,traffic.2.relative_position_x,m,raw,TrafficActorV1[2].relative_position_x,317
+274,traffic.2.relative_position_y,m,raw,TrafficActorV1[2].relative_position_y,317
+275,traffic.2.relative_velocity_x,m/s,raw,TrafficActorV1[2].relative_velocity_x,317
+276,traffic.2.relative_velocity_y,m/s,raw,TrafficActorV1[2].relative_velocity_y,317
+277,traffic.2.relative_heading,rad,raw,TrafficActorV1[2].relative_heading,317
+278,traffic.2.length,m,raw,TrafficActorV1[2].length,317
+279,traffic.2.width,m,raw,TrafficActorV1[2].width,317
+280,traffic.3.relative_position_x,m,raw,TrafficActorV1[3].relative_position_x,318
+281,traffic.3.relative_position_y,m,raw,TrafficActorV1[3].relative_position_y,318
+282,traffic.3.relative_velocity_x,m/s,raw,TrafficActorV1[3].relative_velocity_x,318
+283,traffic.3.relative_velocity_y,m/s,raw,TrafficActorV1[3].relative_velocity_y,318
+284,traffic.3.relative_heading,rad,raw,TrafficActorV1[3].relative_heading,318
+285,traffic.3.length,m,raw,TrafficActorV1[3].length,318
+286,traffic.3.width,m,raw,TrafficActorV1[3].width,318
+287,traffic.4.relative_position_x,m,raw,TrafficActorV1[4].relative_position_x,319
+288,traffic.4.relative_position_y,m,raw,TrafficActorV1[4].relative_position_y,319
+289,traffic.4.relative_velocity_x,m/s,raw,TrafficActorV1[4].relative_velocity_x,319
+290,traffic.4.relative_velocity_y,m/s,raw,TrafficActorV1[4].relative_velocity_y,319
+291,traffic.4.relative_heading,rad,raw,TrafficActorV1[4].relative_heading,319
+292,traffic.4.length,m,raw,TrafficActorV1[4].length,319
+293,traffic.4.width,m,raw,TrafficActorV1[4].width,319
+294,traffic.5.relative_position_x,m,raw,TrafficActorV1[5].relative_position_x,320
+295,traffic.5.relative_position_y,m,raw,TrafficActorV1[5].relative_position_y,320
+296,traffic.5.relative_velocity_x,m/s,raw,TrafficActorV1[5].relative_velocity_x,320
+297,traffic.5.relative_velocity_y,m/s,raw,TrafficActorV1[5].relative_velocity_y,320
+298,traffic.5.relative_heading,rad,raw,TrafficActorV1[5].relative_heading,320
+299,traffic.5.length,m,raw,TrafficActorV1[5].length,320
+300,traffic.5.width,m,raw,TrafficActorV1[5].width,320
+301,traffic.6.relative_position_x,m,raw,TrafficActorV1[6].relative_position_x,321
+302,traffic.6.relative_position_y,m,raw,TrafficActorV1[6].relative_position_y,321
+303,traffic.6.relative_velocity_x,m/s,raw,TrafficActorV1[6].relative_velocity_x,321
+304,traffic.6.relative_velocity_y,m/s,raw,TrafficActorV1[6].relative_velocity_y,321
+305,traffic.6.relative_heading,rad,raw,TrafficActorV1[6].relative_heading,321
+306,traffic.6.length,m,raw,TrafficActorV1[6].length,321
+307,traffic.6.width,m,raw,TrafficActorV1[6].width,321
+308,traffic.7.relative_position_x,m,raw,TrafficActorV1[7].relative_position_x,322
+309,traffic.7.relative_position_y,m,raw,TrafficActorV1[7].relative_position_y,322
+310,traffic.7.relative_velocity_x,m/s,raw,TrafficActorV1[7].relative_velocity_x,322
+311,traffic.7.relative_velocity_y,m/s,raw,TrafficActorV1[7].relative_velocity_y,322
+312,traffic.7.relative_heading,rad,raw,TrafficActorV1[7].relative_heading,322
+313,traffic.7.length,m,raw,TrafficActorV1[7].length,322
+314,traffic.7.width,m,raw,TrafficActorV1[7].width,322
+315,traffic_mask.0,boolean,float32,TrafficContextV1.validity_mask[0],
+316,traffic_mask.1,boolean,float32,TrafficContextV1.validity_mask[1],
+317,traffic_mask.2,boolean,float32,TrafficContextV1.validity_mask[2],
+318,traffic_mask.3,boolean,float32,TrafficContextV1.validity_mask[3],
+319,traffic_mask.4,boolean,float32,TrafficContextV1.validity_mask[4],
+320,traffic_mask.5,boolean,float32,TrafficContextV1.validity_mask[5],
+321,traffic_mask.6,boolean,float32,TrafficContextV1.validity_mask[6],
+322,traffic_mask.7,boolean,float32,TrafficContextV1.validity_mask[7],
+323,traffic_active_ratio,count,/capacity,"active_count/max(1,capacity)",
+324,traffic_overflow_ratio,count,cap 10 / 10,"min(overflow_count,10)/10",
+325,task.0.relative_x,m,raw ego frame,RouteWaypointV1[0].relative_x,385
+326,task.0.relative_y,m,raw ego frame,RouteWaypointV1[0].relative_y,385
+327,task.0.relative_heading,rad,raw ego frame,RouteWaypointV1[0].relative_heading,385
+328,task.1.relative_x,m,raw ego frame,RouteWaypointV1[1].relative_x,386
+329,task.1.relative_y,m,raw ego frame,RouteWaypointV1[1].relative_y,386
+330,task.1.relative_heading,rad,raw ego frame,RouteWaypointV1[1].relative_heading,386
+331,task.2.relative_x,m,raw ego frame,RouteWaypointV1[2].relative_x,387
+332,task.2.relative_y,m,raw ego frame,RouteWaypointV1[2].relative_y,387
+333,task.2.relative_heading,rad,raw ego frame,RouteWaypointV1[2].relative_heading,387
+334,task.3.relative_x,m,raw ego frame,RouteWaypointV1[3].relative_x,388
+335,task.3.relative_y,m,raw ego frame,RouteWaypointV1[3].relative_y,388
+336,task.3.relative_heading,rad,raw ego frame,RouteWaypointV1[3].relative_heading,388
+337,task.4.relative_x,m,raw ego frame,RouteWaypointV1[4].relative_x,389
+338,task.4.relative_y,m,raw ego frame,RouteWaypointV1[4].relative_y,389
+339,task.4.relative_heading,rad,raw ego frame,RouteWaypointV1[4].relative_heading,389
+340,task.5.relative_x,m,raw ego frame,RouteWaypointV1[5].relative_x,390
+341,task.5.relative_y,m,raw ego frame,RouteWaypointV1[5].relative_y,390
+342,task.5.relative_heading,rad,raw ego frame,RouteWaypointV1[5].relative_heading,390
+343,task.6.relative_x,m,raw ego frame,RouteWaypointV1[6].relative_x,391
+344,task.6.relative_y,m,raw ego frame,RouteWaypointV1[6].relative_y,391
+345,task.6.relative_heading,rad,raw ego frame,RouteWaypointV1[6].relative_heading,391
+346,task.7.relative_x,m,raw ego frame,RouteWaypointV1[7].relative_x,392
+347,task.7.relative_y,m,raw ego frame,RouteWaypointV1[7].relative_y,392
+348,task.7.relative_heading,rad,raw ego frame,RouteWaypointV1[7].relative_heading,392
+349,task.8.relative_x,m,raw ego frame,RouteWaypointV1[8].relative_x,393
+350,task.8.relative_y,m,raw ego frame,RouteWaypointV1[8].relative_y,393
+351,task.8.relative_heading,rad,raw ego frame,RouteWaypointV1[8].relative_heading,393
+352,task.9.relative_x,m,raw ego frame,RouteWaypointV1[9].relative_x,394
+353,task.9.relative_y,m,raw ego frame,RouteWaypointV1[9].relative_y,394
+354,task.9.relative_heading,rad,raw ego frame,RouteWaypointV1[9].relative_heading,394
+355,task.10.relative_x,m,raw ego frame,RouteWaypointV1[10].relative_x,395
+356,task.10.relative_y,m,raw ego frame,RouteWaypointV1[10].relative_y,395
+357,task.10.relative_heading,rad,raw ego frame,RouteWaypointV1[10].relative_heading,395
+358,task.11.relative_x,m,raw ego frame,RouteWaypointV1[11].relative_x,396
+359,task.11.relative_y,m,raw ego frame,RouteWaypointV1[11].relative_y,396
+360,task.11.relative_heading,rad,raw ego frame,RouteWaypointV1[11].relative_heading,396
+361,task.12.relative_x,m,raw ego frame,RouteWaypointV1[12].relative_x,397
+362,task.12.relative_y,m,raw ego frame,RouteWaypointV1[12].relative_y,397
+363,task.12.relative_heading,rad,raw ego frame,RouteWaypointV1[12].relative_heading,397
+364,task.13.relative_x,m,raw ego frame,RouteWaypointV1[13].relative_x,398
+365,task.13.relative_y,m,raw ego frame,RouteWaypointV1[13].relative_y,398
+366,task.13.relative_heading,rad,raw ego frame,RouteWaypointV1[13].relative_heading,398
+367,task.14.relative_x,m,raw ego frame,RouteWaypointV1[14].relative_x,399
+368,task.14.relative_y,m,raw ego frame,RouteWaypointV1[14].relative_y,399
+369,task.14.relative_heading,rad,raw ego frame,RouteWaypointV1[14].relative_heading,399
+370,task.15.relative_x,m,raw ego frame,RouteWaypointV1[15].relative_x,400
+371,task.15.relative_y,m,raw ego frame,RouteWaypointV1[15].relative_y,400
+372,task.15.relative_heading,rad,raw ego frame,RouteWaypointV1[15].relative_heading,400
+373,task.16.relative_x,m,raw ego frame,RouteWaypointV1[16].relative_x,401
+374,task.16.relative_y,m,raw ego frame,RouteWaypointV1[16].relative_y,401
+375,task.16.relative_heading,rad,raw ego frame,RouteWaypointV1[16].relative_heading,401
+376,task.17.relative_x,m,raw ego frame,RouteWaypointV1[17].relative_x,402
+377,task.17.relative_y,m,raw ego frame,RouteWaypointV1[17].relative_y,402
+378,task.17.relative_heading,rad,raw ego frame,RouteWaypointV1[17].relative_heading,402
+379,task.18.relative_x,m,raw ego frame,RouteWaypointV1[18].relative_x,403
+380,task.18.relative_y,m,raw ego frame,RouteWaypointV1[18].relative_y,403
+381,task.18.relative_heading,rad,raw ego frame,RouteWaypointV1[18].relative_heading,403
+382,task.19.relative_x,m,raw ego frame,RouteWaypointV1[19].relative_x,404
+383,task.19.relative_y,m,raw ego frame,RouteWaypointV1[19].relative_y,404
+384,task.19.relative_heading,rad,raw ego frame,RouteWaypointV1[19].relative_heading,404
+385,task_mask.0,boolean,float32,TaskContextV1.validity_mask[0],
+386,task_mask.1,boolean,float32,TaskContextV1.validity_mask[1],
+387,task_mask.2,boolean,float32,TaskContextV1.validity_mask[2],
+388,task_mask.3,boolean,float32,TaskContextV1.validity_mask[3],
+389,task_mask.4,boolean,float32,TaskContextV1.validity_mask[4],
+390,task_mask.5,boolean,float32,TaskContextV1.validity_mask[5],
+391,task_mask.6,boolean,float32,TaskContextV1.validity_mask[6],
+392,task_mask.7,boolean,float32,TaskContextV1.validity_mask[7],
+393,task_mask.8,boolean,float32,TaskContextV1.validity_mask[8],
+394,task_mask.9,boolean,float32,TaskContextV1.validity_mask[9],
+395,task_mask.10,boolean,float32,TaskContextV1.validity_mask[10],
+396,task_mask.11,boolean,float32,TaskContextV1.validity_mask[11],
+397,task_mask.12,boolean,float32,TaskContextV1.validity_mask[12],
+398,task_mask.13,boolean,float32,TaskContextV1.validity_mask[13],
+399,task_mask.14,boolean,float32,TaskContextV1.validity_mask[14],
+400,task_mask.15,boolean,float32,TaskContextV1.validity_mask[15],
+401,task_mask.16,boolean,float32,TaskContextV1.validity_mask[16],
+402,task_mask.17,boolean,float32,TaskContextV1.validity_mask[17],
+403,task_mask.18,boolean,float32,TaskContextV1.validity_mask[18],
+404,task_mask.19,boolean,float32,TaskContextV1.validity_mask[19],
+405,task_lane_width_ratio,m,/5m,TaskContextV1.current_lane_width/5,
+406,task_goal_x,unit vector,raw,navigation_goal_direction[0],
+407,task_goal_y,unit vector,raw,navigation_goal_direction[1],
+408,task_route_end_near,boolean,float32,TaskContextV1.route_end_within_lookahead,

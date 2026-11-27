@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
+from src.platform.task_context_producer import LEGACY_TASK_PRODUCER, task_producer_identity
 from src.platform import (
     AgentDecision,
     AgentDescriptor,
@@ -48,7 +49,9 @@ class Stage5SacAgent(AgentPolicy):
         self,
         checkpoint_path: Optional[Union[Path, str]] = None,
         expected_sha256: Optional[str] = None,
+        *, task_context_producer_id: str = LEGACY_TASK_PRODUCER,
     ) -> None:
+        self._task_context_producer_id = task_producer_identity(task_context_producer_id)["id"]
         self._descriptor = AgentDescriptor(
             agent_id=self.agent_id,
             agent_version=self.agent_version,
@@ -65,6 +68,7 @@ class Stage5SacAgent(AgentPolicy):
         self._metadata: Optional[Dict[str, Any]] = None
         self._checkpoint_path: Optional[Path] = None
         self._ready = False
+        self._observation_transform = None
 
         if checkpoint_path is not None:
             self.load_checkpoint(checkpoint_path, expected_sha256=expected_sha256)
@@ -74,11 +78,16 @@ class Stage5SacAgent(AgentPolicy):
         return self._descriptor
 
     @property
+    def task_context_producer_id(self) -> str:
+        return self._task_context_producer_id
+
+    @property
     def checkpoint_provenance(self) -> Optional[Dict[str, Any]]:
         """Returns verified scientific provenance of the loaded checkpoint bundle."""
         if self._metadata is None:
             return None
         return {
+            "task_context_producer": task_producer_identity(self.task_context_producer_id),
             "checkpoint_path": str(self._checkpoint_path) if self._checkpoint_path else None,
             "model_sha256": self._metadata.get("model_sha256"),
             "encoder_fingerprint": self._metadata.get("encoder_fingerprint"),
@@ -102,10 +111,27 @@ class Stage5SacAgent(AgentPolicy):
             expected_sha256=expected_sha256,
             expected_encoder_fingerprint=expected_fp,
             load_replay_buffer=False,
+            task_context_producer_id=self.task_context_producer_id,
         )
+        transform_spec = metadata.get("observation_transform")
+        transform_id = None
+        if transform_spec:
+            from src.training.stage5.pilot_observation_transform import (
+                TRANSFORM_SPECS, transform_fingerprint,
+            )
+            transform_id = transform_spec.get("transform_id") if isinstance(transform_spec, dict) else None
+            expected_spec = TRANSFORM_SPECS.get(transform_id)
+            expected_transform_fingerprint = (
+                transform_fingerprint(expected_spec) if expected_spec is not None else None
+            )
+            if (expected_spec is None or transform_spec != expected_spec or
+                    metadata.get("observation_transform_fingerprint") != expected_transform_fingerprint):
+                raise ValueError("Checkpoint specifies an unsupported or mismatched observation transform")
         self._model = model
         self._metadata = metadata
         self._checkpoint_path = ckpt_path
+        self._observation_transform = transform_id
+        self._ready = False
 
     def reset(self, public_context: AgentPublicEpisodeContext, agent_seed: Optional[int] = None) -> None:
         """Resets the agent before a new episode begins."""
@@ -116,7 +142,8 @@ class Stage5SacAgent(AgentPolicy):
             )
         self._ready = True
 
-    def act(self, agent_input: AgentInputV1) -> AgentDecision:
+    def act(self, agent_input: AgentInputV1, *,
+            task_context_producer_id: str = LEGACY_TASK_PRODUCER) -> AgentDecision:
         """
         Produces a deterministic decision for the current 10 Hz control cycle.
         Operates strictly in inference mode without gradient updates.
@@ -124,8 +151,14 @@ class Stage5SacAgent(AgentPolicy):
         if not self._ready or self._model is None:
             raise RuntimeError(f"Agent '{self.agent_id}' must be reset with a loaded model before act().")
 
+        if task_context_producer_id != self.task_context_producer_id:
+            raise ValueError("Policy input TaskContext producer mismatch")
+
         # 1. Encode public AgentInputV1 into 409D observation vector
         obs_vec = self.encoder.encode(agent_input)
+        if self._observation_transform is not None:
+            from src.training.stage5.pilot_observation_transform import apply_observation_transform
+            obs_vec = apply_observation_transform(obs_vec, self._observation_transform)
 
         # 2. Predict action deterministically using frozen policy network
         raw_action, _ = self._model.predict(obs_vec, deterministic=True)
@@ -147,3 +180,4 @@ class Stage5SacAgent(AgentPolicy):
         self._ready = False
         self._model = None
         self._metadata = None
+        self._observation_transform = None

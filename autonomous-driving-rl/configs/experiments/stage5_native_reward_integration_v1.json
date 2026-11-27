@@ -1,0 +1,45 @@
+{
+  "experiment_id": "stage5_native_reward_integration_v1",
+  "training_task": {
+    "geometry_id": "geom_easy_SCS_seed0",
+    "split": "TRAIN",
+    "environment_seed_root": 101,
+    "traffic_density": 0.0,
+    "task_context_producer_id": "reference_route_station_proposal_v1",
+    "observation_encoder_id": "stage5_flat409_v1",
+    "observation_transform_id": "pilot_groupwise_physical_v1",
+    "action_adapter_id": "continuous_box2_v1",
+    "control_frequency_hz": 10
+  },
+  "training_reward": {
+    "mode_id": "stage5_metadrive_native_reward_v1",
+    "source": "MetaDriveEnv.step raw reward, passed through unchanged",
+    "canonical_comparison": "RewardSpecV1 computed and logged in parallel; not sent to SAC"
+  },
+  "sac": {
+    "algorithm": "Stable-Baselines3 SAC",
+    "policy": "MlpPolicy",
+    "learning_rate": 0.0001,
+    "gamma": 0.99,
+    "learning_starts": 10000,
+    "buffer_size": 1000000,
+    "batch_size": 256,
+    "tau": 0.005,
+    "train_freq": 1,
+    "gradient_steps": 1,
+    "ent_coef": "auto",
+    "target_entropy": "auto",
+    "use_sde": false,
+    "actor_critic_architecture": [256, 256],
+    "activation": "ReLU",
+    "device": "cpu",
+    "seed": 101
+  },
+  "budget": {
+    "max_environment_steps": 100000,
+    "checkpoint_and_full_evaluation_steps": [10000, 25000, 50000, 75000, 100000],
+    "evaluation_episode_count": 5,
+    "evaluation_environment_seeds": [10101, 10102, 10103, 10104, 10105],
+    "pass_rule": "Stop at first scheduled checkpoint with at least 4 of 5 CLEAN_SUCCESS full episodes; otherwise stop at 100000."
+  }
+}

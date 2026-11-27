@@ -1,0 +1,5 @@
+cumulative_updates,new_updates,external_rows_available,external_draws_since_previous_stage,cumulative_external_draws,actor_adam_step,critic_adam_step,alpha_adam_step,learning_seconds
+128,128,5586,8192,8192,641068,641068,641068,9.125
+2000,1872,20085,119808,128000,642940,642940,642940,134.563
+5000,3000,36532,192000,320000,645940,645940,645940,84.844
+10000,5000,59310,320000,640000,650940,650940,650940,123.765

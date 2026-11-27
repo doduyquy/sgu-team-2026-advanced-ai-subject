@@ -43,6 +43,12 @@ To systematically study decision-making and learning methods, we propose an incr
 
 ---
 
+## Stage 5 SAC ? final delivery
+
+The repository includes the frozen SAC V2?5.000 inference checkpoint. See the
+[installation and demo commands](autonomous-driving-rl/README.md#stage-5-sac-demo)
+and the [held-out evaluation](autonomous-driving-rl/docs/stage5/final_product/FINAL_SAC_EVALUATION.md).
+
 ## Autonomous Driving Subproject
 
 The `autonomous-driving-rl/` subproject explores closed-loop driving control in urban and highway environments using the **MetaDrive** simulator.

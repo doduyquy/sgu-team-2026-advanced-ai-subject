@@ -1,0 +1,107 @@
+{
+  "historical": {
+    "interpretation_limit": "This reconstructs marginal executed-action support from the 10k telemetry, not state-conditional replay support or the exact replay buffer contents.",
+    "missing_state_support": [
+      "observations",
+      "next_observations",
+      "behavior log probabilities",
+      "replay indices",
+      "target-Q samples"
+    ],
+    "n_logged_training_actions": 10000,
+    "replay_buffer_saved": false,
+    "source_log_sha256": "582f0271c36adce05f4d73d0c55b4364ce2ee12cf3ae6bfb2e89a6f8dc9d3810",
+    "steering_distribution": {
+      "fraction_abs_ge_0_95": 0.0378,
+      "max": 0.9991958141326904,
+      "mean": 0.015737555199861527,
+      "min": -0.9982246160507202,
+      "q01_q05_q25_q50_q75_q95_q99": [
+        -0.9642609578371047,
+        -0.8848854839801789,
+        -0.5179318934679031,
+        0.01892530918121338,
+        0.544281929731369,
+        0.9018712341785431,
+        0.9695693135261537
+      ],
+      "std": 0.5890016656434547
+    },
+    "throttle_bins": {
+      "brake": 5046,
+      "near_zero": 490,
+      "throttle": 4464
+    },
+    "throttle_brake_distribution": {
+      "fraction_abs_ge_0_95": 0.0395,
+      "max": 0.9941494464874268,
+      "mean": -0.0353588054895401,
+      "min": -0.9984358549118042,
+      "q01_q05_q25_q50_q75_q95_q99": [
+        -0.971930056810379,
+        -0.9062565624713897,
+        -0.5730695724487305,
+        -0.05914318561553955,
+        0.5020647048950195,
+        0.8938278913497922,
+        0.9679039406776431
+      ],
+      "std": 0.5927867912905691
+    },
+    "throttle_hold_blocks": {
+      "count_of_constant_value_runs": 2007,
+      "max_run_length": 5,
+      "run_length_quantiles": [
+        5.0,
+        5.0,
+        5.0,
+        5.0
+      ]
+    },
+    "training_actions_are_observed_execution_actions": "SAC collector passes its returned actions to env.step; Stage5TrainingEnv reports same canonical action in info. Callback records collector action first. The custom sampler changed actions and replay actions together."
+  },
+  "new_diagnostic": {
+    "deterministic": {
+      "fraction_steering_within_historical_marginal_minmax": 1.0,
+      "fraction_throttle_braking": 1.0,
+      "fraction_throttle_positive": 0.0,
+      "fraction_throttle_within_historical_marginal_minmax": 1.0,
+      "n": 1200,
+      "steering_q01_q25_q50_q75_q99": [
+        -0.10955251216888427,
+        -0.10940414667129517,
+        -0.06731513142585754,
+        -0.06724391877651215,
+        -0.019737460017204285
+      ],
+      "throttle_q01_q25_q50_q75_q99": [
+        -0.09726667761802674,
+        -0.0971536785364151,
+        -0.09103208780288696,
+        -0.09099702537059784,
+        -0.08600205183029175
+      ]
+    },
+    "stochastic": {
+      "fraction_steering_within_historical_marginal_minmax": 1.0,
+      "fraction_throttle_braking": 0.5258333333333334,
+      "fraction_throttle_positive": 0.4241666666666667,
+      "fraction_throttle_within_historical_marginal_minmax": 1.0,
+      "n": 1200,
+      "steering_q01_q25_q50_q75_q99": [
+        -0.9750255137681961,
+        -0.6258692145347595,
+        -0.12247467041015625,
+        0.42575347423553467,
+        0.9459895384311676
+      ],
+      "throttle_q01_q25_q50_q75_q99": [
+        -0.9733129066228866,
+        -0.602699801325798,
+        -0.09604018926620483,
+        0.43772366642951965,
+        0.9434436762332916
+      ]
+    }
+  }
+}

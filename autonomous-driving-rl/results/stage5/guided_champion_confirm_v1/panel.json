@@ -1,0 +1,150 @@
+{
+  "cases": [
+    {
+      "adapter_triggers": 26,
+      "censored": false,
+      "clean": true,
+      "family": "SCCS",
+      "geometry": "geom_easy_SCCS_seed19",
+      "outcome": "SUCCESS",
+      "progress": 0.9926231562382267,
+      "seed": 703245376,
+      "speed_km_h": 34.73593478454852,
+      "success_seconds": 51.1
+    },
+    {
+      "adapter_triggers": 27,
+      "censored": false,
+      "clean": true,
+      "family": "SCCS",
+      "geometry": "geom_easy_SCCS_seed19",
+      "outcome": "SUCCESS",
+      "progress": 0.9932273498146867,
+      "seed": 539560248,
+      "speed_km_h": 34.75656476373943,
+      "success_seconds": 51.1
+    },
+    {
+      "adapter_triggers": 25,
+      "censored": false,
+      "clean": true,
+      "family": "SCCS",
+      "geometry": "geom_easy_SCCS_seed4",
+      "outcome": "SUCCESS",
+      "progress": 0.9939257886658975,
+      "seed": 703245376,
+      "speed_km_h": 38.05305307470502,
+      "success_seconds": 54.5
+    },
+    {
+      "adapter_triggers": 25,
+      "censored": false,
+      "clean": true,
+      "family": "SCCS",
+      "geometry": "geom_easy_SCCS_seed4",
+      "outcome": "SUCCESS",
+      "progress": 0.9934830650802331,
+      "seed": 539560248,
+      "speed_km_h": 38.04232579587084,
+      "success_seconds": 54.5
+    },
+    {
+      "adapter_triggers": 27,
+      "censored": false,
+      "clean": true,
+      "family": "SCSS",
+      "geometry": "geom_easy_SCSS_seed18",
+      "outcome": "SUCCESS",
+      "progress": 0.9882496034696551,
+      "seed": 703245376,
+      "speed_km_h": 32.10157430791979,
+      "success_seconds": 44.0
+    },
+    {
+      "adapter_triggers": 28,
+      "censored": false,
+      "clean": true,
+      "family": "SCSS",
+      "geometry": "geom_easy_SCSS_seed18",
+      "outcome": "SUCCESS",
+      "progress": 0.9884870605732495,
+      "seed": 539560248,
+      "speed_km_h": 32.10880704329541,
+      "success_seconds": 44.0
+    },
+    {
+      "adapter_triggers": 32,
+      "censored": false,
+      "clean": true,
+      "family": "SCSS",
+      "geometry": "geom_easy_SCSS_seed2",
+      "outcome": "SUCCESS",
+      "progress": 0.9845783573745451,
+      "seed": 703245376,
+      "speed_km_h": 27.65425729903376,
+      "success_seconds": 39.5
+    },
+    {
+      "adapter_triggers": 32,
+      "censored": false,
+      "clean": true,
+      "family": "SCSS",
+      "geometry": "geom_easy_SCSS_seed2",
+      "outcome": "SUCCESS",
+      "progress": 0.9859188413174315,
+      "seed": 539560248,
+      "speed_km_h": 27.692856769688035,
+      "success_seconds": 39.5
+    },
+    {
+      "adapter_triggers": 30,
+      "censored": false,
+      "clean": true,
+      "family": "SCS",
+      "geometry": "geom_easy_SCS_seed12",
+      "outcome": "SUCCESS",
+      "progress": 0.9873550365746533,
+      "seed": 703245376,
+      "speed_km_h": 30.18395387734964,
+      "success_seconds": 41.3
+    },
+    {
+      "adapter_triggers": 30,
+      "censored": false,
+      "clean": true,
+      "family": "SCS",
+      "geometry": "geom_easy_SCS_seed12",
+      "outcome": "SUCCESS",
+      "progress": 0.9878356483225958,
+      "seed": 539560248,
+      "speed_km_h": 30.200453063801778,
+      "success_seconds": 41.3
+    },
+    {
+      "adapter_triggers": 29,
+      "censored": false,
+      "clean": true,
+      "family": "SCS",
+      "geometry": "geom_easy_SCS_seed16",
+      "outcome": "SUCCESS",
+      "progress": 0.9906397798984671,
+      "seed": 703245376,
+      "speed_km_h": 31.026271922954226,
+      "success_seconds": 42.9
+    },
+    {
+      "adapter_triggers": 29,
+      "censored": false,
+      "clean": true,
+      "family": "SCS",
+      "geometry": "geom_easy_SCS_seed16",
+      "outcome": "SUCCESS",
+      "progress": 0.990853530907901,
+      "seed": 539560248,
+      "speed_km_h": 31.03235329358056,
+      "success_seconds": 42.9
+    }
+  ],
+  "model_sha": "f82ca94d27ebd9fc3468081e20631536c959990a708398f5474bebee986e6d07",
+  "tier": "Easy"
+}

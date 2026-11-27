@@ -153,6 +153,8 @@ class TestAgentRegistry(unittest.TestCase):
 
     def test_fixtures_not_benchmark_eligible(self):
         for a in self.registry.list_all():
+            if a.purpose != "AUDIT_FIXTURE":
+                continue
             self.assertFalse(a.benchmark_eligible, f"Fixture agent {a.agent_id} must not be benchmark eligible!")
             self.assertTrue(a.sandbox_eligible)
             self.assertTrue(a.audit_eligible)

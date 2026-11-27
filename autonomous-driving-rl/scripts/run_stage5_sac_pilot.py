@@ -1,0 +1,333 @@
+"""Run one continuous 10k-step Stage 5 SAC pilot with fixed internal diagnostics."""
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import shutil
+import subprocess
+import sys
+import time
+import traceback
+import uuid
+
+try:  # Load torch before Panda3D on Windows.
+    import torch
+except ImportError:
+    torch = None
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from stable_baselines3.common.callbacks import CallbackList
+
+from src.training.stage5.checkpoint import verify_checkpoint_integrity
+from src.training.stage5.pilot_callbacks import PilotCheckpointCallback
+from src.training.stage5.pilot_action_persistence import ThrottlePersistenceResetCallback
+from src.training.stage5.pilot_protocol import load_pilot_split, save_pilot_split
+from src.training.stage5.sac_trainer import SacBaselineTrainer
+from src.training.stage5.train_sampler import SamplerStrategy
+
+
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write_progress(path: Path, **updates: object) -> None:
+    current = {}
+    if path.exists():
+        try:
+            current = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            current = {}
+    current.update(updates)
+    current["updated_at_epoch_s"] = time.time()
+    temporary = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
+    temporary.write_text(json.dumps(current, sort_keys=True) + "\n", encoding="utf-8")
+    for attempt in range(8):
+        try:
+            os.replace(temporary, path)
+            break
+        except PermissionError:
+            if attempt == 7:
+                raise
+            time.sleep(0.05 * (attempt + 1))
+
+
+def evaluate(checkpoint: Path, run_dir: Path, split_path: Path, *, probe: bool = False) -> subprocess.CompletedProcess:
+    command = [sys.executable, str(ROOT / "scripts/evaluate_stage5_pilot.py"),
+               "--checkpoint", str(checkpoint), "--split", str(split_path),
+               "--output", str(run_dir / ("technical_probe" if probe else "diagnostics"))]
+    command += ["--progress-file", str(run_dir / "progress.json"),
+                "--progress-phase", "TECHNICAL_PROBE" if probe else "DIAGNOSTICS"]
+    if probe:
+        command += ["--max-cases", "1", "--max-steps-per-episode", "20"]
+    return subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--run-id", default=datetime.now(timezone.utc).strftime("s5_3a_%Y%m%dT%H%M%SZ"))
+    parser.add_argument("--waypoint-xy50-ablation", action="store_true",
+                        help="Run a separate internal ablation scaling waypoint relative x/y by 50m.")
+    parser.add_argument("--leaky-relu-ablation", action="store_true",
+                        help="Use LeakyReLU(0.01) in actor and critic MLPs; requires waypoint scaling for the registered comparison.")
+    parser.add_argument("--skip-full-diagnostics", action="store_true",
+                        help="Stop after the pre-registered 10k training run; diagnostics can be resumed manually.")
+    parser.add_argument("--sampler-strategy", choices=[strategy.value for strategy in SamplerStrategy],
+                        default=None, help="Optional controlled pilot override of TRAIN geometry sampling.")
+    parser.add_argument("--gamma", type=float, default=None,
+                        help="Optional controlled SAC discount-factor override in (0, 1].")
+    parser.add_argument("--balanced-long-horizon", action="store_true",
+                        help="Use the pilot-only tier-cycling sampler and gamma=0.9991 protocol; explicit flags can override either factor.")
+    parser.add_argument("--throttle-hold-steps", type=int, default=0,
+                        help="Pilot intervention: hold sampled throttle for N steps while resampling steering every step (0 disables).")
+    args = parser.parse_args()
+    if args.throttle_hold_steps not in (0,) and args.throttle_hold_steps < 2:
+        parser.error("--throttle-hold-steps must be 0 (disabled) or >= 2")
+    if args.leaky_relu_ablation and not args.waypoint_xy50_ablation:
+        parser.error("--leaky-relu-ablation requires --waypoint-xy50-ablation for a controlled comparison")
+    run_dir = ROOT / "runs" / "stage5_pilot" / args.run_id
+    if run_dir.exists():
+        raise FileExistsError(f"Refusing to overwrite existing pilot run: {run_dir}")
+    run_dir.mkdir(parents=True)
+    split_path = save_pilot_split(ROOT, split_seed=5301)
+    split = load_pilot_split(split_path)
+    if args.balanced_long_horizon:
+        config_path = ROOT / "configs/experiments/stage5_pilot_balanced_long_horizon_v1.json"
+    else:
+        config_path = ROOT / ("configs/experiments/stage5_pilot_leakyrelu_v1.json"
+                              if args.leaky_relu_ablation else "configs/experiments/stage5_pilot_v1.json")
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    training_overrides = {}
+    selected_sampler = (args.sampler_strategy or
+                        ("TIER_ROUND_ROBIN" if args.balanced_long_horizon else None))
+    selected_gamma = (args.gamma if args.gamma is not None else
+                      (0.9991 if args.balanced_long_horizon else None))
+    if selected_sampler is not None:
+        training_overrides.setdefault("dataset_sampler", {})["default_strategy"] = selected_sampler
+    if selected_gamma is not None:
+        if not 0.0 < selected_gamma <= 1.0:
+            parser.error("--gamma must be in (0, 1]")
+        training_overrides.setdefault("sac_hyperparameters", {})["gamma"] = selected_gamma
+    baseline_config = json.loads(
+        (ROOT / "configs/experiments/stage5_rl_baseline_v1.json").read_text(encoding="utf-8")
+    )
+    effective_sampler = (selected_sampler or config.get("training_sampler_strategy")
+                         or baseline_config["dataset_sampler"]["default_strategy"])
+    effective_gamma = (selected_gamma if selected_gamma is not None else
+                       baseline_config["sac_hyperparameters"]["gamma"])
+    config["training_sampler_strategy"] = effective_sampler
+    config["sac_gamma"] = effective_gamma
+    config["discount_weight_at_horizon_1000"] = float(effective_gamma ** 1000)
+    config["discount_weight_at_horizon_1500"] = float(effective_gamma ** 1500)
+    config["discount_weight_at_horizon_1860"] = float(effective_gamma ** 1860)
+    if training_overrides:
+        config["protocol"] = f"{config['protocol']}_sampler_{effective_sampler.lower()}_gamma_{effective_gamma:g}"
+    if args.waypoint_xy50_ablation:
+        if not args.leaky_relu_ablation:
+            config["protocol"] = "stage5_pilot_waypoint_xy50_ablation_v1"
+            config["parent_protocol"] = "stage5_pilot_v1"
+        config["normalization"] = "fixed waypoint relative x/y divided by 50m; headings and all other features unchanged"
+        config["single_factor_ablation"] = True
+    if args.leaky_relu_ablation:
+        config["protocol"] = "stage5_pilot_waypoint_xy50_leakyrelu_ablation_v1"
+    config["split_sha256"] = split["split_sha256"]
+    config["action_persistence"] = ({
+        "enabled": True,
+        "throttle_hold_steps": args.throttle_hold_steps,
+        "steering_resampled_every_step": True,
+        "episode_boundary_resets_hold": True,
+        "replay_stores_executed_action": True,
+        "scope": "pilot_behavior_collection_only",
+    } if args.throttle_hold_steps else {"enabled": False})
+    config["baseline_config_sha256"] = sha256_file(ROOT / "configs/experiments/stage5_rl_baseline_v1.json")
+    source_files = [
+        "scripts/run_stage5_sac_pilot.py",
+        "src/training/stage5/sac_trainer.py",
+        "src/training/stage5/pilot_action_persistence.py",
+        "src/training/stage5/pilot_callbacks.py",
+    ]
+    config["source_files_sha256"] = {name: sha256_file(ROOT / name) for name in source_files}
+    config["git_worktree_note"] = "Local source file hashes are authoritative for this run; the working tree may contain uncommitted pilot-only code."
+    (run_dir / "pilot_protocol.json").write_text(json.dumps(config, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    record = {
+        "protocol": config["protocol"], "run_id": args.run_id, "status": "RUNNING",
+        "training_root_seed": 101, "split_sha256": split["split_sha256"],
+        "training_sampler_strategy": effective_sampler, "sac_gamma": effective_gamma,
+        "code_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
+                                       capture_output=True, check=True).stdout.strip(),
+        "source_files_sha256": config["source_files_sha256"],
+        "python": platform.python_version(), "platform": platform.platform(),
+        "torch": str(torch.__version__) if torch is not None else None,
+        "start_utc": datetime.now(timezone.utc).isoformat(), "checkpoint_steps": [0, 5000, 10000],
+        "action_persistence": config["action_persistence"],
+    }
+    status_path = run_dir / "run_status.json"
+    status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_progress(run_dir / "progress.json", status="RUNNING", phase="PREPARING", training_step=0,
+                   requested_timesteps=10000, checkpoint_steps=[0, 5000, 10000])
+    trainer = None
+    try:
+        trainer = SacBaselineTrainer(training_root_seed=101, project_root=ROOT,
+                                     config_overrides=training_overrides,
+                                     allowed_geometry_ids=[x["geometry_id"] for x in split["pilot_train"]],
+                                     pilot_observation_transform=("waypoint_xy_div50m_v1" if args.waypoint_xy50_ablation else None),
+                                     pilot_actor_activation=("leaky_relu_0.01" if args.leaky_relu_ablation else "relu"),
+                                     pilot_throttle_persistence_steps=args.throttle_hold_steps,
+                                     device="cpu")
+        trainer.config["pilot_protocol"] = {
+            "protocol": config["protocol"], "split_sha256": split["split_sha256"],
+            "training_membership_count": 156, "diagnostic_membership_count": 24,
+            "training_sampler_strategy": trainer.sampler.strategy.value,
+            "sac_gamma": float(trainer.model.gamma),
+            "discount_weight_at_horizon_1000": float(trainer.model.gamma ** 1000),
+            "discount_weight_at_horizon_1500": float(trainer.model.gamma ** 1500),
+            "discount_weight_at_horizon_1860": float(trainer.model.gamma ** 1860),
+            "training_allowed_geometry_ids_sha256": hashlib.sha256(
+                "\n".join(sorted(x["geometry_id"] for x in split["pilot_train"])).encode()).hexdigest(),
+            "action_persistence": config["action_persistence"],
+        }
+        if args.waypoint_xy50_ablation:
+            from src.training.stage5.pilot_observation_transform import WAYPOINT_XY50_V1, transform_fingerprint
+            trainer.config["pilot_protocol"]["observation_transform"] = WAYPOINT_XY50_V1
+            trainer.config["pilot_protocol"]["observation_transform_fingerprint"] = transform_fingerprint()
+        if args.leaky_relu_ablation:
+            trainer.config["pilot_protocol"]["actor_critic_activation"] = "LeakyReLU"
+            trainer.config["pilot_protocol"]["leaky_relu_negative_slope"] = 0.01
+        if trainer.sampler.total_eligible_geometries != 156:
+            raise AssertionError("SAC training sampler did not restrict itself to 156 PILOT_TRAIN geometries")
+        checkpoints_dir = run_dir / "checkpoints"
+        checkpoint0 = trainer.save_checkpoint(checkpoints_dir / "step_00000", save_replay_buffer=False)
+        meta0 = verify_checkpoint_integrity(checkpoint0,
+                    expected_encoder_fingerprint=trainer.encoder.get_schema_fingerprint())
+        if meta0["total_timesteps"] != 0 or meta0["training_root_seed"] != 101:
+            raise AssertionError("UNTRAINED checkpoint provenance mismatch")
+
+        # A separate process owns the simulator. This probe is explicitly interrupted and is
+        # never counted as a timeout or as an empirical completed episode.
+        probe = evaluate(checkpoint0, run_dir, split_path, probe=True)
+        (run_dir / "technical_probe.stdout.txt").write_text(probe.stdout, encoding="utf-8")
+        (run_dir / "technical_probe.stderr.txt").write_text(probe.stderr, encoding="utf-8")
+        if probe.returncode != 0:
+            raise RuntimeError(f"Evaluator technical probe failed with exit code {probe.returncode}")
+
+        checkpoint_callback = PilotCheckpointCallback(
+            trainer, checkpoints_dir, [5000, 10000], requested_timesteps=10000, verbose=1
+        )
+        started = time.perf_counter()
+        callbacks = [trainer.callback, checkpoint_callback]
+        if args.throttle_hold_steps:
+            callbacks.insert(1, ThrottlePersistenceResetCallback())
+        trainer.model.learn(total_timesteps=10000,
+                            callback=CallbackList(callbacks),
+                            reset_num_timesteps=True)
+        elapsed = time.perf_counter() - started
+        summary = trainer.callback.get_summary_metrics()
+        summary.update({
+            "requested_timesteps": 10000, "actual_num_timesteps": int(trainer.model.num_timesteps),
+            "optimizer_updates": int(getattr(trainer.model, "_n_updates", 0)),
+            "unique_training_geometries": len({r["geometry_id"] for r in trainer.callback.episode_records}),
+            "training_wall_time_s": elapsed,
+            "training_steps_per_second": int(trainer.model.num_timesteps) / max(elapsed, 0.001),
+            "checkpoint_steps_saved": [0] + checkpoint_callback.saved_steps,
+            "training_action_summary": json.loads(
+                (checkpoints_dir / "training_action_summary.json").read_text(encoding="utf-8")
+            ),
+            "training_geometry_coverage": json.loads(
+                (checkpoints_dir / "training_geometry_coverage.json").read_text(encoding="utf-8")
+            ),
+        })
+        (run_dir / "training_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        if (run_dir / "STOP_REQUESTED").exists():
+            actual_step = int(trainer.model.num_timesteps)
+            partial_checkpoint = checkpoints_dir / f"step_{actual_step:05d}"
+            if not partial_checkpoint.exists():
+                trainer.save_checkpoint(partial_checkpoint, save_replay_buffer=False)
+            metadata = verify_checkpoint_integrity(partial_checkpoint,
+                         expected_encoder_fingerprint=trainer.encoder.get_schema_fingerprint())
+            record.update({
+                "status": "INTERRUPTED", "training_summary": summary,
+                "stop_reason": "USER_REQUESTED_GRACEFUL_STOP",
+                "partial_checkpoint_step": actual_step,
+                "partial_checkpoint_sha256": metadata["model_sha256"],
+                "finish_utc": datetime.now(timezone.utc).isoformat(),
+            })
+            status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            write_progress(run_dir / "progress.json", status="INTERRUPTED", phase="STOPPED_BY_USER",
+                           training_step=actual_step, requested_timesteps=10000,
+                           partial_checkpoint_step=actual_step)
+            return 0
+        if int(trainer.model.num_timesteps) != 10000 or checkpoint_callback.saved_steps != [5000, 10000]:
+            raise RuntimeError("Pilot stopped before exact 10,000 steps or a required checkpoint was missed")
+        for step in (0, 5000, 10000):
+            meta = verify_checkpoint_integrity(checkpoints_dir / f"step_{step:05d}",
+                                               expected_encoder_fingerprint=trainer.encoder.get_schema_fingerprint())
+            if meta["total_timesteps"] != step or meta["training_root_seed"] != 101:
+                raise AssertionError(f"Checkpoint provenance mismatch at step {step}")
+        record["status"] = "TRAINING_COMPLETE_DIAGNOSTICS_PENDING"
+        record["training_summary"] = summary
+        record["checkpoint_sha256"] = {
+            str(step): verify_checkpoint_integrity(checkpoints_dir / f"step_{step:05d}")["model_sha256"]
+            for step in (0, 5000, 10000)
+        }
+        status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        trainer.close()
+        trainer = None
+
+        if not args.skip_full_diagnostics:
+            for step in (0, 5000, 10000):
+                write_progress(run_dir / "progress.json", status="RUNNING", phase="DIAGNOSTICS",
+                               diagnostic_checkpoint_step=step, diagnostic_cases_completed=0,
+                               diagnostic_cases_planned=24)
+                result = evaluate(checkpoints_dir / f"step_{step:05d}", run_dir, split_path)
+                (run_dir / f"diagnostics_step_{step:05d}.stdout.txt").write_text(result.stdout, encoding="utf-8")
+                (run_dir / f"diagnostics_step_{step:05d}.stderr.txt").write_text(result.stderr, encoding="utf-8")
+                if result.returncode != 0:
+                    record["status"] = "DIAGNOSTICS_INCOMPLETE"
+                    status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+                    raise RuntimeError(f"Full diagnostic evaluator failed for step {step}: {result.returncode}")
+            report_dir = ROOT / "results/stage5" / args.run_id
+            summary_process = subprocess.run(
+                [sys.executable, str(ROOT / "scripts/summarize_stage5_pilot.py"),
+                 "--run-dir", str(run_dir), "--output-dir", str(report_dir)],
+                cwd=ROOT, text=True, capture_output=True, check=False,
+            )
+            (run_dir / "summary_builder.stdout.txt").write_text(summary_process.stdout, encoding="utf-8")
+            (run_dir / "summary_builder.stderr.txt").write_text(summary_process.stderr, encoding="utf-8")
+            if summary_process.returncode != 0:
+                raise RuntimeError(f"Empirical report builder failed with exit code {summary_process.returncode}")
+            shutil.copy2(split_path, report_dir / "pilot_split_v1.json")
+            shutil.copy2(run_dir / "pilot_protocol.json", report_dir / "pilot_protocol_v1.json")
+            record["status"] = "COMPLETE"
+            write_progress(run_dir / "progress.json", status="COMPLETE", phase="COMPLETE",
+                           training_step=10000, requested_timesteps=10000,
+                           diagnostic_checkpoints_complete=[0, 5000, 10000])
+        else:
+            record["status"] = "TRAINING_COMPLETE_DIAGNOSTICS_PENDING"
+            write_progress(run_dir / "progress.json", status="TRAINING_COMPLETE_DIAGNOSTICS_PENDING",
+                           phase="TRAINING_COMPLETE", training_step=10000, requested_timesteps=10000)
+        record["finish_utc"] = datetime.now(timezone.utc).isoformat()
+        status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return 0
+    except Exception as exc:
+        record["status"] = "FAILED_OR_INCOMPLETE"
+        record["error"] = repr(exc)
+        record["traceback"] = traceback.format_exc()
+        record["finish_utc"] = datetime.now(timezone.utc).isoformat()
+        status_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        write_progress(run_dir / "progress.json", status="FAILED_OR_INCOMPLETE", phase="FAILED",
+                       error=repr(exc), training_step=record.get("training_summary", {}).get("actual_num_timesteps", 0))
+        return 1
+    finally:
+        if trainer is not None:
+            trainer.close()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

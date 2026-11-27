@@ -1,0 +1,42 @@
+﻿{
+  "protocol": "stage5_sac_deterministic_stochastic_diagnostic_v1",
+  "status": "COMPLETE",
+  "local_code_commit": "4f95af934f7ce9343eabdbca19e92c64f2ecb5c7",
+  "diagnostic_script": "scripts/diagnose_stage5_sac_policy.py",
+  "diagnostic_script_sha256": "E10A61AD8FB2F516F2FF2DEB684A41AF13387915DB9D34C69FE8A9387CC4B22C",
+  "checkpoint_model_sha256": "c52793eda0b75afb27c0934d1a0c1eae14c3c5399fd233c0a1989876cdb28140",
+  "split_sha256": "082d116f393bb1b29dea59988087b3fb0f252705eefa97f601bce7550f2740fa",
+  "schedule_seed": 5302,
+  "environment_seeds": {
+    "geom_easy_SCCS_seed19": 259818,
+    "geom_extreme_CrXROSTR_seed0": 968985
+  },
+  "stochastic_trial_seeds": [10100, 10101, 10102, 10103, 10104, 10105, 10106, 10107, 10108, 10109],
+  "full_episodes": {
+    "deterministic": 2,
+    "stochastic": 10,
+    "all_completed": true,
+    "interrupted": 0
+  },
+  "technical_probes": {
+    "forced_throttle_action": [0.0, 0.7],
+    "steps_per_geometry": 25,
+    "counted_as_full_episodes": false
+  },
+  "read_only_inference": {
+    "policy_sha_unchanged": true,
+    "optimizer_updates_before": 8999,
+    "optimizer_updates_after": 8999,
+    "replay_buffer_size": 0
+  },
+  "official_validation_or_test_used": false,
+  "raw_artifacts": "runs/stage5_pilot/s5_3f_stochastic_policy_diag_seed101_20261115_v3/",
+  "critic_grid_artifact": "runs/stage5_pilot/s5_3f_stochastic_policy_diag_seed101_20261115_v3/critic_action_grid_same_steering.json",
+  "action_distribution_artifact": "runs/stage5_pilot/s5_3f_stochastic_policy_diag_seed101_20261115_v3/initial_action_distribution.json",
+  "temporal_action_analysis_artifact": "runs/stage5_pilot/s5_3f_stochastic_policy_diag_seed101_20261115_v3/temporal_action_analysis.json",
+  "incomplete_attempts": [
+    "s5_3f_stochastic_policy_diag_seed101_20261115",
+    "s5_3f_stochastic_policy_diag_seed101_20261115_v2"
+  ],
+  "incomplete_attempts_used_as_results": false
+}

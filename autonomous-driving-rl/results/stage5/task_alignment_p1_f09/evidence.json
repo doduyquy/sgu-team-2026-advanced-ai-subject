@@ -1,0 +1,1372 @@
+{
+  "decision": "F09_BLOCKED_CHANGE_CONTROL",
+  "case_id": "train/Easy/SCS/geom-0/env-0",
+  "metadrive_source": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+  "proposal_id": "reference_route_station_proposal_v1",
+  "proposal_sha256_lf": "948d6f7ae2e33b4052544220e85ea4ff90fc9d054f0567df96da6345946c972f",
+  "raw": [
+    {
+      "path": "runs/stage5_task_alignment_p1/legacy_regression.json",
+      "sha256": "a7f8771d289eae93952ec5764ddf60ff4feaf3bc5542600b2a28e3d9e9d5629d",
+      "source": "c09a07b7242fbce8c97ea3bdbee60bd234f59835",
+      "script_sha256": "e1efecee89fb6cc4e8f042344ae42778d9461c9183526261a67de39c8c245bbc",
+      "exit_code": 1
+    },
+    {
+      "path": "runs/stage5_task_alignment_p1/proposal_regression.json",
+      "sha256": "dd679ad75dffa8929f16f425ca679c1374942a291538bb9b106f1ccdeebab1a1",
+      "source": "00c367406f7e7dba6c6a9d8e9c3c166cb3e68894",
+      "script_sha256": "e1efecee89fb6cc4e8f042344ae42778d9461c9183526261a67de39c8c245bbc",
+      "exit_code": 0
+    }
+  ],
+  "limits": {
+    "world_m": 0.00015,
+    "station_m": 0.00015,
+    "heading_rad": 8e-05
+  },
+  "scenes": {
+    "lane_zero_clean": {
+      "rows": 419,
+      "before_violations": 0,
+      "after_violations": 0,
+      "identical_task_rows": 419,
+      "max_world_error_m": 7.00660816433454e-05,
+      "max_station_error_m": 6.749503012315472e-05,
+      "max_heading_error_rad": 4.9978833056574246e-05,
+      "transitions": [
+        {
+          "steps": [
+            26,
+            27
+          ],
+          "checkpoints": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          "reference_delta_m": 0.39795780181884766,
+          "waypoint_world_delta_m": 0.39795780181884766
+        },
+        {
+          "steps": [
+            77,
+            78
+          ],
+          "checkpoints": [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "reference_delta_m": 1.1659431457519531,
+          "waypoint_world_delta_m": 1.1659431457514327
+        },
+        {
+          "steps": [
+            137,
+            138
+          ],
+          "checkpoints": [
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "reference_delta_m": 0.9715193696720377,
+          "waypoint_world_delta_m": 0.9714536568223648
+        },
+        {
+          "steps": [
+            277,
+            278
+          ],
+          "checkpoints": [
+            [
+              3,
+              4
+            ],
+            [
+              4,
+              5
+            ]
+          ],
+          "reference_delta_m": 1.0013623410685568,
+          "waypoint_world_delta_m": 1.0013917564382062
+        },
+        {
+          "steps": [
+            339,
+            340
+          ],
+          "checkpoints": [
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              5
+            ]
+          ],
+          "reference_delta_m": 1.2498909117541643,
+          "waypoint_world_delta_m": 1.249890911762653
+        }
+      ],
+      "final_valid_waypoints": 1,
+      "decision_repeat": 5,
+      "physics_dt_s": 0.02,
+      "action_max_error": 0.0,
+      "same_executed_trace": true
+    },
+    "adjacent_straight": {
+      "rows": 45,
+      "before_violations": 0,
+      "after_violations": 0,
+      "identical_task_rows": 45,
+      "max_world_error_m": 4.954043563283398e-05,
+      "max_station_error_m": 5.126619960549306e-06,
+      "max_heading_error_rad": 1.464738599743498e-06,
+      "transitions": [
+        {
+          "steps": [
+            28,
+            29
+          ],
+          "checkpoints": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          "reference_delta_m": 0.3504600524902344,
+          "waypoint_world_delta_m": 0.3504600524902344
+        }
+      ],
+      "final_valid_waypoints": 20,
+      "decision_repeat": 5,
+      "physics_dt_s": 0.02,
+      "action_max_error": 1.1920928966180355e-08,
+      "same_executed_trace": true
+    },
+    "adjacent_curve": {
+      "rows": 900,
+      "before_violations": 6300,
+      "after_violations": 0,
+      "identical_task_rows": 585,
+      "max_world_error_m": 7.052700350804181e-05,
+      "max_station_error_m": 6.834517504472615e-05,
+      "max_heading_error_rad": 4.99979906649628e-05,
+      "transitions": [
+        {
+          "steps": [
+            28,
+            29
+          ],
+          "checkpoints": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          "reference_delta_m": 0.3476743698120117,
+          "waypoint_world_delta_m": 0.3476886558033705
+        },
+        {
+          "steps": [
+            120,
+            121
+          ],
+          "checkpoints": [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "reference_delta_m": 0.4424018859863281,
+          "waypoint_world_delta_m": 0.4424833669438621
+        },
+        {
+          "steps": [
+            299,
+            300
+          ],
+          "checkpoints": [
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "reference_delta_m": 0.4604212165405812,
+          "waypoint_world_delta_m": 0.4604404663283312
+        },
+        {
+          "steps": [
+            614,
+            615
+          ],
+          "checkpoints": [
+            [
+              3,
+              4
+            ],
+            [
+              4,
+              5
+            ]
+          ],
+          "reference_delta_m": 0.24230301907743979,
+          "waypoint_world_delta_m": 0.24223342766751116
+        },
+        {
+          "steps": [
+            801,
+            802
+          ],
+          "checkpoints": [
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              5
+            ]
+          ],
+          "reference_delta_m": 0.3954891169789789,
+          "waypoint_world_delta_m": 0.39550748862871554
+        }
+      ],
+      "final_valid_waypoints": 14,
+      "decision_repeat": 5,
+      "physics_dt_s": 0.02,
+      "action_max_error": 1.4870806419597926e-08,
+      "same_executed_trace": true
+    },
+    "delayed_checkpoint": {
+      "rows": 3,
+      "before_violations": 60,
+      "after_violations": 0,
+      "identical_task_rows": 0,
+      "max_world_error_m": 6.674194645506359e-06,
+      "max_station_error_m": 4.6605362058471655e-07,
+      "max_heading_error_rad": 1.331580543606492e-07,
+      "transitions": [],
+      "final_valid_waypoints": 20,
+      "decision_repeat": 5,
+      "physics_dt_s": 0.02,
+      "action_max_error": 0.0,
+      "same_executed_trace": true
+    }
+  },
+  "step614": {
+    "step": 614,
+    "ego_position": [
+      168.08401489257812,
+      -89.46417999267578
+    ],
+    "ego_heading": -2.0948403829274564,
+    "current_lane": [
+      "1S0_0_",
+      "2C0_0_",
+      1
+    ],
+    "reference_lane": [
+      "1S0_0_",
+      "2C0_0_",
+      0
+    ],
+    "checkpoint_indices": [
+      3,
+      4
+    ],
+    "lane_type": "CircularLane",
+    "current_lane_station_m": 130.07459566742475,
+    "reference_projected_station_m": 137.7591627000553,
+    "station_delta_m": -7.684567032630554,
+    "absolute_reference_station_m": 259.0850675462467,
+    "before": [
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 261.5850675462467,
+        "ego_relative": [
+          -4.6615,
+          5.3766,
+          -0.0181
+        ],
+        "world": [
+          175.07163692567266,
+          -88.11861389150802
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          170.84009466220246,
+          -94.5319306862977
+        ],
+        "station_error_m": -7.683050626763668,
+        "world_error_m": 7.683526679713287,
+        "heading_error_rad": 0.052225295957396334
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 264.0850675462467,
+        "ego_relative": [
+          -2.1635,
+          5.2816,
+          -0.058
+        ],
+        "world": [
+          173.7394225057608,
+          -90.2338523507317
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          169.44012872982373,
+          -96.60318523081388
+        ],
+        "station_error_m": -7.684549797202574,
+        "world_error_m": 7.684551275715933,
+        "heading_error_rad": 0.01232529595739651
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 266.5850675462467,
+        "ego_relative": [
+          0.3306,
+          5.1107,
+          -0.0703
+        ],
+        "world": [
+          172.34344516635508,
+          -92.30773491439477
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          168.04016279744496,
+          -98.67443977533006
+        ],
+        "station_error_m": -7.684606036274275,
+        "world_error_m": 7.684606036279913,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 269.0850675462467,
+        "ego_relative": [
+          2.8245,
+          4.935,
+          -0.0703
+        ],
+        "world": [
+          170.9434120512115,
+          -94.37904246676388
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          166.64019686506623,
+          -100.74569431984624
+        ],
+        "station_error_m": -7.6845244977389635,
+        "world_error_m": 7.68452449775706,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 271.5850675462467,
+        "ego_relative": [
+          5.3183,
+          4.7594,
+          -0.0703
+        ],
+        "world": [
+          169.54351555489313,
+          -96.4503134774227
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          165.2402309326875,
+          -102.8169488643624
+        ],
+        "station_error_m": -7.684549738757449,
+        "world_error_m": 7.684549738920584,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 274.0850675462467,
+        "ego_relative": [
+          7.8121,
+          4.5837,
+          -0.0703
+        ],
+        "world": [
+          168.143532478307,
+          -98.52153444952404
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          163.84026500030873,
+          -104.88820340887858
+        ],
+        "station_error_m": -7.6845679530416575,
+        "world_error_m": 7.684567953060619,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 276.5850675462467,
+        "ego_relative": [
+          10.3059,
+          4.408,
+          -0.0703
+        ],
+        "world": [
+          166.74354940172088,
+          -100.59275542162538
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          162.44029906793,
+          -106.95945795339476
+        ],
+        "station_error_m": -7.684586167325866,
+        "world_error_m": 7.684586167342387,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 279.0850675462467,
+        "ego_relative": [
+          12.7997,
+          4.2323,
+          -0.0703
+        ],
+        "world": [
+          165.34356632513476,
+          -102.66397639372673
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          161.04033313555126,
+          -109.03071249791094
+        ],
+        "station_error_m": -7.684604381610075,
+        "world_error_m": 7.684604381765902,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 281.5850675462467,
+        "ego_relative": [
+          15.2936,
+          4.0567,
+          -0.0703
+        ],
+        "world": [
+          163.94361979025894,
+          -104.73533398465331
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          159.6403672031725,
+          -111.1019670424271
+        ],
+        "station_error_m": -7.68452986980904,
+        "world_error_m": 7.684529869849177,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 284.0850675462467,
+        "ego_relative": [
+          17.7874,
+          3.881,
+          -0.0703
+        ],
+        "world": [
+          162.5436367136728,
+          -106.80655495675467
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          158.24040127079377,
+          -113.17322158694328
+        ],
+        "station_error_m": -7.684548084093237,
+        "world_error_m": 7.684548084097574,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 286.5850675462467,
+        "ego_relative": [
+          20.2812,
+          3.7053,
+          -0.0703
+        ],
+        "world": [
+          161.1436536370867,
+          -108.87777592885601
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          156.84043533841503,
+          -115.24447613145946
+        ],
+        "station_error_m": -7.684566298377447,
+        "world_error_m": 7.68456629848773,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 289.0850675462467,
+        "ego_relative": [
+          22.775,
+          3.5297,
+          -0.0703
+        ],
+        "world": [
+          159.7437571407683,
+          -110.94904693951482
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          155.44046940603627,
+          -117.31573067597564
+        ],
+        "station_error_m": -7.684591539395942,
+        "world_error_m": 7.684591539438515,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 291.5850675462467,
+        "ego_relative": [
+          25.2688,
+          3.354,
+          -0.0703
+        ],
+        "world": [
+          158.34377406418218,
+          -113.02026791161616
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          154.04050347365754,
+          -119.38698522049182
+        ],
+        "station_error_m": -7.684609753680153,
+        "world_error_m": 7.684609753683744,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 294.0850675462467,
+        "ego_relative": [
+          27.7627,
+          3.1783,
+          -0.0703
+        ],
+        "world": [
+          156.9437409490386,
+          -115.09157546398527
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          152.64053754127877,
+          -121.45823976500799
+        ],
+        "station_error_m": -7.684528215144844,
+        "world_error_m": 7.684528215217448,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 296.5850675462467,
+        "ego_relative": [
+          30.2565,
+          3.0027,
+          -0.0703
+        ],
+        "world": [
+          155.54384445272024,
+          -117.16284647464408
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          151.24057160890004,
+          -123.52949430952418
+        ],
+        "station_error_m": -7.684553456163329,
+        "world_error_m": 7.684553456235684,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 299.0850675462467,
+        "ego_relative": [
+          32.7503,
+          2.827,
+          -0.0703
+        ],
+        "world": [
+          154.1438613761341,
+          -119.23406744674544
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          149.8406056765213,
+          -125.60074885404035
+        ],
+        "station_error_m": -7.684571670447525,
+        "world_error_m": 7.6845716704475295,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 301.5850675462467,
+        "ego_relative": [
+          35.2441,
+          2.6513,
+          -0.0703
+        ],
+        "world": [
+          152.743878299548,
+          -121.30528841884679
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          148.44063974414254,
+          -127.67200339855653
+        ],
+        "station_error_m": -7.684589884731736,
+        "world_error_m": 7.684589884801161,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 304.0850675462467,
+        "ego_relative": [
+          37.7379,
+          2.4757,
+          -0.0703
+        ],
+        "world": [
+          151.34398180322964,
+          -123.37655942950559
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          147.0406738117638,
+          -129.7432579430727
+        ],
+        "station_error_m": -7.684615125750248,
+        "world_error_m": 7.684615125825846,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 306.5850675462467,
+        "ego_relative": [
+          40.2318,
+          2.3,
+          -0.0703
+        ],
+        "world": [
+          149.94394868808604,
+          -125.44786698187471
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          145.64070787938508,
+          -131.81451248758887
+        ],
+        "station_error_m": -7.684533587214915,
+        "world_error_m": 7.684533587219177,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 309.0850675462467,
+        "ego_relative": [
+          42.7256,
+          2.1243,
+          -0.0703
+        ],
+        "world": [
+          148.5439656114999,
+          -127.51908795397605
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          144.2407419470063,
+          -133.88576703210506
+        ],
+        "station_error_m": -7.6845518014991185,
+        "world_error_m": 7.684551801539462,
+        "heading_error_rad": 2.5295957396309632e-05
+      }
+    ],
+    "after": [
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 261.5850675462467,
+        "ego_relative": [
+          3.0086,
+          4.9221,
+          -0.0703
+        ],
+        "world": [
+          170.84012221237225,
+          -94.53198176580949
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          170.84009466220246,
+          -94.5319306862977
+        ],
+        "station_error_m": 2.6891748716728614e-05,
+        "world_error_m": 5.803557857338632e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 264.0850675462467,
+        "ego_relative": [
+          5.5024,
+          4.7464,
+          -0.0703
+        ],
+        "world": [
+          169.44013913578613,
+          -96.60320273791083
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          169.44012872982373,
+          -96.60318523081388
+        ],
+        "station_error_m": 8.677464506945398e-06,
+        "world_error_m": 2.036620969369655e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 266.5850675462467,
+        "ego_relative": [
+          7.9962,
+          4.5707,
+          -0.0703
+        ],
+        "world": [
+          168.0401560592,
+          -98.67442371001218
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          168.04016279744496,
+          -98.67443977533006
+        ],
+        "station_error_m": -9.53681970194964e-06,
+        "world_error_m": 1.7421205002851945e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 269.0850675462467,
+        "ego_relative": [
+          10.49,
+          4.395,
+          -0.0703
+        ],
+        "world": [
+          166.64017298261388,
+          -100.74564468211354
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          166.64019686506623,
+          -100.74569431984624
+        ],
+        "station_error_m": -2.775110389841018e-05,
+        "world_error_m": 5.508426307140493e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 271.5850675462467,
+        "ego_relative": [
+          12.9839,
+          4.2194,
+          -0.0703
+        ],
+        "world": [
+          165.24022644773805,
+          -102.81700227304012
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          165.2402309326875,
+          -102.8169488643624
+        ],
+        "station_error_m": 4.676069713482889e-05,
+        "world_error_m": 5.359665686196632e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 274.0850675462467,
+        "ego_relative": [
+          15.4777,
+          4.0437,
+          -0.0703
+        ],
+        "world": [
+          163.84024337115193,
+          -104.88822324514146
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          163.84026500030873,
+          -104.88820340887858
+        ],
+        "station_error_m": 2.8546412927710207e-05,
+        "world_error_m": 2.9347874695138208e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 276.5850675462467,
+        "ego_relative": [
+          17.9715,
+          3.868,
+          -0.0703
+        ],
+        "world": [
+          162.4402602945658,
+          -106.9594442172428
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          162.44029906793,
+          -106.95945795339476
+        ],
+        "station_error_m": 1.0332128717038813e-05,
+        "world_error_m": 4.113460394394872e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 279.0850675462467,
+        "ego_relative": [
+          20.4653,
+          3.6924,
+          -0.0703
+        ],
+        "world": [
+          161.04036379824745,
+          -109.03071522790162
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          161.04033313555126,
+          -109.03071249791094
+        ],
+        "station_error_m": -1.4908889784948087e-05,
+        "world_error_m": 3.078398588192363e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 281.5850675462467,
+        "ego_relative": [
+          22.9591,
+          3.5167,
+          -0.0703
+        ],
+        "world": [
+          159.6403807216613,
+          -111.10193620000297
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          159.6403672031725,
+          -111.1019670424271
+        ],
+        "station_error_m": -3.312317397785591e-05,
+        "world_error_m": 3.3674985763064285e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 284.0850675462467,
+        "ego_relative": [
+          25.453,
+          3.341,
+          -0.0703
+        ],
+        "world": [
+          158.24034760651773,
+          -113.17324375237207
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          158.24040127079377,
+          -113.17322158694328
+        ],
+        "station_error_m": 4.841536133426416e-05,
+        "world_error_m": 5.806169783997485e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 286.5850675462467,
+        "ego_relative": [
+          27.9468,
+          3.1654,
+          -0.0703
+        ],
+        "world": [
+          156.84045111019935,
+          -115.24451476303089
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          156.84043533841503,
+          -115.24447613145946
+        ],
+        "station_error_m": 2.317434285004083e-05,
+        "world_error_m": 4.172705946526446e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 289.0850675462467,
+        "ego_relative": [
+          30.4406,
+          2.9897,
+          -0.0703
+        ],
+        "world": [
+          155.44046803361323,
+          -117.31573573513224
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          155.44046940603627,
+          -117.31573067597564
+        ],
+        "station_error_m": 4.960058639369436e-06,
+        "world_error_m": 5.2420044290304236e-06,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 291.5850675462467,
+        "ego_relative": [
+          32.9344,
+          2.814,
+          -0.0703
+        ],
+        "world": [
+          154.0404849570271,
+          -119.38695670723358
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          154.04050347365754,
+          -119.38698522049182
+        ],
+        "station_error_m": -1.3254225571301959e-05,
+        "world_error_m": 3.3998110216019175e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 294.0850675462467,
+        "ego_relative": [
+          35.4282,
+          2.6384,
+          -0.0703
+        ],
+        "world": [
+          152.64058846070876,
+          -121.45822771789238
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          152.64053754127877,
+          -121.45823976500799
+        ],
+        "station_error_m": -3.8495244083947e-05,
+        "world_error_m": 5.2325150204777284e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 296.5850675462467,
+        "ego_relative": [
+          37.9221,
+          2.4627,
+          -0.0703
+        ],
+        "world": [
+          151.24055534556516,
+          -123.5295352702615
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          151.24057160890004,
+          -123.52949430952418
+        ],
+        "station_error_m": 4.3043291256594784e-05,
+        "world_error_m": 4.407128388887532e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 299.0850675462467,
+        "ego_relative": [
+          40.4159,
+          2.287,
+          -0.0703
+        ],
+        "world": [
+          149.84057226897903,
+          -125.60075624236285
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          149.8406056765213,
+          -125.60074885404035
+        ],
+        "station_error_m": 2.482900704592339e-05,
+        "world_error_m": 3.4214780289863926e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 301.5850675462467,
+        "ego_relative": [
+          42.9097,
+          2.1114,
+          -0.0703
+        ],
+        "world": [
+          148.44067577266068,
+          -127.67202725302167
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          148.44063974414254,
+          -127.67200339855653
+        ],
+        "station_error_m": -4.120114525107965e-07,
+        "world_error_m": 4.320983252027105e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 304.0850675462467,
+        "ego_relative": [
+          45.4035,
+          1.9357,
+          -0.0703
+        ],
+        "world": [
+          147.04069269607453,
+          -129.743248225123
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          147.0406738117638,
+          -129.7432579430727
+        ],
+        "station_error_m": -1.8626295648971336e-05,
+        "world_error_m": 2.1238072832162758e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 306.5850675462467,
+        "ego_relative": [
+          47.8973,
+          1.76,
+          -0.0703
+        ],
+        "world": [
+          145.6407096194884,
+          -131.81446919722435
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          145.64070787938508,
+          -131.81451248758887
+        ],
+        "station_error_m": -3.684057985964273e-05,
+        "world_error_m": 4.3325323074884285e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      },
+      {
+        "valid": true,
+        "expected_valid": true,
+        "target_station_m": 309.0850675462467,
+        "ego_relative": [
+          50.3912,
+          1.5844,
+          -0.0703
+        ],
+        "world": [
+          144.24076308461258,
+          -133.88582678815095
+        ],
+        "reference_lane": [
+          "2C0_0_",
+          "2C0_1_",
+          0
+        ],
+        "expected_world": [
+          144.2407419470063,
+          -133.88576703210506
+        ],
+        "station_error_m": 3.767122119313626e-05,
+        "world_error_m": 6.338440990208042e-05,
+        "heading_error_rad": 2.5295957396309632e-05
+      }
+    ],
+    "same_task_84d": false,
+    "action": [
+      -0.32156625597178595,
+      0.16070737291036288
+    ],
+    "reward": 0.0008583501601973068,
+    "progress": 0.635016510452066,
+    "outcome": null,
+    "terminated": false,
+    "truncated": false
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "OFF": {
+    "action_trace_sha256": "3abd7abdb3f597d0ec08272051e1507b01f9ccdb76a5c96dcef0972cf1cc5654",
+    "effective_density": 0.0,
+    "episode_steps": 372,
+    "final_route_completion": 0.9922694948065559,
+    "geometry_sha256": "6c16b289525e50691cc0414d100e028b490281ee1a797c4f3fc3498c1f38bf09",
+    "original_geometry_repr_sha256": "124a7c4798df91ebf01aac3ff96495fe8e9e7de3aa2fac74013e1a7d93444d17",
+    "primary_reason": "SUCCESS",
+    "recovery_geometry_repr_sha256": "4d2c367e25bea77b429883e495a43c7a9a832683e5021067cca4512d68347fc0",
+    "runtime_canonical_geometry_sha256": "6c16b289525e50691cc0414d100e028b490281ee1a797c4f3fc3498c1f38bf09",
+    "simulation_time_s": 37.2,
+    "terminal_preview_steps": 28
+  },
+  "ON": {
+    "action_trace_sha256": "9f4424f7f63768e266a2ad4adabe8bdded2745709f873b271ea1e73256994134",
+    "effective_density": 0.08,
+    "episode_steps": 639,
+    "final_route_completion": 0.992244216058435,
+    "geometry_sha256": "6c16b289525e50691cc0414d100e028b490281ee1a797c4f3fc3498c1f38bf09",
+    "original_geometry_repr_sha256": "124a7c4798df91ebf01aac3ff96495fe8e9e7de3aa2fac74013e1a7d93444d17",
+    "primary_reason": "SUCCESS",
+    "recovery_geometry_repr_sha256": "4d2c367e25bea77b429883e495a43c7a9a832683e5021067cca4512d68347fc0",
+    "runtime_canonical_geometry_sha256": "6c16b289525e50691cc0414d100e028b490281ee1a797c4f3fc3498c1f38bf09",
+    "simulation_time_s": 63.9,
+    "terminal_preview_steps": 43
+  },
+  "original_evaluator_changed": false,
+  "producer_changed": false,
+  "status": "PASS"
+}

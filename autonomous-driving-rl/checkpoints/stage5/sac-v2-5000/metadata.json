@@ -1,0 +1,315 @@
+{
+  "action_adapter_id": "continuous_box2_v1",
+  "action_dim": 2,
+  "algorithm": "SAC",
+  "behavior": {
+    "kind": "learner deterministic plus clipped Gaussian Box2 noise",
+    "std": 0.04,
+    "traffic_guidance": "traffic_follow_v1",
+    "traffic_teacher_sha": "f82ca94d27ebd9fc3468081e20631536c959990a708398f5474bebee986e6d07"
+  },
+  "encoder_fingerprint": "5bf7c890b5f1098594b985a62c01b598d0c62bd41d7da7f70afbf8d3e3717c2a",
+  "encoder_id": "stage5_flat409_v1",
+  "framework": "stable-baselines3",
+  "framework_version": "2.9.2",
+  "metadrive_commit": "85e5dadc6c7436d324348f6e3d8f8e680c06b4db",
+  "model_name": "stage5_sac",
+  "model_sha256": "512677009e3c1e96dd39f9f1a4dd2dcd65a04cd0d084eaeaeec9554dde8a22b9",
+  "native_reward": {
+    "budget": {
+      "checkpoint_and_full_evaluation_steps": [
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "evaluation_environment_seeds": [
+        10101,
+        10102,
+        10103,
+        10104,
+        10105
+      ],
+      "evaluation_episode_count": 5,
+      "max_environment_steps": 100000,
+      "pass_rule": "Stop at first scheduled checkpoint with at least 4 of 5 CLEAN_SUCCESS full episodes; otherwise stop at 100000."
+    },
+    "experiment_id": "stage5_native_reward_integration_v1",
+    "sac": {
+      "activation": "ReLU",
+      "actor_critic_architecture": [
+        256,
+        256
+      ],
+      "algorithm": "Stable-Baselines3 SAC",
+      "batch_size": 256,
+      "buffer_size": 1000000,
+      "device": "cpu",
+      "ent_coef": "auto",
+      "gamma": 0.99,
+      "gradient_steps": 1,
+      "learning_rate": 0.0001,
+      "learning_starts": 10000,
+      "policy": "MlpPolicy",
+      "seed": 101,
+      "target_entropy": "auto",
+      "tau": 0.005,
+      "train_freq": 1,
+      "use_sde": false
+    },
+    "training_reward": {
+      "canonical_comparison": "RewardSpecV1 computed and logged in parallel; not sent to SAC",
+      "mode_id": "stage5_metadrive_native_reward_v1",
+      "source": "MetaDriveEnv.step raw reward, passed through unchanged"
+    },
+    "training_task": {
+      "action_adapter_id": "continuous_box2_v1",
+      "control_frequency_hz": 10,
+      "environment_seed_root": 101,
+      "geometry_id": "geom_easy_SCS_seed0",
+      "observation_encoder_id": "stage5_flat409_v1",
+      "observation_transform_id": "pilot_groupwise_physical_v1",
+      "split": "TRAIN",
+      "task_context_producer_id": "reference_route_station_proposal_v1",
+      "traffic_density": 0.0
+    }
+  },
+  "observation_dim": 409,
+  "observation_transform": {
+    "clipping": "none",
+    "core": {
+      "slice": [
+        0,
+        259
+      ],
+      "transform": "identity"
+    },
+    "fitted_statistics": "none",
+    "input_rights": "public AgentInputV1 fields only",
+    "mask_semantics": "preserved exactly",
+    "observation_dim": 409,
+    "task_mask_scalars": {
+      "slice": [
+        385,
+        409
+      ],
+      "transform": "identity"
+    },
+    "task_waypoints": {
+      "divisors": [
+        50.0,
+        50.0,
+        3.141592653589793
+      ],
+      "fields": [
+        "relative_x_m",
+        "relative_y_m",
+        "relative_heading_rad"
+      ],
+      "rationale": "50m is the declared waypoint lookahead scale; heading is bounded by pi radians.",
+      "shape": [
+        20,
+        3
+      ],
+      "slice": [
+        325,
+        385
+      ]
+    },
+    "traffic_actors": {
+      "divisors": [
+        50.0,
+        50.0,
+        30.0,
+        30.0,
+        3.141592653589793,
+        5.0,
+        5.0
+      ],
+      "fields": [
+        "relative_x_m",
+        "relative_y_m",
+        "relative_vx_m_s",
+        "relative_vy_m_s",
+        "relative_heading_rad",
+        "length_m",
+        "width_m"
+      ],
+      "rationale": "50m is the declared traffic context radius; 30m/s and 5m are fixed engineering reference scales, not clipping bounds.",
+      "shape": [
+        8,
+        7
+      ],
+      "slice": [
+        259,
+        315
+      ]
+    },
+    "traffic_mask_metrics": {
+      "slice": [
+        315,
+        325
+      ],
+      "transform": "identity"
+    },
+    "transform_id": "pilot_groupwise_physical_v1"
+  },
+  "observation_transform_fingerprint": "265103242e3ba3ad6f8c493d8f0bad39644c375a2696dbcdad4857052796797e",
+  "optimizer_updates": 645940,
+  "phase": "medium",
+  "policy_input_adapter": {
+    "fingerprint": "ca1145b27909a689dfed7ab1e551f28470115e403880a258f9cd628543bf7377",
+    "id": "stage5_terminal_preview_v1"
+  },
+  "protocol_scope": "SANDBOX development candidate",
+  "replay_buffer_saved": false,
+  "task_context_producer": {
+    "configuration": {
+      "checkpoint_window": 1,
+      "implementation_sha256": "948d6f7ae2e33b4052544220e85ea4ff90fc9d054f0567df96da6345946c972f",
+      "lookahead_count": 20,
+      "reference_lane": "first_on_each_route_edge",
+      "seam_tolerance_m": 0.001,
+      "spacing_m": 2.5,
+      "unlocalized_policy": "abort_on_first_sample"
+    },
+    "fingerprint": "a7df3942bb874b40ea16474be43c7b7a48796646c9d59cf61da5d71ba5291725",
+    "id": "reference_route_station_proposal_v1"
+  },
+  "total_timesteps": 1286880,
+  "training_job": "first-window-local-hybrid-v2",
+  "training_recipe": {
+    "bounded_guided_replay": true,
+    "capacity": 122880,
+    "files": {
+      "cloud/kaggle/runtime.py": "2d6b910f99523d72bc3ac66dbf808211a8b4c3724e5b7eeaf995694d183de66e",
+      "results/audits/evaluation_protocol/geometry_split_manifest.csv": "ec1099eb93252f445d7afa95fd19270e72d5a8f37282701d6935e283a0997134",
+      "results/stage5/pilot_split_v1.json": "be6f4a36ef4809f9c769e591589037a6445c8295138715077ce928a237ee8f6d",
+      "src/agents/stage5_terminal_preview_v1.py": "29abf5b7268707f44f114eab333c7235dcd1e18d37ef580570ce22aedff35c1f",
+      "src/platform/task_context_producer.py": "7f237fb328064ac2548d15dad7f9feddd4bf34dc5410785fa005e8dc1e745ca2",
+      "src/training/stage5/env_adapter.py": "3c81a58183a1ff982f136ba8b74e57138091c323faa39699ef7c4111083c6036",
+      "src/training/stage5/native_reward_training.py": "abf85641a9e8daa271d706bb9b032f28098ef9700b6ffe86d5d860991f1620ff",
+      "src/training/stage5/observation_encoder.py": "7725c671f6066174d2f0fef13687f59cd872dda899c59beffc845dc69c869450",
+      "src/training/stage5/pilot_observation_transform.py": "b65726e72bc11a826845618c3b993fc494d9cc3f24a8a730a65736886e4894eb"
+    },
+    "guided_gradient_steps": 1,
+    "learning_starts": 0,
+    "localization_guard": true,
+    "online_behavior": "champion_guided_v1",
+    "phase": "medium",
+    "recipe": {
+      "evaluation_seeds": [
+        30101,
+        30102
+      ],
+      "lineage": "stage5-native-preview-101",
+      "phase_weights": {
+        "easy": {
+          "Easy": 100
+        },
+        "extreme": {
+          "Easy": 15,
+          "Extreme": 40,
+          "Hard": 25,
+          "Medium": 20
+        },
+        "hard": {
+          "Easy": 20,
+          "Hard": 50,
+          "Medium": 30
+        },
+        "medium": {
+          "Easy": 35,
+          "Medium": 65
+        },
+        "mixed": {
+          "Easy": 25,
+          "Extreme": 25,
+          "Hard": 25,
+          "Medium": 25
+        }
+      },
+      "preflight": {
+        "capacity": 8192,
+        "export_reserve": 180,
+        "learning_starts": 1024,
+        "max_seconds": 1200,
+        "transitions": 1280
+      },
+      "schema": 1,
+      "seed": 101,
+      "smoke_geometries": [
+        "geom_easy_SCS_seed0",
+        "geom_easy_SCS_seed1"
+      ]
+    },
+    "sb3": "2.9.2",
+    "source_recipe": {
+      "budget": {
+        "checkpoint_and_full_evaluation_steps": [
+          10000,
+          25000,
+          50000,
+          75000,
+          100000
+        ],
+        "evaluation_environment_seeds": [
+          10101,
+          10102,
+          10103,
+          10104,
+          10105
+        ],
+        "evaluation_episode_count": 5,
+        "max_environment_steps": 100000,
+        "pass_rule": "Stop at first scheduled checkpoint with at least 4 of 5 CLEAN_SUCCESS full episodes; otherwise stop at 100000."
+      },
+      "experiment_id": "stage5_native_reward_integration_v1",
+      "sac": {
+        "activation": "ReLU",
+        "actor_critic_architecture": [
+          256,
+          256
+        ],
+        "algorithm": "Stable-Baselines3 SAC",
+        "batch_size": 256,
+        "buffer_size": 1000000,
+        "device": "cpu",
+        "ent_coef": "auto",
+        "gamma": 0.99,
+        "gradient_steps": 1,
+        "learning_rate": 0.0001,
+        "learning_starts": 10000,
+        "policy": "MlpPolicy",
+        "seed": 101,
+        "target_entropy": "auto",
+        "tau": 0.005,
+        "train_freq": 1,
+        "use_sde": false
+      },
+      "training_reward": {
+        "canonical_comparison": "RewardSpecV1 computed and logged in parallel; not sent to SAC",
+        "mode_id": "stage5_metadrive_native_reward_v1",
+        "source": "MetaDriveEnv.step raw reward, passed through unchanged"
+      },
+      "training_task": {
+        "action_adapter_id": "continuous_box2_v1",
+        "control_frequency_hz": 10,
+        "environment_seed_root": 101,
+        "geometry_id": "geom_easy_SCS_seed0",
+        "observation_encoder_id": "stage5_flat409_v1",
+        "observation_transform_id": "pilot_groupwise_physical_v1",
+        "split": "TRAIN",
+        "task_context_producer_id": "reference_route_station_proposal_v1",
+        "traffic_density": 0.0
+      }
+    },
+    "traffic_guidance": "traffic_follow_v1",
+    "traffic_teacher_sha": "f82ca94d27ebd9fc3468081e20631536c959990a708398f5474bebee986e6d07",
+    "warm_source": "e5fa59f3a19f277af12d7001b26ff4b0cafdfcc6815f892062667d8d92342a68",
+    "workers": 2
+  },
+  "training_root_seed": 101,
+  "training_state_sha256": "ec52eb3ff6ad791abebfe19436b6e683228b03333cc2e505b898bf51ebacb181"
+}

@@ -1,0 +1,229 @@
+"""Generated with an immutable preflight job configuration."""
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import platform
+import shutil
+import subprocess
+import sys
+import time
+import zipfile
+
+JOB = __JOB__
+started = time.monotonic()
+shutdown = started + JOB["max_seconds"]
+if JOB.get("campaign_deadline"):
+    shutdown = min(shutdown, started + JOB["campaign_deadline"] - time.time())
+    if shutdown - started < 1800:
+        print("CAMPAIGN_WINDOW_TOO_SHORT", flush=True)
+        raise SystemExit(0)
+working = Path("/kaggle/working")
+workspace = Path("/tmp") / JOB["job"]
+child_env = {key: value for key, value in os.environ.items()
+             if key not in {"PYTHONHOME", "PYTHONPATH", "PYTHONUSERBASE", "PIP_TARGET", "PIP_PREFIX", "PIP_USER"}}
+child_env.update(PYTHONNOUSERSITE="1", PYTHONFAULTHANDLER="1")
+
+def digest(path):
+    h = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+def input_file(ref, name, expected):
+    owner, slug = ref.split("/")
+    mounts = [Path("/kaggle/input") / slug, Path("/kaggle/input/datasets") / owner / slug]
+    files = [mount / name for mount in mounts if (mount / name).is_file()]
+    if len(files) != 1 or digest(files[0]) != expected:
+        raise ValueError(f"Missing, ambiguous or mismatched private input: {name}")
+    return files[0]
+
+def unpack(source, target, max_bytes):
+    with zipfile.ZipFile(source) as archive:
+        entries = archive.infolist()
+        names = [x.filename for x in entries]
+        if len(names) != len(set(names)) or len(names) > 300 or sum(x.file_size for x in entries) > max_bytes:
+            raise ValueError("Unexpected input archive size or duplicate paths")
+        for row in entries:
+            path = PurePosixPath(row.filename)
+            if path.is_absolute() or ".." in path.parts or "\\" in row.filename or row.is_dir():
+                raise ValueError("Invalid input path")
+            dest = target.joinpath(*path.parts)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with archive.open(row) as stream, dest.open("xb") as output:
+                shutil.copyfileobj(stream, output)
+
+def run(command, deadline, capture=False):
+    time_left = deadline - time.monotonic()
+    if time_left <= 0:
+        raise TimeoutError("Preflight time budget exhausted")
+    return subprocess.run(command, cwd=workspace, env=child_env, check=True, timeout=time_left,
+                          capture_output=capture, text=capture).stdout
+
+def prepare_runtime(deadline):
+    # Keep Kaggle's own TensorFlow, Gym and Torch installations out of the learner.
+    environment = workspace / "venv"
+    run([sys.executable, "-I", "-m", "venv", "--without-pip", str(environment)], deadline)
+    python = str(environment / "bin" / "python")
+    pip = [sys.executable, "-I", "-m", "pip", "--python", python, "--disable-pip-version-check"]
+    lock = workspace / "cloud/kaggle/linux-lock.txt"
+    install = [*pip, "install", "--no-input"]
+    if JOB["device"] == "cpu":
+        torch_pin, = (line for line in lock.read_text(encoding="utf-8").splitlines() if line.startswith("torch=="))
+        run([*install, "--no-deps", "--index-url", "https://download.pytorch.org/whl/cpu", torch_pin + "+cpu"], deadline)
+    run([*install, "-r", str(lock)], deadline)
+    run([*pip, "check"], deadline)
+    return [python, "-X", "faulthandler", "-u"], pip
+
+def check_runtime_abi():
+    system, machine, python_version = platform.system(), platform.machine(), platform.python_version()
+    print(f"Kaggle runtime ABI: {system} {machine} Python {python_version}", flush=True)
+    if (system != "Linux" or machine.lower() not in {"x86_64", "amd64"}
+            or sys.implementation.name != "cpython" or not (3, 10) <= sys.version_info[:2] <= (3, 13)):
+        raise RuntimeError(f"Unsupported Kaggle Python ABI: {system} {machine} Python {python_version}")
+
+
+check_runtime_abi()
+workspace.mkdir()
+source = workspace / "model.zip"
+shutil.copyfile(input_file(JOB["source_ref"], "model.bin", JOB["source_sha"]), source)
+bundle = input_file(JOB["runtime_ref"], "runtime.bin", JOB["runtime_sha"])
+unpack(bundle, workspace, 32_000_000)
+inventory = json.loads((workspace / "source_inventory.json").read_text(encoding="utf-8"))
+for name, expected in inventory["files"].items():
+    if digest(workspace / name) != expected:
+        raise ValueError(f"Runtime fingerprint mismatch: {name}")
+stop = shutdown - JOB["export_reserve"]
+python, pip = prepare_runtime(stop)
+commit_query = (
+    'import json; from importlib.metadata import distribution; '
+    'print(json.loads(distribution("metadrive-simulator").read_text("direct_url.json"))["vcs_info"]["commit_id"])'
+)
+commit = run([*python, "-c", commit_query], stop, capture=True).strip()
+if commit != inventory["metadrive_pin"]:
+    raise RuntimeError("Installed MetaDrive commit differs from the bundle pin")
+run([*python, "-m", "metadrive.pull_asset"], stop)
+freeze = run([*pip, "freeze"], stop, capture=True)
+# Export versions only. Kaggle's preinstalled direct URLs can carry credentials.
+versions = [line for line in freeze.splitlines() if "==" in line and line.split("==", 1)[0].replace("-", "").replace("_", "").isalnum()]
+(workspace / "runtime_versions.txt").write_text("\n".join([f"metadrive-commit={commit}", *versions]), encoding="utf-8")
+state = workspace / "state"
+run([*python, "-m", "cloud.kaggle.runtime", "parity", "--source", str(source),
+     "--out", "observed_parity.json", "--reference", "parity.json"], stop)
+learner_module = "cloud.kaggle.runtime"
+if JOB.get("policy_every") or JOB.get("warm_start_cursor") is not None:
+    learner_module = "cloud.kaggle.learning_hooks"
+if JOB.get("guided_ref") or JOB.get("guided_resume"):
+    learner_module = "cloud.kaggle.guided"
+command = [*python, "-m", learner_module, "train", "--out", str(state),
+           "--job", JOB["job"], "--workers", str(JOB["workers"]), "--device", JOB["device"],
+           "--phase", JOB.get("phase", "smoke"), "--max-seconds", str(JOB["max_seconds"]),
+           "--transitions", str(JOB["transitions"]), "--capacity", str(JOB["capacity"]),
+           "--learning-starts", str(JOB["learning_starts"]),
+           "--stop-at", str(stop)]
+if JOB.get("guided_ref"):
+    guided = workspace / "guided"
+    unpack(input_file(JOB["guided_ref"], "guided.bin", JOB["guided_sha"]), guided, 120_000_000)
+    command.extend(["--guided-prefill", str(guided)])
+if JOB.get("guided_gradient_steps"):
+    command.extend(["--guided-gradient-steps", str(JOB["guided_gradient_steps"])])
+if JOB.get("guided_actor_lr_scale"):
+    command.extend(["--guided-actor-lr-scale", str(JOB["guided_actor_lr_scale"])])
+if JOB.get("guided_curriculum_from"):
+    command.extend(["--guided-curriculum-from", JOB["guided_curriculum_from"]])
+if JOB.get("guided_rollout_axis"):
+    command.extend(["--guided-rollout-axis", JOB["guided_rollout_axis"]])
+if JOB.get("traffic_guidance"):
+    command.append("--traffic-guidance")
+if JOB.get("teacher_ref"):
+    teacher = workspace / "teacher.zip"
+    shutil.copyfile(input_file(JOB["teacher_ref"], "teacher.bin", JOB["traffic_teacher_sha"]), teacher)
+    command.extend(["--traffic-teacher", str(teacher), "--traffic-teacher-sha", JOB["traffic_teacher_sha"]])
+    if JOB.get("campaign_deadline"):
+        command.extend(["--teacher-stop-at", str((time.monotonic() + stop) / 2)])
+if JOB.get("campaign_deadline"):
+    command.extend(["--timeboxed", "--bounded-guided-replay"])
+if JOB.get("localization_guard"):
+    command.append("--localization-guard")
+if JOB.get("autonomous_traffic"):
+    command.append("--autonomous-traffic")
+if JOB.get("policy_every"):
+    command.extend(["--policy-every", str(JOB["policy_every"]),
+                    "--policy-dir", str(working / JOB["job"] / "screening")])
+    if JOB.get("checkpoint_every"):
+        command.extend(["--state-every", str(JOB["checkpoint_every"])])
+if JOB.get("warm_start_cursor") is not None:
+    command.extend(["--warm-start-cursor", str(JOB["warm_start_cursor"])])
+if JOB.get("checkpoint_every"):
+    command.extend(["--checkpoint-every", str(JOB["checkpoint_every"]),
+                    "--checkpoint-dir", str(working / JOB["job"] / "periodic")])
+if JOB.get("measure_optimizer"):
+    command.append("--measure-optimizer")
+if JOB.get("parent_sha"):
+    parent_zip = input_file(JOB["parent_ref"], "parent.bin", JOB["parent_zip_sha"])
+    parent = workspace / "parent"
+    unpack(parent_zip, parent, JOB.get("parent_archive_limit", 120_000_000))
+    if JOB.get("parallel_task"):
+        task = [*python, "-m", "cloud.kaggle.campaign_tasks", "--kind", JOB["parallel_task"],
+                "--parent", str(parent), "--parent-sha", JOB["parent_sha"], "--out", str(working / JOB["job"])]
+        if JOB.get("collector_stream"):
+            task.extend(["--stream", str(JOB["collector_stream"])])
+        if JOB.get("evaluation_tier"):
+            task.extend(["--tier", JOB["evaluation_tier"]])
+        run(task, shutdown - 30)
+        raise SystemExit(0)
+    command.extend(["--resume", str(parent), "--parent-sha", JOB["parent_sha"]])
+elif JOB.get("warm_ref"):
+    warm_model = workspace / "warm.zip"
+    shutil.copyfile(input_file(JOB["warm_ref"], "warm.bin", JOB["warm_model_sha"]), warm_model)
+    command.extend(["--warm-model", str(warm_model), "--warm-sha", JOB["warm_model_sha"]])
+else:
+    command.extend(["--source", str(source)])
+training_start = time.monotonic()
+run(command, shutdown - 30)
+training_end = time.monotonic()
+if JOB.get("sharded_output"):
+    results = working / JOB["job"]
+    index_sha = run([*python, "-m", "cloud.kaggle.checkpoint", "export", "--input", str(state),
+                     "--sha", digest(state / "COMPLETE.json"), "--out", str(results / "final")],
+                    shutdown - 30, capture=True).strip()
+    for source_name, target_name in (("runtime_versions.txt", "runtime_versions.txt"), ("observed_parity.json", "parity.json")):
+        shutil.copyfile(workspace / source_name, results / target_name)
+    with (results / "execution.json").open("x", encoding="utf-8") as output:
+        json.dump({"job": JOB, "index_sha256": index_sha}, output, sort_keys=True)
+    checkpoint_end = time.monotonic()
+    evaluation_status = "NOT_REQUESTED"
+    if JOB.get("evaluate_easy"):
+        try:
+            run([*python, "-m", "cloud.kaggle.runtime", "evaluate", "--model", str(state / "model.zip"),
+                 "--model-sha", digest(state / "model.zip"), "--tier", "Easy", "--out", str(results / "panel.json")],
+                shutdown - 20)
+            tiers = json.loads((workspace / "cloud/kaggle/recipe.json").read_text(encoding="utf-8"))["phase_weights"]
+            for tier in tiers.get(JOB.get("phase"), {}):
+                if tier == "Easy":
+                    continue
+                run([*python, "-m", "cloud.kaggle.runtime", "evaluate", "--model", str(state / "model.zip"),
+                     "--model-sha", digest(state / "model.zip"), "--tier", tier, "--out", str(results / f"panel-{tier.lower()}.json")],
+                    shutdown - 20)
+            evaluation_status = "COMPLETE"
+        except (subprocess.TimeoutExpired, TimeoutError):
+            evaluation_status = "TIME_BUDGET"
+        except subprocess.CalledProcessError:
+            evaluation_status = "FAILED"
+    finished = time.monotonic()
+    with (results / "timing.json").open("x", encoding="utf-8") as output:
+        json.dump({"startup_seconds": training_start - started, "training_process_seconds": training_end - training_start,
+                   "final_checkpoint_seconds": checkpoint_end - training_end, "evaluation_seconds": finished - checkpoint_end,
+                   "end_to_end_seconds": finished - started, "evaluation_status": evaluation_status}, output, sort_keys=True)
+else:
+    temp_zip = working / (JOB["job"] + ".zip.partial")
+    with zipfile.ZipFile(temp_zip, "x", zipfile.ZIP_STORED) as archive:
+        for name in ("model.zip", "replay.pkl", "rng.pt", "metrics.json"):
+            archive.write(state / name, name)
+        archive.write(workspace / "runtime_versions.txt", "runtime_versions.txt")
+        archive.write(workspace / "observed_parity.json", "parity.json")
+        archive.writestr("execution.json", json.dumps(JOB, sort_keys=True))
+        archive.write(state / "COMPLETE.json", "COMPLETE.json")
+    temp_zip.rename(working / (JOB["job"] + ".zip"))
+
