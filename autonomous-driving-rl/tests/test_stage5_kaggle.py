@@ -468,6 +468,8 @@ def test_pilot_plan_uses_verified_cpu_when_gpu_only_wins_after_warmup(tmp_path, 
         files = {"parity.json": "locked", "cloud/kaggle/linux-lock.txt": "unchanged"}
         if production:
             files["cloud/kaggle/checkpoint.py"] = "new"
+        if label == "window-candidate":
+            files["cloud/kaggle/learning_hooks.py"] = "policy snapshots"
         with zipfile.ZipFile(path / "runtime.zip", "x") as archive:
             archive.writestr("source_inventory.json", json.dumps({"files": files}))
         return {"runtime_sha": sha(path / "runtime.zip"), "source_sha": SOURCE_SHA,
@@ -565,6 +567,30 @@ def test_pilot_plan_uses_verified_cpu_when_gpu_only_wins_after_warmup(tmp_path, 
     large = control.read(tmp_path / "plan-stage5-guided-prod.json")["jobs"]["j10"]
     assert (large["phase"], large["guided_curriculum_from"], large["accelerator"]) == ("medium", "easy", "NvidiaTeslaT4")
     assert large["capacity"] >= 110300 and large["checkpoint_every"] == 25000 and large["production_continuation"]
+    write(tmp_path / "bundle.json", bundle("window-candidate", True))
+    medium = "medium-window-parent"
+    medium_marker = tmp_path / "harvest" / medium / "COMPLETE.json"
+    medium_marker.parent.mkdir()
+    parent_state = control.read(marker)
+    parent_state["identity"].update(phase="medium", capacity=122880, bounded_guided_replay=True)
+    write(medium_marker, parent_state)
+    rows[medium] = dict(rows[guided_parent], state_sha=sha(medium_marker), planned=large)
+    deadline = int(control.datetime.now(control.timezone.utc).timestamp()) + 7200
+    branch = SimpleNamespace(campaign="stage5", round="curriculum-window", account="account_01",
+                             parent=medium, transitions=4_000_000, device="cpu", max_seconds=39600,
+                             phase="extreme", campaign_deadline=deadline, localization_guard=True)
+    for phase in ("extreme", "mixed"):
+        branch.phase, branch.round = phase, f"window-{phase}"
+        control.plan_learning_resume(branch, {"jobs": rows})
+        planned_branch = control.read(tmp_path / f"plan-stage5-{branch.round}.json")["jobs"]["j10"]
+        assert (planned_branch["phase"], planned_branch["guided_curriculum_from"]) == (phase, "medium")
+        assert planned_branch["bounded_guided_replay"] and planned_branch["localization_guard"]
+        assert planned_branch["parent_sha"] == sha(medium_marker)
+    branch.phase = "easy"
+    with pytest.raises(ValueError, match="approved phase"):
+        control.plan_learning_resume(branch, {"jobs": rows})
+
+    write(tmp_path / "bundle.json", candidate)
     control_id = continuation["job"]
     rows[control_id].update(status="HARVESTED_VERIFIED", execution=continuation)
     args = SimpleNamespace(campaign="stage5", round="guided-utd05", account="account_01", parent=guided_parent,

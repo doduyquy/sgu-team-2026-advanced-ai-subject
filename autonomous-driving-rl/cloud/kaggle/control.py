@@ -532,8 +532,12 @@ def plan_learning_resume(args, state):
             job["parallel_workload"] = "traffic-follow-medium"
             job["guided_gradient_steps"] = 1
         if next_phase:
-            if {"easy": "medium", "medium": "hard", "hard": "extreme"}.get(parent_phase) != next_phase:
-                raise ValueError("Curriculum may advance only to the next approved phase")
+            sequential = {"easy": "medium", "medium": "hard", "hard": "extreme"}.get(parent_phase) == next_phase
+            branch = deadline and (parent_phase, next_phase) in {
+                ("medium", "extreme"), ("medium", "mixed"), ("hard", "mixed"),
+            }
+            if not (sequential or branch):
+                raise ValueError("Curriculum transition is outside the approved phase schedule")
             job.update(phase=next_phase, guided_curriculum_from=parent_phase)
         if device:
             job["device"] = device
@@ -992,16 +996,19 @@ def launch(args, state):
         raise RuntimeError("Fresh owner observation of available concurrency is required")
     elif len(active) >= sessions:
         raise RuntimeError("Account concurrency budget is occupied")
-    observed_gpu_jobs = [x for x in state["jobs"].values() if x.get("owner") == owner
-                         and x.get("execution", {}).get("device") == "cuda"
-                         and x.get("submitted", {}).get("utc", "") >= creds["observed_at"]]
-    gpu_minutes = sum(x["execution"]["max_seconds"] / 60 for x in observed_gpu_jobs)
     if job["device"] == "cuda":
         available = accelerator_quota(alias).get("GPU")
+        requested = job["max_seconds"] / 60
+        active_reserve = sum(row["execution"]["max_seconds"] / 60 for row in active
+                             if row.get("execution", {}).get("device") == "cuda")
         owner_limit = creds["gpu_minutes_observed"]
-        if available is not None and owner_limit is not None:
-            available = min(available, owner_limit)
-        if available is None or gpu_minutes + job["max_seconds"] / 60 > available:
+        if owner_limit is not None:
+            observed_reserve = sum(row["execution"]["max_seconds"] / 60 for row in state["jobs"].values()
+                                   if row.get("owner") == owner and row.get("execution", {}).get("device") == "cuda"
+                                   and row.get("submitted", {}).get("utc", "") >= creds["observed_at"])
+            owner_limit -= observed_reserve
+        if (available is None or requested + active_reserve > available
+                or (owner_limit is not None and requested > owner_limit)):
             raise RuntimeError("Verified GPU budget is insufficient or unavailable")
     runtime = (ROOT / job["runtime_path"] / "runtime.zip").resolve()
     if not runtime.is_relative_to(WORK.resolve()):

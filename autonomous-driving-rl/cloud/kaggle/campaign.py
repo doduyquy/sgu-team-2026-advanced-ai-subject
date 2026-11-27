@@ -65,8 +65,29 @@ WINDOW_PROFILES = (
 )
 
 
-def prepare_window(root, package, source):
-    clock = read(WORK / "window12.json")
+CURRICULUM_WINDOW_PROFILES = (
+    ("Hard retention", "cuda", "traffic", "hard", False, True, None),
+    ("Hard stability", "cpu", "traffic", "hard", False, True, 0.25),
+    ("Hard autonomous", "cuda", "traffic", "hard", False, True, None),
+    ("Mixed four-tier stability", "cpu", "traffic", "mixed", False, True, 0.25),
+    ("Extreme autonomous", "cuda", "traffic", "extreme", False, True, None),
+    ("Hard retention stability", "cpu", "traffic", "hard", False, True, 0.25),
+    ("Mixed four-tier autonomous", "cuda", "traffic", "mixed", False, True, None),
+    ("Extreme stability", "cpu", "traffic", "extreme", False, True, 0.25),
+    ("Hard stability T4", "cuda", "traffic", "hard", False, True, 0.25),
+    ("Easy/Medium teacher retention", "cpu", "traffic", None, True, False, 0.25),
+    ("Extreme stability T4", "cuda", "traffic", "extreme", False, True, 0.25),
+    ("Mixed stability replicate", "cpu", "traffic", "mixed", False, True, 0.25),
+    ("Mixed autonomous replicate", "cuda", "traffic", "mixed", False, True, None),
+    ("Hard stability replicate", "cpu", "traffic", "hard", False, True, 0.25),
+    ("Extreme autonomous replicate", "cuda", "traffic", "extreme", False, True, None),
+    ("Easy/Medium autonomous retention", "cpu", "traffic", None, False, True, 0.25),
+)
+
+
+def prepare_window(root, package, source, *, clock_file=None, curriculum=False):
+    clock = read(clock_file or WORK / "window12.json")
+    profiles = CURRICULUM_WINDOW_PROFILES if curriculum else WINDOW_PROFILES
     deadline = clock["deadline_epoch"]
     if (root / "campaign.json").exists():
         raise FileExistsError("Campaign dispatch is immutable")
@@ -75,7 +96,7 @@ def prepare_window(root, package, source):
     with c.locked():
         registry = c.registry()
         c.package(source)
-        for i, (workload, device, parent_kind, phase, teacher, autonomous, lr) in enumerate(WINDOW_PROFILES):
+        for i, (workload, device, parent_kind, phase, teacher, autonomous, lr) in enumerate(profiles):
             session = f"S{i + 1:02d}"
             account = c.SLOTS[i // 2]
             round_id = f"{clock.get('round_prefix', 'win12')}-{session.lower()}"
@@ -84,7 +105,7 @@ def prepare_window(root, package, source):
             c.plan_learning_resume(SimpleNamespace(campaign="stage5", round=round_id, account=account,
                 parent=parent, transitions=4_000_000, device=device, max_seconds=39600, phase=phase,
                 traffic_guidance=guidance, traffic_teacher=teacher, autonomous_traffic=autonomous,
-                campaign_deadline=deadline, campaign_actor_lr=lr), registry)
+                campaign_deadline=deadline, campaign_actor_lr=lr, localization_guard=curriculum), registry)
             doc = read(WORK / f"plan-stage5-{round_id}.json")
             job = doc["jobs"]["j10"]
             rows.append(dict(session=session, account=account, workload=workload, job=job["job"], device=device,
@@ -703,6 +724,8 @@ def main():
     parser.add_argument("--traffic-teacher", action="store_true")
     parser.add_argument("--autonomous-traffic", action="store_true")
     parser.add_argument("--campaign-deadline", type=int)
+    parser.add_argument("--window-clock", type=Path)
+    parser.add_argument("--curriculum-window", action="store_true")
     args = parser.parse_args()
     if args.command in {"init", "agent", "prepare-window"} and not args.package:
         parser.error("--package is required")
@@ -712,7 +735,8 @@ def main():
     if args.command == "prepare-window":
         if not args.parent:
             parser.error("prepare-window requires a verified Medium parent")
-        prepare_window(args.root, args.package, args.parent)
+        prepare_window(args.root, args.package, args.parent, clock_file=args.window_clock,
+                       curriculum=args.curriculum_window)
         return
     document = manifest(args.root)
     if args.command == "enqueue":

@@ -216,10 +216,13 @@ def train(args):
             or (config.traffic_teacher and not config.traffic_guidance)
             or (config.autonomous_traffic and config.traffic_guidance)):
         parser.error("Use a verified teacher with traffic guidance, or retire guidance explicitly")
-    if config.guided_curriculum_from and (
-            {"easy": "medium", "medium": "hard", "hard": "extreme"}[config.guided_curriculum_from] != config.phase
-            or config.guided_rollout_axis):
-        parser.error("Curriculum transition requires the next phase and unassisted collection")
+    if config.guided_curriculum_from:
+        sequential = {"easy": "medium", "medium": "hard", "hard": "extreme"}[config.guided_curriculum_from] == config.phase
+        branch = config.timeboxed and (config.guided_curriculum_from, config.phase) in {
+            ("medium", "extreme"), ("medium", "mixed"), ("hard", "mixed"),
+        }
+        if not (sequential or branch) or config.guided_rollout_axis:
+            parser.error("Curriculum transition requires an approved phase and unassisted collection")
     if config.localization_guard and not config.timeboxed:
         parser.error("Localization discard is a timeboxed TRAIN-only behavior")
     if config.timeboxed != config.bounded_guided_replay:
