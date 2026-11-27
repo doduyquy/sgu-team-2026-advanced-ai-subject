@@ -72,20 +72,23 @@ def collect_wave(sim, state, digest, pool_name, wave):
 
 
 class RiskReplay:
-    def __init__(self, model, frozen, mixture=None):
+    def __init__(self, model, frozen, mixture=None, *, experiment_root=None, donor_guidance=True):
         from stable_baselines3.common.buffers import ReplayBuffer
 
         self.frozen = frozen
+        self.experiment_root = EXPERIMENT_ROOT if experiment_root is None else experiment_root
+        self.donor_guidance = donor_guidance
         self.mixture = dict(mixture or MIX)
         self.base = frozen.base
         self.online_rows = 0
         self.risk_rows = 0
         self.draws = Counter()
         self.ledger = dict(frozen.ledger)
-        self.seen = set()
+        self.seen = set() if donor_guidance else set(frozen.seen)
         self.waves = []
         self.audit = []
-        self.rings = {name: ReplayBuffer(48000 if name == "risk" else 32000, model.observation_space,
+        donor_capacity = 48000 if donor_guidance else 80000
+        self.rings = {name: ReplayBuffer(donor_capacity if name == "risk" else 32000, model.observation_space,
                       model.action_space, device="cpu", n_envs=1, handle_timeout_termination=True)
                       for name in ("risk", "online")}
         self.protected_cases = frozen.old_cases | {(row["geometry"], row["environment_seed"]) for row in frozen.audit}
@@ -98,7 +101,7 @@ class RiskReplay:
         verify(folder / "WAVE.json", expected)
         batch = read(folder / "WAVE.json")
         kind = batch["kind"]
-        relative = folder.relative_to(EXPERIMENT_ROOT).as_posix()
+        relative = folder.relative_to(self.experiment_root).as_posix()
         if batch["schema"] != 1 or kind not in self.rings or any(p["path"] == relative for p in self.waves):
             raise ValueError("Unknown or already admitted replay wave")
         if (kind == "online") != (online_limit is not None) or (online_limit is not None and online_limit <= 0):
@@ -127,7 +130,7 @@ class RiskReplay:
             chunk = folder / spec["chunk"]
             rows, key = replay.validate(chunk, spec["sha"], snap["identity"], self.ledger, version,
                 (snap["snapshot_sha"], version), guided=True, collection_phase="mixed",
-                behavior=PROFILE if kind == "risk" else "frozen_deterministic")
+                behavior=PROFILE if kind == "risk" and self.donor_guidance else "frozen_deterministic")
             if rows is None or key != f"{batch['stream']}:{j}":
                 raise ValueError("Replay chunk is duplicate or outside its namespace")
             meta = read(chunk / "CHUNK.json")
@@ -137,6 +140,11 @@ class RiskReplay:
                     or self.frozen.tiers[case[0]] != spec["tier"] or self.frozen.reward != episode["training_reward_mode_fingerprint"]):
                 raise ValueError("Replay case differs from the authorized TRAIN schedule")
             ids = row_ids(rows, episode, self.seen)
+            if kind == "risk" and not self.donor_guidance:
+                quota = min(len(ids), spec["admit_limit"])
+                if quota <= 0:
+                    raise ValueError("Donor admission requires a positive row cap")
+                ids = [ids[i] for i in np.linspace(0, len(ids) - 1, num=quota, dtype=int)]
             if kind == "online":
                 if spec["rows"] != meta["count"]:
                     raise ValueError("Invalid online decision count")
@@ -146,6 +154,8 @@ class RiskReplay:
                 remaining_budget -= quota
                 remaining_rows -= spec["rows"]
             if ids:
+                if not self.donor_guidance and self.rings[kind].size() + len(ids) > self.rings[kind].buffer_size:
+                    raise ValueError("V3 admission would evict previously admitted experience")
                 replay.admit(self.rings[kind], {name: data[ids] for name, data in rows.items()})
             self.ledger[key] = spec["sha"]
             self.protected_cases.add(case)
@@ -154,10 +164,12 @@ class RiskReplay:
             else:
                 self.risk_rows += len(ids)
             events = Counter()
-            if kind == "risk":
+            if kind == "risk" and self.donor_guidance:
                 events.update(row["reason"] for row in read(chunk / "DECISIONS.json") if row["reason"] != "none")
             self.audit.append({"kind": kind, **spec, "admitted": len(ids),
                                "outcome": meta["guided"]["outcome"], "interventions": dict(events)})
+            if not self.donor_guidance:
+                self.audit[-1]["wave"] = batch["label"]
         self.waves.append({"path": relative, "sha": expected, "online_limit": online_limit})
 
     def sample(self, batch_size, env=None):
@@ -168,16 +180,23 @@ class RiskReplay:
             raise ValueError("Risk branch requires the frozen V2 batch size")
         buffers = {"base": self.base, "external_easy": self.frozen.external["Easy"],
                    "external_medium": self.frozen.external["Medium"], "v2_online": self.frozen.online, **self.rings}
+        order = tuple(MIX)
+        if not self.donor_guidance:
+            legacy = {f"v1_{tier.lower()}": buf for tier, buf in self.frozen.legacy_tiers.items()}
+            buffers.update(legacy)
+            order = (*order[:4], *legacy, *order[4:])
         if any(buffers[name].size() < n for name, n in self.mixture.items()):
             raise ValueError("Replay groups are too small for the declared mixture")
         batches = []
         # Manifest JSON sorts keys. Pool order must survive serialization.
-        for name in MIX:
+        for name in order:
             n = self.mixture[name]
             batches.append(buffers[name].sample(n, env))
             self.draws[name] += n
         if any(batch.discounts is not None for batch in batches):
             raise ValueError("Risk replay expects one-step SAC samples")
+        if not self.donor_guidance:
+            self.retention_obs = torch.cat([x.observations for x in batches[:-2]], dim=0)
         return ReplayBufferSamples(*(torch.cat(part, dim=0) for part in zip(*(batch[:5] for batch in batches), strict=True)))
 
     def proof(self):

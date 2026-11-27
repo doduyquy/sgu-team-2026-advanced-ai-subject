@@ -1,4 +1,4 @@
-"""Four persistent, single-threaded MetaDrive processes for Stage 5 SAC."""
+"""Persistent, single-threaded MetaDrive processes for Stage 5 SAC."""
 from __future__ import annotations
 
 from collections import defaultdict
@@ -62,8 +62,14 @@ def worker(task):
                 from cloud.kaggle.risk_metrics import RiskMetrics
 
                 observer = RiskMetrics()
-            result = evaluate_case(model, task["row"], task["seed"], environment("eval"), measured, observer)
-            if observer is not None:
+            if task.get("smooth_traffic"):
+                from cloud.kaggle.smooth_traffic_eval import BlendedPolicy, TrafficObserver
+
+                model, observer = BlendedPolicy(model), TrafficObserver()
+            result = evaluate_case(model, task["row"], task["seed"], environment(task.get("phase", "eval")), measured, observer)
+            if task.get("smooth_traffic"):
+                result["traffic"] = {**observer.summary(), "interventions": model.interventions}
+            if observer is not None and not task.get("smooth_traffic"):
                 result["risk_metrics"] = observer.summary()
             decisions = measured["decisions"]
         else:
@@ -88,8 +94,8 @@ def worker(task):
 
 
 class Simulators:
-    def __init__(self):
-        self.pool = ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context("spawn"), initializer=initialize)
+    def __init__(self, workers=WORKERS):
+        self.pool = ProcessPoolExecutor(max_workers=workers, mp_context=get_context("spawn"), initializer=initialize)
 
     def __enter__(self):
         return self

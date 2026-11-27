@@ -34,7 +34,7 @@ V1_BATCHES = (
 class HybridSAC(GuidedSAC):
     def _update_learning_rate(self, optimizers):
         super()._update_learning_rate(optimizers)
-        for optimizer, rate in ((self.actor.optimizer, RECIPE["actor_lr"]),
+        for optimizer, rate in ((self.actor.optimizer, getattr(self, "local_actor_lr", RECIPE["actor_lr"])),
                                 (self.critic.optimizer, RECIPE["critic_lr"])):
             for group in optimizer.param_groups:
                 group["lr"] = rate
@@ -54,7 +54,7 @@ def row_ids(data, episode, seen):
 
 
 class ThreeWayReplay:
-    def __init__(self, model, base, parent):
+    def __init__(self, model, base, parent, *, preserve_legacy_tiers=False):
         def ring(capacity):
             return ReplayBuffer(capacity, model.observation_space, model.action_space, device="cpu",
                                 n_envs=1, handle_timeout_termination=True)
@@ -62,6 +62,7 @@ class ThreeWayReplay:
         self.base = base
         self.online = ring(RECIPE["online_capacity"])
         self.external = {tier: ring(RECIPE["external_capacity_per_tier"]) for tier in ("Easy", "Medium")}
+        self.legacy_tiers = {tier: ring(20000) for tier in ("Hard", "Extreme")} if preserve_legacy_tiers else {}
         self.identity = parent["identity"]
         env = runtime.ScheduledEnv("mixed", 0, 0)
         try:
@@ -80,6 +81,11 @@ class ThreeWayReplay:
             for tier, values in parts.items():
                 if tier in self.external:
                     replay.admit(self.external[tier], values)
+                elif tier in self.legacy_tiers:
+                    target = self.legacy_tiers[tier]
+                    if target.size() + len(values["obs"]) > target.buffer_size:
+                        raise ValueError("Eligible V1 tier exceeds retention capacity")
+                    replay.admit(target, values)
         # V1 episode identities are disjoint from newly allocated seed ranges.
         self.old_cases = {(row["geometry"], row["environment_seed"]) for row in self.audit}
 
@@ -187,7 +193,7 @@ def optimizer_steps(model):
     return [next(iter(counts)) for counts in steps]
 
 
-def restore(root, state=PARENT, state_sha=PARENT_SHA):
+def restore(root, state=PARENT, state_sha=PARENT_SHA, *, preserve_legacy_tiers=False):
     parent = runtime.check_state(PARENT, PARENT_SHA)
     marker = parent if state == PARENT and state_sha == PARENT_SHA else runtime.check_state(state, state_sha)
     model = HybridSAC.load(state / "model.zip", device="cpu", custom_objects={
@@ -208,7 +214,7 @@ def restore(root, state=PARENT, state_sha=PARENT_SHA):
         raise ValueError("State did not restore all training counters")
     model.set_logger(configure(format_strings=[]))
     model._vec_normalize_env = None
-    mix = ThreeWayReplay(model, ring, parent)
+    mix = ThreeWayReplay(model, ring, parent, preserve_legacy_tiers=preserve_legacy_tiers)
     config = marker.get("hybrid")
     if config:
         if config["recipe"] != RECIPE or config["anchor"] != PARENT_SHA:
@@ -244,7 +250,8 @@ def update(model, mix, parent, target):
         raise ValueError("SAC optimizer or replay counters diverged")
     actual = {name: [group["lr"] for group in optim.param_groups] for name, optim in (
         ("actor", model.actor.optimizer), ("critic", model.critic.optimizer), ("alpha", model.ent_coef_optimizer))}
-    if set(actual["actor"]) != {RECIPE["actor_lr"]} or set(actual["critic"]) != {RECIPE["critic_lr"]}:
+    if (set(actual["actor"]) != {getattr(model, "local_actor_lr", RECIPE["actor_lr"])}
+            or set(actual["critic"]) != {RECIPE["critic_lr"]}):
         raise ValueError("SB3 overwrote the effective actor or critic learning rates")
     logs = {key: float(value) for key, value in model.logger.name_to_value.items()
             if key in ("train/actor_loss", "train/critic_loss", "train/ent_coef", "train/ent_coef_loss")}
