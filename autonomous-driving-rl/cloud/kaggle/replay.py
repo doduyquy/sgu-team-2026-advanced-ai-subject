@@ -46,10 +46,14 @@ def collect(args):
     model = load_policy(args.snapshot / "policy.zip")
     torch.manual_seed(int(fingerprint((args.stream, args.sequence))[:8], 16))
     geometry = getattr(args, "geometry", None)
-    phase = "easy" if geometry else "smoke"
+    collection_phase = getattr(args, "collection_phase", None)
+    if collection_phase is not None and (not geometry or collection_phase not in RECIPE["phase_weights"]):
+        raise ValueError("An explicit collection phase requires a fixed TRAIN geometry")
+    phase = collection_phase or ("easy" if geometry else "smoke")
     rows = pool(phase)
-    if geometry and (geometry not in {r["geometry_id"] for r in rows} or snapshot["identity"]["phase"] != "easy"):
-        raise ValueError("Guided collection requires a geometry in the locked Easy TRAIN pool")
+    if geometry and (geometry not in {r["geometry_id"] for r in rows}
+                     or (collection_phase is None and snapshot["identity"]["phase"] != "easy")):
+        raise ValueError("Guided collection requires a geometry in the locked TRAIN pool")
     dtypes = GUIDED_DTYPES if geometry else DTYPES
     start = time.monotonic()
     data = {key: [] for key in dtypes}
@@ -96,6 +100,8 @@ def collect(args):
             "seconds": time.monotonic() - start}
     if geometry:
         meta["guided"] = {"geometry": geometry, "seed": args.seed, "behavior": "frozen_deterministic", "outcome": outcome}
+    if collection_phase is not None:
+        meta["collection_phase"] = collection_phase
     write(args.out / "CHUNK.json", meta)
     print(sha(args.out / "CHUNK.json"))
 
@@ -109,7 +115,7 @@ def check_snapshot(path, digest, identity):
     return snapshot["policy_version"]
 
 
-def validate(chunk, expected, identity, ledger, policy_version, snapshot=None, *, guided=False):
+def validate(chunk, expected, identity, ledger, policy_version, snapshot=None, *, guided=False, collection_phase=None):
     marker = chunk / "CHUNK.json"
     if marker.stat().st_size > 4_000_000:
         raise ValueError("Chunk manifest is too large")
@@ -132,7 +138,10 @@ def validate(chunk, expected, identity, ledger, policy_version, snapshot=None, *
     guidance = meta.get("guided")
     if bool(guidance) != guided:
         raise ValueError("Replay collection mode mismatch")
-    rows = pool("easy" if guided else "smoke")
+    if meta.get("collection_phase") != collection_phase or (
+            collection_phase is not None and (not guided or collection_phase not in RECIPE["phase_weights"])):
+        raise ValueError("Replay collection phase mismatch")
+    rows = pool(collection_phase or ("easy" if guided else "smoke"))
     dtypes = GUIDED_DTYPES if guided else DTYPES
     if meta["geometry_pool"] != fingerprint(rows):
         raise ValueError("Replay geometry pool mismatch")

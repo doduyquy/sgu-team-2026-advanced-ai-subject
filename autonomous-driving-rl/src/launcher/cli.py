@@ -61,6 +61,8 @@ def create_parser() -> argparse.ArgumentParser:
     # Command: run
     p_run = subparsers.add_parser("run", help="Resolve plan, run preflight, and execute experiment suite")
     _add_plan_arguments(p_run)
+    p_run.add_argument("--steering-profile", choices=("off", "fixed", "adaptive"),
+                       help="Explicit Stage 5 SANDBOX profile with per-step steering telemetry")
 
     return parser
 
@@ -245,6 +247,10 @@ def handle_plan(args: argparse.Namespace) -> int:
 
 
 def handle_run(args: argparse.Namespace) -> int:
+    profile = getattr(args, "steering_profile", None)
+    if profile and (args.mode != "SANDBOX" or args.agent != "stage5_sac_terminal_preview"):
+        print("[ERROR] Steering profiles require the Terminal Preview SAC SANDBOX launcher", file=sys.stderr)
+        return 1
     agent_factory = None
     if args.agent in {"stage5_sac", "stage5_sac_terminal_preview"}:
         if not getattr(args, "checkpoint", None):
@@ -289,7 +295,8 @@ def handle_run(args: argparse.Namespace) -> int:
         registry=registry,
         agent_factory=agent_factory,
         runs_root=request.runs_root,
-        custom_run_id=request.custom_run_id
+        custom_run_id=request.custom_run_id,
+        steering_profile=profile,
     )
 
     try:

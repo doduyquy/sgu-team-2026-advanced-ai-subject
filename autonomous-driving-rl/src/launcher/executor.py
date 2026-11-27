@@ -13,6 +13,7 @@ This module implements the execution engine that runs a ResolvedExperimentPlanV1
 
 from dataclasses import asdict, dataclass
 import json
+import csv
 import math
 import os
 from pathlib import Path
@@ -207,13 +208,21 @@ class ExperimentExecutor:
         runs_root: Optional[Path] = None,
         custom_run_id: Optional[str] = None,
         event_callback: Optional[EventCallback] = None,
-        project_root: Optional[Path] = None
+        project_root: Optional[Path] = None,
+        steering_profile: Optional[str] = None,
     ):
         self.plan = plan
         self.project_root = project_root or get_default_project_root()
         self.runs_root = runs_root or (self.project_root / "runs")
         self.custom_run_id = validate_custom_run_id(custom_run_id, self.runs_root)
         self.event_callback = event_callback
+        if steering_profile is not None and (
+            steering_profile not in {"off", "fixed", "adaptive"}
+            or plan.canonical_run or plan.launcher_mode != LauncherMode.SANDBOX
+            or plan.agent_registration.agent_id != "stage5_sac_terminal_preview"
+        ):
+            raise ValueError("Steering telemetry and smoothing require Terminal Preview SAC in SANDBOX")
+        self.steering_profile = steering_profile
 
         from src.launcher.registry import build_canonical_agent_registry
         canonical_reg = build_canonical_agent_registry()
@@ -268,6 +277,9 @@ class ExperimentExecutor:
         checkpoint = getattr(self.plan, "checkpoint_binding", None)
         is_stage5 = self.plan.agent_registration.agent_id in {"stage5_sac", "stage5_sac_terminal_preview"}
         algorithm_parameters = {"launcher": launcher_prov}
+        if self.steering_profile is not None:
+            from src.launcher.steering import SteeringFilter, steering_sample, vehicle_motion
+            algorithm_parameters["steering"] = {"profile": self.steering_profile, "recipe": "steering_sandbox_v1"}
         parameter_provider = getattr(self.agent_factory, "experiment_parameters", None)
         if parameter_provider is not None:
             param_key = "sac_checkpoint" if is_stage5 or self.plan.agent_registration.method_family == "MODEL_FREE_RL" else "planner"
@@ -445,6 +457,8 @@ class ExperimentExecutor:
                         mode="INFERENCE"
                     )
                     agent.reset(public_context, agent_seed=self.plan.agent_seed)
+                    steering_filter = SteeringFilter(self.steering_profile) if self.steering_profile else None
+                    steering_samples = []
 
                     # D. Step loop (10 Hz decision cycle)
                     latencies_ms: List[float] = []
@@ -473,10 +487,22 @@ class ExperimentExecutor:
 
                         # 3. Action adaptation to physical actuator Box(2)
                         canonical_act = action_adapter.to_canonical(decision.action_payload)
+                        raw_action = canonical_act
+                        if steering_filter is not None:
+                            before = vehicle_motion(env.agent)
+                            canonical_act, alpha, bend = steering_filter.apply(
+                                raw_action, read_vehicle_speed_kmh(env.agent), agent_input.task_context
+                            )
 
                         # 4. Environment physics step
                         raw_obs, r_env, term_step, trunc_step, step_info = env.step(canonical_act.to_numpy())
                         step_idx += 1
+                        if steering_filter is not None:
+                            previous_accel = steering_samples[-1]["lateral_accel_m_s2"] if steering_samples else None
+                            sample = steering_sample(env.agent, before, vehicle_motion(env.agent),
+                                                     float(self.plan.control_dt_s), raw_action, canonical_act,
+                                                     alpha, bend, previous_accel)
+                            steering_samples.append({"step": step_idx, **sample})
 
                         # Update raw safety and task flags from step_info
                         for k in ("arrive_dest", "out_of_road", "crash_vehicle", "crash_object", "crash_building", "crash_human", "crash_sidewalk", "max_step"):
@@ -603,6 +629,11 @@ class ExperimentExecutor:
                 )
 
                 backend.log_episode(log_row, timing=timing)
+                if steering_samples:
+                    with (logger.run_dir / f"steering-{case_idx:03d}.csv").open("x", encoding="utf-8", newline="") as stream:
+                        writer = csv.DictWriter(stream, fieldnames=list(steering_samples[0]))
+                        writer.writeheader()
+                        writer.writerows(steering_samples)
                 completed_count += 1
 
                 self._emit(LauncherEventV1.create(
