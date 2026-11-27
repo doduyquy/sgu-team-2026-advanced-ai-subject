@@ -50,3 +50,19 @@ def test_checksum_mismatch_leaves_no_candidate(tmp_path, monkeypatch):
         second_window_harvest.fetch_checkpoint({"planned": {"job": "sample-job"}},
                                                "sample-job/final", target, index)
     assert not target.exists()
+
+
+def test_already_placed_full_state_is_verified_without_downloading(tmp_path, monkeypatch):
+    package, index = remote_checkpoint(tmp_path)
+    target = tmp_path / "placed"
+    checkpoint.restore_checkpoint(package, index, target)
+    shutil.copyfile(package / "INDEX.json", target / "INDEX.json")
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("An installed checkpoint needs no second download")
+
+    monkeypatch.setattr(second_window_harvest.c, "fetch_output", unexpected)
+    result = second_window_harvest.fetch_checkpoint(
+        {"planned": {"job": "sample-job"}}, "sample-job/final", target, index, full=True)
+    assert not result["policy_only"]
+    assert result["sha256"] == sha(target / "COMPLETE.json")

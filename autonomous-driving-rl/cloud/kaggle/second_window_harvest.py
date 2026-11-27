@@ -42,7 +42,22 @@ def file_catalog(account, ref, version):
             "execution_envelope": "execution.json" in names}
 
 
+def verified_full_receipt(target, index_sha, job):
+    verify(target / "INDEX.json", index_sha)
+    index = read(target / "INDEX.json")
+    digest = index["state_sha256"]
+    verify(target / "COMPLETE.json", digest)
+    marker = read(target / "COMPLETE.json")
+    if marker["schema"] != 1 or marker["job"] != job or set(marker["files"]) != set(STATE_FILES) - {"COMPLETE.json"}:
+        raise ValueError("Existing checkpoint does not match the versioned index")
+    for name, expected in marker["files"].items():
+        verify(target / name, expected)
+    return {"path": str(target), "sha256": digest, "policy_only": False, "result": marker["result"]}
+
+
 def fetch_checkpoint(entry, remote, target, expected, *, full=False):
+    if full and target.is_dir():
+        return verified_full_receipt(target, expected, entry["planned"]["job"])
     with TemporaryDirectory(dir=target.parent, prefix="v3-parts-") as interim:
         staging = Path(interim)
         def fetch(name):
@@ -85,7 +100,12 @@ def fetch_checkpoint(entry, remote, target, expected, *, full=False):
                 continue
             verify(result / name, marker["files"][name])
         shutil.copyfile(staging / "INDEX.json", result / "INDEX.json")
-        result.rename(target)
+        try:
+            result.rename(target)
+        except FileExistsError:
+            if not full:
+                raise
+            return verified_full_receipt(target, expected, entry["planned"]["job"])
     return {"path": str(target), "sha256": digest, "policy_only": not full, "result": marker["result"]}
 
 
@@ -96,6 +116,13 @@ def one(receipt, row, entry, mode):
         "session": row["session"], "job": job, "version": version, "artifacts": {}}
     final = saved["artifacts"].get("final/state", {})
     if final.get("path") and (mode == "small" or not final.get("policy_only")):
+        return
+    placed = receipt / "final-state-complete"
+    if mode == "full" and placed.is_dir() and final.get("path"):
+        saved["artifacts"]["final/state"] = verified_full_receipt(
+            placed, sha(Path(final["path"]) / "INDEX.json"), job)
+        saved["scan_complete"] = True
+        write(journal, saved)
         return
     saved.pop(f"{mode}_error", None)
     if not version:
