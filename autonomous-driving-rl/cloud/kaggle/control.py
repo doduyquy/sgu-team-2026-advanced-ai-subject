@@ -452,7 +452,7 @@ def plan_learning_resume(args, state):
             if (execution["transitions"] != args.transitions or utd_control.get("status") != "HARVESTED_VERIFIED"
                     or utd_control["execution"].get("parent_sha") != state_sha):
                 raise ValueError("The actor profile requires both harvested UTD controls from the same parent")
-    bundle = read(WORK / "bundle.json")
+    bundle = getattr(args, "runtime_bundle", None) or read(WORK / "bundle.json")
     allowed = {"cloud/kaggle/kernel_template.py.txt", "cloud/kaggle/learning_hooks.py", "cloud/kaggle/campaign_tasks.py",
                "cloud/kaggle/traffic_guidance.py",
                "src/launcher/registry.py", "src/launcher/executor.py"}

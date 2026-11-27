@@ -103,7 +103,7 @@ def test_campaign_admits_within_capacity_and_reports_other_identities(tmp_path, 
     bundle.write_bytes(b"test payload")
     campaign.init(root, bundle)
     doc = campaign.manifest(root)
-    assert Counter(x["account"] for x in doc["sessions"]) == {slot: 2 for slot in control.SLOTS}
+    assert Counter(x["account"] for x in doc["sessions"]) == {slot: 2 for slot in campaign.BASE_SLOTS}
     assert len({x["job"] for x in doc["sessions"]}) == 16
     registry = {"jobs": {}}
     monkeypatch.setattr(campaign, "WORK", tmp_path)
@@ -1151,3 +1151,28 @@ def test_campaign_totals_only_count_new_localization_discards(tmp_path, monkeypa
                                    {"planned": plan, "version": 1, "status": "CLOUD_SUCCEEDED"},
                                    {}, {}, {}, tmp_path)
     assert (result["decisions"], result["localization_discard"], result["valid_rows"]) == (20, 4, 16)
+
+def test_campaign_extension_binds_slots_package_and_deadline(tmp_path):
+    from cloud.kaggle import campaign
+    from cloud.kaggle.common import fingerprint
+
+    base, extension = tmp_path / "base", tmp_path / "extension"
+    base.mkdir()
+    extension.mkdir()
+    clock = {"deadline_epoch": 1795782600}
+    document = {"window": clock, "target": 16, "parent_sha": campaign.parallel.STATE,
+                "package_sha": "test-package", "per_account_target": 2, "sessions": campaign.sessions()}
+    write(base / "campaign.json", {**document, "fingerprint": fingerprint(document)})
+    ext = {**document, "target": 6,
+           "extension_of": {"directory": base.name, "fingerprint": fingerprint(document)},
+           "sessions": [{"job": f"job-{index}", "session": f"S{index:02}", "account": slot}
+                        for index, slot in enumerate(
+                            (slot for slot in campaign.EXTENSION_SLOTS for _ in range(2)), start=17)]}
+    write(extension / "campaign.json", {**ext, "fingerprint": fingerprint(ext)})
+    assert campaign.manifest(extension)["sessions"][-1]["session"] == "S22"
+    assert campaign.manifest(base)["target"] == 16
+
+    wrong_deadline = {**ext, "window": {"deadline_epoch": clock["deadline_epoch"] + 1}}
+    write(extension / "campaign.json", {**wrong_deadline, "fingerprint": fingerprint(wrong_deadline)})
+    with pytest.raises(ValueError, match="base deadline"):
+        campaign.manifest(extension)

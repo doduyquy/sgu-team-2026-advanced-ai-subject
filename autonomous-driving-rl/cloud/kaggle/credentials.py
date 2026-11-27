@@ -16,7 +16,9 @@ import warnings
 
 from cloud.kaggle.common import ROOT, read, write
 
-SLOTS = tuple(f"account_{i:02}" for i in range(1, 9))
+BASE_SLOTS = tuple(f"account_{i:02}" for i in range(1, 9))
+EXTENSION_SLOTS = ("account_09", "account_10", "account_11")
+SLOTS = BASE_SLOTS + EXTENSION_SLOTS
 OWNER = re.compile(r"[a-z0-9_-]{1,40}")
 TOKEN = re.compile(r"(?<![A-Za-z0-9_-])KGAT_[A-Za-z0-9_-]{15,}(?![A-Za-z0-9_-])")
 

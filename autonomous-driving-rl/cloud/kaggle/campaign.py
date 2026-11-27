@@ -16,7 +16,7 @@ import zipfile
 
 from cloud.kaggle import control as c, parallel
 from cloud.kaggle.common import WORK, fingerprint, read, sha, verify, write
-from cloud.kaggle.credentials import operator_slot, slot, verify_owner
+from cloud.kaggle.credentials import BASE_SLOTS, EXTENSION_SLOTS, operator_slot, slot, verify_owner
 from cloud.kaggle.pilot import panel, summarize
 
 GROUPS = (
@@ -30,7 +30,7 @@ UNCERTAIN = {"SUBMITTING", "SUBMIT_UNKNOWN", "STATUS_UNKNOWN"}
 
 def sessions():
     rows = []
-    for account, workloads in zip(c.SLOTS, GROUPS, strict=True):
+    for account, workloads in zip(BASE_SLOTS, GROUPS, strict=True):
         for workload in workloads:
             if workload == "mixed":
                 budget, profile, job = 25000, {"device": "cuda"}, None
@@ -85,9 +85,33 @@ CURRICULUM_WINDOW_PROFILES = (
 )
 
 
-def prepare_window(root, package, source, *, clock_file=None, curriculum=False):
-    clock = read(clock_file or WORK / "window12.json")
-    profiles = CURRICULUM_WINDOW_PROFILES if curriculum else WINDOW_PROFILES
+EXTENSION_PROFILES = (
+    ("Hard autonomous", "cuda", "traffic", "hard", False, True, None),
+    ("Hard stability and retention", "cpu", "traffic", "hard", False, True, 0.25),
+    ("Extreme autonomous", "cuda", "traffic", "extreme", False, True, None),
+    ("Extreme stability", "cpu", "traffic", "extreme", False, True, 0.25),
+    ("Extreme from guided replay, autonomous collection", "cuda", "traffic", "extreme", False, True, 0.25),
+    ("Mixed four-tier autonomous", "cpu", "traffic", "mixed", False, True, None),
+)
+
+
+def prepare_window(root, package, source, *, clock_file=None, curriculum=False, base_root=None):
+    base = None
+    slots = BASE_SLOTS
+    start = 1
+    seconds = 39600
+    if base_root is None:
+        clock = read(clock_file or WORK / "window12.json")
+        profiles = CURRICULUM_WINDOW_PROFILES if curriculum else WINDOW_PROFILES
+        prefix = clock.get("round_prefix", "win12")
+    else:
+        if root.resolve().parent != base_root.resolve().parent or root.resolve() == base_root.resolve():
+            raise ValueError("Extension requires a distinct sibling directory")
+        base = manifest(base_root, allow_extension=False)
+        verify(package, base["package_sha"])
+        clock = base["window"]
+        profiles, slots, start, prefix = EXTENSION_PROFILES, EXTENSION_SLOTS, 17, "win2x"
+        seconds = min(seconds, clock["deadline_epoch"] - int(time.time()))
     deadline = clock["deadline_epoch"]
     if (root / "campaign.json").exists():
         raise FileExistsError("Campaign dispatch is immutable")
@@ -95,37 +119,59 @@ def prepare_window(root, package, source, *, clock_file=None, curriculum=False):
     rows = []
     with c.locked():
         registry = c.registry()
-        c.package(source)
+        bundle = None
+        if base is None:
+            c.package(source)
+        else:
+            runtime = registry["jobs"][base["sessions"][0]["job"]]["planned"]
+            bundle = {key: runtime[key] for key in ("runtime_sha", "source_sha", "template_sha")}
+            bundle["path"] = runtime["runtime_path"]
         for i, (workload, device, parent_kind, phase, teacher, autonomous, lr) in enumerate(profiles):
-            session = f"S{i + 1:02d}"
-            account = c.SLOTS[i // 2]
-            round_id = f"{clock.get('round_prefix', 'win12')}-{session.lower()}"
+            session = f"S{i + start:02d}"
+            account = slots[i // 2]
+            round_id = f"{prefix}-{session.lower()}"
             parent = source if parent_kind == "traffic" else parallel.CHAMPION
             guidance = phase == "medium" and ("guided" in workload or "capped" in workload or "experience" in workload)
             c.plan_learning_resume(SimpleNamespace(campaign="stage5", round=round_id, account=account,
-                parent=parent, transitions=4_000_000, device=device, max_seconds=39600, phase=phase,
+                parent=parent, transitions=4_000_000, device=device, max_seconds=seconds, phase=phase,
                 traffic_guidance=guidance, traffic_teacher=teacher, autonomous_traffic=autonomous,
-                campaign_deadline=deadline, campaign_actor_lr=lr, localization_guard=curriculum), registry)
+                campaign_deadline=deadline, campaign_actor_lr=lr, localization_guard=curriculum or base is not None,
+                runtime_bundle=bundle), registry)
             doc = read(WORK / f"plan-stage5-{round_id}.json")
             job = doc["jobs"]["j10"]
             rows.append(dict(session=session, account=account, workload=workload, job=job["job"], device=device,
-                             budget="39,600 s or campaign deadline", round=round_id,
+                             budget=f"{seconds:,} s or campaign deadline", round=round_id,
                              plan_fingerprint=doc["fingerprint"], parent=parent, parent_sha=job["parent_sha"],
                              checkpoint="50k policy / 250k full state / final sharded"))
-    data = {"target": 16, "per_account_target": 2, "parent_sha": parallel.STATE,
+    data = {"target": len(rows), "per_account_target": 2, "parent_sha": parallel.STATE,
             "package_sha": sha(package), "sessions": rows, "window": clock}
+    if base is not None:
+        data["extension_of"] = {"directory": base_root.resolve().name, "fingerprint": base["fingerprint"]}
     data["fingerprint"] = fingerprint(data)
     write(root / "campaign.json", data)
     print(data["fingerprint"])
 
 
-def manifest(root):
+def manifest(root, *, allow_extension=True):
     document = read(root / "campaign.json")
     fields = {k: v for k, v in document.items() if k != "fingerprint"}
-    if (document["fingerprint"] != fingerprint(fields) or (document["sessions"] != sessions() if "window" not in document else
-                [(row["session"], row["account"]) for row in document["sessions"]] !=
-                [(f"S{i + 1:02d}", c.SLOTS[i // 2]) for i in range(16)])
-            or document["target"] != 16 or document["per_account_target"] != 2
+    extension = document.get("extension_of")
+    slots, start = BASE_SLOTS, 1
+    if extension:
+        name = extension["directory"]
+        if not allow_extension or not re.fullmatch(r"[a-zA-Z0-9_-]+", name):
+            raise ValueError("Invalid campaign extension link")
+        base = manifest(root.parent / name, allow_extension=False)
+        if (base["fingerprint"] != extension["fingerprint"] or base.get("window") != document.get("window")
+                or "window" not in document or base["package_sha"] != document["package_sha"]):
+            raise ValueError("Campaign extension must preserve the base deadline and package")
+        slots, start = EXTENSION_SLOTS, 17
+    target = 2 * len(slots)
+    expected = [(f"S{i + start:02d}", slots[i // 2]) for i in range(target)]
+    valid_rows = ([(row["session"], row["account"]) for row in document["sessions"]] == expected
+                  if "window" in document else document["sessions"] == sessions())
+    if (document["fingerprint"] != fingerprint(fields) or not valid_rows
+            or document["target"] != target or document["per_account_target"] != 2
             or document["parent_sha"] != parallel.STATE):
         raise ValueError("Campaign definition differs from the pinned workload queue")
     return document
@@ -156,6 +202,8 @@ def agent_lock(folder):
 
 def enqueue_continuation(root, document, args):
     account = operator_slot()
+    if account not in {row["account"] for row in document["sessions"]}:
+        raise ValueError("This operator is outside the campaign dispatch")
     with c.locked():
         registry = c.registry()
         parent = registry["jobs"][args.parent]
@@ -259,7 +307,7 @@ def watch_localization_repairs(root, package, document, account):
 def job_queue(root, document):
     queue = list(document["sessions"])
     known = {row["job"] for row in queue}
-    for account in c.SLOTS:
+    for account in dict.fromkeys(row["account"] for row in queue):
         for path in sorted((root / "rounds" / account).glob("*.json")):
             data = read(path)
             c.identity_part(path.stem)
@@ -520,7 +568,7 @@ def window_assets(document, registry):
         base = c.ROOT / job["runtime_path"]
         parent, _ = c.parent_checkpoint(registry, job["parent_job"])
         verify(parent / "COMPLETE.json", job["parent_sha"])
-        archive = parent / "parent.zip"
+        archive = parent / ("parent-deflate.zip" if document.get("extension_of") else "parent.zip")
         if not archive.is_file():
             raise FileNotFoundError("Parallel staging requires the existing verified parent transport archive")
         # The same archive will be checked member-by-member again before notebook upload.
@@ -726,6 +774,7 @@ def main():
     parser.add_argument("--campaign-deadline", type=int)
     parser.add_argument("--window-clock", type=Path)
     parser.add_argument("--curriculum-window", action="store_true")
+    parser.add_argument("--extend-window", type=Path)
     args = parser.parse_args()
     if args.command in {"init", "agent", "prepare-window"} and not args.package:
         parser.error("--package is required")
@@ -736,7 +785,7 @@ def main():
         if not args.parent:
             parser.error("prepare-window requires a verified Medium parent")
         prepare_window(args.root, args.package, args.parent, clock_file=args.window_clock,
-                       curriculum=args.curriculum_window)
+                       curriculum=args.curriculum_window, base_root=args.extend_window)
         return
     document = manifest(args.root)
     if args.command == "enqueue":
