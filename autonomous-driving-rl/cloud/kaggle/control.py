@@ -1038,6 +1038,14 @@ def launch(args, state):
         parent, _ = parent_checkpoint(state, job["parent_job"], job.get("parent_step"))
         verify(parent / "COMPLETE.json", job["parent_sha"])
         parent_archive = parent / "parent.zip"
+        compact_archive = parent / "parent-deflate.zip"
+        if job.get("campaign_deadline") and compact_archive.is_file():
+            compact_sha = sha(compact_archive)
+            compact_ref = f"{owner}/s5-long-parent-{compact_sha[:20]}-bin"
+            staged = state["uploads"].get(compact_ref, {})
+            if (staged.get("status"), staged.get("version"), staged.get("sha")) == ("ACCEPTED", 1, compact_sha) and (
+                    staged.get("alias") == alias and staged.get("remote_sha_verified_at")):
+                parent_archive = compact_archive
         manifest = read(parent / "COMPLETE.json")
         if set(manifest["files"]) != STATE_FILES - {"COMPLETE.json"}:
             raise ValueError("Unexpected parent checkpoint members")
