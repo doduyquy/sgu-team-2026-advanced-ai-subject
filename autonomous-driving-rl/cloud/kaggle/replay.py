@@ -36,7 +36,7 @@ def publish(model_path, expected, identity, version, out):
     write(out / "SNAPSHOT.json", snapshot)
     return sha(out / "SNAPSHOT.json")
 
-def collect(args, *, model=None, env=None, quiet=False):
+def collect(args, *, model=None, env=None, quiet=False, action_guide=None, guide_profile=None):
     torch.set_num_threads(1)
     verify(args.snapshot / "SNAPSHOT.json", args.snapshot_sha)
     snapshot = read(args.snapshot / "SNAPSHOT.json")
@@ -56,9 +56,12 @@ def collect(args, *, model=None, env=None, quiet=False):
                      or (collection_phase is None and snapshot["identity"]["phase"] != "easy")):
         raise ValueError("Guided collection requires a geometry in the locked TRAIN pool")
     dtypes = GUIDED_DTYPES if geometry else DTYPES
+    if action_guide is not None and (not geometry or not guide_profile):
+        raise ValueError("Guided actions require a fixed TRAIN episode and a behavior profile")
     start = time.monotonic()
     data = {key: [] for key in dtypes}
     episodes = []
+    decisions = []
     fixed = (geometry, args.seed) if geometry else None
     if env is None:
         env = ScheduledEnv(phase, args.stream, args.sequence * MAX_ROWS, fixed=fixed)
@@ -71,6 +74,9 @@ def collect(args, *, model=None, env=None, quiet=False):
         episodes.append(info)
         for _ in range(args.rows):
             action, _ = model.predict(obs, deterministic=bool(geometry))
+            if action_guide is not None:
+                raw = action
+                action, diagnosis = action_guide(obs, raw)
             successor, reward, terminated, truncated, step_info = env.step(action)
             row = (obs, successor, action, reward, terminated, truncated,
                    len(episodes) - 1, step_info["step_index"])
@@ -78,6 +84,9 @@ def collect(args, *, model=None, env=None, quiet=False):
                 executed = np.asarray([step_info["action_steering"], step_info["action_throttle_brake"]], dtype=np.float32)
                 row = (obs, successor, executed, reward, terminated, truncated, 0, step_info["step_index"],
                        step_info["route_completion"], step_info["speed_km_h"])
+                if action_guide is not None:
+                    decisions.append({"step": step_info["step_index"], "raw": raw.tolist(),
+                                      "guided": action.tolist(), "executed": executed.tolist(), **diagnosis})
             for key, value in zip(dtypes, row, strict=True):
                 data[key].append(value)
             obs = successor
@@ -105,6 +114,10 @@ def collect(args, *, model=None, env=None, quiet=False):
             "seconds": time.monotonic() - start}
     if geometry:
         meta["guided"] = {"geometry": geometry, "seed": args.seed, "behavior": "frozen_deterministic", "outcome": outcome}
+    if action_guide is not None:
+        trace = args.out / "DECISIONS.json"
+        write(trace, decisions)
+        meta["guided"].update(behavior=guide_profile, decisions_sha=sha(trace))
     if collection_phase is not None:
         meta["collection_phase"] = collection_phase
     write(args.out / "CHUNK.json", meta)
@@ -123,7 +136,8 @@ def check_snapshot(path, digest, identity):
     return snapshot["policy_version"]
 
 
-def validate(chunk, expected, identity, ledger, policy_version, snapshot=None, *, guided=False, collection_phase=None):
+def validate(chunk, expected, identity, ledger, policy_version, snapshot=None, *, guided=False, collection_phase=None,
+             behavior="frozen_deterministic"):
     marker = chunk / "CHUNK.json"
     if marker.stat().st_size > 4_000_000:
         raise ValueError("Chunk manifest is too large")
@@ -189,12 +203,21 @@ def validate(chunk, expected, identity, ledger, policy_version, snapshot=None, *
     if guided:
         done = data["terminated"] | data["truncated"]
         if (len(episodes) != 1 or not done[-1] or done[:-1].any()
-                or guidance["behavior"] != "frozen_deterministic" or guidance["geometry"] not in lookup
+                or guidance["behavior"] != behavior or guidance["geometry"] not in lookup
                 or type(guidance["seed"]) is not int or not 0 <= guidance["seed"] < 2**31
                 or not isinstance(guidance["outcome"], str) or not guidance["outcome"]
                 or (guidance["outcome"] == "TIMEOUT") != bool(data["truncated"][-1] and not data["terminated"][-1])
                 or (guidance["outcome"] != "TIMEOUT" and not data["terminated"][-1])):
             raise ValueError("Invalid full-episode guided replay")
+        if behavior != "frozen_deterministic":
+            trace = chunk / "DECISIONS.json"
+            verify(trace, guidance["decisions_sha"])
+            decisions = read(trace)
+            if (len(decisions) != n or [row["step"] for row in decisions] != data["step"].tolist()
+                    or not np.array_equal(np.asarray([row["executed"] for row in decisions], dtype=np.float32),
+                                          data["action"])
+                    or not np.allclose([row["guided"] for row in decisions], data["action"], rtol=0, atol=1e-6)):
+                raise ValueError("Guidance trace does not match executed replay actions")
     from cloud.kaggle.runtime import schedule
     from src.training.stage5.train_sampler import TrainCaseSampler
     sampler = TrainCaseSampler(allowed_geometry_ids=list(lookup))

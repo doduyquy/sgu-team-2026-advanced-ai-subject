@@ -109,6 +109,29 @@ the `extension-*-resume-proof.json` receipts for the tested states.
 python -B -m src.launcher.cli run --mode SANDBOX --agent stage5_sac_terminal_preview --checkpoint runs/kaggle/first-window-v2/best-v2-extension-10000-bundle --task-context-producer reference_route_station_proposal_v1 --tier Medium --sequence SCTCS --geom-seed 11 --env-seed 33701 --render OFF --wandb DISABLED --runs-root runs/kaggle/demo-v2-reproduction
 ```
 
+## Risk-aware SAC experiment
+
+This local experiment uses the locked V2–5.000 parent and reads its
+replay sidecars in their recorded locations. The experiment directory
+is `runs/kaggle/first-window-risk`. Each collection wave stores the
+policy fingerprint, TRAIN case, validated replay and an optional
+step-by-step guidance trace. Online waves use the raw learned policy.
+All training reports and comparisons are scoped to the development split.
+
+Verify a saved experimental checkpoint without gradient updates. The
+state pin comes from its recorded screening or resume receipt.
+
+```powershell
+$risk = 'runs/kaggle/first-window-risk'
+$proof = Get-Content "$risk/resume-proof.json" -Raw | ConvertFrom-Json
+python -B -m cloud.kaggle.local_risk --verify-state "$risk/$($proof.state)" --state-sha $proof.state_sha
+```
+
+Use the experimental `experiment-bundle` with the same SANDBOX launcher
+and raw SAC policy as above. The retention experiment and its independently
+verified state are under `retention`. `selection.json` records the overall
+comparison. The locked production reference remains V2–5.000.
+
 ## Checkpoint navigation and storage
 
 The focused Gate audit is in `runs/kaggle/postwindow-product/checkpoint-gate-audit.json`. It records the actual runtime option, F09 lookahead changes and the native navigation index transitions. The pinned native navigation and reward code are available in the corresponding MetaDrive source. [Navigation implementation](https://github.com/metadriverse/metadrive/blob/85e5dadc6c7436d324348f6e3d8f8e680c06b4db/metadrive/component/navigation_module/node_network_navigation.py) · [Reward and destination implementation](https://github.com/metadriverse/metadrive/blob/85e5dadc6c7436d324348f6e3d8f8e680c06b4db/metadrive/envs/metadrive_env.py)

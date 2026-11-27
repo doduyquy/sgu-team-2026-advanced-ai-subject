@@ -30,7 +30,7 @@ def evaluate(plan, model_path, tier):
     return {"model_sha": plan["model_sha"], "scope": plan["scope"], "tier": tier, "cases": cases}
 
 
-def evaluate_case(model, row, seed, env=None, measurement=None):
+def evaluate_case(model, row, seed, env=None, measurement=None, observer=None):
     if env is None:
         from cloud.kaggle.runtime import ScheduledEnv
         env = ScheduledEnv("eval", 0, 0)
@@ -40,7 +40,11 @@ def evaluate_case(model, row, seed, env=None, measurement=None):
         obs, reset = env.reset()
         for step in range(1, reset["horizon_steps"] + 1):
             action, _ = model.predict(obs, deterministic=True)
+            if observer is not None:
+                observer.before_step(obs, action)
             obs, _, terminated, truncated, info = env.step(action)
+            if observer is not None:
+                observer.after_step(env.env.env._env.agent)
             if terminated or truncated:
                 break
         else:

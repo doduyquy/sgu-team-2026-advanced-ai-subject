@@ -57,15 +57,27 @@ def worker(task):
         model = policy(task["policy"], task["policy_sha"])
         if task["kind"] == "eval":
             measured = {}
-            result = evaluate_case(model, task["row"], task["seed"], environment("eval"), measured)
+            observer = None
+            if task.get("risk_metrics"):
+                from cloud.kaggle.risk_metrics import RiskMetrics
+
+                observer = RiskMetrics()
+            result = evaluate_case(model, task["row"], task["seed"], environment("eval"), measured, observer)
+            if observer is not None:
+                result["risk_metrics"] = observer.summary()
             decisions = measured["decisions"]
         else:
+            guide = {}
+            if task.get("risk_guidance"):
+                from cloud.kaggle.risk_guidance import PROFILE, risk_action
+
+                guide = {"action_guide": risk_action, "guide_profile": PROFILE}
             try:
                 digest = replay.collect(SimpleNamespace(
                     snapshot=task["snapshot"], snapshot_sha=task["snapshot_sha"], rows=replay.MAX_ROWS,
                     stream=task["stream"], sequence=task["sequence"], geometry=task["geometry"],
                     collection_phase="mixed", seed=task["seed"], out=task["out"]),
-                    model=model, env=environment("mixed"), quiet=True)
+                    model=model, env=environment("mixed"), quiet=True, **guide)
             except TaskContextLocalizationError:
                 result, decisions = {"discard": "LOCALIZATION"}, 0
             else:
@@ -109,13 +121,14 @@ def references():
     return {tier: read(WORK / item["file"]) for tier, item in graph["confirmation"].items()}
 
 
-def assess(sim, model, digest, panel, tiers):
+def assess(sim, model, digest, panel, tiers, *, risk_metrics=False):
     from cloud.kaggle.runtime import pool
 
     lookup = {row["geometry_id"]: row for row in pool("eval")}
     locked = [(tier, case) for tier in tiers for case in panel[tier]["cases"]]
     data, performance = sim.run([{"kind": "eval", "policy": model, "policy_sha": digest,
-                                  "row": lookup[case["geometry"]], "seed": case["seed"]} for _, case in locked])
+                                  "row": lookup[case["geometry"]], "seed": case["seed"],
+                                  "risk_metrics": risk_metrics} for _, case in locked])
     results = {tier: {"tier": tier, "scope": "development confirmation", "model_sha": digest, "cases": []}
                for tier in tiers}
     for (tier, _), case in zip(locked, data, strict=True):
